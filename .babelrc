@@ -1,19 +1,10 @@
 {
   "presets": [
-    "react",
     "stage-0"
   ],
   "plugins": [
-    ["module-resolver", {
-      "root": ["./"],
-      "alias": {
-      }
-    }],
-    [
-      "import",
-      {
-        "libraryName": "antd"
-      }
-    ]
+    ["transform-react-jsx", {
+      "pragma": "createElement"
+    }]
   ]
 }

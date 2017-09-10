@@ -1,49 +1,31 @@
 {
-  "name": "cicada-engine",
-  "version": "0.1.0",
-  "description": "",
+  "name": "@ariesate/engine",
+  "version": "0.0.1",
+  "description": "you should not publish this package.",
   "main": "index.js",
+  "dependencies": {
+    "babel-loader": "^7.1.2",
+    "eslint": "^4.5.0",
+    "eslint-config-airbnb": "^15.1.0",
+    "eslint-plugin-babel": "^4.1.2",
+    "eslint-plugin-react": "^7.3.0"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-eslint": "^7.2.3",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-jsx-a11y": "^6.0.2",
+    "lodash": "^4.17.4",
+    "webpack": "^3.5.5",
+    "webpack-dev-server": "^2.7.1"
+  },
   "scripts": {
     "start": "webpack-dev-server",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint render",
-    "eslint-fix": "eslint --fix render"
+    "eslint-fix": "eslint ./render/src --fix "
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/cicada-team/cicada-engine.git"
-  },
-  "author": "sskyy",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/cicada-team/cicada-engine/issues"
-  },
-  "homepage": "https://github.com/cicada-team/cicada-engine#readme",
-  "dependencies": {
-    "eslint": "^3.19.0",
-    "eslint-config-airbnb": "^14.1.0",
-    "prop-types": "^15.5.10",
-    "react": "^15.4.2",
-    "react-dom": "^15.4.2"
-  },
-  "devDependencies": {
-    "antd": "^2.9.3",
-    "babel-core": "^6.24.1",
-    "babel-eslint": "^7.2.1",
-    "babel-loader": "^7.0.0",
-    "babel-plugin-import": "^1.1.1",
-    "babel-plugin-module-resolver": "^2.7.0",
-    "babel-preset-react": "^6.24.1",
-    "babel-preset-stage-0": "^6.22.0",
-    "eslint": "^3.19.0",
-    "eslint-config-airbnb": "^14.1.0",
-    "eslint-plugin-babel": "^4.1.1",
-    "eslint-plugin-import": "^2.2.0",
-    "eslint-plugin-jsx-a11y": "^4.0.0",
-    "eslint-plugin-react": "^6.10",
-    "react-router": "^4.1.1",
-    "react-router-dom": "^4.1.1",
-    "webpack": "^2.5.1",
-    "webpack-dev-server": "^2.4.4"
-  }
+  "author": "sskyy <skyking_H@hotmail.com>",
+  "license": "MIT"
 }

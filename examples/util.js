@@ -284,7 +284,7 @@ export function createUniqueIdGenerator(prefix = '') {
   return () => {
     index = (index === LETTER_AND_NUMBER_LEN - 1) ? 0 : (index + 1)
     last = (index === 0 ? last : last.slice(0, last.length - 1)) + LETTER_AND_NUMBER[index]
-    return `${prefix}-${last}`
+    return prefix + '-' + last
   }
 }
 
@@ -304,7 +304,7 @@ export function diff(first, second) {
   const absent = []
   const newBee = second.slice()
 
-  first.forEach((item) => {
+  first.forEach(item => {
     const index = newBee.indexOf(item)
     if (index === -1) {
       absent.push(item)
@@ -313,9 +313,5 @@ export function diff(first, second) {
     }
   })
 
-  return [absent, newBee]
-}
-
-export function ensureArray(o) {
-  return Array.isArray(o) ? o : [o]
+  return [absent, newbee]
 }
