@@ -6,5 +6,11 @@
     ["transform-react-jsx", {
       "pragma": "createElement"
     }]
-  ]
+  ],
+  "env": {
+    "test": {
+      "presets": [["stage-0"]],
+      "plugins": ["transform-es2015-modules-commonjs"]
+    }
+  }
 }

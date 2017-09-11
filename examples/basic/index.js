@@ -1,28 +1,36 @@
 import { createElement, render } from '@ariesate/render'
 import { ctreeToVtree, vtreeToHTML } from '../common'
 
-let count = 0
-
 const World = {
   displayName: 'World',
   getDefaultState() {
     return {
-      count: 0
+      count: 0,
     }
   },
-  render({state}) {
-    return <div>world {state.count}</div>
-  }
+  render({ state, refs, viewRefs }) {
+    console.log(refs, viewRefs)
+    return (
+      <div>
+        <span>
+          world {state.count}
+        </span>
+        <div ref="spy">1111</div>
+      </div>
+    )
+  },
 }
 
 const App = {
   displayName: 'App',
   render() {
-    return <div>
-      <span>Hello</span>
-      <World bind='world'/>
+    return (
+      <div>
+        <span>Hello</span>
+        <World bind="world" />
       </div>
-  }
+    )
+  },
 }
 
 const controller = render((
@@ -31,9 +39,8 @@ const controller = render((
   </div>
 ), document.getElementById('root'))
 
-console.log(vtreeToHTML(ctreeToVtree(controller.getCtree())))
 
-controller.onChange(ctree => {
+controller.onChange((ctree) => {
   console.log(vtreeToHTML(ctreeToVtree(ctree)))
 })
 

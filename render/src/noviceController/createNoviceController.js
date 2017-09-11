@@ -1,6 +1,7 @@
 import { ensureArray } from '../util'
 import { TRANSACTION_REPAINT, TRANSACTION_FIRST_PAINT } from './constant'
-import { walkCnodes, createVnodesTraversor, createPatchTraversor } from '../common'
+import { walkCnodes } from '../common'
+import { createInitialTraversor, createSingleStepPatchTraversor } from './vnode'
 import createStateTree from './createStateTree'
 import createAppearance from './createAppearance'
 
@@ -12,15 +13,6 @@ function createModuleSystem() {
     update: () => {},
     destroy: () => {},
   }
-}
-
-function generateInitialTraversor(ctree) {
-  return createVnodesTraversor(ctree.ret, ctree)
-}
-
-function generatePatchTraversor(cnode) {
-  const { ret: lastRet } = cnode.modified
-  return createPatchTraversor(cnode, lastRet, cnode.ret)
 }
 
 /**
@@ -56,7 +48,8 @@ export default function createNoviceController(initialState, initialAppearance, 
       ctree = scheduler.paint(vnode)
     })
 
-    view.initialDigest(generateInitialTraversor(ctree), domElement)
+    // CAUTION traversor 会在 build 读取的过程中动态往 ctree 上添加 ref/viewRefs 引用
+    view.initialDigest(createInitialTraversor(ctree), domElement)
   }
 
   function repaint(cnodeRefs) {
@@ -65,8 +58,9 @@ export default function createNoviceController(initialState, initialAppearance, 
 
       // cnodeToDigest 是 updateRender 时塞进去的
       cnodeToDigest.forEach((currentCnode) => {
-        // 后面参数中的 cnode.viewRefs 是在 generateXXX 中生成的
-        view.updateDigest(generatePatchTraversor(currentCnode), currentCnode.viewRefs)
+        // 后面参数中的 cnode.viewRefs 是在 generateInitialTraversor 中生成的
+        // CAUTION traversor 会在 build 读取的过程中动态往 ctree 上添加 ref/viewRefs 引用
+        view.updateDigest(createSingleStepPatchTraversor(currentCnode), currentCnode.getViewRefs())
       })
 
       cnodeToDigest = []
@@ -81,11 +75,7 @@ export default function createNoviceController(initialState, initialAppearance, 
   // 上层模块系统
   // TODO controller 要把 view batch 传给 moduleSystem,
   // 但是对 module 来说，仍然只是和 controller 的约定, controller 应该对 module 屏蔽 view 概念
-  const moduleSystem = createModuleSystem(mods, stateTree, appearance)
-
-  setTimeout(() => {
-    stateTree.api.merge('world', { count: 1 })
-  }, 500)
+  const moduleSystem = createModuleSystem(mods, stateTree, appearance, view)
 
   return {
     // 创建 background 只是为了把一部分 controller 的功能抽出去，得到一个更平整的抽象，用于构建更上层的系统
@@ -102,7 +92,10 @@ export default function createNoviceController(initialState, initialAppearance, 
         // view ref 在 cnode 上，要注入给 moduleSystem
         moduleSystem.initialize(cnode, parent)
 
-        const injectArgv = { ...stateTree.inject(cnode, parent), ...moduleSystem.inject(cnode, parent) }
+        const injectArgv = {
+          ...stateTree.inject(cnode, parent),
+          ...moduleSystem.inject(cnode, parent),
+        }
         // CAUTION 注意这里我们注意的参数是一个，不是数组
         // TODO 在这里要把 ref 改成指向组件的函数
         return ensureArray(moduleSystem.hijack(render, injectArgv))
@@ -113,14 +106,19 @@ export default function createNoviceController(initialState, initialAppearance, 
           const { render } = cnode.type
           // view ref 在 cnode 上，要注入给 moduleSystem
           moduleSystem.update(cnode)
-          const injectArgv = { ...stateTree.inject(cnode), ...moduleSystem.inject(cnode) }
+          const injectArgv = {
+            ...stateTree.inject(cnode),
+            ...moduleSystem.inject(cnode),
+            refs: cnode.getRefs(),
+            viewRefs: cnode.getViewRefs(),
+          }
 
           // 把上一次 ret 存一下，之后计算 patch 要用
           cnode.modified = { ret: cnode.ret }
           cnodeToDigest.push(cnode)
           return ensureArray(moduleSystem.hijack(render, injectArgv))
         },
-        review(cnode, [toInitialize, toDestroy]) {
+        review(cnode, [toInitialize, toDestroy, toRemain]) {
           // 先销毁要销毁的
           walkCnodes(toDestroy, (current) => {
             stateTree.destroy(current.statePath)
@@ -130,6 +128,7 @@ export default function createNoviceController(initialState, initialAppearance, 
 
           // 存一下 update 中需要 initialize 的，之后计算 patch 要用
           cnode.modified.toInitialize = toInitialize
+          cnode.modified.toRemain = toRemain
         },
       },
     },
@@ -160,6 +159,7 @@ export default function createNoviceController(initialState, initialAppearance, 
     // for debug
     onChange: o => onChange = o,
     getCtree: () => ctree,
+    getStateTree: () => stateTree,
 
     dump() {
 

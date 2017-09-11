@@ -13,10 +13,10 @@
 import createScheduler from './createScheduler'
 import createPainter from './createPainter'
 import createDOMView from './DOMView/createDOMView'
-
+import createVnodeElement from './createElement'
 import createNoviceController from './noviceController/createNoviceController'
 
-export createElement from './createElement'
+export const createElement = createVnodeElement
 
 export function render(vnode, domElement, controllerArgv) {
   const controller = createNoviceController(controllerArgv)
