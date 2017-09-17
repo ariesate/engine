@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "exist.js": "^0.3.0",
+    "fast-deep-equal": "^1.0.0",
     "immutable": "^3.8.1"
   }
 }

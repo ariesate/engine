@@ -34,18 +34,12 @@ export default function publicCreateStateTree(initialState, onChange) {
       // TODO 增加 repaint 调用
       set(...argv) {
         const changes = root.set(...argv)
-        changes.forEach(({ statePath }) => {
-          onChange([cnodeMap[joinPath(statePath)]])
-        })
-
+        onChange(changes.map(({ statePath }) => cnodeMap[joinPath(statePath)]))
         return changes
       },
       merge(...argv) {
         const changes = root.merge(...argv)
-        changes.forEach(({ statePath }) => {
-          onChange([cnodeMap[joinPath(statePath)]])
-        })
-
+        onChange(changes.map(({ statePath }) => cnodeMap[joinPath(statePath)]))
         return changes
       },
     },

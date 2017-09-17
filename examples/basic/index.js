@@ -39,8 +39,10 @@ const controller = render((
   </div>
 ), document.getElementById('root'))
 
+window.controller = controller
+// controller.onChange((ctree) => {
+//   console.log(vtreeToHTML(ctreeToVtree(ctree)))
+// })
 
-controller.onChange((ctree) => {
-  console.log(vtreeToHTML(ctreeToVtree(ctree)))
-})
-
+controller.getStateTree().api.merge('world', { count: 1 })
+controller.repaint()

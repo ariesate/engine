@@ -22,11 +22,10 @@ function paint(ctree, parent, painter, intercepter) {
 
 
 export default function createScheduler(painter, intercepter) {
-  // TODO 优化算法:
   // 1. 子组件可能由于父组件重绘而不再需要绘制
   function repaint(cnodeRefs) {
     cnodeRefs.forEach((cnodeRef) => {
-      paint(cnodeRef, false, painter, intercepter)
+      paint(cnodeRef, cnodeRef.parent, painter, intercepter)
     })
   }
 

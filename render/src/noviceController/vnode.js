@@ -42,8 +42,8 @@ function handleInitialComponentNode(currentCnode, handler) {
       // 通过代理 getter 的方式来实现 viewRefs 和 refs 的链式管理
       const getChildCnodeViewRefs = () => childCnode.getViewRefs()
       currentCnode.viewRefs.push(getChildCnodeViewRefs)
-      if (childVnode.attributes.ref) {
-        currentCnode.refs[childVnode.attributes.ref] = getChildCnodeViewRefs
+      if (childVnode.ref) {
+        currentCnode.refs[childVnode.ref] = getChildCnodeViewRefs
       }
 
       handleInitialComponentNode(
@@ -59,8 +59,8 @@ function handleInitialComponentNode(currentCnode, handler) {
         (dom) => {
           // 处理当前 cnode 上的 viewRefs 和 ref
           currentCnode.viewRefs.push(dom)
-          if (childVnode.attributes.ref) {
-            currentCnode.refs[childVnode.attributes.ref] = dom
+          if (childVnode.ref) {
+            currentCnode.refs[childVnode.ref] = dom
           }
         },
         handler)
@@ -96,8 +96,8 @@ function createInitialChildrenTraversor(vnodes, cnode, parentPath = []) {
             cnode,
             currentPath,
             (dom) => {
-              if (vnode.attributes.ref !== undefined) {
-                cnode.refs[vnode.attributes.ref] = dom
+              if (vnode.ref !== undefined) {
+                cnode.refs[vnode.ref] = dom
               }
             },
             autoCountHandler,
@@ -216,8 +216,8 @@ function handlePatchNode(lastVnode, vnode, index, cnode, parentPath, autoCountHa
         if (needViewRefs) {
           cnode.viewRefs.push(dom)
         }
-        if (vnode.attributes.ref) {
-          cnode.refs[vnode.attributes.ref] = dom
+        if (vnode.ref) {
+          cnode.refs[vnode.ref] = dom
         }
       },
       autoCountHandler,
@@ -246,8 +246,8 @@ function handlePatchNode(lastVnode, vnode, index, cnode, parentPath, autoCountHa
         cnode.viewRefs.push(getChildCnodeViewRefs)
       }
 
-      if (vnode.attributes.ref) {
-        cnode.refs[vnode.attributes.ref] = getChildCnodeViewRefs
+      if (vnode.ref) {
+        cnode.refs[vnode.ref] = getChildCnodeViewRefs
       }
     }
 

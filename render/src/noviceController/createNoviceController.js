@@ -1,9 +1,13 @@
 import { ensureArray } from '../util'
 import { TRANSACTION_REPAINT, TRANSACTION_FIRST_PAINT } from './constant'
-import { walkCnodes } from '../common'
-import { createInitialTraversor, createSingleStepPatchTraversor } from './vnode'
+import { walkCnodes, makeVnodeKey } from '../common'
 import createStateTree from './createStateTree'
 import createAppearance from './createAppearance'
+
+function ensureKeyedArray(ret) {
+  return ensureArray(ret).map((v, index) => Object.assign(v, { key: makeVnodeKey(v, index) }))
+}
+
 
 function createModuleSystem() {
   return {
@@ -27,6 +31,7 @@ export default function createNoviceController(initialState, initialAppearance, 
   let scheduler = null
   let view = null
   let ctree = null
+  let cnodeToRepaint = []
   let cnodeToDigest = []
 
   // let currentTransaction = null
@@ -43,24 +48,33 @@ export default function createNoviceController(initialState, initialAppearance, 
   }
 
   // 对外提供的接口
-  function paint(vnode, domElement) {
+  function paint(vnode) {
     transaction(TRANSACTION_FIRST_PAINT, () => {
       ctree = scheduler.paint(vnode)
     })
 
     // CAUTION traversor 会在 build 读取的过程中动态往 ctree 上添加 ref/viewRefs 引用
-    view.initialDigest(createInitialTraversor(ctree), domElement)
+    view.initialDigest(ctree)
   }
 
-  function repaint(cnodeRefs) {
-    transaction(TRANSACTION_REPAINT, () => {
-      scheduler.repaint(cnodeRefs)
+  // TODO 用户处理紧急需求
+  function repaintImmediately(cnode) {
+    scheduler.repaint([cnode])
+    view.updateDigest(cnode)
+  }
 
+  function repaint() {
+    transaction(TRANSACTION_REPAINT, () => {
+      // TODO 这里要将 cnodeToDigest 从数组改成 orderedSet。来去掉重复的。
+      scheduler.repaint(cnodeToRepaint)
+      cnodeToRepaint = []
+
+      // CAUTION 在重绘时可以优化的是：隔一段时间再真实操作 dom。
       // cnodeToDigest 是 updateRender 时塞进去的
       cnodeToDigest.forEach((currentCnode) => {
         // 后面参数中的 cnode.viewRefs 是在 generateInitialTraversor 中生成的
         // CAUTION traversor 会在 build 读取的过程中动态往 ctree 上添加 ref/viewRefs 引用
-        view.updateDigest(createSingleStepPatchTraversor(currentCnode), currentCnode.getViewRefs())
+        view.updateDigest(currentCnode)
       })
 
       cnodeToDigest = []
@@ -69,9 +83,11 @@ export default function createNoviceController(initialState, initialAppearance, 
   }
 
   // 基础设施
-
-  const stateTree = createStateTree(initialState, repaint)
-  const appearance = createAppearance(initialAppearance, repaint)
+  const onBaseChange = (cnodes) => {
+    cnodeToRepaint = cnodeToRepaint.concat(cnodes)
+  }
+  const stateTree = createStateTree(initialState, onBaseChange)
+  const appearance = createAppearance(initialAppearance, onBaseChange)
   // 上层模块系统
   // TODO controller 要把 view batch 传给 moduleSystem,
   // 但是对 module 来说，仍然只是和 controller 的约定, controller 应该对 module 屏蔽 view 概念
@@ -96,9 +112,10 @@ export default function createNoviceController(initialState, initialAppearance, 
           ...stateTree.inject(cnode, parent),
           ...moduleSystem.inject(cnode, parent),
         }
+
         // CAUTION 注意这里我们注意的参数是一个，不是数组
-        // TODO 在这里要把 ref 改成指向组件的函数
-        return ensureArray(moduleSystem.hijack(render, injectArgv))
+        // CAUTION 由于第一层返回值没有 key，我们手动加上
+        return ensureKeyedArray(moduleSystem.hijack(render, injectArgv))
       },
       // TODO appearance 也要 hijack 怎么办？拆成两部分，一部分是基础设施，一部分是 module？
       updateRender: {
@@ -109,16 +126,16 @@ export default function createNoviceController(initialState, initialAppearance, 
           const injectArgv = {
             ...stateTree.inject(cnode),
             ...moduleSystem.inject(cnode),
-            refs: cnode.getRefs(),
-            viewRefs: cnode.getViewRefs(),
+            refs: cnode.view.getRefs(),
+            viewRefs: cnode.view.getViewRefs(),
           }
 
-          // 把上一次 ret 存一下，之后计算 patch 要用
-          cnode.modified = { ret: cnode.ret }
+
           cnodeToDigest.push(cnode)
-          return ensureArray(moduleSystem.hijack(render, injectArgv))
+          // CAUTION 由于第一层返回值没有 key，我们手动加上
+          return ensureKeyedArray(moduleSystem.hijack(render, injectArgv))
         },
-        review(cnode, [toInitialize, toDestroy, toRemain]) {
+        review(cnode, { toInitialize, toDestroy, toRemain }) {
           // 先销毁要销毁的
           walkCnodes(toDestroy, (current) => {
             stateTree.destroy(current.statePath)
@@ -127,15 +144,14 @@ export default function createNoviceController(initialState, initialAppearance, 
           })
 
           // 存一下 update 中需要 initialize 的，之后计算 patch 要用
-          cnode.modified.toInitialize = toInitialize
-          cnode.modified.toRemain = toRemain
+          cnode.view.toDigest = { toInitialize, toRemain }
         },
       },
     },
     // controller 的 intercepter 接口
     intercepter: {
-      intercept(...argv) {
-        const [toInitialize] = argv[0]
+      intercept(result) {
+        const { toInitialize } = result
         // CAUTION 这里决定了我们的更新模式是精确更新，始终只渲染要新增的，remain 的不管。
         // TODO 这里对 toRemain 的没有进行判断 children 是否发生了变化！！！！！
         return toInitialize
@@ -144,15 +160,16 @@ export default function createNoviceController(initialState, initialAppearance, 
 
     observer: {
       invoke: () => {
-        view.batch(() => {
+        // 先执行用户的所有函数
 
-        })
+        // repaint
       },
       // TODO 在这里要实现 didMount
     },
 
     paint,
     repaint,
+    repaintImmediately,
     // 存储外部传入的 scheduler
     receiveScheduler: s => scheduler = s,
     receiveView: v => view = v,

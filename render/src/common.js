@@ -1,25 +1,34 @@
 import cloneDeep from 'lodash/clonedeep'
-import { each } from './util'
+import { each, createUniqueIdGenerator } from './util'
 
 export function isComponent(n) {
   return typeof n === 'object'
 }
 
-export function getVnodeName(vnode) {
-  return (typeof vnode.name === 'string') ?
-    vnode.name :
-    (typeof vnode === 'object') ?
-      vnode.name.displayName :
-      'text'
+const createUniqueVnodeName = createUniqueIdGenerator('C')
+
+// CAUTION 注意此函数有副作用，会给没有 displayName 的组件自动加上
+export function getVnodeType(vnode) {
+  if (vnode.type === null) return 'null'
+  if (vnode.type === Array) return 'Array'
+  if (vnode.type === String) return 'String'
+  if (typeof vnode.type === 'string') return vnode.type
+
+  if (typeof vnode.type === 'object') {
+    if (vnode.type.displayName === undefined) {
+      vnode.type.displayName = createUniqueVnodeName()
+    }
+    return vnode.type.displayName
+  }
 }
 
-export function createVnodePath(vnode, index, parentPath = []) {
-  return parentPath.concat({ name: getVnodeName(vnode), index })
+export function createVnodePath(vnode, parentPath = []) {
+  return parentPath.concat(vnode.key)
 }
 
 export function walkVnodes(vnodes, handler, parentPath = []) {
-  vnodes.forEach((vnode, index) => {
-    const currentPath = createVnodePath(vnode, index, parentPath)
+  vnodes.forEach((vnode) => {
+    const currentPath = createVnodePath(vnode, parentPath)
     handler(vnode, currentPath)
 
     if (vnode.children !== undefined) {
@@ -29,12 +38,12 @@ export function walkVnodes(vnodes, handler, parentPath = []) {
 }
 
 export function walkCnodes() {
+
 }
 
 export function vnodePathToString(path) {
-  return path.map(p => `${p.name}-${p.index}`).join('.')
+  return path.join('.')
 }
-
 
 function replaceVnode(ret, xpath, next) {
   const indexPath = xpath.split('.').map(p => p.split('-')[1])
@@ -61,7 +70,40 @@ export function ctreeToVtree(ctree) {
 
 export function noop() {}
 
-// 下面是 patch 所需要的
-export function isComponentNode(node) {
-  return typeof node.name === 'object'
+export function cloneVnode(vnode) {
+  if (typeof vnode === 'string' || typeof vnode === 'number' || vnode === null || vnode === undefined) return vnode
+
+  if (Array.isArray(vnode)) return [...vnode]
+
+  if (typeof vnode === 'object') return { ...vnode, children: [] }
+}
+
+
+export function isComponentVnode(a) {
+  return typeof a.type === 'object' && a.type !== Array
+}
+
+export function resolveFirstLayerElements(vnodes, parentPath, cnode) {
+  return vnodes.reduce((result, vnode) => {
+    if (vnode.type === null) {
+      return result
+    } else if (vnode.type === String || typeof vnode.type === 'string') {
+      return [vnode.element]
+    } else if (vnode.type === Array) {
+      return vnode.children.reduce((elements, child) => {
+        return elements.concat(resolveFirstLayerElements(child, createVnodePath(vnode, parentPath), cnode))
+      }, [])
+    } else if (typeof vnode.type === 'object') {
+      const nextCnode = cnode.next[vnodePathToString(createVnodePath(vnode, parentPath))]
+      return nextCnode.patch.reduce((elements, child) => {
+        return elements.concat(resolveFirstLayerElements(child, [], nextCnode))
+      }, [])
+    }
+    return result
+  }, [])
+}
+
+export function makeVnodeKey(child, index) {
+  const rawKey = (child.attributes && child.attributes.key !== undefined) ? child.attributes.key : index
+  return `__${getVnodeType(child)}__${rawKey}__`
 }

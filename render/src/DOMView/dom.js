@@ -78,11 +78,11 @@ export function setAttribute(node, name, value, isSvg) {
 }
 
 export function createElement(node, isSVG) {
-  if (typeof node !== 'object') return document.createTextNode(`${node}`)
+  if (node.type === String) return document.createTextNode(node.value)
 
   const element = isSVG || node.tag === 'svg'
-    ? document.createElementNS('http://www.w3.org/2000/svg', node.name)
-    : document.createElement(node.name)
+    ? document.createElementNS('http://www.w3.org/2000/svg', node.type)
+    : document.createElement(node.type)
 
 
   each(node.attributes, (attribute, name) => {
@@ -90,4 +90,12 @@ export function createElement(node, isSVG) {
   })
 
   return element
+}
+
+export function updateElement(node, element) {
+  if (node.type === String) {
+    element.nodeValue = node.value
+  } else {
+    each(node.attributes, (value, name) => setAttribute(element, name, value))
+  }
 }
