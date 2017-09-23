@@ -9,7 +9,7 @@
  */
 
 import deepEqual from 'fast-deep-equal'
-import { isComponent, walkVnodes, vnodePathToString, noop, isComponentVnode, createVnodePath } from './common'
+import { isComponent, walkVnodes, vnodePathToString, isComponentVnode, createVnodePath } from './common'
 import { each, indexBy } from './util'
 import {
   PATCH_ACTION_INSERT,
@@ -17,7 +17,17 @@ import {
   PATCH_ACTION_REMAIN,
   PATCH_ACTION_REMOVE,
   PATCH_ACTION_TO_MOVE,
+  DEV_MAX_LOOP,
 } from './constant'
+
+function createCnode(vnode, parent) {
+  return {
+    type: vnode.type,
+    props: vnode.attributes || {},
+    children: vnode.children,
+    parent,
+  }
+}
 
 /**
  * 新挂载的组件会由 initialize 函数来解析。解析的结果就是创建的 cnode。注意 cnode 中会有引用。
@@ -27,31 +37,22 @@ import {
  * @param parent parent 为 null 表示是 root，为 false 表示是更新，获取不到 parent。
  * @returns {{}}
  */
-function initialize(cnode, renderer, parent) {
-  const specificRenderer = parent === null ? renderer.rootRender : renderer.initialRender
-  const render = specificRenderer.fn || specificRenderer
-  const review = specificRenderer.review || noop
-  cnode.ret = render(cnode, parent)
+function initialize(cnode, renderer) {
+  const specificRenderer = cnode.parent === undefined ? renderer.rootRender : renderer.initialRender
+  cnode.ret = specificRenderer(cnode, parent)
 
   const next = {}
   walkVnodes(cnode.ret, (vnode, vnodePath) => {
     if (isComponent(vnode.type)) {
       // CAUTION 注意这里有引用, props/children/parent
-      next[vnodePathToString(vnodePath)] = {
-        type: vnode.type,
-        props: vnode.attributes || {},
-        children: vnode.children,
-        parent,
-      }
+      next[vnodePathToString(vnodePath)] = createCnode(vnode, cnode)
     }
   })
 
   cnode.next = next
 
   // CAUTION review 只是让外部能得知返回值的，不是它来干预返回的，要干预返回去 scheduler 里。
-  const result = { toInitialize: next }
-  review(cnode, result)
-  return result
+  return { toInitialize: next }
 }
 
 /* ******************
@@ -76,6 +77,59 @@ function diffNodeDetail(lastVnode, vnode) {
   }
 }
 
+function createPatchNode(lastVnode = {}, vnode, actionType) {
+  return {
+    ...lastVnode,
+    ...vnode,
+    action: {
+      type: actionType,
+    },
+  }
+}
+
+function handleInsertPatchNode(vnode, currentPath, patch, toInitialize, cnode) {
+  patch.push(createPatchNode({}, vnode, PATCH_ACTION_INSERT))
+  if (isComponentVnode(vnode)) toInitialize[vnodePathToString(currentPath)] = createCnode(vnode, cnode)
+}
+
+function handleRemovePatchNode(lastVnode, patch) {
+  patch.push({
+    ...lastVnode,
+    action: {
+      type: PATCH_ACTION_REMOVE,
+    },
+  })
+}
+
+function handleToMovePatchNode(lastVnode, patch) {
+  patch.push({
+    ...lastVnode,
+    action: {
+      type: PATCH_ACTION_TO_MOVE,
+    },
+  })
+}
+
+function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, currentPath, cnode, patch, toInitialize, toRemain) {
+  const patchNode = createPatchNode(lastVnode, vnode, actionType)
+
+  if (isComponentVnode(vnode)) {
+    const path = vnodePathToString(currentPath)
+    toRemain[path] = cnode.next[path]
+  } else {
+    patchNode.patch = diffNodeDetail(lastVnode, vnode)
+    if (vnode.children !== undefined) {
+      /* eslint-disable no-use-before-define */
+      const childDiffResult = diff(lastVnode.children, vnode.children, currentPath, cnode)
+      /* eslint-enable no-use-before-define */
+      Object.assign(toInitialize, childDiffResult.toInitialize)
+      Object.assign(toRemain, childDiffResult.toRemain)
+      patchNode.children = childDiffResult.patch
+    }
+  }
+  patch.push(patchNode)
+}
+
 
 function reconcile(lastVnodes, vnodes, parentPath, cnode) {
   const toRemain = {}
@@ -89,41 +143,40 @@ function reconcile(lastVnodes, vnodes, parentPath, cnode) {
   const lastVnodesIndexedByKey = indexBy(lastVnodes, 'key')
   const vnodeKeys = vnodes.map(v => v.key)
 
+  let counter = 0
+
   while (vnodesIndex < vnodesLen || lastVnodesIndex < lastVnodesLen) {
+    counter += 1
+    if (counter === DEV_MAX_LOOP) { throw new Error() }
+
     const lastVnode = lastVnodes[lastVnodesIndex]
     const vnode = vnodes[vnodesIndex]
+
     // 先处理边界条件
     // 1. vnodes 已经遍历完
     if (!(vnodesIndex < vnodesLen)) {
       if (lastVnode.action === undefined || lastVnode.action.type !== PATCH_ACTION_INSERT) {
-        patch.push({
-          ...lastVnode,
-          action: {
-            type: PATCH_ACTION_REMOVE,
-          },
-        })
+        handleRemovePatchNode(lastVnode, patch)
       }
       lastVnodesIndex += 1
       continue
     }
 
+    const currentPath = createVnodePath(vnode, parentPath)
     // 2. 如果 lastVnodes 已经遍历完
     if (!(lastVnodesIndex < lastVnodesLen)) {
-      patch.push({
-        ...vnode,
-        action: {
-          type: PATCH_ACTION_INSERT,
-        },
-      })
+      const correspondingLastVnode = lastVnodesIndexedByKey[vnode.key]
+      if (correspondingLastVnode !== undefined && correspondingLastVnode.type === vnode.type) {
+        handleRemainLikePatchNode(correspondingLastVnode, vnode, PATCH_ACTION_MOVE_FROM, currentPath, cnode, patch, toInitialize, toRemain)
+      } else {
+        handleInsertPatchNode(vnode, currentPath, patch, toInitialize, cnode)
+      }
+
       vnodesIndex += 1
       continue
     }
 
-
-    const currentPath = createVnodePath(vnode, parentPath)
-    const currentPathStr = vnodePathToString(currentPath)
     const { action = { type: PATCH_ACTION_REMAIN } } = lastVnode
-
     // 1. 如果原本是要 remove 的那么仍然 remove
     if (action.type === PATCH_ACTION_REMOVE) {
       patch.push(lastVnode)
@@ -132,15 +185,10 @@ function reconcile(lastVnodes, vnodes, parentPath, cnode) {
     }
 
     // 剩下的都是 insert/to_move/remain 了
-    // 2. 如果原本的 key 在新的里面没有了，那么 remove
+    // 2. 如果原本的 key 在新的里面没有了，那么 remove，如果本身就是insert 的，直接跳过不用管就行了
     if (!vnodeKeys.includes(lastVnode.key)) {
       if (action.type !== PATCH_ACTION_INSERT) {
-        patch.push({
-          ...lastVnode,
-          action: {
-            type: PATCH_ACTION_REMOVE,
-          },
-        })
+        handleRemovePatchNode(lastVnode, patch)
       }
       lastVnodesIndex += 1
       continue
@@ -149,13 +197,7 @@ function reconcile(lastVnodes, vnodes, parentPath, cnode) {
     // 剩下的都是原来的 key 在新的里面还有的了
     // 3. 如果 vnode.key 在旧的中不存在，说明是新增的
     if (!lastVnodeKeys.includes(vnode.key)) {
-      patch.push({
-        ...vnode,
-        action: {
-          type: PATCH_ACTION_INSERT,
-        },
-      })
-      if (isComponentVnode(vnode)) toInitialize[currentPathStr] = vnode
+      handleInsertPatchNode(vnode, currentPath, patch, toInitialize, cnode)
       vnodesIndex += 1
       continue
     }
@@ -163,86 +205,22 @@ function reconcile(lastVnodes, vnodes, parentPath, cnode) {
     // 剩下的都是 vnode.key 在原来的中也存在的
     // 4. 如果 key 相同
     if (vnode.key === lastVnode.key) {
-      // 但是 type 不同，那么先要移除原来的，在新增现在的
+      // 但是 type 不同，那么先要移除原来的，再新增现在的
       if (vnode.type !== lastVnode.type) {
-        patch.push({
-          ...lastVnode,
-          action: {
-            type: PATCH_ACTION_REMOVE,
-          },
-        })
-
-        patch.push({
-          ...vnode,
-          action: {
-            type: PATCH_ACTION_INSERT,
-          },
-        })
-        if (isComponentVnode(vnode)) toInitialize[currentPathStr] = vnode
+        handleRemovePatchNode(lastVnode, patch)
+        handleInsertPatchNode(vnode, currentPath, patch, toInitialize, cnode)
         // type 也相同
       } else {
-        const patchNode = {
-          ...lastVnode,
-          ...vnode,
-          action: {
-            type: PATCH_ACTION_REMAIN,
-          },
-        }
-
-        if (isComponentVnode(vnode)) {
-          toRemain[currentPathStr] = vnode
-        } else {
-          patchNode.patch = diffNodeDetail(lastVnode, vnode)
-          if (vnode.children !== undefined) {
-            /* eslint-disable no-use-before-define */
-            const childDiffResult = diff(lastVnode.children, vnode.children, currentPath, cnode)
-            /* eslint-enable no-use-before-define */
-            Object.assign(toInitialize, childDiffResult.toInitialize)
-            Object.assign(toRemain, childDiffResult.toRemain)
-            patchNode.children = childDiffResult.patch
-          }
-        }
-
-        patch.push(patchNode)
+        handleRemainLikePatchNode(lastVnode, vnode, PATCH_ACTION_REMAIN, currentPath, cnode, patch, toInitialize, toRemain)
       }
       lastVnodesIndex += 1
       vnodesIndex += 1
-      continue
-    }
-
-    // 剩下的都是 key 不同的了
-    patch.push({
-      ...lastVnode,
-      action: {
-        type: PATCH_ACTION_TO_MOVE,
-      },
-    })
-
-    const patchNode = {
-      ...lastVnode,
-      ...vnode,
-      action: {
-        type: PATCH_ACTION_MOVE_FROM,
-      },
-    }
-
-    if (isComponentVnode(vnode)) {
-      toRemain[currentPathStr] = vnode
     } else {
-      patchNode.patch = diffNodeDetail(lastVnode, vnode)
-      if (vnode.children !== undefined) {
-        /* eslint-disable no-use-before-define */
-        const childDiffResult = diff(lastVnodesIndexedByKey[vnode.key].children, vnode.children, currentPath, cnode)
-        /* eslint-enable no-use-before-define */
-        Object.assign(toInitialize, childDiffResult.toInitialize)
-        Object.assign(toRemain, childDiffResult.toRemain)
-        patchNode.children = childDiffResult.patch
-      }
+      // 剩下的都是 key 不同的了, 那么只把 lastVnodesIndex + 1，等待子序列
+      handleToMovePatchNode(lastVnode, patch)
+      lastVnodesIndex += 1
+      // handleRemainLikePatchNode(lastVnode, vnode, PATCH_ACTION_MOVE_FROM, currentPath, cnode, patch, toInitialize, toRemain)
     }
-
-    patch.push(patchNode)
-    lastVnodesIndex += 1
-    vnodesIndex += 1
   }
 
   return {
@@ -266,7 +244,11 @@ function diff(lastVnodesOrPatch, vnodes, parentPath, cnode) {
     delete lastNext[key]
   })
 
-  return { toInitialize, toRemain, toDestroy: lastNext, patch: result.patch }
+  // 这是提供给 patch 用来查找 cnode 上的 ref dom 的，一定要用 last 的值覆盖当前值
+  const lastToDestroyPatch = cnode.toDestroyPatch || {}
+  const toDestroyPatch = { ...lastNext, ...lastToDestroyPatch }
+
+  return { toInitialize, toRemain, toDestroy: lastNext, patch: result.patch, toDestroyPatch }
 }
 
 
@@ -279,18 +261,17 @@ function diff(lastVnodesOrPatch, vnodes, parentPath, cnode) {
  * @returns {{}}
  */
 function update(cnode, renderer) {
-  const render = renderer.updateRender.fn || renderer.updateRender
-  const review = renderer.updateRender.review || noop
+  const render = renderer.updateRender
   const lastPatch = cnode.patch || cnode.ret
   cnode.ret = render(cnode, cnode.parent)
   const diffResult = diff(lastPatch, cnode.ret, [], cnode)
+
   cnode.patch = diffResult.patch
-
   cnode.next = { ...diffResult.toInitialize, ...diffResult.toRemain }
-  // 我们只处理要新建的和要删除的，已有的不再管，这样就实现了组件的精确更新
 
+  // CAUTION 挂在 cnode 上等 view 消费
+  cnode.toDestroyPatch = diffResult.toDestroyPatch
   // 注意返回的是引用
-  review(cnode, diffResult)
   return diffResult
 }
 
@@ -305,9 +286,9 @@ function update(cnode, renderer) {
  * @returns {{handle: handle }}
  */
 export default function createPainter(renderer) {
-  function handle(cnode, parent) {
+  function handle(cnode) {
     return (cnode.ret === undefined) ?
-      initialize(cnode, renderer, parent) :
+      initialize(cnode, renderer) :
       update(cnode, renderer)
   }
 

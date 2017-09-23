@@ -1,5 +1,4 @@
 import { createElement, render } from '@ariesate/render'
-import { ctreeToVtree, vtreeToHTML } from '../common'
 
 const World = {
   displayName: 'World',

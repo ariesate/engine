@@ -13,10 +13,10 @@ TODO
  */
 
 
-function paint(ctree, parent, painter, intercepter) {
-  const nextToPaint = Object.values(intercepter.intercept(painter.handle(ctree, parent)))
-  nextToPaint.forEach((current) => {
-    paint(current, ctree, painter, intercepter)
+function paint(cnode, painter, intercepter) {
+  const nextToPaint = Object.values(intercepter.intercept(painter.handle(cnode), cnode))
+  nextToPaint.forEach((subCnode) => {
+    paint(subCnode, painter, intercepter)
   })
 }
 
@@ -25,14 +25,14 @@ export default function createScheduler(painter, intercepter) {
   // 1. 子组件可能由于父组件重绘而不再需要绘制
   function repaint(cnodeRefs) {
     cnodeRefs.forEach((cnodeRef) => {
-      paint(cnodeRef, cnodeRef.parent, painter, intercepter)
+      paint(cnodeRef, painter, intercepter)
     })
   }
 
   function firstPaint(vnode) {
     const ctree = {}
     ctree.type = { render: () => vnode }
-    paint(ctree, null, painter, intercepter)
+    paint(ctree, painter, intercepter)
     return ctree
   }
 

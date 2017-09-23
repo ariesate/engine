@@ -95,7 +95,7 @@ export function handleInitialVnode(vnode, cnode, view, vnodesRef, parentPath, pa
   // path 中会多一个没有 name 的路径
   if (vnode.type === Array) {
     /* eslint-disable no-use-before-define */
-    return handleInitialVnodeChildren(vnode.children, cnode, view, vnodeRef, currentPath, parentNode)
+    return handleInitialVnodeChildren(vnode.children, cnode, view, vnodeRef.children, currentPath, parentNode)
     /* eslint-enable no-use-before-define */
   }
 

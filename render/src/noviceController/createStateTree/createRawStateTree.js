@@ -31,7 +31,7 @@ const ENV = DEBUG
 
 export default function createStateTree(initialStateTree) {
   const stateTree = cloneDeep(initialStateTree) || {}
-  const scopeStatePath = new Set()
+  // TODO 这两个 map 从来没有 remove 过
   const statePathMap = new Set()
   const stateInfo = {}
   let version = 0
@@ -58,17 +58,11 @@ export default function createStateTree(initialStateTree) {
     }
   }
 
-  function registerScope(statePath) {
-    const statePathStr = joinPath(statePath)
-    if (scopeStatePath.has(statePathStr)) {
-      scopeStatePath.add(joinPath(statePath))
-      exist.set(stateTree, statePath, new OrderedMap())
-    }
-  }
 
   function registerToStateTree(statePath, getDefaultState = () => ({}), getInitialState = () => ({})) {
+    const statePathStr = joinPath(statePath)
     complete(statePath, { ...getDefaultState(), ...getInitialState() })
-    statePathMap.add(joinPath(statePath))
+    statePathMap.add(statePathStr)
   }
 
   function findRelativePath(parent, child) {
@@ -114,7 +108,8 @@ export default function createStateTree(initialStateTree) {
   }
 
   // CAUTION 递归 merge 规则，只对纯对象嵌套的有效，一旦中间夹有数组，就不再 merge了。
-  // TODO 判断 object 是不是 scope !!!!
+  // TODO 判断 object 是不是 scope !!!! 如果是的，必须要保持 OrderedMap 结构
+  // 注意只有 statePath 下的集合形式的子路径才要求是 OrderedMap，如果只是一个普通数据，那就不用了。
   function setObject(stateNodePath, relativePath, inputValue, mergeLastState, initialValue = {}, inputStatePath) {
     let changes = [{ statePath: stateNodePath, valuePath: relativePath, inputStatePath }]
     const nextValue = mergeLastState ? inputValue : { ...initialValue, ...inputValue }
@@ -258,9 +253,12 @@ export default function createStateTree(initialStateTree) {
     register: (statePath, type, getInitialState = () => ({})) => {
       // TODO 拆分 type
       // TODO setObject 的时候判断是不是 scope!!!
-      registerScope(statePath.slice(0, statePath.length - 1))
+
       registerToStateTree(statePath, type.getDefaultState, getInitialState)
       stateInfo[joinPath(statePath)] = { getInitialState, type }
+    },
+    unregister(statePath) {
+      statePathMap.remove(joinPath(statePath))
     },
     toJS() {
 

@@ -161,7 +161,7 @@ export function isPrimitiveType(type) {
 }
 
 export function indexBy(arr, key) {
-  return arr.reduce((last, v, index) => ({ ...last, [key === undefined ? index : key]: v }), {})
+  return arr.reduce((last, v, index) => ({ ...last, [key === undefined ? index : v[key]]: v }), {})
 }
 
 export function values(obj) {

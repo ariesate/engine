@@ -71,11 +71,12 @@ export function ctreeToVtree(ctree) {
 export function noop() {}
 
 export function cloneVnode(vnode) {
-  if (typeof vnode === 'string' || typeof vnode === 'number' || vnode === null || vnode === undefined) return vnode
+  const result = { ...vnode }
+  if (vnode.children !== undefined) {
+    result.children = []
+  }
 
-  if (Array.isArray(vnode)) return [...vnode]
-
-  if (typeof vnode === 'object') return { ...vnode, children: [] }
+  return result
 }
 
 
@@ -95,15 +96,13 @@ export function resolveFirstLayerElements(vnodes, parentPath, cnode) {
       }, [])
     } else if (typeof vnode.type === 'object') {
       const nextCnode = cnode.next[vnodePathToString(createVnodePath(vnode, parentPath))]
-      return nextCnode.patch.reduce((elements, child) => {
-        return elements.concat(resolveFirstLayerElements(child, [], nextCnode))
-      }, [])
+      return resolveFirstLayerElements(nextCnode.patch, [], nextCnode)
     }
     return result
   }, [])
 }
 
 export function makeVnodeKey(child, index) {
-  const rawKey = (child.attributes && child.attributes.key !== undefined) ? child.attributes.key : index
-  return `__${getVnodeType(child)}__${rawKey}__`
+  const rawKey = (child.attributes && child.attributes.key !== undefined) ? child.attributes.key : `_${index}_`
+  return `${getVnodeType(child)}-${rawKey}`
 }

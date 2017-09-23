@@ -4,6 +4,9 @@ const path = require('path')
 module.exports = {
   entry: {
     basic: './examples/basic/index.js',
+    key: './examples/key/index.js',
+    vnodeArray: './examples/vnodeArray/index.js',
+    cnodeKey: './examples/cnodeKey/index.js',
   },
   output: {
     filename: '[name].js',
@@ -19,7 +22,7 @@ module.exports = {
   ],
   resolve: {
     alias: {
-      '@ariesate/render' : path.resolve(__dirname, 'render/src'),
+      '@ariesate/render': path.resolve(__dirname, 'render/src'),
     },
   },
 }

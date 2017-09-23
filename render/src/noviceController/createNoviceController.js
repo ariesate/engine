@@ -21,7 +21,7 @@ function createModuleSystem() {
 
 /**
  * controller 是把 renderer/view 统一在一起的抽象层。
- * 注意，对整个引擎架构的约定知道这里为止。至于 noviceController 中的 background 抽象
+ * 注意，对整个引擎架构的约定到这里为止。至于 noviceController 中的 background 抽象
  * 纯属 noviceController 内部架构约定。
  *
  * @param plugins
@@ -33,6 +33,7 @@ export default function createNoviceController(initialState, initialAppearance, 
   let ctree = null
   let cnodeToRepaint = []
   let cnodeToDigest = []
+  let openCollect = false
 
   // let currentTransaction = null
   // const transactionCallback = []
@@ -83,8 +84,11 @@ export default function createNoviceController(initialState, initialAppearance, 
   }
 
   // 基础设施
+  // CAUTION 由于我们调和的过程也会改变数据，但是调和时时不需要 repaint 的
   const onBaseChange = (cnodes) => {
-    cnodeToRepaint = cnodeToRepaint.concat(cnodes)
+    if (openCollect) {
+      cnodeToRepaint = cnodeToRepaint.concat(cnodes)
+    }
   }
   const stateTree = createStateTree(initialState, onBaseChange)
   const appearance = createAppearance(initialAppearance, onBaseChange)
@@ -118,40 +122,33 @@ export default function createNoviceController(initialState, initialAppearance, 
         return ensureKeyedArray(moduleSystem.hijack(render, injectArgv))
       },
       // TODO appearance 也要 hijack 怎么办？拆成两部分，一部分是基础设施，一部分是 module？
-      updateRender: {
-        fn(cnode) {
-          const { render } = cnode.type
-          // view ref 在 cnode 上，要注入给 moduleSystem
-          moduleSystem.update(cnode)
-          const injectArgv = {
-            ...stateTree.inject(cnode),
-            ...moduleSystem.inject(cnode),
-            refs: cnode.view.getRefs(),
-            viewRefs: cnode.view.getViewRefs(),
-          }
+      updateRender(cnode) {
+        const { render } = cnode.type
+        // view ref 在 cnode 上，要注入给 moduleSystem
+        moduleSystem.update(cnode)
+        const injectArgv = {
+          ...stateTree.inject(cnode),
+          ...moduleSystem.inject(cnode),
+          refs: cnode.view.getRefs(),
+          viewRefs: cnode.view.getViewRefs(),
+        }
 
 
-          cnodeToDigest.push(cnode)
-          // CAUTION 由于第一层返回值没有 key，我们手动加上
-          return ensureKeyedArray(moduleSystem.hijack(render, injectArgv))
-        },
-        review(cnode, { toInitialize, toDestroy, toRemain }) {
-          // 先销毁要销毁的
-          walkCnodes(toDestroy, (current) => {
-            stateTree.destroy(current.statePath)
-            appearance.destroy(current.statePath)
-            moduleSystem.destroy(current)
-          })
-
-          // 存一下 update 中需要 initialize 的，之后计算 patch 要用
-          cnode.view.toDigest = { toInitialize, toRemain }
-        },
+        cnodeToDigest.push(cnode)
+        // CAUTION 由于第一层返回值没有 key，我们手动加上
+        return ensureKeyedArray(moduleSystem.hijack(render, injectArgv))
       },
     },
     // controller 的 intercepter 接口
     intercepter: {
       intercept(result) {
-        const { toInitialize } = result
+        const { toInitialize, toDestroy } = result
+        walkCnodes(toDestroy, (current) => {
+          stateTree.destroy(current.statePath)
+          appearance.destroy(current.statePath)
+          moduleSystem.destroy(current)
+        })
+
         // CAUTION 这里决定了我们的更新模式是精确更新，始终只渲染要新增的，remain 的不管。
         // TODO 这里对 toRemain 的没有进行判断 children 是否发生了变化！！！！！
         return toInitialize
@@ -180,6 +177,11 @@ export default function createNoviceController(initialState, initialAppearance, 
 
     dump() {
 
+    },
+    collect(fn) {
+      openCollect = true
+      fn()
+      openCollect = false
     },
   }
 }
