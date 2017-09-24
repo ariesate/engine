@@ -1,34 +1,18 @@
-import { createVnodePath, resolveFirstLayerElements } from '../common'
+import { createVnodePath, resolveFirstLayerElements, resolveLastElement } from '../common'
 import { handleInitialVnode } from './initialDigest'
 import {
   PATCH_ACTION_INSERT,
   PATCH_ACTION_MOVE_FROM,
   PATCH_ACTION_REMAIN,
   PATCH_ACTION_REMOVE,
+  PATCH_ACTION_TO_MOVE,
 } from '../constant'
 
-function resolveFirstElement(vnode, currentPath, cnode) {
-  if (vnode === undefined) return null
-  if (vnode.type === null) return null
-
-  if (vnode.type === Array) {
-    return resolveFirstElement(vnode.children[0], createVnodePath(vnode.children[0], currentPath), cnode)
-  }
-
-  if (typeof vnode.type === 'object') {
-    const nextCnode = cnode.next[vnode.element]
-    return resolveFirstElement(nextCnode.patch[0], createVnodePath(nextCnode.patch[0], []), nextCnode)
-  }
-
-  // 普通节点和文字是有的
-  if (vnode.element !== undefined) return vnode.element
-}
-
-function handleRemainPatchNode(p, nextPatch, parentNode, parentPath, cnode, view) {
+function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, parentPath, cnode, view) {
   nextPatch.push(p)
   if (p.type === Array) {
     /* eslint-disable no-use-before-define */
-    p.children = handlePatchVnodeChildren(p.children, parentNode, createVnodePath(p, parentPath), cnode, view)
+    p.children = handlePatchVnodeChildren(p.children, parentNode, prevSiblingNode, createVnodePath(p, parentPath), cnode, view)
     /* eslint-enable no-use-before-define */
   } else if (typeof p.type === 'object') {
     // 不继续递归，我们只处理一层
@@ -40,7 +24,7 @@ function handleRemainPatchNode(p, nextPatch, parentNode, parentPath, cnode, view
 
     if (p.children !== undefined) {
       /* eslint-disable no-use-before-define */
-      p.children = handlePatchVnodeChildren(p.children, p.element, createVnodePath(p, parentPath), cnode, view)
+      p.children = handlePatchVnodeChildren(p.children, p.element, null, createVnodePath(p, parentPath), cnode, view)
       /* eslint-enable no-use-before-define */
     }
   }
@@ -53,6 +37,7 @@ function handleRemovePatchNode(p, parentPath, toDestroy, parentNode) {
   })
 }
 
+// TODO 没有递归
 function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert) {
   const elements = resolveFirstLayerElements([p], parentPath, cnode)
   elements.forEach((ele) => {
@@ -60,6 +45,13 @@ function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert) {
   })
   nextPatch.push(p)
   return elements.length
+}
+
+function handleToMovePatchNode(p, parentPath, cnode, toMove) {
+  const elements = resolveFirstLayerElements([p], parentPath, cnode)
+  elements.forEach((ele) => {
+    toMove.appendChild(ele)
+  })
 }
 
 /**
@@ -72,13 +64,17 @@ function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert) {
  * @param view
  * @returns {Array}
  */
-function handlePatchVnodeChildren(patch, parentNode, parentPath, cnode, view) {
+function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, parentPath, cnode, view) {
   const nextPatch = []
   let toInsert = view.createFragment()
+  const toMove = view.createFragment()
+  let currentLastStableSiblingNode = lastStableSiblingNode
 
   // CAUTION 注意，对于 to_move 我们是不处理的，因为 move_from 处理的时候 dom 节点就已经处理了
   patch.forEach((p) => {
-    if (p.action.type === PATCH_ACTION_MOVE_FROM) {
+    if (p.action.type === PATCH_ACTION_TO_MOVE) {
+      handleToMovePatchNode(p, parentPath, cnode, toMove)
+    } else if (p.action.type === PATCH_ACTION_MOVE_FROM) {
       p.action.type = PATCH_ACTION_REMAIN
       handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert)
     } else if (p.action.type === PATCH_ACTION_INSERT) {
@@ -88,24 +84,37 @@ function handlePatchVnodeChildren(patch, parentNode, parentPath, cnode, view) {
       handleRemovePatchNode(p, parentPath, { next: cnode.toDestroyPatch }, parentNode)
     } else if (p.action.type === PATCH_ACTION_REMAIN) {
       // 先处理掉 toInsert 的
+      const toInsertBefore = currentLastStableSiblingNode === null ? parentNode.childNodes[0] : currentLastStableSiblingNode.nextSibling
       if (toInsert.childNodes.length !== 0) {
-        parentNode.insertBefore(toInsert, resolveFirstElement(p, createVnodePath(p, parentPath), cnode))
+        currentLastStableSiblingNode = toInsert.childNodes[toInsert.childNodes.length - 1]
+        parentNode.insertBefore(toInsert, toInsertBefore)
         toInsert = view.createFragment()
       }
-      handleRemainPatchNode(p, nextPatch, parentNode, parentPath, cnode, view)
+
+      // 好像只针对 p.type === Array 这种情况要 previousSibling，其他都不用
+      handleRemainPatchNode(p, nextPatch, parentNode, currentLastStableSiblingNode, parentPath, cnode, view)
+      // 还要找到 p 中最后一个 ele, 更新 currentLastStableSiblingNode
+      const lastElement = resolveLastElement(p, parentPath, cnode)
+      if (lastElement) {
+        currentLastStableSiblingNode = lastElement
+      }
     }
   })
 
   if (toInsert.childNodes.length !== 0) {
-    parentNode.appendChild(toInsert)
+    parentNode.insertBefore(toInsert, currentLastStableSiblingNode ? currentLastStableSiblingNode.nextSibling : null)
     toInsert = null
+  }
+
+  if (toMove.childNodes.length !== 0) {
+    throw new Error('to move length not 0')
   }
 
   return nextPatch
 }
 
 export default function updateDigest(cnode, view) {
-  cnode.patch = handlePatchVnodeChildren(cnode.patch, cnode.view.parentNode, [], cnode, view)
+  cnode.patch = handlePatchVnodeChildren(cnode.patch, cnode.view.parentNode, null, [], cnode, view)
   // 消费过一次就清空
   cnode.toDestroyPatch = {}
 }

@@ -7,6 +7,7 @@ module.exports = {
     key: './examples/key/index.js',
     vnodeArray: './examples/vnodeArray/index.js',
     cnodeKey: './examples/cnodeKey/index.js',
+    listener: './examples/listener/index.js',
   },
   output: {
     filename: '[name].js',

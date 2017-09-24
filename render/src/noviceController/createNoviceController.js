@@ -3,20 +3,10 @@ import { TRANSACTION_REPAINT, TRANSACTION_FIRST_PAINT } from './constant'
 import { walkCnodes, makeVnodeKey } from '../common'
 import createStateTree from './createStateTree'
 import createAppearance from './createAppearance'
+import createModuleSystem from './createModuleSystem'
 
 function ensureKeyedArray(ret) {
   return ensureArray(ret).map((v, index) => Object.assign(v, { key: makeVnodeKey(v, index) }))
-}
-
-
-function createModuleSystem() {
-  return {
-    inject: () => ({}),
-    hijack: (fn, ...argv) => fn(...argv),
-    initialize: () => {},
-    update: () => {},
-    destroy: () => {},
-  }
 }
 
 /**
@@ -38,6 +28,12 @@ export default function createNoviceController(initialState, initialAppearance, 
   // let currentTransaction = null
   // const transactionCallback = []
   let onChange = () => {}
+
+  function collect(fn) {
+    openCollect = true
+    fn()
+    openCollect = false
+  }
 
   // TODO transaction 现在好像没什么用
   function transaction(name, fn) {
@@ -95,7 +91,7 @@ export default function createNoviceController(initialState, initialAppearance, 
   // 上层模块系统
   // TODO controller 要把 view batch 传给 moduleSystem,
   // 但是对 module 来说，仍然只是和 controller 的约定, controller 应该对 module 屏蔽 view 概念
-  const moduleSystem = createModuleSystem(mods, stateTree, appearance, view)
+  const moduleSystem = createModuleSystem(mods, stateTree, appearance)
 
   return {
     // 创建 background 只是为了把一部分 controller 的功能抽出去，得到一个更平整的抽象，用于构建更上层的系统
@@ -113,13 +109,13 @@ export default function createNoviceController(initialState, initialAppearance, 
         moduleSystem.initialize(cnode, parent)
 
         const injectArgv = {
-          ...stateTree.inject(cnode, parent),
-          ...moduleSystem.inject(cnode, parent),
+          ...stateTree.inject(cnode),
+          ...moduleSystem.inject(cnode),
         }
 
         // CAUTION 注意这里我们注意的参数是一个，不是数组
         // CAUTION 由于第一层返回值没有 key，我们手动加上
-        return ensureKeyedArray(moduleSystem.hijack(render, injectArgv))
+        return ensureKeyedArray(moduleSystem.hijack(cnode, render, injectArgv))
       },
       // TODO appearance 也要 hijack 怎么办？拆成两部分，一部分是基础设施，一部分是 module？
       updateRender(cnode) {
@@ -136,7 +132,7 @@ export default function createNoviceController(initialState, initialAppearance, 
 
         cnodeToDigest.push(cnode)
         // CAUTION 由于第一层返回值没有 key，我们手动加上
-        return ensureKeyedArray(moduleSystem.hijack(render, injectArgv))
+        return ensureKeyedArray(moduleSystem.hijack(cnode, render, injectArgv))
       },
     },
     // controller 的 intercepter 接口
@@ -155,11 +151,11 @@ export default function createNoviceController(initialState, initialAppearance, 
       },
     },
 
-    observer: {
-      invoke: () => {
+    invoker: {
+      invoke: (fn, ...argv) => {
         // 先执行用户的所有函数
-
-        // repaint
+        collect(() => fn(...argv))
+        repaint()
       },
       // TODO 在这里要实现 didMount
     },
@@ -178,10 +174,6 @@ export default function createNoviceController(initialState, initialAppearance, 
     dump() {
 
     },
-    collect(fn) {
-      openCollect = true
-      fn()
-      openCollect = false
-    },
+    collect,
   }
 }

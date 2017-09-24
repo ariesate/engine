@@ -31,7 +31,6 @@ function eventProxy(e) {
 export function setAttribute(node, name, value, isSvg) {
   if (name === 'className') name = 'class'
 
-
   if (name === 'key' || name === 'ref') {
     // ignore
   } else if (name === 'class' && !isSvg) {
@@ -77,25 +76,32 @@ export function setAttribute(node, name, value, isSvg) {
   }
 }
 
-export function createElement(node, isSVG) {
+function setAttributes(attributes, element, invoke) {
+  each(attributes, (attribute, name) => {
+    if (/^on[A-Z]/.test(name) && typeof attribute === 'function') {
+      setAttribute(element, name, (...argv) => invoke(attribute, ...argv))
+    } else {
+      setAttribute(element, name, attribute)
+    }
+  })
+}
+
+export function createElement(node, isSVG, invoke) {
   if (node.type === String) return document.createTextNode(node.value)
 
   const element = isSVG || node.tag === 'svg'
     ? document.createElementNS('http://www.w3.org/2000/svg', node.type)
     : document.createElement(node.type)
 
-
-  each(node.attributes, (attribute, name) => {
-    setAttribute(element, name, attribute)
-  })
+  setAttributes(node.attributes, element, invoke)
 
   return element
 }
 
-export function updateElement(node, element) {
+export function updateElement(node, element, invoke) {
   if (node.type === String) {
     element.nodeValue = node.value
   } else {
-    each(node.attributes, (value, name) => setAttribute(element, name, value))
+    setAttributes(node.attributes, element, invoke)
   }
 }

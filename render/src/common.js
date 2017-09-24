@@ -106,3 +106,21 @@ export function makeVnodeKey(child, index) {
   const rawKey = (child.attributes && child.attributes.key !== undefined) ? child.attributes.key : `_${index}_`
   return `${getVnodeType(child)}-${rawKey}`
 }
+
+export function resolveLastElement(vnode, parentPath, cnode) {
+  let result = null
+  if (vnode.type === String || typeof vnode.type === 'string') {
+    result = vnode.element
+  } else if (vnode.type === Array) {
+    vnode.children.slice().reverse().some((child) => {
+      result = resolveLastElement(child, createVnodePath(vnode, parentPath), cnode)
+      return Boolean(result)
+    })
+  } else if (typeof vnode.type === 'object') {
+    const nextCnode = cnode.next[vnodePathToString(createVnodePath(vnode, parentPath))]
+    if (nextCnode.patch.length > 0) {
+      result = resolveLastElement(nextCnode.patch[nextCnode.patch.length - 1], [], nextCnode)
+    }
+  }
+  return result
+}
