@@ -1,6 +1,5 @@
 import cloneDeep from 'lodash/clonedeep'
-import { each } from './util'
-
+import { each, find } from './util'
 
 function replaceVnode(ret, xpath, next) {
   const indexPath = xpath.split('.').map(p => p.split('-')[1])
@@ -33,4 +32,15 @@ export function vtreeToHTML(vnodes, indent = 0) {
 ${vnode.children ? vtreeToHTML(vnode.children, indent + 2) : ''}
 ${' '.repeat(indent)}</${vnode.name}>`
   }).join('\n')
+}
+
+export function findCnode(cnode, handler) {
+  let toCheck = [cnode]
+  let current
+  /* eslint-disable no-cond-assign */
+  while (current = toCheck.pop()) {
+    if (handler(current)) return current
+    toCheck = toCheck.concat(Object.values(current.next))
+  }
+  /* eslint-enable no-cond-assign */
 }

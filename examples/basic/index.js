@@ -34,14 +34,14 @@ const App = {
 
 const controller = render((
   <div>
-    <App>aaaa</App>
+    <App bind="app">aaaa</App>
   </div>
 ), document.getElementById('root'))
 
 window.controller = controller
-// controller.onChange((ctree) => {
-//   console.log(vtreeToHTML(ctreeToVtree(ctree)))
-// })
 
-controller.getStateTree().api.merge('world', { count: 1 })
+controller.collect(() => {
+  controller.getStateTree().api.get('app.world').count = 1
+})
+
 controller.repaint()

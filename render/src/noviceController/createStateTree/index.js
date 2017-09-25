@@ -18,9 +18,9 @@ export default function publicCreateStateTree(initialState, onChange) {
       // TODO batch
       // TODO initialState 没用到
       const rawValue = exist.get(parentStateNode, bind, {})
-      // console.log("initialize", bind)
       // TODO deepMerge
-      const initialStateNodeValue = { ...cnode.type.getDefaultState(), ...rawValue }
+      const { getDefaultState = () => ({}) } = cnode.type
+      const initialStateNodeValue = { ...getDefaultState(), ...rawValue }
       const stateNode = createStateNode(initialStateNodeValue, () => onChange([cnode]))
       cnode.stateNode = stateNode
       exist.set(parentStateNode, bind, stateNode)

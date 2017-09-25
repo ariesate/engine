@@ -30,8 +30,11 @@ export default function createScheduler(painter, intercepter) {
   }
 
   function firstPaint(vnode) {
-    const ctree = {}
-    ctree.type = { render: () => vnode }
+    const ctree = {
+      type: { render: () => vnode },
+      props: {},
+      children: [],
+    }
     paint(ctree, painter, intercepter)
     return ctree
   }

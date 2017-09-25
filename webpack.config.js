@@ -8,6 +8,7 @@ module.exports = {
     vnodeArray: './examples/vnodeArray/index.js',
     cnodeKey: './examples/cnodeKey/index.js',
     listener: './examples/listener/index.js',
+    controlled: './examples/controlled/index.js',
   },
   output: {
     filename: '[name].js',
