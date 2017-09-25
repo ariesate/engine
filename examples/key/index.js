@@ -170,16 +170,16 @@ const ReplaceBetween = {
 
 const controller = render((
   <div>
-    {/*<h1>basic</h1>*/}
-    {/*<Basic bind="basic" />*/}
-    {/*<h1>insertAfter</h1>*/}
-    {/*<InsertAfter bind="insertAfter" />*/}
-    {/*<h1>insertBefore</h1>*/}
-    {/*<InsertBefore bind="insertBefore" />*/}
+    <h1>basic</h1>
+    <Basic bind="basic" />
+    <h1>insertAfter</h1>
+    <InsertAfter bind="insertAfter" />
+    <h1>insertBefore</h1>
+    <InsertBefore bind="insertBefore" />
     <h1>insertBetween</h1>
     <InsertBetween bind="insertBetween" />
-    {/*<h1>reverseBetween</h1>*/}
-    {/*<ReverseBetween bind="reverseBetween" />*/}
+    <h1>reverseBetween</h1>
+    <ReverseBetween bind="reverseBetween" />
     <h1>replaceBetween</h1>
     <ReplaceBetween bind="replaceBetween" />
   </div>
@@ -188,19 +188,23 @@ const controller = render((
 window.controller = controller
 
 serial([() => {
-  // controller.getStateTree().api.merge('basic', { count: !initialCount })
-  // controller.getStateTree().api.merge('insertAfter', { count: !initialCount })
-  // controller.getStateTree().api.merge('insertBefore', { count: !initialCount })
-  controller.getStateTree().api.merge('insertBetween', { count: !initialCount })
-  // controller.getStateTree().api.merge('reverseBetween', { count: !initialCount })
-  controller.getStateTree().api.merge('replaceBetween', { count: !initialCount })
-  controller.repaint()
+  controller.collect(() => {
+    controller.getStateTree().api.get('basic').count = !initialCount
+    controller.getStateTree().api.get('insertAfter').count = !initialCount
+    controller.getStateTree().api.get('insertBefore').count = !initialCount
+    controller.getStateTree().api.get('insertBetween').count = !initialCount
+    controller.getStateTree().api.get('reverseBetween').count = !initialCount
+    controller.getStateTree().api.get('replaceBetween').count = !initialCount
+  })
 }, () => {
-  // controller.getStateTree().api.merge('basic', { count: initialCount })
-  // controller.getStateTree().api.merge('insertAfter', { count: initialCount })
-  // controller.getStateTree().api.merge('insertBefore', { count: initialCount })
-  controller.getStateTree().api.merge('insertBetween', { count: initialCount })
-  // controller.getStateTree().api.merge('reverseBetween', { count: initialCount })
-  controller.getStateTree().api.merge('replaceBetween', { count: initialCount })
+  controller.collect(() => {
+    controller.getStateTree().api.get('basic').count = initialCount
+    controller.getStateTree().api.get('insertAfter').count = initialCount
+    controller.getStateTree().api.get('insertBefore').count = initialCount
+    controller.getStateTree().api.get('insertBetween').count = initialCount
+    controller.getStateTree().api.get('reverseBetween').count = initialCount
+    controller.getStateTree().api.get('replaceBetween').count = initialCount
+  })
+}], 1000, () => {
   controller.repaint()
-}], 1000)
+})

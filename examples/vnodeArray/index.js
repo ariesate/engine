@@ -10,7 +10,6 @@ const Basic = {
     }
   },
   render({ state }) {
-    console.log('update', state)
     return (
       <div>
         {state.list.map(s => (<div key={s} className="zoomIn animated">{s}</div>))}
@@ -29,11 +28,17 @@ const controller = render((
 window.controller = controller
 
 serial([() => {
-  controller.getStateTree().api.set('basic', { list: [1, 2, 3, 4] })
+  controller.collect(() => {
+    controller.getStateTree().api.get('basic').list = [1, 2, 3, 4]
+  })
 }, () => {
-  controller.getStateTree().api.set('basic', { list: [1, 2] })
+  controller.collect(() => {
+    controller.getStateTree().api.get('basic').list = [1, 2]
+  })
 }, () => {
-  controller.getStateTree().api.set('basic', { list: [3, 1, 2] })
+  controller.collect(() => {
+    controller.getStateTree().api.get('basic').list = [3, 2, 1]
+  })
 }], 1000, () => {
   controller.repaint()
 })

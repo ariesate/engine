@@ -54,6 +54,7 @@ export default function createStateNode(initialState, onChange) {
 
   defineMethod(stateNode, '_onChange', onChange)
   defineMethod(stateNode, '_getPath', () => [])
+  defineValue(stateNode, '_isStateNode', true)
 
   each(initialState, (value, k) => {
     const observableValue = createObservableValue(stateNode, k, value, stateNode)

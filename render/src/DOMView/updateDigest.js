@@ -70,7 +70,6 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
   const toMove = view.createFragment()
   let currentLastStableSiblingNode = lastStableSiblingNode
 
-  // CAUTION 注意，对于 to_move 我们是不处理的，因为 move_from 处理的时候 dom 节点就已经处理了
   patch.forEach((p) => {
     if (p.action.type === PATCH_ACTION_TO_MOVE) {
       handleToMovePatchNode(p, parentPath, cnode, toMove)

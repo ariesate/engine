@@ -6,7 +6,7 @@ const Sub = {
   getDefaultState() {
     return {
       value: 0,
-      payload: 'ssss',
+      payload: '$',
     }
   },
   render({ state }) {
@@ -14,13 +14,11 @@ const Sub = {
   },
 }
 
-const initialCount = true
 
 const Basic = {
   displayName: 'Basic',
   getDefaultState() {
     return {
-      count: initialCount,
       list: [{
         key: 1,
         value: 1,
@@ -51,13 +49,10 @@ serial([() => {
   const basic = controller.getStateTree().api.get('basic')
   controller.collect(() => {
     basic.list = basic.list.slice(0, 1).concat({ key: 3, value: 3 }, basic.list.slice(1))
+    basic.list[0].value = 111
+    basic.list[2].value = 222
   })
-
-  // controller.getStateTree().api.set('basic.sub1', { index: 1 })
-  // controller.getStateTree().api.set('basic.sub2', { index: 2 })
-  // controller.getStateTree().api.merge('basic', { count: !initialCount })
 }, () => {
-  // controller.getStateTree().api.merge('basic', { count: initialCount })
 }], 1000, () => {
   controller.repaint()
 })
