@@ -1,3 +1,4 @@
+import merge from 'lodash/merge'
 import { createUniqueIdGenerator } from '../../util'
 import createStateNode from './createStateNode'
 import exist from './exist'
@@ -14,14 +15,12 @@ export default function publicCreateStateTree(initialState, onChange) {
       const { bind = generateBind() } = cnode.props
       const parentStateNode = (cnode.parent && cnode.parent.stateNode) ? cnode.parent.stateNode : root
 
-      // TODO 这里有副作用！！！！
-      // TODO batch
       // TODO initialState 没用到
       const rawValue = exist.get(parentStateNode, bind, {})
-      // TODO deepMerge
       const { getDefaultState = () => ({}) } = cnode.type
-      const initialStateNodeValue = { ...getDefaultState(), ...rawValue }
+      const initialStateNodeValue = merge(getDefaultState(), rawValue)
       const stateNode = createStateNode(initialStateNodeValue, () => onChange([cnode]))
+      // CAUTION 这里有副作用
       cnode.stateNode = stateNode
       exist.set(parentStateNode, bind, stateNode)
     },

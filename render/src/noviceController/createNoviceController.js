@@ -54,7 +54,7 @@ export default function createNoviceController(initialState, initialAppearance, 
     view.initialDigest(ctree)
   }
 
-  // TODO 用户处理紧急需求
+  // 用户调用的紧急需求
   function repaintImmediately(cnode) {
     scheduler.repaint([cnode])
     view.updateDigest(cnode)
@@ -89,7 +89,6 @@ export default function createNoviceController(initialState, initialAppearance, 
   const stateTree = createStateTree(initialState, onBaseChange)
   const appearance = createAppearance(initialAppearance, onBaseChange)
   // 上层模块系统
-  // TODO controller 要把 view batch 传给 moduleSystem,
   // 但是对 module 来说，仍然只是和 controller 的约定, controller 应该对 module 屏蔽 view 概念
   const moduleSystem = createModuleSystem(mods, stateTree, appearance)
 
@@ -100,7 +99,6 @@ export default function createNoviceController(initialState, initialAppearance, 
         // root 没有注入任何东西
         return ensureArray(cnode.type.render())
       },
-      // TODO appearance 也要 hijack 怎么办？拆成两部分，一部分是基础设施，一部分是 module？
       initialRender(cnode, parent) {
         const { render } = cnode.type
         stateTree.initialize(cnode)
@@ -117,7 +115,6 @@ export default function createNoviceController(initialState, initialAppearance, 
         // CAUTION 由于第一层返回值没有 key，我们手动加上
         return ensureKeyedArray(moduleSystem.hijack(cnode, render, injectArgv))
       },
-      // TODO appearance 也要 hijack 怎么办？拆成两部分，一部分是基础设施，一部分是 module？
       updateRender(cnode) {
         const { render } = cnode.type
         // view ref 在 cnode 上，要注入给 moduleSystem
@@ -128,7 +125,6 @@ export default function createNoviceController(initialState, initialAppearance, 
           refs: cnode.view.getRefs(),
           viewRefs: cnode.view.getViewRefs(),
         }
-
 
         cnodeToDigest.push(cnode)
         // CAUTION 由于第一层返回值没有 key，我们手动加上
@@ -146,7 +142,7 @@ export default function createNoviceController(initialState, initialAppearance, 
         })
 
         // CAUTION 这里决定了我们的更新模式是精确更新，始终只渲染要新增的，remain 的不管。
-        // TODO 这里对 toRemain 的没有进行判断 children 是否发生了变化！！！！！
+        // TODO 这里对 toRemain 的没有进行判断 children 是否发生了变化
         return toInitialize
       },
     },

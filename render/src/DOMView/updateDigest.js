@@ -10,19 +10,20 @@ import {
 
 function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, parentPath, cnode, view) {
   nextPatch.push(p)
+  // 组件不继续递归，我们只处理一层
+  if (typeof p.type === 'object') return
+
   if (p.type === Array) {
     /* eslint-disable no-use-before-define */
     p.children = handlePatchVnodeChildren(p.children, parentNode, prevSiblingNode, createVnodePath(p, parentPath), cnode, view)
     /* eslint-enable no-use-before-define */
-  } else if (typeof p.type === 'object') {
-    // 不继续递归，我们只处理一层
   } else if (typeof p.type === 'string' || p.type === String) {
     if (p.patch !== undefined) {
       view.updateElement(p, p.element)
       delete p.patch
     }
 
-    if (p.children !== undefined) {
+    if (typeof p.type === 'string' && p.children !== undefined) {
       /* eslint-disable no-use-before-define */
       p.children = handlePatchVnodeChildren(p.children, p.element, null, createVnodePath(p, parentPath), cnode, view)
       /* eslint-enable no-use-before-define */
@@ -37,12 +38,20 @@ function handleRemovePatchNode(p, parentPath, toDestroy, parentNode) {
   })
 }
 
-// TODO 没有递归
-function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert) {
+function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view) {
   const elements = resolveFirstLayerElements([p], parentPath, cnode)
   elements.forEach((ele) => {
     toInsert.appendChild(ele)
   })
+
+  // move from 的，只可能是 component 或者原生 dom。因为只有这上面能写 key。
+  // component 的不递归处理
+  if (typeof p.type === 'string' && p.children !== undefined) {
+    /* eslint-disable no-use-before-define */
+    p.children = handlePatchVnodeChildren(p.children, p.element, null, createVnodePath(p, parentPath), cnode, view)
+    /* eslint-enable no-use-before-define */
+  }
+
   nextPatch.push(p)
   return elements.length
 }
@@ -75,7 +84,7 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
       handleToMovePatchNode(p, parentPath, cnode, toMove)
     } else if (p.action.type === PATCH_ACTION_MOVE_FROM) {
       p.action.type = PATCH_ACTION_REMAIN
-      handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert)
+      handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view)
     } else if (p.action.type === PATCH_ACTION_INSERT) {
       p.action.type = PATCH_ACTION_REMAIN
       handleInitialVnode(p, cnode, view, nextPatch, parentPath, toInsert, nextPatch.length)
