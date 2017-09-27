@@ -8,7 +8,7 @@ const World = {
     }
   },
   render({ state, refs, viewRefs }) {
-    console.log(refs, viewRefs)
+    console.log(arguments)
     return (
       <div>
         <span>

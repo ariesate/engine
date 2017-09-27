@@ -1,4 +1,4 @@
-import { mapValues } from '../../util'
+import { mapValues } from '../../../util'
 
 export function initialize() {
   // 默认 mod 都没有更新能力，一定要通过操作 stateTree 和 appearance 来更新

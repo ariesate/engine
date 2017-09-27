@@ -1,6 +1,5 @@
 import serialize from 'dom-serialize'
 import { createElement, render } from '../src/index'
-import * as listenerMod from '../src/noviceController/modules/listener'
 
 const Sub = {
   displayName: 'Sub',
@@ -51,7 +50,7 @@ document.body.appendChild(root)
 
 render((
   <Basic bind="basic" />
-), root, {}, {}, { listeners: listenerMod })
+), root, {}, {}, {})
 
 describe('listener', () => {
   test('mimic button click', () => {

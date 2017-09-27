@@ -1,5 +1,4 @@
 import { createElement, render } from '@ariesate/render'
-import * as listenerMod from '@ariesate/render/noviceController/modules/listener'
 import { serial } from '../common'
 
 const Sub = {
@@ -50,7 +49,7 @@ const controller = render((
   <div>
     <Basic bind="basic" />
   </div>
-), document.getElementById('root'), {}, {}, { listeners: listenerMod })
+), document.getElementById('root'), {}, {})
 
 window.controller = controller
 

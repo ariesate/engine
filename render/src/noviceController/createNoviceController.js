@@ -1,9 +1,6 @@
 import { ensureArray } from '../util'
-import { TRANSACTION_REPAINT, TRANSACTION_FIRST_PAINT } from './constant'
 import { walkCnodes, makeVnodeKey } from '../common'
-import createStateTree from './createStateTree'
-import createAppearance from './createAppearance'
-import createModuleSystem from './createModuleSystem'
+import createNoviceModuleSystem from './moduleSystem/index'
 
 function ensureKeyedArray(ret) {
   return ensureArray(ret).map((v, index) => Object.assign(v, { key: makeVnodeKey(v, index) }))
@@ -25,8 +22,6 @@ export default function createNoviceController(initialState, initialAppearance, 
   let cnodeToDigest = []
   let openCollect = false
 
-  // let currentTransaction = null
-  // const transactionCallback = []
   let onChange = () => {}
 
   function collect(fn) {
@@ -35,21 +30,9 @@ export default function createNoviceController(initialState, initialAppearance, 
     openCollect = false
   }
 
-  // TODO transaction 现在好像没什么用
-  function transaction(name, fn) {
-    // currentTransaction = name
-    const result = fn()
-    // currentTransaction = null
-    // TODO call transaction callback
-    return result
-  }
-
   // 对外提供的接口
   function paint(vnode) {
-    transaction(TRANSACTION_FIRST_PAINT, () => {
-      ctree = scheduler.paint(vnode)
-    })
-
+    ctree = scheduler.paint(vnode)
     // CAUTION traversor 会在 build 读取的过程中动态往 ctree 上添加 ref/viewRefs 引用
     view.initialDigest(ctree)
   }
@@ -61,22 +44,20 @@ export default function createNoviceController(initialState, initialAppearance, 
   }
 
   function repaint() {
-    transaction(TRANSACTION_REPAINT, () => {
-      // TODO 这里要将 cnodeToDigest 从数组改成 orderedSet。来去掉重复的。
-      scheduler.repaint(cnodeToRepaint)
-      cnodeToRepaint = []
+    // TODO 这里要将 cnodeToDigest 从数组改成 orderedSet。来去掉重复的。
+    scheduler.repaint(cnodeToRepaint)
+    cnodeToRepaint = []
 
-      // CAUTION 在重绘时可以优化的是：隔一段时间再真实操作 dom。
-      // cnodeToDigest 是 updateRender 时塞进去的
-      cnodeToDigest.forEach((currentCnode) => {
-        // 后面参数中的 cnode.viewRefs 是在 generateInitialTraversor 中生成的
-        // CAUTION traversor 会在 build 读取的过程中动态往 ctree 上添加 ref/viewRefs 引用
-        view.updateDigest(currentCnode)
-      })
-
-      cnodeToDigest = []
-      onChange(ctree)
+    // CAUTION 在重绘时可以优化的是：隔一段时间再真实操作 dom。
+    // cnodeToDigest 是 updateRender 时塞进去的
+    cnodeToDigest.forEach((currentCnode) => {
+      // 后面参数中的 cnode.viewRefs 是在 generateInitialTraversor 中生成的
+      // CAUTION traversor 会在 build 读取的过程中动态往 ctree 上添加 ref/viewRefs 引用
+      view.updateDigest(currentCnode)
     })
+
+    cnodeToDigest = []
+    onChange(ctree)
   }
 
   // 基础设施
@@ -86,11 +67,8 @@ export default function createNoviceController(initialState, initialAppearance, 
       cnodeToRepaint = cnodeToRepaint.concat(cnodes)
     }
   }
-  const stateTree = createStateTree(initialState, onBaseChange)
-  const appearance = createAppearance(initialAppearance, onBaseChange)
-  // 上层模块系统
-  // 但是对 module 来说，仍然只是和 controller 的约定, controller 应该对 module 屏蔽 view 概念
-  const moduleSystem = createModuleSystem(mods, stateTree, appearance)
+
+  const moduleSystem = createNoviceModuleSystem(mods, onBaseChange, initialState, initialAppearance)
 
   return {
     // 创建 background 只是为了把一部分 controller 的功能抽出去，得到一个更平整的抽象，用于构建更上层的系统
@@ -101,15 +79,10 @@ export default function createNoviceController(initialState, initialAppearance, 
       },
       initialRender(cnode, parent) {
         const { render } = cnode.type
-        stateTree.initialize(cnode)
-        appearance.initialize(cnode)
         // view ref 在 cnode 上，要注入给 moduleSystem
         moduleSystem.initialize(cnode, parent)
 
-        const injectArgv = {
-          ...stateTree.inject(cnode),
-          ...moduleSystem.inject(cnode),
-        }
+        const injectArgv = moduleSystem.inject(cnode)
 
         // CAUTION 注意这里我们注意的参数是一个，不是数组
         // CAUTION 由于第一层返回值没有 key，我们手动加上
@@ -119,12 +92,7 @@ export default function createNoviceController(initialState, initialAppearance, 
         const { render } = cnode.type
         // view ref 在 cnode 上，要注入给 moduleSystem
         moduleSystem.update(cnode)
-        const injectArgv = {
-          ...stateTree.inject(cnode),
-          ...moduleSystem.inject(cnode),
-          refs: cnode.view.getRefs(),
-          viewRefs: cnode.view.getViewRefs(),
-        }
+        const injectArgv = moduleSystem.inject(cnode)
 
         cnodeToDigest.push(cnode)
         // CAUTION 由于第一层返回值没有 key，我们手动加上
@@ -135,10 +103,8 @@ export default function createNoviceController(initialState, initialAppearance, 
     intercepter: {
       intercept(result) {
         const { toInitialize, toDestroy } = result
-        walkCnodes(toDestroy, (current) => {
-          stateTree.destroy(current.statePath)
-          appearance.destroy(current.statePath)
-          moduleSystem.destroy(current)
+        walkCnodes(toDestroy, (cnode) => {
+          moduleSystem.destroy(cnode)
         })
 
         // CAUTION 这里决定了我们的更新模式是精确更新，始终只渲染要新增的，remain 的不管。
@@ -165,7 +131,7 @@ export default function createNoviceController(initialState, initialAppearance, 
     // for debug
     onChange: o => onChange = o,
     getCtree: () => ctree,
-    getStateTree: () => stateTree,
+    getStateTree: () => moduleSystem.instances.stateTree,
 
     dump() {
 

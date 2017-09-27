@@ -1,7 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable prefer-arrow-callback */
 /* eslint-disable no-use-before-define */
-import { each } from '../../util'
+import { each } from '../../../../util'
 import { EVENT_POP, EVENT_PUSH, EVENT_UNSHIFT, EVENT_SHIFT } from './constant'
 
 /**

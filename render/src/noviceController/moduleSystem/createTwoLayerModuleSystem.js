@@ -1,4 +1,4 @@
-import { mapValues, map, filter, compose } from '../util'
+import { mapValues, map, filter, compose } from '../../util'
 
 // 这里不需要用 middleware 的模型，因为各个模块应该是相互独立的，不存先后顺序
 // TODO validator 和 listener 这种约定怎么算?
@@ -17,14 +17,18 @@ function combineInstancesMethod(instances, mods, method, defaultFn) {
   }
 }
 
-export default function createModuleSystem(mods, stateTree, appearance) {
-  const instances = mapValues(mods, mod => mod.initialize(stateTree, appearance))
+export default function createTwoLayerModuleSystem(baseMods, mods) {
+  const baseInstances = mapValues(baseMods, baseMod => baseMod.initialize(...(baseMod.argv || [])))
+  const instances = mapValues(mods, mod => mod.initialize(baseInstances, ...(mod.argv || [])))
 
-  return mapValues({
+  const result = mapValues({
     inject: () => ({}),
     hijack: (cnode, fn, ...argv) => fn(...argv),
     initialize: () => {},
     update: () => {},
     destroy: () => {},
   }, (defaultFn, name) => combineInstancesMethod(instances, mods, name, defaultFn))
+
+  result.instances = instances
+  return result
 }

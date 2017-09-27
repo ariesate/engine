@@ -1,10 +1,9 @@
 import merge from 'lodash/merge'
-import { createUniqueIdGenerator } from '../../util'
+import { createUniqueIdGenerator } from '../../../../util'
 import createStateNode from './createStateNode'
-import exist from './exist'
+import exist from '../../exist'
 
-
-export default function publicCreateStateTree(initialState, onChange) {
+export function initialize(initialState, onChange) {
   const root = {}
   const generateBind = createUniqueIdGenerator('bind')
 
@@ -24,28 +23,13 @@ export default function publicCreateStateTree(initialState, onChange) {
       cnode.stateNode = stateNode
       exist.set(parentStateNode, bind, stateNode)
     },
+    getState() {
+      return root
+    },
     destroy(cnode) {
       if (!cnode.parent) {
         delete root[cnode.props.bind]
       }
-    },
-    api: {
-      get(statePath) {
-        return exist.get(root, statePath)
-      },
-    },
-    inject(cnode) {
-      return {
-        state: cnode.stateNode,
-      }
-    },
-    dump() {
-      // TODO 还要保存 ordered Map 等数据结构信息
-      // return root.toJS()
-    },
-    load() {
-      // TODO 还要load ordered Map 等数据结构信息
-      // TODO 如果回滚到上一次使用完全重新 render 的方式，那么就不用！
     },
   }
 }
