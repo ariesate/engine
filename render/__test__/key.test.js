@@ -191,10 +191,9 @@ describe('key test', () => {
   test('basic', () => {
     const lastDomRef1 = document.getElementById('basic-1')
     const lastDomRef2 = document.getElementById('basic-2')
-    controller.collect(() => {
+    controller.apply(() => {
       controller.getStateTree().api.get('basic').count = !initialCount
     })
-    controller.repaint()
 
     expect(lastDomRef1).toBe(document.getElementById('basic-1'))
     expect(lastDomRef2).toBe(document.getElementById('basic-2'))
@@ -205,10 +204,9 @@ describe('key test', () => {
   test('reverse basic', () => {
     const lastDomRef1 = document.getElementById('basic-1')
     const lastDomRef2 = document.getElementById('basic-2')
-    controller.collect(() => {
+    controller.apply(() => {
       controller.getStateTree().api.get('basic').count = initialCount
     })
-    controller.repaint()
 
     expect(lastDomRef1).toBe(document.getElementById('basic-1'))
     expect(lastDomRef2).toBe(document.getElementById('basic-2'))
@@ -219,10 +217,9 @@ describe('key test', () => {
   test('insertAfter', () => {
     const lastDomRef1 = document.getElementById('insertAfter-1')
     const lastDomRef2 = document.getElementById('insertAfter-2')
-    controller.collect(() => {
+    controller.apply(() => {
       controller.getStateTree().api.get('insertAfter').count = !initialCount
     })
-    controller.repaint()
 
     expect(lastDomRef1).toBe(document.getElementById('insertAfter-1'))
     expect(lastDomRef2).toBe(document.getElementById('insertAfter-2'))
@@ -235,10 +232,9 @@ describe('key test', () => {
   test('reverse insertAfter', () => {
     const lastDomRef1 = document.getElementById('insertAfter-1')
     const lastDomRef2 = document.getElementById('insertAfter-2')
-    controller.collect(() => {
+    controller.apply(() => {
       controller.getStateTree().api.get('insertAfter').count = initialCount
     })
-    controller.repaint()
 
     expect(lastDomRef1).toBe(document.getElementById('insertAfter-1'))
     expect(lastDomRef2).toBe(document.getElementById('insertAfter-2'))
@@ -251,10 +247,9 @@ describe('key test', () => {
   test('insertBefore', () => {
     const lastDomRef1 = document.getElementById('insertBefore-1')
     const lastDomRef2 = document.getElementById('insertBefore-2')
-    controller.collect(() => {
+    controller.apply(() => {
       controller.getStateTree().api.get('insertBefore').count = !initialCount
     })
-    controller.repaint()
 
     expect(lastDomRef1).toBe(document.getElementById('insertBefore-1'))
     expect(lastDomRef2).toBe(document.getElementById('insertBefore-2'))
@@ -267,10 +262,9 @@ describe('key test', () => {
   test('reverse insertBefore', () => {
     const lastDomRef1 = document.getElementById('insertBefore-1')
     const lastDomRef2 = document.getElementById('insertBefore-2')
-    controller.collect(() => {
+    controller.apply(() => {
       controller.getStateTree().api.get('insertBefore').count = initialCount
     })
-    controller.repaint()
 
     expect(lastDomRef1).toBe(document.getElementById('insertBefore-1'))
     expect(lastDomRef2).toBe(document.getElementById('insertBefore-2'))
@@ -283,10 +277,9 @@ describe('key test', () => {
   test('insertBetween', () => {
     const lastDomRef1 = document.getElementById('insertBetween-1')
     const lastDomRef2 = document.getElementById('insertBetween-2')
-    controller.collect(() => {
+    controller.apply(() => {
       controller.getStateTree().api.get('insertBetween').count = !initialCount
     })
-    controller.repaint()
 
     expect(lastDomRef1).toBe(document.getElementById('insertBetween-1'))
     expect(lastDomRef2).toBe(document.getElementById('insertBetween-2'))
@@ -300,10 +293,9 @@ describe('key test', () => {
   test('reverse insertBetween', () => {
     const lastDomRef1 = document.getElementById('insertBetween-1')
     const lastDomRef2 = document.getElementById('insertBetween-2')
-    controller.collect(() => {
+    controller.apply(() => {
       controller.getStateTree().api.get('insertBetween').count = initialCount
     })
-    controller.repaint()
 
     expect(lastDomRef1).toBe(document.getElementById('insertBetween-1'))
     expect(lastDomRef2).toBe(document.getElementById('insertBetween-2'))
@@ -318,10 +310,9 @@ describe('key test', () => {
     const lastDomRef1 = document.getElementById('reverseBetween-1')
     const lastDomRef2 = document.getElementById('reverseBetween-2')
     const lastDomRef3 = document.getElementById('reverseBetween-3')
-    controller.collect(() => {
+    controller.apply(() => {
       controller.getStateTree().api.get('reverseBetween').count = !initialCount
     })
-    controller.repaint()
 
     expect(lastDomRef1).toBe(document.getElementById('reverseBetween-1'))
     expect(lastDomRef2).toBe(document.getElementById('reverseBetween-2'))
@@ -336,10 +327,9 @@ describe('key test', () => {
     const lastDomRef1 = document.getElementById('reverseBetween-1')
     const lastDomRef2 = document.getElementById('reverseBetween-2')
     const lastDomRef3 = document.getElementById('reverseBetween-3')
-    controller.collect(() => {
+    controller.apply(() => {
       controller.getStateTree().api.get('reverseBetween').count = initialCount
     })
-    controller.repaint()
 
     expect(lastDomRef1).toBe(document.getElementById('reverseBetween-1'))
     expect(lastDomRef2).toBe(document.getElementById('reverseBetween-2'))
@@ -354,10 +344,9 @@ describe('key test', () => {
     const lastDomRef1 = document.getElementById('replaceBetween-1')
     const lastDomRef2 = document.getElementById('replaceBetween-2')
     const lastDomRef3 = document.getElementById('replaceBetween-3')
-    controller.collect(() => {
+    controller.apply(() => {
       controller.getStateTree().api.get('replaceBetween').count = !initialCount
     })
-    controller.repaint()
 
     expect(lastDomRef1).toBe(document.getElementById('replaceBetween-1'))
     expect(lastDomRef3).toBe(document.getElementById('replaceBetween-3'))
@@ -371,10 +360,9 @@ describe('key test', () => {
   test('reverse replaceBetween', () => {
     const lastDomRef1 = document.getElementById('replaceBetween-1')
     const lastDomRef3 = document.getElementById('replaceBetween-3')
-    controller.collect(() => {
+    controller.apply(() => {
       controller.getStateTree().api.get('replaceBetween').count = initialCount
     })
-    controller.repaint()
 
     expect(lastDomRef1).toBe(document.getElementById('replaceBetween-1'))
     expect(lastDomRef3).toBe(document.getElementById('replaceBetween-3'))

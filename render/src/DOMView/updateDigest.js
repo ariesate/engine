@@ -121,8 +121,10 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
   return nextPatch
 }
 
+// 我们提供的 updateDigest 始终只处理一个 cnode 以及下面新建的 cnode。
 export default function updateDigest(cnode, view) {
   cnode.patch = handlePatchVnodeChildren(cnode.patch, cnode.view.parentNode, null, [], cnode, view)
   // 消费过一次就清空
   cnode.toDestroyPatch = {}
+  view.collectUpdateDigestedCnode(cnode)
 }

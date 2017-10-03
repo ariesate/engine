@@ -75,6 +75,7 @@ function handleInitialComponentNode(vnode, cnode, view, vnodeRef, currentPath, p
   // CAUTION 注意这里把 ret 替换成了 retRefs，这样使得 painter 之后 diff 的结果上就有 ref 了
   childCnode.patch = retRefs
   parentNode.appendChild(fragment)
+  view.collectInitialDigestedCnode(childCnode)
 }
 
 export function handleInitialVnode(vnode, cnode, view, vnodesRef, parentPath, parentNode, index) {
@@ -117,7 +118,7 @@ function handleInitialVnodeChildren(vnodes, cnode, view, vnodesRef, parentPath, 
   })
 }
 
-
+// initialDigest 处理当前 ctree 下的所有 cnode
 export default function initialDigest(ctree, view) {
   const parentNode = view.getRoot()
   attachCnodeView(ctree, parentNode)
@@ -127,5 +128,6 @@ export default function initialDigest(ctree, view) {
   // CAUTION 这里将 ret 替换成了 retRefs，之后 painter 的 diff 结果里就会带上 dom ref
   ctree.patch = retRefs
   parentNode.appendChild(fragment)
+  view.collectInitialDigestedCnode(ctree)
 }
 

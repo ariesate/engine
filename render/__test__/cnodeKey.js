@@ -53,12 +53,11 @@ describe('cnodeKey test', () => {
     const lastDomRef2 = document.getElementById('sub-2')
 
     const basic = controller.getStateTree().api.get('basic')
-    controller.collect(() => {
+    controller.apply(() => {
       basic.list = basic.list.slice(0, 1).concat({ key: 3, value: 3 }, basic.list.slice(1))
       basic.list[0].value = 111
       basic.list[2].value = 222
     })
-    controller.repaint()
 
     expect(lastDomRef1).toBe(document.getElementById('sub-1'))
     expect(lastDomRef2).toBe(document.getElementById('sub-2'))

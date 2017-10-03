@@ -21,7 +21,7 @@ export const createElement = createVnodeElement
 export function render(vnode, domElement, ...controllerArgv) {
   const controller = createNoviceController(...controllerArgv)
 
-  const view = createDOMView(controller.invoker, domElement)
+  const view = createDOMView(controller.observer, domElement)
   const painter = createPainter(controller.renderer)
 
   // 传进去的background 是因为 background 实现了 transaction 接口。

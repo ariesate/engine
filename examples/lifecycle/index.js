@@ -7,6 +7,18 @@ const World = {
       count: 0,
     }
   },
+  hookBeforePaint(...argv) {
+    console.log('before paint', ...argv)
+  },
+  hookAfterPaint(...argv) {
+    console.log('after paint', ...argv)
+  },
+  hookBeforeInitialDigest(...argv) {
+    console.log('before digest', ...argv)
+  },
+  hookAfterInitialDigest(...argv) {
+    console.log('after digest', ...argv)
+  },
   render({ state }) {
     return (
       <div>

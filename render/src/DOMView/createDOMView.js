@@ -3,7 +3,7 @@ import initialDigest from './initialDigest'
 import updateDigest from './updateDigest'
 import { partialRight } from '../util'
 
-export default function createDOMRenderer({ invoke }, rootDomElement) {
+export default function createDOMRenderer({ invoke, collectInitialDigestedCnode, collectUpdateDigestedCnode }, rootDomElement) {
   const view = {
     // TODO 暂时不支持 svg
     createElement: partialRight(createElement, false, invoke),
@@ -12,7 +12,8 @@ export default function createDOMRenderer({ invoke }, rootDomElement) {
       return document.createDocumentFragment()
     },
     getRoot: () => rootDomElement,
-    // 用于调用函数
+    collectInitialDigestedCnode,
+    collectUpdateDigestedCnode,
   }
 
   return {

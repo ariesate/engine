@@ -17,17 +17,11 @@ function combineInstancesMethod(instances, mods, method, defaultFn) {
   }
 }
 
-export default function createTwoLayerModuleSystem(baseMods, mods) {
+export default function createTwoLayerModuleSystem(baseMods, mods, fns) {
   const baseInstances = mapValues(baseMods, baseMod => baseMod.initialize(...(baseMod.argv || [])))
   const instances = mapValues(mods, mod => mod.initialize(baseInstances, ...(mod.argv || [])))
 
-  const result = mapValues({
-    inject: () => ({}),
-    hijack: (cnode, fn, ...argv) => fn(...argv),
-    initialize: () => {},
-    update: () => {},
-    destroy: () => {},
-  }, (defaultFn, name) => combineInstancesMethod(instances, mods, name, defaultFn))
+  const result = mapValues(fns, (defaultFn, name) => combineInstancesMethod(instances, mods, name, defaultFn))
 
   result.instances = instances
   return result

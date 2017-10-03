@@ -37,8 +37,13 @@ export function walkVnodes(vnodes, handler, parentPath = []) {
   })
 }
 
-export function walkCnodes() {
-
+export function walkCnodes(cnodes, handler) {
+  cnodes.forEach((cnode) => {
+    const shouldStop = handler(cnode) === false
+    if (!shouldStop) {
+      walkCnodes(Object.values(cnode.next || {}), handler)
+    }
+  })
 }
 
 export function vnodePathToString(path) {

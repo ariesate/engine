@@ -43,10 +43,9 @@ const controller = render((
 describe('basic test', () => {
   test('basic', () => {
     expect(serialize(root)).toBe('<div><div><div><span>Hello</span><div><span>world 0</span><div>1111</div></div></div></div></div>')
-    controller.collect(() => {
+    controller.apply(() => {
       controller.getStateTree().api.get('app.world').count = 1
     })
-    controller.repaint()
     expect(serialize(root)).toBe('<div><div><div><span>Hello</span><div><span>world 1</span><div>1111</div></div></div></div></div>')
   })
 })

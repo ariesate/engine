@@ -9,6 +9,7 @@ module.exports = {
     cnodeKey: './examples/cnodeKey/index.js',
     listener: './examples/listener/index.js',
     controlled: './examples/controlled/index.js',
+    lifecycle: './examples/lifecycle/index.js',
   },
   output: {
     filename: '[name].js',
