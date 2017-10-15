@@ -65,5 +65,5 @@ serial([() => {
 }, () => {
   // controller.getStateTree().api.merge('basic', { count: initialCount })
 }], 1000, () => {
-  controller.repaint()
+  // controller.repaint()
 })

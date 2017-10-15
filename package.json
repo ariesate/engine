@@ -28,6 +28,7 @@
   },
   "scripts": {
     "start": "webpack-dev-server",
+    "lint": "eslint ./render/src",
     "eslint-fix": "eslint ./render/src --fix ",
     "test": "jest"
   },

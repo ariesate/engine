@@ -1,4 +1,14 @@
-import { createVnodePath, vnodePathToString, isComponentVnode, cloneVnode, resolveFirstLayerElements } from '../common'
+import {
+  createVnodePath,
+  vnodePathToString,
+  isComponentVnode,
+  cloneVnode,
+  resolveFirstLayerElements,
+} from '../common'
+import {
+  PATCH_ACTION_MOVE_FROM,
+} from '../constant'
+import { handleMoveFromPatchNode } from './updateDigest'
 import { mapValues } from '../util'
 
 /**
@@ -57,14 +67,16 @@ function handleInitialNaiveVnode(vnode, cnode, view, vnodeRef, currentPath, pare
 
 function handleInitialComponentNode(vnode, cnode, view, vnodeRef, currentPath, parentNode) {
   // 1. 为 cnode 建立 view 信息
-  const childCnode = cnode.next[vnodePathToString(currentPath)]
+  const currentPathStr = vnodePathToString(currentPath)
+  const nextIndex = vnode.transferKey === undefined ? currentPathStr : vnode.transferKey
+  const childCnode = cnode.next[nextIndex]
   attachCnodeView(childCnode, parentNode)
 
   // 我们不再使用函数引用的方式去记录 element，而是使用 path，由外部提供工具函数递归去查
-  const currentPathStr = vnodePathToString(currentPath)
-  attachCnodeViewQuickRefs(cnode, vnode, currentPathStr)
 
-  vnodeRef.element = currentPathStr
+  attachCnodeViewQuickRefs(cnode, vnode, nextIndex)
+
+  vnodeRef.element = nextIndex
 
   const fragment = view.createFragment()
 
@@ -114,7 +126,11 @@ export function handleInitialVnode(vnode, cnode, view, vnodesRef, parentPath, pa
 function handleInitialVnodeChildren(vnodes, cnode, view, vnodesRef, parentPath, parentNode) {
   // vnodes 有两种: 1是某个 vnode 的 children。2 是 array 类型的 vnode
   vnodes.forEach((vnode, index) => {
-    handleInitialVnode(vnode, cnode, view, vnodesRef, parentPath, parentNode, index)
+    if (vnode.action && vnode.action.type === PATCH_ACTION_MOVE_FROM) {
+      handleMoveFromPatchNode(vnode, vnodesRef, parentPath, cnode, parentNode, view)
+    } else {
+      handleInitialVnode(vnode, cnode, view, vnodesRef, parentPath, parentNode, index)
+    }
   })
 }
 

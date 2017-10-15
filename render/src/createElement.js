@@ -1,8 +1,7 @@
 import VNode from './VNode'
-import { makeVnodeKey } from './common'
 
 function normalizeChildren(rawChildren) {
-  return rawChildren.map((rawChild, index) => {
+  return rawChildren.map((rawChild) => {
     let child = rawChild
     if (rawChild === undefined) throw new Error('element cannot be undefined')
     if (rawChild === null) {
@@ -12,9 +11,7 @@ function normalizeChildren(rawChildren) {
     } else if (typeof rawChild === 'number' || typeof rawChild === 'string') {
       child = { type: String, value: child.toString() }
     }
-    // 剩下的只有对象了，我们给所有没 key 的节点都用 index 加上 key。这样之后运算方便。
-    // 并且 key 上面带有 type 信息，这样保证 <div key="1" /> 和 <span key="1" /> 最后真正的 key 肯定不同
-    Object.assign(child, { key: makeVnodeKey(child, index) })
+
     return child
   })
 }
@@ -34,6 +31,16 @@ export default function createElement(type, attributes, ...rawChildren) {
   if (node.attributes.ref !== undefined) {
     node.ref = node.attributes.ref
     delete node.attributes.ref
+  }
+
+  if (node.attributes.key !== undefined) {
+    node.rawKey = node.attributes.key
+    delete node.attributes.key
+  }
+
+  if (node.attributes.transferKey !== undefined) {
+    node.rawTransferKey = node.attributes.transferKey
+    delete node.attributes.transferKey
   }
 
   node.children = normalizeChildren(rawChildren)

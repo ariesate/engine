@@ -1,5 +1,5 @@
 import { ensureArray, noop } from '../util'
-import { walkCnodes, makeVnodeKey } from '../common'
+import { walkCnodes } from '../common'
 import createNoviceModuleSystem from './moduleSystem/index'
 import createBatchLifecycle from './createBatchLifecycle'
 import {
@@ -12,10 +12,6 @@ import {
   HOOK_BEFORE_INITIAL_DIGEST,
   HOOK_AFTER_INITIAL_DIGEST,
 } from './constant'
-
-function ensureKeyedArray(ret) {
-  return ensureArray(ret).map((v, index) => Object.assign(v, { key: makeVnodeKey(v, index) }))
-}
 
 /**
  * TODO
@@ -165,8 +161,7 @@ export default function createNoviceController(initialState, initialAppearance, 
         const injectArgv = moduleSystem.inject(cnode)
         lifecycle.collectInitialCnode(cnode)
         // CAUTION 注意这里我们注意的参数是一个，不是数组
-        // CAUTION 由于第一层返回值没有 key，我们手动加上
-        return ensureKeyedArray(moduleSystem.hijack(cnode, render, injectArgv))
+        return ensureArray(moduleSystem.hijack(cnode, render, injectArgv))
       },
       updateRender(cnode) {
         const { render } = cnode.type
@@ -176,8 +171,7 @@ export default function createNoviceController(initialState, initialAppearance, 
 
         lifecycle.collectUpdateCnode(cnode)
         cnodesToDigest.add(cnode)
-        // CAUTION 由于第一层返回值没有 key，我们手动加上
-        return ensureKeyedArray(moduleSystem.hijack(cnode, render, injectArgv))
+        return ensureArray(moduleSystem.hijack(cnode, render, injectArgv))
       },
     },
     // controller 的 intercepter 接口
@@ -185,8 +179,7 @@ export default function createNoviceController(initialState, initialAppearance, 
       intercept(result) {
         const { toInitialize, toDestroy = {} } = result
         walkCnodes(Object.values(toDestroy), moduleSystem.destroy)
-
-        // CAUTION 这里决定了我们的更新模式是精确更新，始终只渲染要新增的，remain 的不管。
+        // CAUTION 这里决定了我们的更新模式是精确更新，始终只渲染新增的，remain 的不管。
         // TODO 这里对 toRemain 的没有进行判断 children 是否发生了变化
         return toInitialize
       },

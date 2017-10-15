@@ -284,7 +284,7 @@ export function createUniqueIdGenerator(prefix = '') {
   return () => {
     index = (index === LETTER_AND_NUMBER_LEN - 1) ? 0 : (index + 1)
     last = (index === 0 ? last : last.slice(0, last.length - 1)) + LETTER_AND_NUMBER[index]
-    return `${prefix}-${last}`
+    return `${prefix}_${last}`
   }
 }
 

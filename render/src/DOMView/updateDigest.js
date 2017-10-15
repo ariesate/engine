@@ -38,7 +38,7 @@ function handleRemovePatchNode(p, parentPath, toDestroy, parentNode) {
   })
 }
 
-function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view) {
+export function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view) {
   const elements = resolveFirstLayerElements([p], parentPath, cnode)
   elements.forEach((ele) => {
     toInsert.appendChild(ele)
@@ -56,11 +56,14 @@ function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view
   return elements.length
 }
 
-function handleToMovePatchNode(p, parentPath, cnode, toMove) {
-  const elements = resolveFirstLayerElements([p], parentPath, cnode)
-  elements.forEach((ele) => {
-    toMove.appendChild(ele)
-  })
+function handleToMovePatchNode() {
+// function handleToMovePatchNode(p, parentPath, cnode, toMove) {
+  // CAUTION 不再处理 toMove, 因为加入了 transfer 的情况，不确定
+  // moveFrom 会不会在 toMove 前处理，如果会，那么 toMove 再处理就错了
+  // const elements = resolveFirstLayerElements([p], parentPath, cnode)
+  // elements.forEach((ele) => {
+  //   toMove.appendChild(ele)
+  // })
 }
 
 /**
@@ -76,6 +79,9 @@ function handleToMovePatchNode(p, parentPath, cnode, toMove) {
 function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, parentPath, cnode, view) {
   const nextPatch = []
   let toInsert = view.createFragment()
+  // 这里用 fragment 用来保存 toMove 的 dom 引用，主要是因为
+  // 如果 dom 被 move from 处理了，那么 dom 会自动从 fragment 中被去掉。
+  // 最后检查一下 fragment 就可以值到算法有没有出错。
   const toMove = view.createFragment()
   let currentLastStableSiblingNode = lastStableSiblingNode
 

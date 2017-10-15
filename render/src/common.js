@@ -29,10 +29,21 @@ export function createVnodePath(vnode, parentPath = []) {
 export function walkVnodes(vnodes, handler, parentPath = []) {
   vnodes.forEach((vnode) => {
     const currentPath = createVnodePath(vnode, parentPath)
-    handler(vnode, currentPath)
+    const shouldStop = handler(vnode, currentPath)
+
+    if (!shouldStop && vnode.children !== undefined) {
+      walkVnodes(vnode.children, handler, currentPath)
+    }
+  })
+}
+
+export function walkRawVnodes(vnodes, handler, parentPath = [], context) {
+  vnodes.forEach((vnode, index) => {
+    const currentPath = parentPath.concat(index)
+    const nextContext = handler(vnode, currentPath, context)
 
     if (vnode.children !== undefined) {
-      walkVnodes(vnode.children, handler, currentPath)
+      walkRawVnodes(vnode.children, handler, currentPath, nextContext)
     }
   })
 }
@@ -89,6 +100,10 @@ export function isComponentVnode(a) {
   return typeof a.type === 'object' && a.type !== Array
 }
 
+export function getVnodeNextIndex(vnode, parentPath) {
+  return vnode.transferKey === undefined ? vnodePathToString(createVnodePath(vnode, parentPath)) : vnode.transferKey
+}
+
 export function resolveFirstLayerElements(vnodes, parentPath, cnode) {
   return vnodes.reduce((result, vnode) => {
     if (vnode.type === null) {
@@ -100,16 +115,20 @@ export function resolveFirstLayerElements(vnodes, parentPath, cnode) {
         return elements.concat(resolveFirstLayerElements(child, createVnodePath(vnode, parentPath), cnode))
       }, [])
     } else if (typeof vnode.type === 'object') {
-      const nextCnode = cnode.next[vnodePathToString(createVnodePath(vnode, parentPath))]
+      const nextCnode = cnode.next[getVnodeNextIndex(vnode, parentPath)]
       return resolveFirstLayerElements(nextCnode.patch, [], nextCnode)
     }
     return result
   }, [])
 }
 
-export function makeVnodeKey(child, index) {
-  const rawKey = (child.attributes && child.attributes.key !== undefined) ? child.attributes.key : `_${index}_`
-  return `${getVnodeType(child)}-${rawKey}`
+export function makeVnodeKey(vnode, index) {
+  const rawKey = vnode.rawKey !== undefined ? vnode.rawKey : `_${index}_`
+  return `${getVnodeType(vnode)}-${rawKey}`
+}
+
+export function makeVnodeTransferKey(vnode) {
+  return vnode.rawTransferKey === undefined ? undefined : `${getVnodeType(vnode)}-${vnode.rawTransferKey}`
 }
 
 export function resolveLastElement(vnode, parentPath, cnode) {
@@ -122,7 +141,8 @@ export function resolveLastElement(vnode, parentPath, cnode) {
       return Boolean(result)
     })
   } else if (typeof vnode.type === 'object') {
-    const nextCnode = cnode.next[vnodePathToString(createVnodePath(vnode, parentPath))]
+    const nextIndex = getVnodeNextIndex(vnode, parentPath)
+    const nextCnode = cnode.next[nextIndex]
     if (nextCnode.patch.length > 0) {
       result = resolveLastElement(nextCnode.patch[nextCnode.patch.length - 1], [], nextCnode)
     }
