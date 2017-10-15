@@ -216,5 +216,6 @@ export default function createNoviceController(initialState, initialAppearance, 
     getCtree: () => ctree,
     getStateTree: () => moduleSystem.instances.stateTree,
     dump() {},
+    getLifecycle: () => lifecycle,
   }
 }

@@ -12,14 +12,14 @@ import {
 import { mapValues } from '../util'
 
 const HOOK_CNODE_MAP = {
-  [HOOK_BEFORE_PAINT]: ['currentInitialCnodes'],
-  [HOOK_AFTER_PAINT]: ['currentInitialCnodes'],
-  [HOOK_BEFORE_INITIAL_DIGEST]: ['currentInitialDigestedCnodes'],
-  [HOOK_AFTER_INITIAL_DIGEST]: ['currentInitialDigestedCnodes'],
-  [HOOK_BEFORE_REPAINT]: ['currentInitialCnodes', 'currentUpdateCnodes'],
-  [HOOK_AFTER_REPAINT]: ['currentInitialCnodes', 'currentUpdateCnodes'],
-  [HOOK_BEFORE_UPDATE_DIGEST]: ['currentInitialDigestedCnodes', 'currentUpdateDigestedCnodes'],
-  [HOOK_AFTER_UPDATE_DIGEST]: ['currentInitialDigestedCnodes', 'currentUpdateDigestedCnodes'],
+  [HOOK_BEFORE_PAINT]: ['initialCnodes'],
+  [HOOK_AFTER_PAINT]: ['initialCnodes'],
+  [HOOK_BEFORE_INITIAL_DIGEST]: ['initialDigestedCnodes'],
+  [HOOK_AFTER_INITIAL_DIGEST]: ['initialDigestedCnodes'],
+  [HOOK_BEFORE_REPAINT]: ['initialCnodes', 'updateCnodes'],
+  [HOOK_AFTER_REPAINT]: ['initialCnodes', 'updateCnodes'],
+  [HOOK_BEFORE_UPDATE_DIGEST]: ['initialDigestedCnodes', 'updateDigestedCnodes'],
+  [HOOK_AFTER_UPDATE_DIGEST]: ['initialDigestedCnodes', 'updateDigestedCnodes'],
 }
 
 function toMethodName(constant) {
@@ -51,10 +51,10 @@ function dispatch(hooksToMatch, hookName, ...argv) {
 
 export default function createLifecycle(moduleSystem) {
   const hookArgv = {
-    currentInitialCnodes: null,
-    currentUpdateCnodes: null,
-    currentInitialDigestedCnodes: null,
-    currentUpdateDigestedCnodes: null,
+    initialCnodes: null,
+    updateCnodes: null,
+    initialDigestedCnodes: null,
+    updateDigestedCnodes: null,
   }
 
   let toFlush = []
@@ -65,30 +65,32 @@ export default function createLifecycle(moduleSystem) {
     },
     startSession() {
       // TODO 检测是否全部消费干净
-      hookArgv.currentInitialCnodes = []
-      hookArgv.currentUpdateCnodes = []
-      hookArgv.currentInitialDigestedCnodes = []
-      hookArgv.currentUpdateDigestedCnodes = []
+      hookArgv.initialCnodes = []
+      hookArgv.updateCnodes = []
+      hookArgv.initialDigestedCnodes = []
+      hookArgv.updateDigestedCnodes = []
     },
     endSession() {
+      // TODO 加上 try catch 防止某个组件 hook 破坏循环
       toFlush.forEach(fn => fn())
-      hookArgv.currentInitialCnodes = []
-      hookArgv.currentUpdateCnodes = []
-      hookArgv.currentInitialDigestedCnodes = []
-      hookArgv.currentUpdateDigestedCnodes = []
+      hookArgv.initialCnodes = []
+      hookArgv.updateCnodes = []
+      hookArgv.initialDigestedCnodes = []
+      hookArgv.updateDigestedCnodes = []
       toFlush = []
     },
     collectInitialCnode(cnode) {
-      hookArgv.currentInitialCnodes.push(cnode)
+      hookArgv.initialCnodes.push(cnode)
     },
     collectUpdateCnode(cnode) {
-      hookArgv.currentUpdateCnodes.push(cnode)
+      hookArgv.updateCnodes.push(cnode)
     },
     collectInitialDigestedCnode(cnode) {
-      hookArgv.currentInitialDigestedCnodes.push(cnode)
+      hookArgv.initialDigestedCnodes.push(cnode)
     },
     collectUpdateDigestedCnodes(cnode) {
-      hookArgv.currentUpdateDigestedCnodes.push(cnode)
+      hookArgv.updateDigestedCnodes.push(cnode)
     },
+    // TODO 为 debug 导出工具函数
   }
 }
