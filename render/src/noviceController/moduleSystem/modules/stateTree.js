@@ -3,7 +3,7 @@ import exist from '../exist'
 export function initialize({ stateTree }) {
   return {
     initialize: (_, cnode) => stateTree.initialize(cnode),
-    destroy: (_, cnode) => stateTree.initialize(cnode),
+    destroy: (_, cnode) => stateTree.destroy(cnode),
     api: {
       get(statePath) {
         return exist.get(stateTree.getState(), statePath)

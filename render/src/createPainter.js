@@ -4,7 +4,7 @@
  * 由外部控制是否需要继续解析。这样未来可以单独在外部实现解析的优化。
  *
  * cnode 中的节点更新会得到新的 ret。
- * next 字段按照 xpath 指向了 ret 中的子组件。注意，虽然 next 中每个对象都是新引用，
+ * next 字段按照 xpath|transferKey 指向了 ret 中的子组件。注意，虽然 next 中每个对象都是新引用，
  * 但是为了节约性能， children 这个字段直接指向了 vnode 中的 children，没有做深度克隆。
  */
 

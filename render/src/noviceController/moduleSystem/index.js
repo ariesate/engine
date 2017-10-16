@@ -12,7 +12,6 @@ export default function createNoviceModuleSystem(inputMods, onChange, apply, ini
     appearance: { ...baseAppearanceMod, argv: [initialAppearance, onChange] },
   }
 
-  // TODO 在这里拿到了 apply，应该把它改成两次稳定再传给 mod 吧？？？
   const mods = mapValues({
     stateTree: stateTreeMod,
     ref: refMod,
