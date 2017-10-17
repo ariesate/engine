@@ -2,18 +2,40 @@ import exist from '../exist'
 
 export function initialize({ stateTree }) {
   return {
-    initialize: (_, cnode) => stateTree.initialize(cnode),
-    destroy: (_, cnode) => stateTree.destroy(cnode),
+    initialize: next => (cnode) => {
+      next(cnode)
+      stateTree.initialize(cnode)
+    },
+    destroy: next => (cnode) => {
+      next(cnode)
+      stateTree.destroy(cnode)
+    },
+    inject: next => (cnode) => {
+      // console.log("injecting", cnode.state)
+      return {
+        ...next(cnode),
+        state: cnode.state,
+      }
+    },
+    initialRender: next => (cnode, ...argv) => {
+      return stateTree.observeRender(next, cnode, ...argv)
+    },
+    updateRender: next => (cnode, ...argv) => {
+      return stateTree.observeRender(next, cnode, ...argv)
+    },
+    startInitialSession: next => (fn) => {
+      next(fn)
+      stateTree.afterSession()
+    },
+    startUpdateSession: next => (fn) => {
+      // transaction(() => next(fn))
+      next(fn)
+      stateTree.afterSession()
+    },
     api: {
       get(statePath) {
         return exist.get(stateTree.getState(), statePath)
       },
-    },
-    inject(lastInject, cnode) {
-      return {
-        ...lastInject,
-        state: cnode.stateNode,
-      }
     },
     dump() {
       // TODO 还要保存 ordered Map 等数据结构信息

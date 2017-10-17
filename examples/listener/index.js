@@ -32,7 +32,7 @@ const Basic = {
   },
   listeners: {
     addOne({ state }) {
-      state.list.push({ key: state.list.length, value: state.list.length })
+      state.list = state.list.concat({ key: state.list.length, value: state.list.length })
     },
   },
   render({ state, listeners }) {
@@ -54,10 +54,10 @@ const controller = render((
 window.controller = controller
 
 serial([() => {
-  // const basic = controller.getStateTree().api.get('basic')
-  // controller.collect(() => {
-  //   basic.list = basic.list.slice(0, 1).concat({ key: 3, value: 3 }, basic.list.slice(1))
-  // })
+  const basic = controller.getStateTree().api.get('basic')
+  controller.apply(() => {
+    // basic.list = basic.list.slice(0, 1).concat({ key: 3, value: 3 }, basic.list.slice(1))
+  })
 
   // controller.getStateTree().api.set('basic.sub1', { index: 1 })
   // controller.getStateTree().api.set('basic.sub2', { index: 2 })

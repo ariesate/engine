@@ -11,9 +11,9 @@ function combineInstancesMethod(instances, mods, method, defaultFn) {
         involvedIns,
         (_, name) => (mods[name].test === undefined || mods[name].test(cnode)),
       ),
-      i => lastResult => i[method](lastResult, cnode, ...runtimeArgv),
+      ins => ins[method],
     )
-    return compose(runtimeFns)(defaultFn(cnode, ...runtimeArgv))
+    return compose(runtimeFns)(defaultFn)(cnode, ...runtimeArgv)
   }
 }
 

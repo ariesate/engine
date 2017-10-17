@@ -12,10 +12,22 @@ export function concat(fns) {
   }
 }
 
-export function compose(fns, spreadArgs = false) {
+export function chain(fns, spreadArgs = false) {
   return base => fns.reduce((last, fn) => {
     return spreadArgs ? fn(...last) : fn(last)
   }, base)
+}
+
+export function compose(fns) {
+  if (fns.length === 0) {
+    return arg => arg
+  }
+
+  if (fns.length === 1) {
+    return fns[0]
+  }
+
+  return fns.reduce((a, b) => (...args) => a(b(...args)))
 }
 
 export function warning(message) {

@@ -32,7 +32,7 @@ const Basic = {
   },
   listeners: {
     addOne({ state }) {
-      state.list.push({ key: state.list.length, value: state.list.length })
+      state.list = state.list.concat({ key: state.list.length, value: state.list.length })
     },
   },
   render({ state, listeners }) {

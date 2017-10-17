@@ -47,12 +47,11 @@ window.controller = controller
 
 serial([() => {
   const basic = controller.getStateTree().api.get('basic')
-  controller.collect(() => {
+  controller.apply(() => {
     basic.list = basic.list.slice(0, 1).concat({ key: 3, value: 3 }, basic.list.slice(1))
     basic.list[0].value = 111
     basic.list[2].value = 222
   })
 }, () => {
 }], 1000, () => {
-  controller.repaint()
 })

@@ -1,4 +1,4 @@
-import { mapValues } from '../../util'
+import { mapValues, noop } from '../../util'
 import createTwoLayerModuleSystem from './createTwoLayerModuleSystem'
 import * as baseStateTreeMod from './base/stateTree'
 import * as baseAppearanceMod from './base/appearance'
@@ -21,10 +21,16 @@ export default function createNoviceModuleSystem(inputMods, onChange, apply, ini
 
   return createTwoLayerModuleSystem(baseMods, mods, {
     inject: () => ({}),
-    hijack: (cnode, fn, ...argv) => fn(...argv),
-    initialize: () => {},
-    update: () => {},
-    destroy: () => {},
-    afterInitialDigest: () => {},
+    hijack: (cnode, render, ...argv) => render(...argv),
+    initialize: noop,
+    update: noop,
+    destroy: noop,
+    afterInitialDigest: noop,
+    initialRender: (cnode, initialRender) => initialRender(cnode),
+    updateRender: (cnode, updateRender) => updateRender(cnode),
+    startInitialSession: start => start(),
+    startUpdateSession: start => start(),
+    beforeLifeCycle: noop,
+    afterLifeCycle: noop,
   })
 }

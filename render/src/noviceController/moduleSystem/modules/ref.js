@@ -1,12 +1,17 @@
 export function initialize() {
   return {
-    inject(lastInject, cnode) {
-      if (cnode.view === undefined) return lastInject
-      return {
-        ...lastInject,
-        refs: cnode.view.getRefs(),
-        viewRefs: cnode.view.getViewRefs(),
+    inject(next) {
+      return (cnode) => {
+        return {
+          ...next(cnode),
+          refs: cnode.view.getRefs(),
+          viewRefs: cnode.view.getViewRefs(),
+        }
       }
     },
   }
+}
+
+export function test(cnode) {
+  return cnode.view !== undefined
 }

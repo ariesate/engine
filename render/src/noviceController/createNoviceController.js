@@ -96,53 +96,57 @@ export default function createNoviceController(initialState, initialAppearance, 
   }
 
   function startInitialSession(vnode) {
-    inSession = true
-    lifecycle.startSession()
-    lifecycle.invoke(HOOK_BEFORE_PAINT)
-    ctree = scheduler.paint(vnode)
-    lifecycle.invoke(HOOK_AFTER_PAINT)
-    lifecycle.invoke(HOOK_BEFORE_INITIAL_DIGEST)
-    view.initialDigest(ctree)
-    collect(() => {
-      lifecycle.invoke(HOOK_AFTER_INITIAL_DIGEST)
+    moduleSystem.startInitialSession(() => {
+      inSession = true
+      lifecycle.startSession()
+      lifecycle.invoke(HOOK_BEFORE_PAINT)
+      ctree = scheduler.paint(vnode)
+      lifecycle.invoke(HOOK_AFTER_PAINT)
+      lifecycle.invoke(HOOK_BEFORE_INITIAL_DIGEST)
+      view.initialDigest(ctree)
+      collect(() => {
+        lifecycle.invoke(HOOK_AFTER_INITIAL_DIGEST)
+      })
+      if (cnodesToRepaint.size !== 0) {
+        // 如果在最后阶段又产生了新的变化，那么重新来一个 session
+        applyChange(noop)
+      }
+      lifecycle.endSession()
+      inSession = false
     })
-    if (cnodesToRepaint.size !== 0) {
-      // 如果在最后阶段又产生了新的变化，那么重新来一个 session
-      applyChange(noop)
-    }
-    lifecycle.endSession()
-    inSession = false
   }
 
   function startUpdateSession() {
     if (!inSession) {
-      inSession = true
-      let currentSession
-      /* eslint-disable no-cond-assign */
-      while (currentSession = sessions.shift()) {
-        lifecycle.startSession()
-        /* eslint-enable no-cond-assign */
-        /* eslint-disable no-loop-func */
-        collect(() => {
-          currentSession()
-          lifecycle.invoke(HOOK_BEFORE_REPAINT)
-        })
-        repaint()
-        lifecycle.invoke(HOOK_AFTER_REPAINT)
-        lifecycle.invoke(HOOK_BEFORE_UPDATE_DIGEST)
-        updateDigest()
-        collect(() => {
-          lifecycle.invoke(HOOK_AFTER_UPDATE_DIGEST)
-        })
-        /* eslint-enable no-loop-func */
-        if (cnodesToRepaint.size !== 0) {
-          // 如果在最后阶段又产生了新的变化，那么重新来一个 session
-          // TODO 这里为什么不直接往 session 里面 push noop?
-          applyChange(noop)
+      moduleSystem.startUpdateSession(() => {
+        inSession = true
+        let currentSession
+        /* eslint-disable no-cond-assign */
+        while (currentSession = sessions.shift()) {
+          lifecycle.startSession()
+          /* eslint-enable no-cond-assign */
+          /* eslint-disable no-loop-func */
+          collect(() => {
+            currentSession()
+            lifecycle.invoke(HOOK_BEFORE_REPAINT)
+          })
+          repaint()
+          lifecycle.invoke(HOOK_AFTER_REPAINT)
+          lifecycle.invoke(HOOK_BEFORE_UPDATE_DIGEST)
+          updateDigest()
+          collect(() => {
+            lifecycle.invoke(HOOK_AFTER_UPDATE_DIGEST)
+          })
+          /* eslint-enable no-loop-func */
+          if (cnodesToRepaint.size !== 0) {
+            // 如果在最后阶段又产生了新的变化，那么重新来一个 session
+            // TODO 这里为什么不直接往 session 里面 push noop?
+            applyChange(noop)
+          }
+          lifecycle.endSession()
         }
-        lifecycle.endSession()
-      }
-      inSession = false
+        inSession = false
+      })
     }
   }
 
@@ -153,25 +157,29 @@ export default function createNoviceController(initialState, initialAppearance, 
         // root 没有注入任何东西
         return ensureArray(cnode.type.render())
       },
-      initialRender(cnode, parent) {
-        const { render } = cnode.type
-        // view ref 在 cnode 上，要注入给 moduleSystem
-        moduleSystem.initialize(cnode, parent)
+      initialRender(cnodeToInitialize, parent) {
+        return moduleSystem.initialRender(cnodeToInitialize, (cnode) => {
+          const { render } = cnode.type
+          // view ref 在 cnode 上，要注入给 moduleSystem
+          moduleSystem.initialize(cnode, parent)
 
-        const injectArgv = moduleSystem.inject(cnode)
-        lifecycle.collectInitialCnode(cnode)
-        // CAUTION 注意这里我们注意的参数是一个，不是数组
-        return ensureArray(moduleSystem.hijack(cnode, render, injectArgv))
+          const injectArgv = moduleSystem.inject(cnode)
+          lifecycle.collectInitialCnode(cnode)
+          // CAUTION 注意这里我们注意的参数是一个，不是数组
+          return ensureArray(moduleSystem.hijack(cnode, render, injectArgv))
+        })
       },
-      updateRender(cnode) {
-        const { render } = cnode.type
-        // view ref 在 cnode 上，要注入给 moduleSystem
-        moduleSystem.update(cnode)
-        const injectArgv = moduleSystem.inject(cnode)
+      updateRender(cnodeToUpdate) {
+        return moduleSystem.updateRender(cnodeToUpdate, (cnode) => {
+          const { render } = cnode.type
+          // view ref 在 cnode 上，要注入给 moduleSystem
+          moduleSystem.update(cnode)
+          const injectArgv = moduleSystem.inject(cnode)
 
-        lifecycle.collectUpdateCnode(cnode)
-        cnodesToDigest.add(cnode)
-        return ensureArray(moduleSystem.hijack(cnode, render, injectArgv))
+          lifecycle.collectUpdateCnode(cnode)
+          cnodesToDigest.add(cnode)
+          return ensureArray(moduleSystem.hijack(cnode, render, injectArgv))
+        })
       },
     },
     // controller 的 intercepter 接口
