@@ -1,49 +1,8 @@
-import { extendObservable, Reaction } from 'mobx'
+import { extendObservable } from 'mobx'
 import { dump, restore } from './dump'
-// import { dump, restore } from 'dumpjs'
+import { once, getReactionCacheFn } from './once'
 import { createUniqueIdGenerator, ensureArray } from '../../../../util'
 import exist from '../../exist'
-
-// const dump = {dump() {},restore() {}}
-
-function createCache(getObservable, observing) {
-  const keysToRead = observing.map(o => o.name.replace(/^[A-Za-z0-9@_]+\./, ""))
-  return function cache() {
-    keysToRead.forEach((key) => {
-      exist.get(getObservable(), key)
-    })
-  }
-}
-
-function getReactionCacheFn(getObservable, fn) {
-  const reaction = new Reaction('sss')
-  let result = null
-  reaction.track(() => {
-    result = fn()
-  })
-  const cacheFn = createCache(getObservable, reaction.observing)
-  reaction.getDisposer()()
-  return [result, cacheFn]
-}
-
-function once(fn, listener) {
-  let tracked = false
-  const reaction = new Reaction(undefined, function () {
-    if (!tracked) {
-      this.track(fn)
-      tracked = true
-    } else {
-      listener()
-      reaction.getDisposer()()
-    }
-  })
-
-  reaction.getDisposer().onError((err) => {
-    console.err(err)
-  })
-
-  reaction.schedule()
-}
 
 function createStateClass(type, getInitialState) {
   const StateNodeClass = function (currentState) {
@@ -59,14 +18,31 @@ function resolveBind(cnode) {
   return cnode.parent ? resolveBind(cnode.parent).concat(result) : result
 }
 
-export function initialize(initialStateTree={}, onChange) {
+export function initialize(initialStateTree = {}, onChange) {
   const root = {}
   const generateBind = createUniqueIdGenerator('bind')
   const cnodesToStartReaction = new Set()
   let isInitialized = false
 
+  function observeRender(render, cnode, ...argv) {
+    const [result, cacheFn] = getReactionCacheFn(() => cnode.state, () => render(cnode, ...argv))
+    cnode.reactionCacheFn = cacheFn
+    cnodesToStartReaction.add(cnode)
+    return result
+  }
+
+  function afterSession() {
+    // CAUTION 先不管是哪个 session， 只要执行过， initialized 肯定是 true
+    isInitialized = true
+    cnodesToStartReaction.forEach((cnode) => {
+      once(cnode.reactionCacheFn, () => onChange([cnode]))
+      cnodesToStartReaction.delete(cnode)
+    })
+  }
+
   return {
-    initialize(cnode) {
+    initialize: next => (cnode) => {
+      next(cnode)
       if (cnode.State !== undefined) {
         throw new Error('cnode has State Class already')
       }
@@ -101,29 +77,41 @@ export function initialize(initialStateTree={}, onChange) {
       cnode.state = state
       exist.set(cnode.parent.state || root, bind, state)
     },
-    destroy(cnode) {
+    // CAUTION 由于是主动式的写，因此我们不再对数据进行补全，用户要自己注意。
+    // update() {
+    //
+    // }
+    destroy: next => (cnode) => {
+      next(cnode)
       if (!cnode.parent) {
         delete root[cnode.props.bind]
       }
       cnode.cancelReaction()
     },
-    observeRender(render, cnode, ...argv) {
-      const [result, cacheFn] = getReactionCacheFn(() => cnode.state, () => render(cnode, ...argv))
-      cnode.reactionCacheFn = cacheFn
-      cnodesToStartReaction.add(cnode)
-      return result
+    inject: next => (cnode) => {
+      return {
+        ...next(cnode),
+        state: cnode.state,
+      }
     },
-    // 等稳定了之后，对 cnode 的 state 所有一级字段读一遍就好了
-    afterSession() {
-      // TODO 先不管是哪个 session， 只要执行过， initialized 肯定是 true
-      isInitialized = true
-      cnodesToStartReaction.forEach((cnode) => {
-        once(cnode.reactionCacheFn, () => onChange([cnode]))
-        cnodesToStartReaction.delete(cnode)
-      })
+    initialRender: next => (cnode, ...argv) => {
+      return observeRender(next, cnode, ...argv)
     },
-    getState() {
-      return root
+    updateRender: next => (cnode, ...argv) => {
+      return observeRender(next, cnode, ...argv)
+    },
+    startInitialSession: next => (fn) => {
+      next(fn)
+      afterSession()
+    },
+    startUpdateSession: next => (fn) => {
+      next(fn)
+      afterSession()
+    },
+    api: {
+      get(statePath) {
+        return exist.get(root, statePath)
+      },
     },
   }
 }
