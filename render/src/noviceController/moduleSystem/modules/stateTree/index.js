@@ -1,6 +1,6 @@
 import { extendObservable } from 'mobx'
 import { dump, restore } from './dump'
-import { once, getReactionCacheFn } from './once'
+import { once, getReactionCacheFn, getCacheFnFromReactionProxy } from './once'
 import { createUniqueIdGenerator, ensureArray } from '../../../../util'
 import exist from '../../exist'
 
@@ -25,7 +25,10 @@ export function initialize(initialStateTree = {}, onChange) {
   let isInitialized = false
 
   function observeRender(render, cnode, ...argv) {
-    const [result, cacheFn] = getReactionCacheFn(() => cnode.state, () => render(cnode, ...argv))
+    // TODO 先通过复用外层 reaction 的形式来解决 reaction 无法嵌套的问题，之后再说
+    const [result, cacheFn] = cnode.reaction ?
+      getCacheFnFromReactionProxy(cnode.reaction, () => cnode.state, () => render(cnode, ...argv)) :
+      getReactionCacheFn(() => cnode.state, () => render(cnode, ...argv))
     cnode.reactionCacheFn = cacheFn
     cnodesToStartReaction.add(cnode)
     return result

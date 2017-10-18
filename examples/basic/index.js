@@ -5,6 +5,9 @@ const World = {
   getDefaultState() {
     return {
       count: 0,
+      deep: {
+        count: 0,
+      },
     }
   },
   render({ state }) {
@@ -12,6 +15,7 @@ const World = {
       <div>
         <span>
           world {state.count}
+          world deep {state.deep.count}
         </span>
         <div ref="spy">1111</div>
       </div>
@@ -40,5 +44,6 @@ const controller = render((
 window.controller = controller
 
 controller.apply(() => {
-  controller.getStateTree().api.get('app.world').count = 1
+  // controller.getStateTree().api.get('app.world').count = 1
+  controller.getStateTree().api.get('app.world').deep.count = 1
 })

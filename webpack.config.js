@@ -11,6 +11,7 @@ module.exports = {
     controlled: './examples/controlled/index.js',
     lifecycle: './examples/lifecycle/index.js',
     cnodeTransferKey: './examples/cnodeTransferKey/index.js',
+    mst: './examples/mst/index.js',
   },
   output: {
     filename: '[name].js',

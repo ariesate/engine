@@ -43,7 +43,7 @@ import {
  * @param plugins
  * @returns {*}
  */
-export default function createNoviceController(initialState, initialAppearance, mods = {}) {
+export default function createNoviceController(mods = {}, initialState, initialAppearance) {
   let scheduler = null
   let view = null
   let ctree = null
@@ -217,6 +217,7 @@ export default function createNoviceController(initialState, initialAppearance, 
     getCtree: () => ctree,
     getStateTree: () => moduleSystem.instances.stateTree,
     dump() {},
+    instances: moduleSystem.instances,
     getLifecycle: () => lifecycle,
   }
 }

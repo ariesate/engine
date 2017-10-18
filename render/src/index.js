@@ -35,5 +35,3 @@ export function render(vnode, domElement, ...controllerArgv) {
 
   return controller
 }
-
-// window.pc = s => console.log(JSON.stringify(s, null, '\t'))

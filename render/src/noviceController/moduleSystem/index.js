@@ -1,6 +1,6 @@
 import { mapValues, noop, map, filter, compose } from '../../util'
 // import * as baseAppearanceMod from './modules/appearance'
-import * as stateTreeMod from './modules/stateTree'
+import * as stateTreeMod from './modules/stateTree/index'
 import * as refMod from './modules/ref'
 import * as listenerMod from './modules/listener'
 
@@ -21,8 +21,8 @@ function combineInstancesMethod(baseInstances, instances, baseMods, mods, method
 
   return (cnode, ...runtimeArgv) => {
     // TODO 可以作为缓存存在 cnode 上
-    // CAUTION 这里一定要把 base 的函数放在前面，这样就能保障后面的可以完全控制前面的
-    const runtimeFns = getRuntimeFns(involvedBaseIns, baseMods, cnode).concat(getRuntimeFns(involvedIns, mods, cnode))
+    // CAUTION 这里一定要把 base 的函数放在后面(compose 是倒序)，这样就能保障后面的可以完全控制前面的
+    const runtimeFns = getRuntimeFns(involvedIns, mods, cnode).concat(getRuntimeFns(involvedBaseIns, baseMods, cnode))
     return compose(runtimeFns)(defaultFn)(cnode, ...runtimeArgv)
   }
 }
@@ -53,11 +53,11 @@ export default function createNoviceModuleSystem(inputMods, onChange, apply, ini
     ref: refMod,
     listener: listenerMod,
     ...inputMods,
-  }, mod => ({ ...mod, argv: (mod.argv || []).concat(apply) }))
+  }, mod => ({ ...mod, argv: (mod.argv || []).concat(apply, onChange) }))
 
 
   const baseInstances = mapValues(baseMods, baseMod => baseMod.initialize(...(baseMod.argv || [])))
-  const instances = mapValues(mods, mod => mod.initialize(baseInstances, ...(mod.argv || [])))
+  const instances = mapValues(mods, mod => mod.initialize(...mod.argv))
 
   const result = mapValues(defaultFns, (defaultFn, name) => combineInstancesMethod(baseInstances, instances, baseMods, mods, name, defaultFn))
 
