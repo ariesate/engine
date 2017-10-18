@@ -6,16 +6,25 @@ export function initialize(apply) {
     initialize(next) {
       return (cnode, ...argv) => {
         next(cnode, ...argv)
-        cnode.listeners = mapValues(cnode.type.listeners, (listener) => {
-          return (...runtimeArgv) => apply(() => listener({ state: cnode.state }, ...runtimeArgv))
-        })
+        cnode.generateListeners = (injectedArgv) => {
+          return mapValues(cnode.type.listeners, (listener, name) => {
+            return (...runtimeArgv) => apply(() => {
+              listener(injectedArgv, ...runtimeArgv)
+              if (cnode.props.listeners && cnode.props.listeners[name]) {
+                cnode.props.listeners[name](injectedArgv, ...runtimeArgv)
+              }
+            })
+          })
+        }
       }
     },
+    // 这是注入到 render.
     inject(next) {
       return (cnode) => {
+        const injectedArgv = next(cnode)
         return {
-          ...next(cnode),
-          listeners: cnode.listeners,
+          ...injectedArgv,
+          listeners: cnode.generateListeners(injectedArgv),
         }
       }
     },

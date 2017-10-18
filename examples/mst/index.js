@@ -1,8 +1,7 @@
 import { createElement, render } from '@ariesate/render'
 import * as mstMod from '@ariesate/render/noviceController/moduleSystem/modules/mst'
-import { once } from '@ariesate/render/noviceController/moduleSystem/modules/stateTree/once'
 
-const { autorun, types } = mstMod
+const { types } = mstMod
 
 const World = {
   displayName: 'World',
@@ -11,9 +10,7 @@ const World = {
       count: 0,
     }
   },
-  render({ state, mst }) {
-    console.log("rendering", state, mst.count)
-    // console.log("renering", controller.instances.mst.api.root.count)
+  render({ state }) {
     return (
       <div>
         <span>
@@ -31,16 +28,16 @@ const App = {
     return (
       <div>
         <span>Hello</span>
-        <World bind="world" mapMSTToState={root => ({ count: root.count })} />
+        <World bind="world" mapMSTToState={({mst: root}) => ({ count: root.count })} />
       </div>
     )
   },
 }
 
 const modelDefs = {
-  Root: {
+  Root: types.model({
     count: types.number,
-  },
+  }),
 }
 
 const initialMSTState = {
@@ -54,16 +51,6 @@ const controller = render((
 ), document.getElementById('root'), { mst: { ...mstMod, argv: [{ rootType: 'Root', modelDefs, initialState: initialMSTState }] } })
 
 window.controller = controller
-
-autorun(() => {
-  console.log("auto run count >>>>", controller.instances.mst.api.root.count)
-})
-
-// once(() => {
-//   console.log("track once", controller.instances.mst.api.root.count)
-// }, () => {
-//   console.log("track listener fire")
-// })
 
 controller.apply(() => {
   controller.instances.mst.api.root.set('count', 2)

@@ -13,7 +13,7 @@ function combineInstancesMethod(baseInstances, instances, baseMods, mods, method
     return map(
       filter(
         currentIns,
-        (_, name) => (currentMods[name].test === undefined || currentMods[name].test(cnode)),
+        (_, name) => (currentMods[name].test === undefined || currentMods[name].test(cnode, method)),
       ),
       ins => ins[method],
     )

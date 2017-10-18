@@ -12,6 +12,7 @@ module.exports = {
     lifecycle: './examples/lifecycle/index.js',
     cnodeTransferKey: './examples/cnodeTransferKey/index.js',
     mst: './examples/mst/index.js',
+    todoMVC: './examples/todoMVC/index.js',
   },
   output: {
     filename: '[name].js',

@@ -49,6 +49,7 @@ export function initialize(initialStateTree = {}, onChange) {
       if (cnode.State !== undefined) {
         throw new Error('cnode has State Class already')
       }
+
       // TODO scope 要支持指定成上一级，比如有些布局组件，自己也有 state，但并不想把子组件数据也挂在自己下面
       // 约定 scope === 空数组时即为上一层
       const { bind = generateBind() } = cnode.props
@@ -95,6 +96,7 @@ export function initialize(initialStateTree = {}, onChange) {
       return {
         ...next(cnode),
         state: cnode.state,
+        stateTree: root,
       }
     },
     initialRender: next => (cnode, ...argv) => {
