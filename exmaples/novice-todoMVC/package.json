@@ -1,11 +1,11 @@
 {
-  "name": "@ariesate/engine",
+  "name": "@ariesate/are-exmaple-novice-todoMVC",
   "version": "0.0.1",
   "description": "you should not publish this package.",
   "main": "index.js",
+  "dependencies": {},
   "devDependencies": {
     "babel-core": "^6.26.0",
-    "babel-eslint": "^7.2.3",
     "babel-jest": "^21.0.2",
     "babel-loader": "^7.1.2",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.26.0",
@@ -14,12 +14,6 @@
     "babel-preset-stage-0": "^6.24.1",
     "classnames": "^2.2.5",
     "dom-serialize": "^2.2.1",
-    "eslint": "^4.5.0",
-    "eslint-config-airbnb": "^15.1.0",
-    "eslint-plugin-babel": "^4.1.2",
-    "eslint-plugin-import": "^2.7.0",
-    "eslint-plugin-jsx-a11y": "^6.0.2",
-    "eslint-plugin-react": "^7.3.0",
     "jest": "^21.0.2",
     "lodash": "^4.17.4",
     "webpack": "^3.5.5",
@@ -27,9 +21,8 @@
   },
   "scripts": {
     "start": "webpack-dev-server",
-    "lint": "eslint ./render/src",
-    "eslint-fix": "eslint ./render/src --fix"
+    "dev": "NODE_ENV=dev webpack-dev-server"
   },
-  "author": "ariesate@outlook.com",
+  "author": "sskyy <skyking_H@hotmail.com>",
   "license": "MIT"
 }
