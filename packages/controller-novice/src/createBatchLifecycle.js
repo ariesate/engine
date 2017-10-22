@@ -26,7 +26,7 @@ function toMethodName(constant) {
   return constant.replace(/(\.\w)/g, s => s[1].toUpperCase())
 }
 
-// just a simple dispatch
+// Simple dispatch
 const HOOKS = mapValues(HOOK_CNODE_MAP, (cnodeNamesToInvoke, HOOK_NAME) => {
   return (collection, moduleSystem) => {
     return () => {
@@ -66,14 +66,12 @@ export default function createLifecycle(moduleSystem) {
       toFlush.push(dispatch(HOOKS, name, hookArgv, moduleSystem))
     },
     startSession() {
-      // TODO 检测是否全部消费干净
       hookArgv.initialCnodes = []
       hookArgv.updateCnodes = []
       hookArgv.initialDigestedCnodes = []
       hookArgv.updateDigestedCnodes = []
     },
     endSession() {
-      // TODO 加上 try catch 防止某个组件 hook 破坏循环
       toFlush.forEach(fn => fn())
       hookArgv.initialCnodes = []
       hookArgv.updateCnodes = []

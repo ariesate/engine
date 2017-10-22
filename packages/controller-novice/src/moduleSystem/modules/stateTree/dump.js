@@ -74,7 +74,7 @@ export function dump(root, options) {
 
   serialized[key] = _dump(root, key)
 
-  // CAUTION 这样写是因为 unprocessed 会在循环中持续添加
+  // CAUTION unprocessed will be added during _dump
   /* eslint-disable no-restricted-syntax */
   for (const [obj, identifier] of unprocessed) {
   /* eslint-enable no-restricted-syntax */

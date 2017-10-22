@@ -58,7 +58,6 @@ export function initialize(initialStateTree = {}, onChange) {
       const parentGetDefaultState = (cnode.parent && cnode.parent.type.getDefaultState) ? cnode.parent.type.getDefaultState : () => ({})
       const initialStateInTree = exist.get(initialStateTree, resolveBind(cnode), {})
       // TODO need deepMerge
-      // CAUTION 无论如何，getInitialState 也要保证数据是完整的，这样运行时的数据才可以不完整，方便用户。
       const mergedInitialState = dump({
         ...cnode.type.getDefaultState(),
         ...exist.get(parentGetDefaultState(), bind, {}),

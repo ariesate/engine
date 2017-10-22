@@ -13,9 +13,6 @@ import { mapValues } from '../util'
 
 /**
  * Attach element reference to cnode.
- * @param cnode
- * @param parentNode
- * @returns {*}
  */
 function attachCnodeView(cnode, parentNode) {
   cnode.view = {
@@ -38,11 +35,8 @@ function attachCnodeView(cnode, parentNode) {
 }
 
 /**
- *
- * @param cnode
- * @param vnode
- * @param element If this argument is a string, that mean it is a cnode.
- * We need to look up child cnode to find the reference.
+ * If the third argument is a string, that mean it is a cnode ref.
+ * We need to look up child cnodes to find the reference.
  */
 function attachCnodeViewQuickRefs(cnode, vnode, element) {
   if (vnode.ref !== undefined) {
@@ -55,10 +49,10 @@ function handleInitialNaiveVnode(vnode, cnode, view, vnodeRef, currentPath, pare
 
   const element = createElement(vnode)
   parentNode.appendChild(element)
-  // save it for update
+  // Save it for update
   vnodeRef.element = element
 
-  // handle root vnode reference and vnode with `ref` attribute
+  // Save references of root vnode and vnode with `ref` attribute
   attachCnodeViewQuickRefs(cnode, vnode, element)
 
   if (vnode.children !== undefined) {
@@ -71,7 +65,6 @@ function handleInitialNaiveVnode(vnode, cnode, view, vnodeRef, currentPath, pare
 
 
 function handleInitialComponentNode(vnode, cnode, view, vnodeRef, currentPath, parentNode) {
-  // 1. 为 cnode 建立 view 信息
   const currentPathStr = vnodePathToString(currentPath)
   const nextIndex = vnode.transferKey === undefined ? currentPathStr : vnode.transferKey
   const childCnode = cnode.next[nextIndex]
@@ -97,7 +90,7 @@ export function handleInitialVnode(vnode, cnode, view, vnodesRef, parentPath, pa
 
   const currentPath = createVnodePath(vnode, parentPath)
   // vnode types:
-  // 1. text/string/null
+  // 1) text/string/null
   if (vnode.type === null) return
   if (vnode.type === String) {
     const element = view.createElement(vnode)
@@ -113,19 +106,21 @@ export function handleInitialVnode(vnode, cnode, view, vnodesRef, parentPath, pa
     /* eslint-enable no-use-before-define */
   }
 
-  // 2. normal node
+  // 2) normal node
   if (!isComponentVnode(vnode)) {
     return handleInitialNaiveVnode(vnode, cnode, view, vnodeRef, currentPath, parentNode)
   }
 
-  // 3. component node
+  // 3) component node
   if (isComponentVnode(vnode)) {
     return handleInitialComponentNode(vnode, cnode, view, vnodeRef, currentPath, parentNode)
   }
 }
 
 function handleInitialVnodeChildren(vnodes, cnode, view, vnodesRef, parentPath, parentNode) {
-  // vnodes conditions: 1. vnode children 2. vnode of array type
+  // vnodes conditions:
+  // 1) vnode children
+  // 2) vnode of array type
   vnodes.forEach((vnode, index) => {
     if (vnode.action && vnode.action.type === PATCH_ACTION_MOVE_FROM) {
       handleMoveFromPatchNode(vnode, vnodesRef, parentPath, cnode, parentNode, view)

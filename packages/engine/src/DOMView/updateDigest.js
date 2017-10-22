@@ -44,7 +44,7 @@ export function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInser
   })
 
   // Only component vnode or normal vnode can be marked as 'moveFrom',
-  // because user can only create 'key' attribute on this two types.
+  // because user can only use 'key' attribute on this two types in jsx.
   if (typeof p.type === 'string' && p.children !== undefined) {
     /* eslint-disable no-use-before-define */
     p.children = handlePatchVnodeChildren(p.children, p.element, null, createVnodePath(p, parentPath), cnode, view)
@@ -55,7 +55,8 @@ export function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInser
   return elements.length
 }
 
-// CAUTION no more handle toMove, trust moveFrom will handle every node.
+// CAUTION No more handle `toMove`, trust `moveFrom` will handle every node.
+// In dom manipulation, appendChild will  automatically detach the dom node from its original parent.
 function handleToMovePatchNode() {
 // function handleToMovePatchNode(p, parentPath, cnode, toMove) {
   // const elements = resolveFirstLayerElements([p], parentPath, cnode)
@@ -65,21 +66,21 @@ function handleToMovePatchNode() {
 }
 
 /**
- * During patch, we do not handle 'remove' type, because cnode maybe already removed
+ * Consume the patch.
+ * During the procedure, we do not handle "remove" type, because if it is component vnode,
+ * the real dom ref was attached to the cnode, but the cnode may be removed already,
  * so we can not find the right reference to remove.
- * The patch algorithm only deal type of remain/insert/moveFrom.
- * We find the remained vnode first, delete every node between them, then insert insert/moveFrom type to the right place.
- * @param patch
- * @param parentNode
- * @param parentPath
- * @param cnode
- * @param view
- * @returns {Array}
+ * The patch method only deal with type of "remain", "insert", and "moveFrom".
+ *
+ * The algorithm can be shortly described as:
+ * 1) Find the remained vnode first.
+ * 2) Delete every vnode between them.
+ * 3) Insert vnode of "insert" type and "moveFrom" type to the right place.
  */
 function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, parentPath, cnode, view) {
   const nextPatch = []
   let toInsert = view.createFragment()
-  // Save toMove to fragment for later check if algorithm runs right.
+  // Save "toMove" type vnode to a fragment for later check if the algorithm is right.
   const toMove = view.createFragment()
   let currentLastStableSiblingNode = lastStableSiblingNode
 
@@ -95,7 +96,7 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
     } else if (p.action.type === PATCH_ACTION_REMOVE) {
       handleRemovePatchNode(p, parentPath, { next: cnode.toDestroyPatch }, parentNode)
     } else if (p.action.type === PATCH_ACTION_REMAIN) {
-      // Handle toInsert first
+      // Handle "toInsert" type first
       const toInsertBefore = currentLastStableSiblingNode === null ? parentNode.childNodes[0] : currentLastStableSiblingNode.nextSibling
       if (toInsert.childNodes.length !== 0) {
         currentLastStableSiblingNode = toInsert.childNodes[toInsert.childNodes.length - 1]
@@ -103,9 +104,9 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
         toInsert = view.createFragment()
       }
 
-      // Only condition of 'p.type === Array' needs previousSibling
+      // Only "p.type === Array" condition needs previousSibling
       handleRemainPatchNode(p, nextPatch, parentNode, currentLastStableSiblingNode, parentPath, cnode, view)
-      // find last element in patch node to update currentLastStableSiblingNode
+      // Find last element in patch node to update currentLastStableSiblingNode
       const lastElement = resolveLastElement(p, parentPath, cnode)
       if (lastElement) {
         currentLastStableSiblingNode = lastElement
@@ -128,7 +129,7 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
 // updateDigest only handle one cnode and its new child cnodes.
 export default function updateDigest(cnode, view) {
   cnode.patch = handlePatchVnodeChildren(cnode.patch, cnode.view.parentNode, null, [], cnode, view)
-  // CAUTION toDestroyPatch should be reset update digest.
+  // CAUTION toDestroyPatch should be reset after update digest.
   cnode.toDestroyPatch = {}
   view.collectUpdateDigestedCnode(cnode)
 }

@@ -19,7 +19,7 @@ function defineProxyValue(obj, key, mstState, state) {
 }
 
 function createStateProxy(mstState, state) {
-  // TODO 处理几层？
+  // TODO recursive?
   const proxyState = {}
   each(state, (value, key) => {
     defineProxyValue(proxyState, key, mstState, state)
@@ -82,7 +82,7 @@ export function initialize({ rootType, modelDefs = {}, initialState = {} }, appl
     inject: next => (cnode) => {
       const originInjectArgv = next(cnode)
       if (!cnode.reaction) return { ...originInjectArgv, mst: root }
-      // CAUTION only inject in re-render
+      // CAUTION Only inject in re-render
       const mstState = cnode.props.mapMSTToState({ ...originInjectArgv, mst: root })
       const state = createStateProxy(mstState, cnode.state)
       return {

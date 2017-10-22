@@ -4,7 +4,6 @@ import * as stateTreeMod from './modules/stateTree/index'
 import * as refMod from './modules/ref'
 import * as listenerMod from './modules/listener'
 
-
 function combineInstancesMethod(baseInstances, instances, baseMods, mods, method, defaultFn) {
   const involvedBaseIns = filter(baseInstances, i => i[method] !== undefined)
   const involvedIns = filter(instances, i => i[method] !== undefined)
@@ -20,7 +19,7 @@ function combineInstancesMethod(baseInstances, instances, baseMods, mods, method
   }
 
   return (cnode, ...runtimeArgv) => {
-    // TODO may be stored in cnode as a cache
+    // TODO May stored the functions in cnode as a cache
     // CAUTION compose if LIFO, so we need to put base functions at the end.
     const runtimeFns = getRuntimeFns(involvedIns, mods, cnode).concat(getRuntimeFns(involvedBaseIns, baseMods, cnode))
     return compose(runtimeFns)(defaultFn)(cnode, ...runtimeArgv)

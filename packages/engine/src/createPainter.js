@@ -1,17 +1,16 @@
 /**
  * Variable Name Convention
- * cnode: component tree node, see function `createCnode` from attributes.
- * ret: return value of render method.
- * patch: vnode diff result, it tells view how to handle real dom.
+ * cnode: Component tree node. See function `createCnode` from attributes.
+ * ret: The return value of render method. It is always a array of vnode.
+ * patch: Vnode diff result, it tells view how to handle real dom.
  *
- * Description Of Painter
- * Painter is the exact object to handle cnode's painting.
- * It only handle one cnode. For recursive painting, it needs
- * scheduler to call its handle method from outside.
+ * Painter handles the actual cnode painting work.
+ * It only paint one cnode at a time. For recursive painting,
+ * it needs a scheduler to call its handle method from outside.
  *
- * The painting result consist of tow parts:
- *  1. vnode diff result(we use "patch" as variable name)
- *  2. child cnodes(we use "next" as variable name)
+ * The painting result consists of tow parts:
+ * 1) patch: vnode diff result.
+ * 2) next: child cnodes.
  *
  * We also implement a new feature called 'transfer key'.
  * It allow user to appoint which child cnode should be reused,
@@ -41,12 +40,11 @@ import {
 } from './constant'
 
 /**
- * The creator of cnode.
  * @param vnode
  * @param parent Parent cnode.
- * @returns {{type: object, props: object, children: vnode, parent: cnode}}
+ * @returns {{type: Object, props: Object, children: Vnode, parent: Cnode}}
  */
-function createCnode(vnode, parent) {
+export function createCnode(vnode, parent) {
   return {
     type: vnode.type,
     props: vnode.attributes || {},
@@ -56,14 +54,11 @@ function createCnode(vnode, parent) {
 }
 
 /**
- *  Three things:
- *   1. Normalize the return value of render method,
- *   attach key to every vnode, so out diff algorithm can be simpler.
- *   2. Calculate child cnode, return as `next`.
- *   3. Collect vnodes with transfer key.
- * @param ret
- * @param cnode
- * @returns {{next: {}, ret: *}}
+ *  Generate 3 elemental parts for diff algorithm to use.
+ *  1) Normalized return value of render method,
+ *  with key attached to **every** vnode, so diff algorithm can be simpler.
+ *   2. Calculated child cnodes, returned as `next`.
+ *   3. Vnodes with transfer key.
  */
 function prepareRetForAttach(ret, cnode) {
   const next = {}
@@ -88,11 +83,13 @@ function prepareRetForAttach(ret, cnode) {
 }
 
 /**
- * The actual entry point to handle cnode.
- * This method is used to handle new cnode.
+ * The actual entry point to handle new cnode.
+ *
  * @param cnode
- * @param renderer The object to call render method, it can inject arguments.
- * @returns {{}} The child cnodes.
+ * @param renderer The collection of render method invoker, passed in by controller,
+ * expected to return the render result which is a array of vnode.
+ * Controller may inject extra arguments into render.
+ * @returns {{ toInitialize: Object }} The child cnodes to initialize.
  */
 function initialize(cnode, renderer) {
   const specificRenderer = cnode.parent === undefined ? renderer.rootRender : renderer.initialRender
@@ -110,10 +107,7 @@ function initialize(cnode, renderer) {
  ****************************** */
 
 /**
- * Diff the detail of two vnode
- * @param lastVnode
- * @param vnode
- * @returns {*}
+ * Diff the detail of two vnode.
  */
 function diffNodeDetail(lastVnode, vnode) {
   if (lastVnode.type === String && lastVnode.value !== vnode.value) {
@@ -122,7 +116,7 @@ function diffNodeDetail(lastVnode, vnode) {
     }
   }
 
-  // TODO Improve performance. Maybe only a style changed.
+  // TODO Improve performance. Maybe only a style rule changed.
   if (!deepEqual(lastVnode.attributes, vnode.attributes)) {
     return {
       attributes: vnode.attributes,
@@ -131,13 +125,9 @@ function diffNodeDetail(lastVnode, vnode) {
 }
 
 /**
- * Patch or PatchNode is a vnode style object, with a additional key `action`.
+ * Patch(PatchNode) is a vnode style object, with a additional key `action`.
  * The action type indicates that the new vnode should be insert/remain/remove
- * from last vnode tree.
- * @param lastVnode
- * @param vnode
- * @param actionType
- * @returns {{action: {type: *}}}
+ * from the parent vnode.
  */
 function createPatchNode(lastVnode = {}, vnode, actionType) {
   return {
@@ -150,15 +140,8 @@ function createPatchNode(lastVnode = {}, vnode, actionType) {
 }
 
 /**
- * If the diff algorithm tells this vnode is new, then we need this method to handle its children.
- * We need to check if there is new cnode, or cnode with transfer key, and attach the result
- * to `toInitialize` adn `toRemain`.
- * @param vnode
- * @param currentPath
- * @param patch
- * @param toInitialize
- * @param toRemain
- * @param cnode
+ * Handle new vnode. A new vnode is a vnode with key(transferKey) that do not exist in last render result.
+ * This method was used to create patchNode for new vnode, and recursively find cnode in its descendants.
  */
 function handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain, cnode) {
   patch.push(createPatchNode({}, vnode, PATCH_ACTION_INSERT))
@@ -170,8 +153,8 @@ function handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain
       if (isComponentVnode(childVnode)) {
         const nextIndex = childVnode.transferKey === undefined ? vnodePathToString(currentPath.concat(vnodePath)) : childVnode.transferKey
 
-        // because current vnode is a new vnode, so its child remains under only one
-        // condition, that is having a transferKey.
+        // Because current vnode is a new vnode,
+        // so its child vnode patch action will have "remain" type only if it has a transferKey
         if (childVnode.transferKey !== undefined && cnode.next[nextIndex] !== undefined) {
           toRemain[nextIndex] = cnode.next[nextIndex]
           if (childVnode.transferKey !== undefined) {
@@ -192,25 +175,14 @@ function handleRemovePatchNode(lastVnode, patch) {
 }
 
 /**
- * If a vnode changed place between its siblings, we use this method to mark it.
- * @param lastVnode
- * @param patch
+ * If a vnode's position changed from last time, we use this method to mark it.
  */
 function handleToMovePatchNode(lastVnode, patch) {
   patch.push(createPatchNode(lastVnode, {}, PATCH_ACTION_TO_MOVE))
 }
 
 /**
- * If a vnode should remain, we use this method to (recursively) handle its children.
- * @param lastVnode
- * @param vnode
- * @param actionType
- * @param currentPath
- * @param cnode
- * @param patch
- * @param toInitialize
- * @param toRemain
- * @param nextTransferKeyedVnodes
+ * If a vnode remains the same position, we use this method to (recursively) handle its children.
  */
 function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, currentPath, cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes) {
   const patchNode = createPatchNode(lastVnode, vnode, actionType)
@@ -233,13 +205,14 @@ function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, currentPat
 }
 
 /**
- * The entry point to create a vnode patch, and new child cnodes information.
- * @param lastVnodes
- * @param vnodes
- * @param parentPath
- * @param cnode
- * @param nextTransferKeyedVnodes
- * @returns {{toInitialize: {}, toRemain: {}, patch: Array}}
+ * The entry point to create a vnode patch, and collect new child cnodes information.
+ * This method is the core of diff algorithm. It used key and transferKey to track vnodes.
+ * The different between key and transfer key is that, we only track key in its siblings,
+ * but track transfer key in the render result.
+ * Another important thing need to be illustrated is that, this method can also compare
+ * last patch to current render result. In this circumstance, the returned patch represent
+ * the difference between current result and the result before last patch.
+ * With this feature, users can skip real dom manipulation for request like performance concern, etc..
  */
 function createPatch(lastVnodes, vnodes, parentPath, cnode, nextTransferKeyedVnodes) {
   const toRemain = {}
@@ -255,6 +228,7 @@ function createPatch(lastVnodes, vnodes, parentPath, cnode, nextTransferKeyedVno
 
   let counter = 0
 
+  // Use a loop to compare last vnodes and current vnodes one by one.
   while (vnodesIndex < vnodesLen || lastVnodesIndex < lastVnodesLen) {
     counter += 1
     if (counter === DEV_MAX_LOOP) { throw new Error(`patch loop over ${DEV_MAX_LOOP} times.`) }
@@ -262,18 +236,18 @@ function createPatch(lastVnodes, vnodes, parentPath, cnode, nextTransferKeyedVno
     const lastVnode = lastVnodes[lastVnodesIndex]
     const vnode = vnodes[vnodesIndex]
 
-    // Handle transferKey first. Only component vnode can have transferKey.
+    // Handle transferKey first. Only component vnode may have transferKey.
     if (lastVnode !== undefined &&
       isComponentVnode(lastVnode) &&
       lastVnode.transferKey !== undefined
     ) {
-      // If it no more exist
+      // If current lastVnode transferKey not exist anymore
       if (nextTransferKeyedVnodes[lastVnode.transferKey] === undefined) {
         handleRemovePatchNode(lastVnode, patch)
         lastVnodesIndex += 1
         continue
       }
-      // If it still exist and vnode have the same type, we mark it as to remain。
+      // If it still exist and current vnode have the same type, we mark it as "remain".
       if (vnode !== undefined && vnode.type === lastVnode.type && vnode.transferKey === lastVnode.transferKey) {
         handleRemainLikePatchNode(lastVnode, vnode, PATCH_ACTION_REMAIN, [getVnodeNextIndex(vnode)], cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes)
         lastVnodesIndex += 1
@@ -292,21 +266,21 @@ function createPatch(lastVnodes, vnodes, parentPath, cnode, nextTransferKeyedVno
       vnode.transferKey !== undefined
     ) {
       if (cnode.next[vnode.transferKey] === undefined) {
-        // If it is new
+        // If it is new vnode
         handleInsertPatchNode(vnode, [getVnodeNextIndex(vnode)], patch, toInitialize, toRemain, cnode)
       } else {
-        // If it is not, mark it as `moveFrom`
+        // If it is not new, it must be transferred from somewhere. Mark it as `moveFrom`
         handleRemainLikePatchNode(cnode.transferKeyedVnodes[vnode.transferKey], vnode, PATCH_ACTION_MOVE_FROM, [getVnodeNextIndex(vnode)], cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes)
       }
 
-      // We have handled the `lastVnode === vnode` condition before, so we continue here
+      // jump the condition of `lastVnode === vnode`, because we dealt with it before
       vnodesIndex += 1
       continue
     }
 
-    // All condition with transferKey have been handled before, now we handle normal key diff.
+    // All conditions of transferKey have been handled, now we handle normal key diff.
     // Handle boundary conditions first.
-    // 1. vnodes exceeds range
+    // 1) vnodes runs out.
     if (!(vnodesIndex < vnodesLen)) {
       if (lastVnode.action === undefined || lastVnode.action.type !== PATCH_ACTION_INSERT) {
         handleRemovePatchNode(lastVnode, patch)
@@ -316,7 +290,7 @@ function createPatch(lastVnodes, vnodes, parentPath, cnode, nextTransferKeyedVno
     }
 
     const currentPath = createVnodePath(vnode, parentPath)
-    // 2. lastVnodes exceeds range
+    // 2) lastVnodes runs out.
     if (!(lastVnodesIndex < lastVnodesLen)) {
       const correspondingLastVnode = lastVnodesIndexedByKey[vnode.key]
       if (correspondingLastVnode !== undefined && correspondingLastVnode.type === vnode.type) {
@@ -329,8 +303,9 @@ function createPatch(lastVnodes, vnodes, parentPath, cnode, nextTransferKeyedVno
       continue
     }
 
+    // Both lastVnode and vnode exists.
     const { action = { type: PATCH_ACTION_REMAIN } } = lastVnode
-    // 1. remove + remove = remove
+    // 1) remove + remove = remove
     if (action.type === PATCH_ACTION_REMOVE) {
       patch.push(lastVnode)
       lastVnodesIndex += 1
@@ -338,10 +313,10 @@ function createPatch(lastVnodes, vnodes, parentPath, cnode, nextTransferKeyedVno
     }
 
     // Only insert/to_move/remain left now.
-    // 2. If key not exist anymore, vnode should be removed.
+    // 2) If last vnode not exist anymore, we need to remove it.
     // If the lastVnode was marked as `insert`,
-    // that means real dom has not been inserted,
-    // we just continue.
+    // that means the real dom has not been inserted,
+    // so we just skip it.
     if (!vnodeKeys.includes(lastVnode.key)) {
       if (action.type !== PATCH_ACTION_INSERT) {
         handleRemovePatchNode(lastVnode, patch)
@@ -350,22 +325,20 @@ function createPatch(lastVnodes, vnodes, parentPath, cnode, nextTransferKeyedVno
       continue
     }
 
-    // The left condition is vnode key still exist.
-    // If vnode.key is totally new
+    // If current vnode is new.
     if (!lastVnodeKeys.includes(vnode.key)) {
       handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain, cnode)
       vnodesIndex += 1
       continue
     }
 
-    // If vnode.key remains
-    // If same key
+    // If lastVnode and vnode has the same key.
     if (vnode.key === lastVnode.key) {
-      // different type, then we remove the old, insert the new.
+      // 1) different type, then we remove the old, insert the new.
       if (vnode.type !== lastVnode.type) {
         handleRemovePatchNode(lastVnode, patch)
         handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain, cnode)
-        // same type
+        // 2) same type
       } else {
         handleRemainLikePatchNode(lastVnode, vnode, PATCH_ACTION_REMAIN, currentPath, cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes)
       }
@@ -386,13 +359,7 @@ function createPatch(lastVnodes, vnodes, parentPath, cnode, nextTransferKeyedVno
 }
 
 /**
- * The entry point of diffing the last patch(return value) and the new return value.
- * @param lastVnodesOrPatch
- * @param vnodes
- * @param parentPath
- * @param cnode
- * @param nextTransferKeyedVnodes
- * @returns {{toInitialize: {}, toRemain: {}, toDestroy: {}, patch: Array, toDestroyPatch: {}}}
+ * The entry point of diffing the last patch and the new return value.
  */
 function diff(lastVnodesOrPatch, vnodes, parentPath, cnode, nextTransferKeyedVnodes) {
   const lastNext = { ...cnode.next }
@@ -409,6 +376,7 @@ function diff(lastVnodesOrPatch, vnodes, parentPath, cnode, nextTransferKeyedVno
 
   const lastToDestroyPatch = cnode.toDestroyPatch || {}
   // CAUTION Maybe last patch have not been consumed, so we need to keep its info.
+  // `lastToDestroyPatch` contains the real dom reference to remove.
   const toDestroyPatch = { ...lastNext, ...lastToDestroyPatch }
 
   return { toInitialize, toRemain, toDestroy: lastNext, patch: result.patch, toDestroyPatch }
@@ -417,9 +385,6 @@ function diff(lastVnodesOrPatch, vnodes, parentPath, cnode, nextTransferKeyedVno
 
 /**
  * The entry point of updating a rendered cnode.
- * @param cnode
- * @param renderer
- * @returns {{}}
  */
 function update(cnode, renderer) {
   const render = renderer.updateRender
@@ -433,7 +398,7 @@ function update(cnode, renderer) {
   cnode.next = { ...diffResult.toInitialize, ...diffResult.toRemain }
   cnode.transferKeyedVnodes = transferKeyedVnodes
 
-  // toDestroyPatch indicate which cnode no more exist.
+  // `toDestroyPatch` indicate which cnode no more exist.
   cnode.toDestroyPatch = diffResult.toDestroyPatch
   return diffResult
 }
@@ -442,12 +407,6 @@ function update(cnode, renderer) {
  * Diff Algorithm Functions Ends
  ***************************** */
 
-/**
- *
- * @param backgroundArgv
- * @param renderer
- * @returns {{handle: handle }}
- */
 export default function createPainter(renderer) {
   function handle(cnode) {
     return (cnode.ret === undefined) ?
@@ -457,5 +416,6 @@ export default function createPainter(renderer) {
 
   return {
     handle,
+    createCnode,
   }
 }

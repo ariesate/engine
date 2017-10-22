@@ -16,8 +16,6 @@ import {
 /**
  * Controller is the backbone to assemble scheduler, painter and view.
  * The module system and lifecycle is provided by Novice controller, not the engine.
- * @param plugins
- * @returns {*}
  */
 export default function createNoviceController(mods = {}, initialState, initialAppearance) {
   let scheduler = null
@@ -53,7 +51,7 @@ export default function createNoviceController(mods = {}, initialState, initialA
   }
 
   function updateDigest() {
-    // CAUTION view digest can be debounced, out DOM view digest algorithm support this feature.
+    // CAUTION View digest can be debounced with DOM view digest algorithm support.
     cnodesToDigest.forEach((currentCnode) => {
       view.updateDigest(currentCnode)
     })
@@ -152,8 +150,8 @@ export default function createNoviceController(mods = {}, initialState, initialA
       intercept(result) {
         const { toInitialize, toDestroy = {} } = result
         walkCnodes(Object.values(toDestroy), moduleSystem.destroy)
-        // CAUTION Notice that in Novice, we only render new cnode during repaint,
-        // that meas unlike React, we do not recursively re-render component children.
+        // CAUTION Unlike React, Novice only render new cnode during repaint,
+        // while React recursively re-render child components.
         return toInitialize
       },
     },
