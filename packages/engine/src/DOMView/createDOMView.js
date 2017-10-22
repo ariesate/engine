@@ -5,7 +5,7 @@ import { partialRight } from '../util'
 
 export default function createDOMRenderer({ invoke, collectInitialDigestedCnode, collectUpdateDigestedCnode }, rootDomElement) {
   const view = {
-    // TODO 暂时不支持 svg
+    // CAUTION svg not support yet
     createElement: partialRight(createElement, false, invoke),
     updateElement: partialRight(updateElement, invoke),
     createFragment() {

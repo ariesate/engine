@@ -2,7 +2,6 @@ import { Reaction } from 'mobx'
 import exist from '../../exist'
 
 function createCache(getObservable, observing) {
-  // TODO 深度的name 确定有？
   const keys = observing.map(o => o.name)
   return function cache() {
     const observable = getObservable()

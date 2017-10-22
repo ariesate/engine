@@ -10,7 +10,6 @@ import {
 
 function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, parentPath, cnode, view) {
   nextPatch.push(p)
-  // 组件不继续递归，我们只处理一层
   if (typeof p.type === 'object') return
 
   if (p.type === Array) {
@@ -44,8 +43,8 @@ export function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInser
     toInsert.appendChild(ele)
   })
 
-  // move from 的，只可能是 component 或者原生 dom。因为只有这上面能写 key。
-  // component 的不递归处理
+  // Only component vnode or normal vnode can be marked as 'moveFrom',
+  // because user can only create 'key' attribute on this two types.
   if (typeof p.type === 'string' && p.children !== undefined) {
     /* eslint-disable no-use-before-define */
     p.children = handlePatchVnodeChildren(p.children, p.element, null, createVnodePath(p, parentPath), cnode, view)
@@ -56,10 +55,9 @@ export function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInser
   return elements.length
 }
 
+// CAUTION no more handle toMove, trust moveFrom will handle every node.
 function handleToMovePatchNode() {
 // function handleToMovePatchNode(p, parentPath, cnode, toMove) {
-  // CAUTION 不再处理 toMove, 因为加入了 transfer 的情况，不确定
-  // moveFrom 会不会在 toMove 前处理，如果会，那么 toMove 再处理就错了
   // const elements = resolveFirstLayerElements([p], parentPath, cnode)
   // elements.forEach((ele) => {
   //   toMove.appendChild(ele)
@@ -67,8 +65,10 @@ function handleToMovePatchNode() {
 }
 
 /**
- * 由于 destroy 的 cnode 会在 ctree 上被释放掉，所以在 remove 的时候如果碰到这种情况情况就无法准确的找到要移除的 dom 了。
- * 所以我们的算法是：找到 remain 的节点，把 remain 节点和上一个 remain 之间的全部删掉，在拆入中间要 moveFrom 或者新建的。
+ * During patch, we do not handle 'remove' type, because cnode maybe already removed
+ * so we can not find the right reference to remove.
+ * The patch algorithm only deal type of remain/insert/moveFrom.
+ * We find the remained vnode first, delete every node between them, then insert insert/moveFrom type to the right place.
  * @param patch
  * @param parentNode
  * @param parentPath
@@ -79,9 +79,7 @@ function handleToMovePatchNode() {
 function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, parentPath, cnode, view) {
   const nextPatch = []
   let toInsert = view.createFragment()
-  // 这里用 fragment 用来保存 toMove 的 dom 引用，主要是因为
-  // 如果 dom 被 move from 处理了，那么 dom 会自动从 fragment 中被去掉。
-  // 最后检查一下 fragment 就可以值到算法有没有出错。
+  // Save toMove to fragment for later check if algorithm runs right.
   const toMove = view.createFragment()
   let currentLastStableSiblingNode = lastStableSiblingNode
 
@@ -97,7 +95,7 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
     } else if (p.action.type === PATCH_ACTION_REMOVE) {
       handleRemovePatchNode(p, parentPath, { next: cnode.toDestroyPatch }, parentNode)
     } else if (p.action.type === PATCH_ACTION_REMAIN) {
-      // 先处理掉 toInsert 的
+      // Handle toInsert first
       const toInsertBefore = currentLastStableSiblingNode === null ? parentNode.childNodes[0] : currentLastStableSiblingNode.nextSibling
       if (toInsert.childNodes.length !== 0) {
         currentLastStableSiblingNode = toInsert.childNodes[toInsert.childNodes.length - 1]
@@ -105,9 +103,9 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
         toInsert = view.createFragment()
       }
 
-      // 好像只针对 p.type === Array 这种情况要 previousSibling，其他都不用
+      // Only condition of 'p.type === Array' needs previousSibling
       handleRemainPatchNode(p, nextPatch, parentNode, currentLastStableSiblingNode, parentPath, cnode, view)
-      // 还要找到 p 中最后一个 ele, 更新 currentLastStableSiblingNode
+      // find last element in patch node to update currentLastStableSiblingNode
       const lastElement = resolveLastElement(p, parentPath, cnode)
       if (lastElement) {
         currentLastStableSiblingNode = lastElement
@@ -127,10 +125,10 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
   return nextPatch
 }
 
-// 我们提供的 updateDigest 始终只处理一个 cnode 以及下面新建的 cnode。
+// updateDigest only handle one cnode and its new child cnodes.
 export default function updateDigest(cnode, view) {
   cnode.patch = handlePatchVnodeChildren(cnode.patch, cnode.view.parentNode, null, [], cnode, view)
-  // 消费过一次就清空
+  // CAUTION toDestroyPatch should be reset update digest.
   cnode.toDestroyPatch = {}
   view.collectUpdateDigestedCnode(cnode)
 }

@@ -7,7 +7,7 @@ export function isComponent(n) {
 
 const createUniqueVnodeName = createUniqueIdGenerator('C')
 
-// CAUTION 注意此函数有副作用，会给没有 displayName 的组件自动加上
+// CAUTION Side effects here. DisplayName will be generated if it is undefined.
 export function getVnodeType(vnode) {
   if (vnode.type === null) return 'null'
   if (vnode.type === Array) return 'Array'

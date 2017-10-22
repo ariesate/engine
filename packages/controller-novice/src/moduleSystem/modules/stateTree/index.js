@@ -6,7 +6,7 @@ import exist from '../../exist'
 
 function createStateClass(type, getInitialState) {
   const StateNodeClass = function (currentState) {
-    // TODO 可以把 reset 之类的函数增加到这个上面？
+    // TODO add reset function?
     extendObservable(this, { ...getInitialState(), ...currentState })
   }
   StateNodeClass.displayName = type.displayName
@@ -25,7 +25,7 @@ export function initialize(initialStateTree = {}, onChange) {
   let isInitialized = false
 
   function observeRender(render, cnode, ...argv) {
-    // TODO 先通过复用外层 reaction 的形式来解决 reaction 无法嵌套的问题，之后再说
+    // TODO use outer reaction because mobx reaction can not be nested.
     const [result, cacheFn] = cnode.reaction ?
       getCacheFnFromReactionProxy(cnode.reaction, () => cnode.state, () => render(cnode, ...argv)) :
       getReactionCacheFn(() => cnode.state, () => render(cnode, ...argv))
@@ -35,7 +35,6 @@ export function initialize(initialStateTree = {}, onChange) {
   }
 
   function afterSession() {
-    // CAUTION 先不管是哪个 session， 只要执行过， initialized 肯定是 true
     isInitialized = true
     cnodesToStartReaction.forEach((cnode) => {
       once(cnode.reactionCacheFn, () => onChange([cnode]))
@@ -50,20 +49,15 @@ export function initialize(initialStateTree = {}, onChange) {
         throw new Error('cnode has State Class already')
       }
 
-      // TODO scope 要支持指定成上一级，比如有些布局组件，自己也有 state，但并不想把子组件数据也挂在自己下面
-      // 约定 scope === 空数组时即为上一层
+      // TODO need to support scope lift up.
+      // Layout component may not want to attach child component state in its own state.
       const { bind = generateBind() } = cnode.props
       if (cnode.type.getDefaultState === undefined) cnode.type.getDefaultState = () => ({})
 
-      // CAUTION 这里一定要这样判断，因为 parent 可能是 root, 没有经过 initialize，没有 getDefaultState
-      // state 的数据需要三个参数:
-      // defaultState: 来自于自己的 type
-      // initialState: 来自与 父组件 defaultState 中, initialStateTree
-      // 当前值: 如果当前 isInitialized 为 true, 那么么当前 tree 上的就是运行时数据，否则用 initialStateTree 上的值做当前值。
-      // 现在的问题是，由于运行时的数据也是直接在
+      // CAUTION cnode may not have parent.
       const parentGetDefaultState = (cnode.parent && cnode.parent.type.getDefaultState) ? cnode.parent.type.getDefaultState : () => ({})
       const initialStateInTree = exist.get(initialStateTree, resolveBind(cnode), {})
-      // TODO 要 deepMerge
+      // TODO need deepMerge
       // CAUTION 无论如何，getInitialState 也要保证数据是完整的，这样运行时的数据才可以不完整，方便用户。
       const mergedInitialState = dump({
         ...cnode.type.getDefaultState(),
@@ -77,11 +71,11 @@ export function initialize(initialStateTree = {}, onChange) {
 
       const state = new cnode.State(currentState)
 
-      // CAUTION 这里有副作用
+      // CAUTION Side effects.
       cnode.state = state
       exist.set(cnode.parent.state || root, bind, state)
     },
-    // CAUTION 由于是主动式的写，因此我们不再对数据进行补全，用户要自己注意。
+    // CAUTION User need to handle state right. We do not validate state anymore.
     // update() {
     //
     // }

@@ -1,7 +1,6 @@
 import { mapValues } from '../../util'
 
 export function initialize(apply) {
-  // 默认 mod 都没有更新能力，一定要通过操作 stateTree 和 appearance 来更新
   return {
     initialize(next) {
       return (cnode, ...argv) => {
@@ -18,7 +17,7 @@ export function initialize(apply) {
         }
       }
     },
-    // 这是注入到 render.
+    // inject to render.
     inject(next) {
       return (cnode) => {
         const injectedArgv = next(cnode)

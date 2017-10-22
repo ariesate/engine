@@ -20,8 +20,8 @@ function combineInstancesMethod(baseInstances, instances, baseMods, mods, method
   }
 
   return (cnode, ...runtimeArgv) => {
-    // TODO 可以作为缓存存在 cnode 上
-    // CAUTION 这里一定要把 base 的函数放在后面(compose 是倒序)，这样就能保障后面的可以完全控制前面的
+    // TODO may be stored in cnode as a cache
+    // CAUTION compose if LIFO, so we need to put base functions at the end.
     const runtimeFns = getRuntimeFns(involvedIns, mods, cnode).concat(getRuntimeFns(involvedBaseIns, baseMods, cnode))
     return compose(runtimeFns)(defaultFn)(cnode, ...runtimeArgv)
   }

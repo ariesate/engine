@@ -17,8 +17,7 @@ function normalizeChildren(rawChildren) {
 }
 
 /**
- * 合法的 children 类型: null/array/string/number/VNode
- * @param type
+ * @param type {Null|Array|String|Number|VNode}
  * @param attributes
  * @param rawChildren
  * @returns {VNode}

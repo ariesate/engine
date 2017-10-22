@@ -14,7 +14,6 @@ function setProperty(node, name, value) {
   }
 }
 
-// TODO 要不要 synthetic event?
 function eventProxy(e) {
   return this._listeners[e.type](e)
 }

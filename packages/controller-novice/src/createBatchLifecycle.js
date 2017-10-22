@@ -26,7 +26,7 @@ function toMethodName(constant) {
   return constant.replace(/(\.\w)/g, s => s[1].toUpperCase())
 }
 
-// 这里的 hooks 只是简单的分发，没有对任何一个 hook 做特殊处理
+// just a simple dispatch
 const HOOKS = mapValues(HOOK_CNODE_MAP, (cnodeNamesToInvoke, HOOK_NAME) => {
   return (collection, moduleSystem) => {
     return () => {
@@ -93,6 +93,5 @@ export default function createLifecycle(moduleSystem) {
     collectUpdateDigestedCnodes(cnode) {
       hookArgv.updateDigestedCnodes.push(cnode)
     },
-    // TODO 为 debug 导出工具函数
   }
 }
