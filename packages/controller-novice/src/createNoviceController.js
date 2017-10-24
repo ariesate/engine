@@ -70,10 +70,10 @@ export default function createNoviceController(mods = {}, initialState, initialA
     moduleSystem.startInitialSession(() => {
       inSession = true
       lifecycle.startSession()
-      lifecycle.invoke(HOOK_BEFORE_PAINT)
+      lifecycle.invoke(HOOK_BEFORE_PAINT, true)
       ctree = scheduler.paint(vnode)
       lifecycle.invoke(HOOK_AFTER_PAINT)
-      lifecycle.invoke(HOOK_BEFORE_INITIAL_DIGEST)
+      lifecycle.invoke(HOOK_BEFORE_INITIAL_DIGEST, true)
       view.initialDigest(ctree)
       collect(() => {
         lifecycle.invoke(HOOK_AFTER_INITIAL_DIGEST)
@@ -99,11 +99,11 @@ export default function createNoviceController(mods = {}, initialState, initialA
           /* eslint-disable no-loop-func */
           collect(() => {
             currentSession()
-            lifecycle.invoke(HOOK_BEFORE_REPAINT)
+            lifecycle.invoke(HOOK_BEFORE_REPAINT, true)
           })
           repaint()
           lifecycle.invoke(HOOK_AFTER_REPAINT)
-          lifecycle.invoke(HOOK_BEFORE_UPDATE_DIGEST)
+          lifecycle.invoke(HOOK_BEFORE_UPDATE_DIGEST, true)
           updateDigest()
           collect(() => {
             lifecycle.invoke(HOOK_AFTER_UPDATE_DIGEST)

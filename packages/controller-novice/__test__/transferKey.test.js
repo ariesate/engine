@@ -15,13 +15,14 @@ const Basic = {
   getDefaultState() {
     return {
       count: initialCount,
+      sub: {},
     }
   },
   render({ state }) {
     if (state.count) {
       return (
         <div>
-          <Sub transferKey="sub" />
+          <Sub transferKey="sub" bind="sub" />
         </div>
       )
     }
@@ -29,7 +30,7 @@ const Basic = {
     return (
       <div>
         <div>
-          <Sub transferKey="sub" />
+          <Sub transferKey="sub" bind="sub" />
         </div>
       </div>
     )

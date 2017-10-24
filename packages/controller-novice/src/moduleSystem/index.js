@@ -42,9 +42,9 @@ const defaultFns = {
   afterLifecycle: noop,
 }
 
-export default function createNoviceModuleSystem(inputMods, onChange, apply, initialState = {}) {
+export default function createNoviceModuleSystem(inputMods, onChange, apply) {
   const baseMods = {
-    stateTree: { ...stateTreeMod, argv: [initialState, onChange] },
+    stateTree: { ...stateTreeMod, argv: [onChange] },
     // appearance: { ...baseAppearanceMod, argv: [initialAppearance, onChange] },
   }
 

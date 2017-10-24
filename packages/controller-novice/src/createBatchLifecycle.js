@@ -12,12 +12,12 @@ import {
 import { mapValues } from './util'
 
 const HOOK_CNODE_MAP = {
-  [HOOK_BEFORE_PAINT]: ['initialCnodes'],
-  [HOOK_AFTER_PAINT]: ['initialCnodes'],
+  [HOOK_BEFORE_PAINT]: ['initializedCnodes'],
+  [HOOK_AFTER_PAINT]: ['initializedCnodes'],
   [HOOK_BEFORE_INITIAL_DIGEST]: ['initialDigestedCnodes'],
   [HOOK_AFTER_INITIAL_DIGEST]: ['initialDigestedCnodes'],
-  [HOOK_BEFORE_REPAINT]: ['initialCnodes', 'updateCnodes'],
-  [HOOK_AFTER_REPAINT]: ['initialCnodes', 'updateCnodes'],
+  [HOOK_BEFORE_REPAINT]: ['initializedCnodes', 'updatedCnodes'],
+  [HOOK_AFTER_REPAINT]: ['initializedCnodes', 'updatedCnodes'],
   [HOOK_BEFORE_UPDATE_DIGEST]: ['initialDigestedCnodes', 'updateDigestedCnodes'],
   [HOOK_AFTER_UPDATE_DIGEST]: ['initialDigestedCnodes', 'updateDigestedCnodes'],
 }
@@ -28,12 +28,12 @@ function toMethodName(constant) {
 
 // Simple dispatch
 const HOOKS = mapValues(HOOK_CNODE_MAP, (cnodeNamesToInvoke, HOOK_NAME) => {
+  const methodName = toMethodName(HOOK_NAME)
   return (collection, moduleSystem) => {
     return () => {
       cnodeNamesToInvoke.forEach((cnodeName) => {
         const cnodes = collection[cnodeName]
         cnodes.forEach((cnode) => {
-          const methodName = toMethodName(HOOK_NAME)
           moduleSystem.beforeLifecycle(cnode, methodName)
           if (cnode.type[methodName] !== undefined) {
             cnode.type[methodName](moduleSystem.inject(cnode))
@@ -46,15 +46,14 @@ const HOOKS = mapValues(HOOK_CNODE_MAP, (cnodeNamesToInvoke, HOOK_NAME) => {
 })
 
 function dispatch(hooksToMatch, hookName, ...argv) {
-  if (hooksToMatch[hookName] !== undefined) {
-    return hooksToMatch[hookName](...argv)
-  }
+  if (hooksToMatch[hookName] === undefined) throw new Error(`invoking unknown hook ${hookName}`)
+  return hooksToMatch[hookName](...argv)
 }
 
 export default function createLifecycle(moduleSystem) {
   const hookArgv = {
-    initialCnodes: null,
-    updateCnodes: null,
+    initializedCnodes: null,
+    updatedCnodes: null,
     initialDigestedCnodes: null,
     updateDigestedCnodes: null,
   }
@@ -62,28 +61,32 @@ export default function createLifecycle(moduleSystem) {
   let toFlush = []
 
   return {
-    invoke(name) {
-      toFlush.push(dispatch(HOOKS, name, hookArgv, moduleSystem))
+    invoke(name, immediately) {
+      if (immediately) {
+        dispatch(HOOKS, name, hookArgv, moduleSystem)()
+      } else {
+        toFlush.push(dispatch(HOOKS, name, hookArgv, moduleSystem))
+      }
     },
     startSession() {
-      hookArgv.initialCnodes = []
-      hookArgv.updateCnodes = []
+      hookArgv.initializedCnodes = []
+      hookArgv.updatedCnodes = []
       hookArgv.initialDigestedCnodes = []
       hookArgv.updateDigestedCnodes = []
     },
     endSession() {
       toFlush.forEach(fn => fn())
-      hookArgv.initialCnodes = []
-      hookArgv.updateCnodes = []
+      hookArgv.initializedCnodes = []
+      hookArgv.updatedCnodes = []
       hookArgv.initialDigestedCnodes = []
       hookArgv.updateDigestedCnodes = []
       toFlush = []
     },
     collectInitialCnode(cnode) {
-      hookArgv.initialCnodes.push(cnode)
+      hookArgv.initializedCnodes.push(cnode)
     },
     collectUpdateCnode(cnode) {
-      hookArgv.updateCnodes.push(cnode)
+      hookArgv.updatedCnodes.push(cnode)
     },
     collectInitialDigestedCnode(cnode) {
       hookArgv.initialDigestedCnodes.push(cnode)

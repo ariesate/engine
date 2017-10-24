@@ -10,7 +10,6 @@ export default {
   },
   listeners: {
     onChange({ state, listeners }, e) {
-      console.log("change editing value", state.editingValue)
       if (e.keyCode === 13) {
         state.value = state.editingValue
         listeners.onSave()
@@ -21,7 +20,6 @@ export default {
     onSave() {},
   },
   render({ state, listeners }) {
-    console.log("rendering string", state.editingValue)
     return [
       <input value={state.editingValue} onKeyUp={listeners.onChange} />,
       <span>{state.value === state.editingValue ? '' : '未保存'}</span>,

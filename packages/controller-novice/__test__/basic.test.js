@@ -22,6 +22,11 @@ const World = {
 
 const App = {
   displayName: 'App',
+  getDefaultState() {
+    return {
+      world: {},
+    }
+  },
   render() {
     return (
       <div>

@@ -6,8 +6,12 @@ const rxAccess = /[\[\]\.]+/
 
 export default {
   ...exist,
+  set(obj, inputPath, ...argv) {
+    const path = Array.isArray(inputPath) ? inputPath.slice() : inputPath
+    return exist.set(obj, path, ...argv)
+  },
   get(obj, path, defaultValue) {
-    return (path === '' || path === undefined) ? obj : exist.get(obj, path, defaultValue)
+    return (path === '' || path === undefined || (Array.isArray(path) && path.length === 0)) ? obj : exist.get(obj, path, defaultValue)
   },
   ensure(obj, path, value) {
     if (exist.detect(obj, path) !== true) {
