@@ -65,26 +65,26 @@ function handleInitialNaiveVnode(vnode, cnode, view, vnodeRef, currentPath, pare
 
 
 function handleInitialComponentNode(vnode, cnode, view, vnodeRef, currentPath, parentNode, cnodesToUpdateParentNode) {
-  const currentPathStr = vnodePathToString(currentPath)
-  const nextIndex = vnode.transferKey === undefined ? currentPathStr : vnode.transferKey
-  const childCnode = cnode.next[nextIndex]
-  attachCnodeView(childCnode, parentNode)
-  attachCnodeViewQuickRefs(cnode, vnode, nextIndex)
+  view.initialDigestIntercepter(cnode, () => {
+    const currentPathStr = vnodePathToString(currentPath)
+    const nextIndex = vnode.transferKey === undefined ? currentPathStr : vnode.transferKey
+    const childCnode = cnode.next[nextIndex]
+    attachCnodeView(childCnode, parentNode)
+    attachCnodeViewQuickRefs(cnode, vnode, nextIndex)
 
-  vnodeRef.element = nextIndex
+    vnodeRef.element = nextIndex
 
-  const fragment = view.createFragment()
+    const fragment = view.createFragment()
 
-  /* eslint-disable no-use-before-define */
-  const retRefs = []
-  handleInitialVnodeChildren(childCnode.ret, childCnode, view, retRefs, [], fragment)
-  /* eslint-enable no-use-before-define */
-  childCnode.patch = retRefs
-  parentNode.appendChild(fragment)
+    /* eslint-disable no-use-before-define */
+    const retRefs = []
+    handleInitialVnodeChildren(childCnode.ret, childCnode, view, retRefs, [], fragment)
+    /* eslint-enable no-use-before-define */
+    childCnode.patch = retRefs
+    parentNode.appendChild(fragment)
 
-  if (cnodesToUpdateParentNode) cnodesToUpdateParentNode.push(childCnode)
-
-  view.collectInitialDigestedCnode(childCnode)
+    if (cnodesToUpdateParentNode) cnodesToUpdateParentNode.push(childCnode)
+  })
 }
 
 export function handleInitialVnode(vnode, cnode, view, vnodesRef, parentPath, parentNode, index, cnodesToUpdateParentNode) {
@@ -135,17 +135,18 @@ function handleInitialVnodeChildren(vnodes, cnode, view, vnodesRef, parentPath, 
 
 // initialDigest handle the whole tree
 export default function initialDigest(ctree, view) {
-  const parentNode = view.getRoot()
-  attachCnodeView(ctree, parentNode)
-  const fragment = view.createFragment()
-  const retRefs = []
-  const cnodesToUpdateParentNode = []
-  handleInitialVnodeChildren(ctree.ret, ctree, view, retRefs, [], fragment, cnodesToUpdateParentNode)
-  // CAUTION replaced ret with retRefs for update.
-  ctree.patch = retRefs
-  cnodesToUpdateParentNode.forEach(cnode => cnode.view.parentNode = parentNode)
+  view.initialDigestIntercepter(ctree, () => {
+    const parentNode = view.getRoot()
+    attachCnodeView(ctree, parentNode)
+    const fragment = view.createFragment()
+    const retRefs = []
+    const cnodesToUpdateParentNode = []
+    handleInitialVnodeChildren(ctree.ret, ctree, view, retRefs, [], fragment, cnodesToUpdateParentNode)
+    // CAUTION replaced ret with retRefs for update.
+    ctree.patch = retRefs
+    cnodesToUpdateParentNode.forEach(cnode => cnode.view.parentNode = parentNode)
 
-  parentNode.appendChild(fragment)
-  view.collectInitialDigestedCnode(ctree)
+    parentNode.appendChild(fragment)
+  })
 }
 

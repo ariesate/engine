@@ -28,6 +28,9 @@ const controller = render(
 // for debug
 window.controller = controller
 window.change = (com) => {
+  // controller.apply(() => {
+  //   controller.instances.stateTree.api.get('editor').current = com
+  // })
   controller.instances.actions.api.get('editor').changeCurrent(com, JSON.parse(localStorage.getItem(com)))
 }
 

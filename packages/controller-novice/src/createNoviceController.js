@@ -70,14 +70,9 @@ export default function createNoviceController(mods = {}, initialState, initialA
     moduleSystem.startInitialSession(() => {
       inSession = true
       lifecycle.startSession()
-      lifecycle.invoke(HOOK_BEFORE_PAINT, true)
       ctree = scheduler.paint(vnode)
-      lifecycle.invoke(HOOK_AFTER_PAINT)
-      lifecycle.invoke(HOOK_BEFORE_INITIAL_DIGEST, true)
       view.initialDigest(ctree)
-      collect(() => {
-        lifecycle.invoke(HOOK_AFTER_INITIAL_DIGEST)
-      })
+      // CAUTION in digest lifecycle, there may be cnodes changed.
       if (cnodesToRepaint.size !== 0) {
         // If any cnode changed during last lifecycle, start a new session.
         applyChange(noop)
@@ -95,20 +90,14 @@ export default function createNoviceController(mods = {}, initialState, initialA
         /* eslint-disable no-cond-assign */
         while (currentSession = sessions.shift()) {
           lifecycle.startSession()
-          /* eslint-enable no-cond-assign */
           /* eslint-disable no-loop-func */
           collect(() => {
             currentSession()
-            lifecycle.invoke(HOOK_BEFORE_REPAINT, true)
           })
           repaint()
-          lifecycle.invoke(HOOK_AFTER_REPAINT)
-          lifecycle.invoke(HOOK_BEFORE_UPDATE_DIGEST, true)
           updateDigest()
-          collect(() => {
-            lifecycle.invoke(HOOK_AFTER_UPDATE_DIGEST)
-          })
           /* eslint-enable no-loop-func */
+          // CAUTION in digest lifecycle, there may be cnodes changed.
           if (cnodesToRepaint.size !== 0) {
             // If any cnode changed during last lifecycle, start a new session.
             applyChange(noop)
@@ -132,8 +121,10 @@ export default function createNoviceController(mods = {}, initialState, initialA
           const injectArgv = moduleSystem.inject(cnode)
           injectArgv.children = cnode.children
 
-          lifecycle.collectInitialCnode(cnode)
-          return moduleSystem.hijack(cnode, render, injectArgv)
+          lifecycle.invoke(HOOK_BEFORE_PAINT, cnode, true)
+          const result = moduleSystem.hijack(cnode, render, injectArgv)
+          lifecycle.invoke(HOOK_AFTER_PAINT, cnode, false, true)
+          return result
         })
       },
       updateRender(cnodeToUpdate) {
@@ -143,9 +134,11 @@ export default function createNoviceController(mods = {}, initialState, initialA
           const injectArgv = moduleSystem.inject(cnode)
           injectArgv.children = cnode.children
 
-          lifecycle.collectUpdateCnode(cnode)
+          lifecycle.invoke(HOOK_BEFORE_REPAINT, cnode, true)
+          const result = moduleSystem.hijack(cnode, render, injectArgv)
           cnodesToDigest.add(cnode)
-          return moduleSystem.hijack(cnode, render, injectArgv)
+          lifecycle.invoke(HOOK_AFTER_REPAINT, cnode, false, true)
+          return result
         })
       },
     },
@@ -164,11 +157,21 @@ export default function createNoviceController(mods = {}, initialState, initialA
       invoke: (fn, ...argv) => {
         fn(...argv)
       },
-      collectInitialDigestedCnode(cnode) {
-        lifecycle.collectInitialDigestedCnode(cnode)
+      initialDigest(cnode, digestFn) {
+        lifecycle.invoke(HOOK_BEFORE_INITIAL_DIGEST, cnode, true)
+        const result = digestFn()
+        collect(() => {
+          lifecycle.invoke(HOOK_AFTER_INITIAL_DIGEST, cnode, false, true)
+        })
+        return result
       },
-      collectUpdateDigestedCnode(cnode) {
-        lifecycle.collectUpdateDigestedCnodes(cnode)
+      updateDigest(cnode, digestFn) {
+        lifecycle.invoke(HOOK_BEFORE_UPDATE_DIGEST, cnode, true)
+        const result = digestFn()
+        collect(() => {
+          lifecycle.invoke(HOOK_AFTER_UPDATE_DIGEST, cnode, false, true)
+        })
+        return result
       },
     },
 

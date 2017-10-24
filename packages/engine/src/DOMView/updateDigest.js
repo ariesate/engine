@@ -145,8 +145,9 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
 
 // updateDigest only handle one cnode and its new child cnodes.
 export default function updateDigest(cnode, view) {
-  cnode.patch = handlePatchVnodeChildren(cnode.patch, cnode.view.parentNode, null, [], cnode, view)
-  // CAUTION toDestroyPatch should be reset after update digest.
-  cnode.toDestroyPatch = {}
-  view.collectUpdateDigestedCnode(cnode)
+  view.updateDigestIntercepter(cnode, () => {
+    cnode.patch = handlePatchVnodeChildren(cnode.patch, cnode.view.parentNode, null, [], cnode, view)
+    // CAUTION toDestroyPatch should be reset after update digest.
+    cnode.toDestroyPatch = {}
+  })
 }

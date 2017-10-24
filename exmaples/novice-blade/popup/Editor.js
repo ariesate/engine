@@ -26,32 +26,6 @@ export default {
       })
     },
   },
-  // hookBeforePaint({ state }) {
-  //   if (state.current !== null) {
-  //     const component = definition[state.current]
-  //     const defaultState = component.getDefaultState()
-  //     state.value = mapValues(defaultState, (defaultItem, key) => {
-  //       /* eslint-disable no-prototype-builtins */
-  //       return state.inputValue.hasOwnProperty(key) ? state.inputValue[key] : defaultItem
-  //       /* eslint-enable no-prototype-builtins */
-  //     })
-  //     console.log(state.value, state.current)
-  //   }
-  //   console.log(state.value, state.current)
-  // },
-  // hookBeforeRepaint({ state }) {
-  //   if (state.current !== null) {
-  //     const component = definition[state.current]
-  //     const defaultState = component.getDefaultState()
-  //
-  //     state.value = mapValues(defaultState, (defaultItem, key) => {
-  //       /* eslint-disable no-prototype-builtins */
-  //       return state.inputValue.hasOwnProperty(key) ? state.inputValue[key] : defaultItem
-  //       /* eslint-enable no-prototype-builtins */
-  //     })
-  //     console.log("before repaint", defaultState, state.value)
-  //   }
-  // },
   getDefaultState() {
     return {
       current: null,
