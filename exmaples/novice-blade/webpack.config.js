@@ -5,16 +5,8 @@ const isDevMode = process.env.NODE_ENV === 'dev'
 
 const config = {
   entry: {
-    simple: './simple/index.js',
-    key: './key/index.js',
-    vnodeArray: './vnodeArray/index.js',
-    cnodeKey: './cnodeKey/index.js',
-    listener: './listener/index.js',
-    controlled: './controlled/index.js',
-    lifecycle: './lifecycle/index.js',
-    cnodeTransferKey: './cnodeTransferKey/index.js',
-    mst: './mst/index.js',
-    retArray: './retArray/index.js',
+    popup: './popup.js',
+    output: './output.js',
   },
   output: {
     filename: '[name].js',

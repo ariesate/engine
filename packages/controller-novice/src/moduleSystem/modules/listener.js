@@ -6,14 +6,17 @@ export function initialize(apply) {
       return (cnode, ...argv) => {
         next(cnode, ...argv)
         cnode.generateListeners = (injectedArgv) => {
-          return mapValues(cnode.type.listeners, (listener, name) => {
+          const listeners = mapValues(cnode.type.listeners, (listener, name) => {
             return (...runtimeArgv) => apply(() => {
-              listener(injectedArgv, ...runtimeArgv)
+              // listener can call another listener
+              listener({ ...injectedArgv, listeners }, ...runtimeArgv)
               if (cnode.props.listeners && cnode.props.listeners[name]) {
                 cnode.props.listeners[name](injectedArgv, ...runtimeArgv)
               }
             })
           })
+
+          return listeners
         }
       }
     },

@@ -1,8 +1,8 @@
 import cloneDeep from 'lodash/clonedeep'
-import { each, createUniqueIdGenerator } from './util'
+import { each, createUniqueIdGenerator, isObject } from './util'
 
 export function isComponent(n) {
-  return typeof n === 'object'
+  return isObject(n)
 }
 
 const createUniqueVnodeName = createUniqueIdGenerator('C')
@@ -97,7 +97,7 @@ export function cloneVnode(vnode) {
 
 
 export function isComponentVnode(a) {
-  return typeof a.type === 'object' && a.type !== Array
+  return isComponent(a.type)
 }
 
 export function getVnodeNextIndex(vnode, parentPath) {

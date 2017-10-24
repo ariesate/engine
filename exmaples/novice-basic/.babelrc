@@ -7,6 +7,7 @@
       "pragma": "createElement"
     }],
     ["module-alias", [
+      { "src": "../../packages/controller-novice/src", "expose": "novice" },
       { "src": "../../packages/engine/src", "expose": "@ariesate/are" }
     ]]
   ],

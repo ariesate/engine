@@ -9,8 +9,18 @@ const Sub = {
       payload: 'ssss',
     }
   },
-  render({ state }) {
-    return <div className="zoomIn animated">{state.value}</div>
+  listeners: {
+    onClick({ state }) {
+      state.value += 1
+    },
+  },
+  render({ state, listeners }) {
+    return (
+      <div>
+        <span className="zoomIn animated">{state.value}</span>
+        <button onClick={listeners.onClick}>+1</button>
+      </div>
+    )
   },
 }
 

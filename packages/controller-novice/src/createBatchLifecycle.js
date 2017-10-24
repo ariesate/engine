@@ -34,11 +34,11 @@ const HOOKS = mapValues(HOOK_CNODE_MAP, (cnodeNamesToInvoke, HOOK_NAME) => {
         const cnodes = collection[cnodeName]
         cnodes.forEach((cnode) => {
           const methodName = toMethodName(HOOK_NAME)
+          moduleSystem.beforeLifecycle(cnode, methodName)
           if (cnode.type[methodName] !== undefined) {
-            moduleSystem.beforeLifecycle(cnode, HOOK_NAME)
             cnode.type[methodName](moduleSystem.inject(cnode))
-            moduleSystem.afterLifecycle(cnode, HOOK_NAME)
           }
+          moduleSystem.afterLifecycle(cnode, methodName)
         })
       })
     }

@@ -38,6 +38,7 @@ import {
   PATCH_ACTION_TO_MOVE,
   DEV_MAX_LOOP,
 } from './constant'
+import { normalizeChildren } from './createElement'
 
 /**
  * @param vnode
@@ -60,7 +61,9 @@ export function createCnode(vnode, parent) {
  *   2. Calculated child cnodes, returned as `next`.
  *   3. Vnodes with transfer key.
  */
-function prepareRetForAttach(ret, cnode) {
+function prepareRetForAttach(rawRet, cnode) {
+  // user may render single component or null, we should normalize it.
+  const ret = normalizeChildren(Array.isArray(rawRet) ? rawRet : [rawRet])
   const next = {}
   const transferKeyedVnodes = {}
   walkRawVnodes(ret, (vnode, path, parentVnodePath = []) => {

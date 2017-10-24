@@ -1,5 +1,14 @@
-import { createVnodePath, resolveFirstLayerElements, resolveLastElement } from '../common'
-import { handleInitialVnode } from './initialDigest'
+import {
+  createVnodePath,
+  resolveFirstLayerElements,
+  resolveLastElement,
+  isComponentVnode,
+  vnodePathToString,
+} from '../common'
+import {
+  handleInitialVnode,
+  updateParentNode,
+} from './initialDigest'
 import {
   PATCH_ACTION_INSERT,
   PATCH_ACTION_MOVE_FROM,
@@ -37,7 +46,7 @@ function handleRemovePatchNode(p, parentPath, toDestroy, parentNode) {
   })
 }
 
-export function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view) {
+export function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view, cnodesToUpdateParentNode) {
   const elements = resolveFirstLayerElements([p], parentPath, cnode)
   elements.forEach((ele) => {
     toInsert.appendChild(ele)
@@ -52,6 +61,9 @@ export function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInser
   }
 
   nextPatch.push(p)
+  if (cnodesToUpdateParentNode && isComponentVnode(p)) {
+    cnodesToUpdateParentNode.push(cnode.next[vnodePathToString(createVnodePath(p, parentPath))])
+  }
   return elements.length
 }
 
@@ -82,6 +94,7 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
   let toInsert = view.createFragment()
   // Save "toMove" type vnode to a fragment for later check if the algorithm is right.
   const toMove = view.createFragment()
+  const cnodesToUpdateParentNode = []
   let currentLastStableSiblingNode = lastStableSiblingNode
 
   patch.forEach((p) => {
@@ -89,10 +102,10 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
       handleToMovePatchNode(p, parentPath, cnode, toMove)
     } else if (p.action.type === PATCH_ACTION_MOVE_FROM) {
       p.action.type = PATCH_ACTION_REMAIN
-      handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view)
+      handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view, cnodesToUpdateParentNode)
     } else if (p.action.type === PATCH_ACTION_INSERT) {
       p.action.type = PATCH_ACTION_REMAIN
-      handleInitialVnode(p, cnode, view, nextPatch, parentPath, toInsert, nextPatch.length)
+      handleInitialVnode(p, cnode, view, nextPatch, parentPath, toInsert, nextPatch.length, cnodesToUpdateParentNode)
     } else if (p.action.type === PATCH_ACTION_REMOVE) {
       handleRemovePatchNode(p, parentPath, { next: cnode.toDestroyPatch }, parentNode)
     } else if (p.action.type === PATCH_ACTION_REMAIN) {
@@ -112,6 +125,10 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
         currentLastStableSiblingNode = lastElement
       }
     }
+  })
+
+  cnodesToUpdateParentNode.forEach((cnodeToUpdateParentNode) => {
+    cnodeToUpdateParentNode.view.parentNode = parentNode
   })
 
   if (toInsert.childNodes.length !== 0) {

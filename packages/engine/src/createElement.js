@@ -1,6 +1,6 @@
 import VNode from './VNode'
 
-function normalizeChildren(rawChildren) {
+export function normalizeChildren(rawChildren) {
   return rawChildren.map((rawChild) => {
     let child = rawChild
     if (rawChild === undefined) throw new Error('element cannot be undefined')
@@ -45,4 +45,18 @@ export default function createElement(type, attributes, ...rawChildren) {
   node.children = normalizeChildren(rawChildren)
 
   return node
+}
+
+export function cloneElement(vnode, newAttributes) {
+  return createElement(
+    vnode.type,
+    {
+      ...vnode.attributes,
+      key: vnode.key,
+      ref: vnode.ref,
+      transferKey: vnode.transferKey,
+      ...newAttributes,
+    },
+    ...vnode.children,
+  )
 }

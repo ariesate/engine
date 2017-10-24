@@ -38,8 +38,8 @@ const defaultFns = {
   updateRender: (cnode, updateRender) => updateRender(cnode),
   startInitialSession: start => start(),
   startUpdateSession: start => start(),
-  beforeLifeCycle: noop,
-  afterLifeCycle: noop,
+  beforeLifecycle: noop,
+  afterLifecycle: noop,
 }
 
 export default function createNoviceModuleSystem(inputMods, onChange, apply, initialState = {}) {
@@ -48,17 +48,17 @@ export default function createNoviceModuleSystem(inputMods, onChange, apply, ini
     // appearance: { ...baseAppearanceMod, argv: [initialAppearance, onChange] },
   }
 
+  const result = {}
   const mods = mapValues({
     ref: refMod,
     listener: listenerMod,
     ...inputMods,
-  }, mod => ({ ...mod, argv: (mod.argv || []).concat(apply, onChange) }))
-
+  }, mod => ({ ...mod, argv: (mod.argv || []).concat(apply, onChange, result) }))
 
   const baseInstances = mapValues(baseMods, baseMod => baseMod.initialize(...(baseMod.argv || [])))
   const instances = mapValues(mods, mod => mod.initialize(...mod.argv))
 
-  const result = mapValues(defaultFns, (defaultFn, name) => combineInstancesMethod(baseInstances, instances, baseMods, mods, name, defaultFn))
+  Object.assign(result, mapValues(defaultFns, (defaultFn, name) => combineInstancesMethod(baseInstances, instances, baseMods, mods, name, defaultFn)))
 
   result.instances = { ...baseInstances, ...instances }
   return result

@@ -28,7 +28,7 @@ function createStateProxy(mstState, state) {
   return proxyState
 }
 
-export function initialize({ rootType, modelDefs = {}, initialState = {} }, apply, onChange) {
+export function initialize({ rootType, modelDefs = {}, initialState = {} }, apply, collect) {
   // TODO create model here or outside？
   // const models = mapValues(
   //   modelDefs,
@@ -46,7 +46,7 @@ export function initialize({ rootType, modelDefs = {}, initialState = {} }, appl
   function observeRender(render, cnode, ...argv) {
     cnode.reaction = createOnceReactionProxy(
       () => render(cnode, ...argv),
-      () => onChange([cnode]),
+      () => collect([cnode]),
       () => delete cnode.reaction,
     )
 
@@ -64,7 +64,7 @@ export function initialize({ rootType, modelDefs = {}, initialState = {} }, appl
     if (cnodesToStartReaction.size !== 0) {
       apply(() => {
         cnodesToStartReaction.forEach((cnode) => {
-          onChange([cnode])
+          collect([cnode])
           cnodesToStartReaction.delete(cnode)
         })
       })

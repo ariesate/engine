@@ -15,7 +15,8 @@ function setProperty(node, name, value) {
 }
 
 function eventProxy(e) {
-  return this._listeners[e.type](e)
+  const listener = this._listeners[e.type]
+  return Array.isArray(listener) ? listener.forEach(l => l(e)) : listener(e)
 }
 
 /** Set a named attribute on the given Node, with special behavior for some names and event handlers.

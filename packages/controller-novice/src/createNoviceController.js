@@ -1,4 +1,4 @@
-import { ensureArray, noop } from './util'
+import { noop } from './util'
 import { walkCnodes } from './common'
 import createNoviceModuleSystem from './moduleSystem/index'
 import createBatchLifecycle from './createBatchLifecycle'
@@ -25,6 +25,7 @@ export default function createNoviceController(mods = {}, initialState, initialA
   let inSession = false
   const sessions = []
 
+  // TODO use a tree to store
   const cnodesToRepaint = new Set()
   const cnodesToDigest = new Set()
 
@@ -122,16 +123,17 @@ export default function createNoviceController(mods = {}, initialState, initialA
   return {
     renderer: {
       rootRender(cnode) {
-        return ensureArray(cnode.type.render())
+        return cnode.type.render({ children: cnode.children })
       },
       initialRender(cnodeToInitialize, parent) {
         return moduleSystem.initialRender(cnodeToInitialize, (cnode) => {
           const { render } = cnode.type
           moduleSystem.initialize(cnode, parent)
-
           const injectArgv = moduleSystem.inject(cnode)
+          injectArgv.children = cnode.children
+
           lifecycle.collectInitialCnode(cnode)
-          return ensureArray(moduleSystem.hijack(cnode, render, injectArgv))
+          return moduleSystem.hijack(cnode, render, injectArgv)
         })
       },
       updateRender(cnodeToUpdate) {
@@ -139,16 +141,18 @@ export default function createNoviceController(mods = {}, initialState, initialA
           const { render } = cnode.type
           moduleSystem.update(cnode)
           const injectArgv = moduleSystem.inject(cnode)
+          injectArgv.children = cnode.children
 
           lifecycle.collectUpdateCnode(cnode)
           cnodesToDigest.add(cnode)
-          return ensureArray(moduleSystem.hijack(cnode, render, injectArgv))
+          return moduleSystem.hijack(cnode, render, injectArgv)
         })
       },
     },
     intercepter: {
       intercept(result) {
         const { toInitialize, toDestroy = {} } = result
+        // TODO remove toDestroy in cnodesToRepaint
         walkCnodes(Object.values(toDestroy), moduleSystem.destroy)
         // CAUTION Unlike React, Novice only render new cnode during repaint,
         // while React recursively re-render child components.

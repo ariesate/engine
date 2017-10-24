@@ -13,10 +13,11 @@
 import createScheduler from '@ariesate/are/createScheduler'
 import createPainter from '@ariesate/are/createPainter'
 import createDOMView from '@ariesate/are/DOMView/createDOMView'
-import createVnodeElement from '@ariesate/are/createElement'
+import createVnodeElement, { cloneElement as cloneVnodeElement } from '@ariesate/are/createElement'
 import createNoviceController from './createNoviceController'
 
 export const createElement = createVnodeElement
+export const cloneElement = cloneVnodeElement
 
 export function render(vnode, domElement, ...controllerArgv) {
   const controller = createNoviceController(...controllerArgv)
