@@ -7,17 +7,27 @@ const World = {
       count: 0,
     }
   },
-  hookBeforePaint(...argv) {
-    console.log('before paint', ...argv)
-  },
-  hookAfterPaint(...argv) {
-    console.log('after paint', ...argv)
-  },
-  hookBeforeInitialDigest(...argv) {
-    console.log('before digest', ...argv)
-  },
-  hookAfterInitialDigest(...argv) {
-    console.log('after digest', ...argv)
+  lifecycle: {
+    beforePaint(...argv) {
+      console.log('before paint', ...argv)
+    },
+    afterPaint(...argv) {
+      console.log('after paint', ...argv)
+    },
+    beforeInitialDigest(...argv) {
+      console.log('before digest', ...argv)
+    },
+    afterInitialDigest(...argv) {
+      console.log('after digest', ...argv)
+    },
+    beforeUpdateDigest(...argv) {
+      console.log('before update digest', ...argv)
+    },
+    afterUpdateDigest(...argv) {
+      console.log('after update digest', ...argv)
+      const { state } = argv[0]
+      if (state.count !== 2) state.count = 2
+    },
   },
   render({ state }) {
     return (
@@ -33,6 +43,11 @@ const World = {
 
 const App = {
   displayName: 'App',
+  getDefaultState() {
+    return {
+      world: {},
+    }
+  },
   render() {
     return (
       <div>

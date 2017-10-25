@@ -10,11 +10,11 @@
  * 又通过 receive 来控制它们的 api。看起来有点奇怪，但只要把 controller 想成一个为了
  * 开发者方便而设计胶水层概念就可以了。
  */
+import createScheduler from '@ariesate/are/createScheduler'
 import createPainter from '@ariesate/are/createPainter'
 import createDOMView from '@ariesate/are/DOMView/createDOMView'
 import createVnodeElement, { cloneElement as cloneVnodeElement } from '@ariesate/are/createElement'
 import createNoviceController from './createNoviceController'
-import createScheduler from './createScheduler'
 
 export const createElement = createVnodeElement
 export const cloneElement = cloneVnodeElement

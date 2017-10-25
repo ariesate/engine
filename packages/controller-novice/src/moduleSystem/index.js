@@ -3,6 +3,7 @@ import { mapValues, noop, map, filter, compose } from '../util'
 import * as stateTreeMod from './modules/stateTree/index'
 import * as refMod from './modules/ref'
 import * as listenerMod from './modules/listener'
+import * as lifecycleMod from './modules/lifecycle'
 
 function combineInstancesMethod(baseInstances, instances, baseMods, mods, method, defaultFn) {
   const involvedBaseIns = filter(baseInstances, i => i[method] !== undefined)
@@ -46,18 +47,19 @@ export default function createNoviceModuleSystem(inputMods, collectChangedCnodes
     // appearance: { ...baseAppearanceMod, argv: [initialAppearance, onChange] },
   }
 
-  const result = {}
+  const system = {}
   const mods = mapValues({
     ref: refMod,
     listener: listenerMod,
+    lifecycle: lifecycleMod,
     ...inputMods,
-  }, mod => ({ ...mod, argv: (mod.argv || []).concat(apply, collectChangedCnodes, result) }))
+  }, mod => ({ ...mod, argv: (mod.argv || []).concat(apply, collectChangedCnodes, system) }))
 
   const baseInstances = mapValues(baseMods, baseMod => baseMod.initialize(...(baseMod.argv || [])))
   const instances = mapValues(mods, mod => mod.initialize(...mod.argv))
 
-  Object.assign(result, mapValues(defaultFns, (defaultFn, name) => combineInstancesMethod(baseInstances, instances, baseMods, mods, name, defaultFn)))
+  Object.assign(system, mapValues(defaultFns, (defaultFn, name) => combineInstancesMethod(baseInstances, instances, baseMods, mods, name, defaultFn)))
 
-  result.instances = { ...baseInstances, ...instances }
-  return result
+  system.instances = { ...baseInstances, ...instances }
+  return system
 }
