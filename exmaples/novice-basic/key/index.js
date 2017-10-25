@@ -188,7 +188,7 @@ const controller = render((
 window.controller = controller
 
 serial([() => {
-  controller.collect(() => {
+  controller.apply(() => {
     controller.getStateTree().api.get('basic').count = !initialCount
     controller.getStateTree().api.get('insertAfter').count = !initialCount
     controller.getStateTree().api.get('insertBefore').count = !initialCount
@@ -197,14 +197,14 @@ serial([() => {
     controller.getStateTree().api.get('replaceBetween').count = !initialCount
   })
 }, () => {
-  controller.collect(() => {
-    controller.getStateTree().api.get('basic').count = initialCount
-    controller.getStateTree().api.get('insertAfter').count = initialCount
-    controller.getStateTree().api.get('insertBefore').count = initialCount
-    controller.getStateTree().api.get('insertBetween').count = initialCount
-    controller.getStateTree().api.get('reverseBetween').count = initialCount
-    controller.getStateTree().api.get('replaceBetween').count = initialCount
+  controller.apply(() => {
+    // controller.getStateTree().api.get('basic').count = initialCount
+    // controller.getStateTree().api.get('insertAfter').count = initialCount
+    // controller.getStateTree().api.get('insertBefore').count = initialCount
+    // controller.getStateTree().api.get('insertBetween').count = initialCount
+    // controller.getStateTree().api.get('reverseBetween').count = initialCount
+    // controller.getStateTree().api.get('replaceBetween').count = initialCount
   })
 }], 1000, () => {
-  controller.repaint()
+  // controller.repaint()
 })

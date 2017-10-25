@@ -29,7 +29,7 @@ import {
   getVnodeNextIndex,
   walkVnodes,
 } from './common'
-import { each, indexBy } from './util'
+import { each, indexBy, ensureArray } from './util'
 import {
   PATCH_ACTION_INSERT,
   PATCH_ACTION_MOVE_FROM,
@@ -63,7 +63,7 @@ export function createCnode(vnode, parent) {
  */
 function prepareRetForAttach(rawRet, cnode) {
   // user may render single component or null, we should normalize it.
-  const ret = normalizeChildren(Array.isArray(rawRet) ? rawRet : [rawRet])
+  const ret = normalizeChildren(ensureArray(rawRet))
   const next = {}
   const transferKeyedVnodes = {}
   walkRawVnodes(ret, (vnode, path, parentVnodePath = []) => {
@@ -94,13 +94,14 @@ function prepareRetForAttach(rawRet, cnode) {
  * Controller may inject extra arguments into render.
  * @returns {{ toInitialize: Object }} The child cnodes to initialize.
  */
-function initialize(cnode, renderer) {
+function paint(cnode, renderer) {
   const specificRenderer = cnode.parent === undefined ? renderer.rootRender : renderer.initialRender
   const { next, ret, transferKeyedVnodes } = prepareRetForAttach(specificRenderer(cnode, cnode.parent), cnode)
 
   cnode.ret = ret
   cnode.next = next
   cnode.transferKeyedVnodes = transferKeyedVnodes
+  cnode.isPainted = true
 
   return { toInitialize: next }
 }
@@ -389,7 +390,7 @@ function diff(lastVnodesOrPatch, vnodes, parentPath, cnode, nextTransferKeyedVno
 /**
  * The entry point of updating a rendered cnode.
  */
-function update(cnode, renderer) {
+function repaint(cnode, renderer) {
   const render = renderer.updateRender
   const lastPatch = cnode.patch || cnode.ret
   const { transferKeyedVnodes, ret } = prepareRetForAttach(render(cnode, cnode.parent), cnode)
@@ -411,14 +412,18 @@ function update(cnode, renderer) {
  ***************************** */
 
 export default function createPainter(renderer) {
-  function handle(cnode) {
-    return (cnode.ret === undefined) ?
-      initialize(cnode, renderer) :
-      update(cnode, renderer)
-  }
-
   return {
-    handle,
+    paint: (cnode) => {
+      if (cnode.isPainted) throw new Error(`cnode already painted ${cnode.type.displayName}`)
+      return paint(cnode, renderer)
+    },
+    repaint: (cnode) => {
+      if (!cnode.isPainted) throw new Error(`cnode is not painted ${cnode.type.displayName}`)
+      return repaint(cnode, renderer)
+    },
+    handle: (cnode) => {
+      return cnode.ret === undefined ? paint(cnode, renderer) : repaint(cnode, renderer)
+    },
     createCnode,
   }
 }

@@ -107,12 +107,8 @@ export function initialize(collect) {
       }
       return observeRender(next, cnode, ...argv)
     },
-    startInitialSession: next => (fn) => {
-      next(fn)
-      startReaction()
-    },
-    startUpdateSession: next => (fn) => {
-      next(fn)
+    session: next => (sessionName, fn) => {
+      next(sessionName, fn)
       startReaction()
     },
     // CAUTION User need to handle state right. We do not validate state anymore.

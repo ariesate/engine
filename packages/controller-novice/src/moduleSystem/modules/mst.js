@@ -98,12 +98,8 @@ export function initialize({ rootType, modelDefs = {}, initialState = {} }, appl
     updateRender: next => (cnode, ...argv) => {
       return observeRender(next, cnode, ...argv)
     },
-    startInitialSession: next => (fn) => {
-      next(fn)
-      afterSession()
-    },
-    startUpdateSession: next => (fn) => {
-      next(fn)
+    session: next => (sessionName, fn) => {
+      next(sessionName, fn)
       afterSession()
     },
     api: {

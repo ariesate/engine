@@ -8,17 +8,23 @@ import {
 import {
   PATCH_ACTION_MOVE_FROM,
 } from '../constant'
+import createElement from '../createElement'
 import { handleMoveFromPatchNode } from './updateDigest'
 import { mapValues } from '../util'
 
 /**
  * Attach element reference to cnode.
  */
-function attachCnodeView(cnode, parentNode) {
+function prepareCnodeForView(cnode, vnode, parentNode, view) {
+  const placeHolder = view.createElement(createElement('div', { style: { display: 'none' } }))
+  parentNode.appendChild(placeHolder)
+  if (parentNode._childCnodes === undefined) parentNode._childCnodes = []
+  parentNode._childCnodes.push(cnode)
   cnode.view = {
     rootRefs: [],
     refs: {},
-    parentNode,
+    vnode,
+    placeHolder,
     getRefs() {
       return mapValues(cnode.view.refs, (ref) => {
         if (typeof ref === 'string') {
@@ -38,58 +44,32 @@ function attachCnodeView(cnode, parentNode) {
  * If the third argument is a string, that mean it is a cnode ref.
  * We need to look up child cnodes to find the reference.
  */
-function attachCnodeViewQuickRefs(cnode, vnode, element) {
+function attachCnodeQuickRefs(cnode, vnode, element) {
   if (vnode.ref !== undefined) {
     cnode.view.refs[vnode.ref] = element
   }
 }
 
-function handleInitialNaiveVnode(vnode, cnode, view, vnodeRef, currentPath, parentNode) {
-  const { createElement } = view
-
-  const element = createElement(vnode)
+function handleInitialNaiveVnode(vnode, cnode, view, patch, currentPath, parentNode) {
+  const element = view.createElement(vnode)
   parentNode.appendChild(element)
   // Save it for update
-  vnodeRef.element = element
+  patch.element = element
 
   // Save references of root vnode and vnode with `ref` attribute
-  attachCnodeViewQuickRefs(cnode, vnode, element)
+  attachCnodeQuickRefs(cnode, vnode, element)
 
   if (vnode.children !== undefined) {
-    vnodeRef.children = []
+    patch.children = []
     /* eslint-disable no-use-before-define */
-    handleInitialVnodeChildren(vnode.children, cnode, view, vnodeRef.children, currentPath, element)
+    handleInitialVnodeChildren(vnode.children, cnode, view, patch.children, currentPath, element)
     /* eslint-enable no-use-before-define */
   }
 }
 
-
-function handleInitialComponentNode(vnode, cnode, view, vnodeRef, currentPath, parentNode, cnodesToUpdateParentNode) {
-  view.initialDigestIntercepter(cnode, () => {
-    const currentPathStr = vnodePathToString(currentPath)
-    const nextIndex = vnode.transferKey === undefined ? currentPathStr : vnode.transferKey
-    const childCnode = cnode.next[nextIndex]
-    attachCnodeView(childCnode, parentNode)
-    attachCnodeViewQuickRefs(cnode, vnode, nextIndex)
-
-    vnodeRef.element = nextIndex
-
-    const fragment = view.createFragment()
-
-    /* eslint-disable no-use-before-define */
-    const retRefs = []
-    handleInitialVnodeChildren(childCnode.ret, childCnode, view, retRefs, [], fragment)
-    /* eslint-enable no-use-before-define */
-    childCnode.patch = retRefs
-    parentNode.appendChild(fragment)
-
-    if (cnodesToUpdateParentNode) cnodesToUpdateParentNode.push(childCnode)
-  })
-}
-
-export function handleInitialVnode(vnode, cnode, view, vnodesRef, parentPath, parentNode, index, cnodesToUpdateParentNode) {
-  const vnodeRef = cloneVnode(vnode)
-  vnodesRef[index] = vnodeRef
+export function handleInitialVnode(vnode, cnode, view, parentPatch, parentPath, parentNode, index) {
+  const patch = cloneVnode(vnode)
+  parentPatch[index] = patch
 
   const currentPath = createVnodePath(vnode, parentPath)
   // vnode types:
@@ -97,7 +77,7 @@ export function handleInitialVnode(vnode, cnode, view, vnodesRef, parentPath, pa
   if (vnode.type === null) return
   if (vnode.type === String) {
     const element = view.createElement(vnode)
-    vnodeRef.element = element
+    patch.element = element
     return parentNode.appendChild(element)
   }
 
@@ -105,48 +85,60 @@ export function handleInitialVnode(vnode, cnode, view, vnodesRef, parentPath, pa
   // There will be a empty element in path, it is ok.
   if (vnode.type === Array) {
     /* eslint-disable no-use-before-define */
-    return handleInitialVnodeChildren(vnode.children, cnode, view, vnodeRef.children, currentPath, parentNode, cnodesToUpdateParentNode)
+    return handleInitialVnodeChildren(vnode.children, cnode, view, patch.children, currentPath, parentNode)
     /* eslint-enable no-use-before-define */
   }
 
   // 2) normal node
   if (!isComponentVnode(vnode)) {
-    return handleInitialNaiveVnode(vnode, cnode, view, vnodeRef, currentPath, parentNode)
+    return handleInitialNaiveVnode(vnode, cnode, view, patch, currentPath, parentNode)
   }
 
   // 3) component node
   if (isComponentVnode(vnode)) {
-    return handleInitialComponentNode(vnode, cnode, view, vnodeRef, currentPath, parentNode, cnodesToUpdateParentNode)
+    /* eslint-disable no-use-before-define */
+    return handleInitialComponentNode(vnode, cnode, view, patch, currentPath, parentNode)
+    /* eslint-enable no-use-before-define */
   }
 }
 
-function handleInitialVnodeChildren(vnodes, cnode, view, vnodesRef, parentPath, parentNode, cnodesToUpdateParentNode) {
+function handleInitialVnodeChildren(vnodes, cnode, view, patch, parentPath, parentNode) {
   // vnodes conditions:
   // 1) vnode children
   // 2) vnode of array type
   vnodes.forEach((vnode, index) => {
     if (vnode.action && vnode.action.type === PATCH_ACTION_MOVE_FROM) {
-      handleMoveFromPatchNode(vnode, vnodesRef, parentPath, cnode, parentNode, view, cnodesToUpdateParentNode)
+      handleMoveFromPatchNode(vnode, patch, parentPath, cnode, parentNode, view)
     } else {
-      handleInitialVnode(vnode, cnode, view, vnodesRef, parentPath, parentNode, index, cnodesToUpdateParentNode)
+      handleInitialVnode(vnode, cnode, view, patch, parentPath, parentNode, index)
     }
   })
 }
 
-// initialDigest handle the whole tree
-export default function initialDigest(ctree, view) {
-  view.initialDigestIntercepter(ctree, () => {
-    const parentNode = view.getRoot()
-    attachCnodeView(ctree, parentNode)
-    const fragment = view.createFragment()
-    const retRefs = []
-    const cnodesToUpdateParentNode = []
-    handleInitialVnodeChildren(ctree.ret, ctree, view, retRefs, [], fragment, cnodesToUpdateParentNode)
-    // CAUTION replaced ret with retRefs for update.
-    ctree.patch = retRefs
-    cnodesToUpdateParentNode.forEach(cnode => cnode.view.parentNode = parentNode)
+function handleInitialComponentNode(vnode, cnode, view, patch, currentPath, parentNode) {
+  const currentPathStr = vnodePathToString(currentPath)
+  const nextIndex = vnode.transferKey === undefined ? currentPathStr : vnode.transferKey
+  const childCnode = cnode.next[nextIndex]
+  childCnode.patch = []
+  prepareCnodeForView(childCnode, vnode, parentNode, view)
+  attachCnodeQuickRefs(cnode, vnode, nextIndex)
 
-    parentNode.appendChild(fragment)
-  })
+  patch.element = nextIndex
+}
+
+
+// initialDigest handle the whole tree
+export default function initialDigest(cnode, view) {
+  if (cnode.parent === undefined) prepareCnodeForView(cnode, createElement(cnode.type), view.getRoot(), view)
+  if (cnode.view.placeHolder === undefined) throw new Error(`cnode is not prepared for initial digest ${cnode.type.displayName}`)
+  cnode.patch = []
+  const fragment = view.createFragment()
+  handleInitialVnodeChildren(cnode.ret, cnode, view, cnode.patch, [], fragment)
+  const parentNode = cnode.view.placeHolder.parentNode
+  parentNode.insertBefore(fragment, cnode.view.placeHolder.nextSibling)
+  parentNode.removeChild(cnode.view.placeHolder)
+  delete cnode.view.placeHolder
+  cnode.view.parentNode = parentNode
+  cnode.isDigested = true
 }
 

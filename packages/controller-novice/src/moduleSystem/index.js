@@ -36,15 +36,13 @@ const defaultFns = {
   afterInitialDigest: noop,
   initialRender: (cnode, initialRender) => initialRender(cnode),
   updateRender: (cnode, updateRender) => updateRender(cnode),
-  startInitialSession: start => start(),
-  startUpdateSession: start => start(),
-  beforeLifecycle: noop,
-  afterLifecycle: noop,
+  session: (sessionName, fn) => fn(),
+  unit: (unitName, cnode, fn) => fn(),
 }
 
-export default function createNoviceModuleSystem(inputMods, onChange, apply) {
+export default function createNoviceModuleSystem(inputMods, collectChangedCnodes, apply) {
   const baseMods = {
-    stateTree: { ...stateTreeMod, argv: [onChange] },
+    stateTree: { ...stateTreeMod, argv: [collectChangedCnodes] },
     // appearance: { ...baseAppearanceMod, argv: [initialAppearance, onChange] },
   }
 
@@ -53,7 +51,7 @@ export default function createNoviceModuleSystem(inputMods, onChange, apply) {
     ref: refMod,
     listener: listenerMod,
     ...inputMods,
-  }, mod => ({ ...mod, argv: (mod.argv || []).concat(apply, onChange, result) }))
+  }, mod => ({ ...mod, argv: (mod.argv || []).concat(apply, collectChangedCnodes, result) }))
 
   const baseInstances = mapValues(baseMods, baseMod => baseMod.initialize(...(baseMod.argv || [])))
   const instances = mapValues(mods, mod => mod.initialize(...mod.argv))

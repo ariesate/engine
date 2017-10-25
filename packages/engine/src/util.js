@@ -328,6 +328,6 @@ export function diff(first, second) {
   return [absent, newBee]
 }
 
-export function ensureArray(o) {
-  return Array.isArray(o) ? o : [o]
+export function ensureArray(o, allowUndefined = false) {
+  return Array.isArray(o) ? o : ((o !== undefined || allowUndefined) ? [o] : [])
 }

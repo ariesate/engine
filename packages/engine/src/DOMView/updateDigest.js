@@ -7,7 +7,6 @@ import {
 } from '../common'
 import {
   handleInitialVnode,
-  updateParentNode,
 } from './initialDigest'
 import {
   PATCH_ACTION_INSERT,
@@ -39,14 +38,14 @@ function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, parent
   }
 }
 
-function handleRemovePatchNode(p, parentPath, toDestroy, parentNode) {
+function handleRemovePatchNode(p, parentPath, toDestroy) {
   const elements = resolveFirstLayerElements([p], parentPath, toDestroy)
   elements.forEach((ele) => {
-    parentNode.removeChild(ele)
+    ele.parentNode.removeChild(ele)
   })
 }
 
-export function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view, cnodesToUpdateParentNode) {
+export function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view) {
   const elements = resolveFirstLayerElements([p], parentPath, cnode)
   elements.forEach((ele) => {
     toInsert.appendChild(ele)
@@ -61,9 +60,9 @@ export function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInser
   }
 
   nextPatch.push(p)
-  if (cnodesToUpdateParentNode && isComponentVnode(p)) {
-    cnodesToUpdateParentNode.push(cnode.next[vnodePathToString(createVnodePath(p, parentPath))])
-  }
+  // if (cnodesToUpdateParentNode && isComponentVnode(p)) {
+  //   cnodesToUpdateParentNode.push(cnode.next[vnodePathToString(createVnodePath(p, parentPath))])
+  // }
   return elements.length
 }
 
@@ -94,7 +93,6 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
   let toInsert = view.createFragment()
   // Save "toMove" type vnode to a fragment for later check if the algorithm is right.
   const toMove = view.createFragment()
-  const cnodesToUpdateParentNode = []
   let currentLastStableSiblingNode = lastStableSiblingNode
 
   patch.forEach((p) => {
@@ -102,21 +100,25 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
       handleToMovePatchNode(p, parentPath, cnode, toMove)
     } else if (p.action.type === PATCH_ACTION_MOVE_FROM) {
       p.action.type = PATCH_ACTION_REMAIN
-      handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view, cnodesToUpdateParentNode)
+      handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view)
     } else if (p.action.type === PATCH_ACTION_INSERT) {
       p.action.type = PATCH_ACTION_REMAIN
-      handleInitialVnode(p, cnode, view, nextPatch, parentPath, toInsert, nextPatch.length, cnodesToUpdateParentNode)
+      handleInitialVnode(p, cnode, view, nextPatch, parentPath, toInsert, nextPatch.length)
     } else if (p.action.type === PATCH_ACTION_REMOVE) {
-      handleRemovePatchNode(p, parentPath, { next: cnode.toDestroyPatch }, parentNode)
+      // TODO parentNode 可以去掉， p 中的 element 可以自己查到 parentNode
+      handleRemovePatchNode(p, parentPath, { next: cnode.toDestroyPatch })
     } else if (p.action.type === PATCH_ACTION_REMAIN) {
-      // Handle "toInsert" type first
-      const toInsertBefore = currentLastStableSiblingNode === null ? parentNode.childNodes[0] : currentLastStableSiblingNode.nextSibling
+      // Handle "toInsert" type first.
+      // Trying to insert all new element between two remained elements, So we need to find last remained element first.
       if (toInsert.childNodes.length !== 0) {
-        currentLastStableSiblingNode = toInsert.childNodes[toInsert.childNodes.length - 1]
+        const toInsertBefore = currentLastStableSiblingNode === null ? parentNode.childNodes[0] : currentLastStableSiblingNode.nextSibling
+        currentLastStableSiblingNode = toInsertBefore || toInsert.childNodes[toInsert.childNodes.length - 1]
         parentNode.insertBefore(toInsert, toInsertBefore)
-        toInsert = view.createFragment()
+        // toInsert is empty now
+        // toInsert = view.createFragment()
       }
 
+      // debugger
       // Only "p.type === Array" condition needs previousSibling
       handleRemainPatchNode(p, nextPatch, parentNode, currentLastStableSiblingNode, parentPath, cnode, view)
       // Find last element in patch node to update currentLastStableSiblingNode
@@ -127,27 +129,22 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
     }
   })
 
-  cnodesToUpdateParentNode.forEach((cnodeToUpdateParentNode) => {
-    cnodeToUpdateParentNode.view.parentNode = parentNode
-  })
 
   if (toInsert.childNodes.length !== 0) {
     parentNode.insertBefore(toInsert, currentLastStableSiblingNode ? currentLastStableSiblingNode.nextSibling : null)
     toInsert = null
   }
 
-  if (toMove.childNodes.length !== 0) {
-    throw new Error('to move length not 0')
-  }
+  // for debug
+  if (toMove.childNodes.length !== 0) throw new Error('to move length not 0')
 
   return nextPatch
 }
 
 // updateDigest only handle one cnode and its new child cnodes.
 export default function updateDigest(cnode, view) {
-  view.updateDigestIntercepter(cnode, () => {
-    cnode.patch = handlePatchVnodeChildren(cnode.patch, cnode.view.parentNode, null, [], cnode, view)
-    // CAUTION toDestroyPatch should be reset after update digest.
-    cnode.toDestroyPatch = {}
-  })
+  if (cnode.view.parentNode === undefined) throw new Error(`cnode has not been initial digested ${cnode.type.displayName}`)
+  cnode.patch = handlePatchVnodeChildren(cnode.patch, cnode.view.parentNode, null, [], cnode, view)
+  // CAUTION toDestroyPatch should be reset after update digest.
+  cnode.toDestroyPatch = {}
 }
