@@ -92,10 +92,12 @@ export function initialize({ rootType, modelDefs = {}, initialState = {} }, appl
       }
     },
     initialRender: next => (cnode, ...argv) => {
+      if (cnode.props.mapMSTToState === undefined) return next(cnode, ...argv)
       cnodesToStartReaction.add(cnode)
       return next(cnode, ...argv)
     },
     updateRender: next => (cnode, ...argv) => {
+      if (cnode.props.mapMSTToState === undefined) return next(cnode, ...argv)
       return observeRender(next, cnode, ...argv)
     },
     session: next => (sessionName, fn) => {
@@ -106,11 +108,6 @@ export function initialize({ rootType, modelDefs = {}, initialState = {} }, appl
       root,
     },
   }
-}
-
-export function test(cnode, methodName) {
-  if (methodName === 'inject') return true
-  return !(typeof cnode === 'object' && cnode.props.mapMSTToState === undefined)
 }
 
 export { types, autorun, Reaction, destroy }

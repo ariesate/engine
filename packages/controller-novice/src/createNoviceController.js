@@ -1,14 +1,11 @@
-import { noop } from './util'
 import { walkCnodes } from './common'
-import createNoviceModuleSystem from './moduleSystem/index'
-
-
+import createNoviceModuleSystem from './moduleSystem/createModuleSystem'
 
 /**
  * Controller is the backbone to assemble scheduler, painter and view.
  * The module system and lifecycle is provided by Novice controller, not the engine.
  */
-export default function createNoviceController(mods = {}, initialState, initialAppearance) {
+export default function createNoviceController(mods = {}) {
   let scheduler = null
   let ctree = null
 
@@ -22,7 +19,7 @@ export default function createNoviceController(mods = {}, initialState, initialA
   }
 
   /* eslint-disable no-use-before-define */
-  const moduleSystem = createNoviceModuleSystem(mods, collectChangedCnodes, startUpdateSession, initialState, initialAppearance)
+  const moduleSystem = createNoviceModuleSystem(mods, startUpdateSession, collectChangedCnodes)
   /* eslint-enable no-use-before-define */
 
   return {
@@ -37,8 +34,7 @@ export default function createNoviceController(mods = {}, initialState, initialA
           const injectArgv = moduleSystem.inject(cnode)
           injectArgv.children = cnode.children
 
-          const result = moduleSystem.hijack(cnode, render, injectArgv)
-          return result
+          return moduleSystem.hijack(cnode, render, injectArgv)
         })
       },
       updateRender(cnodeToUpdate) {
@@ -73,7 +69,7 @@ export default function createNoviceController(mods = {}, initialState, initialA
 
     paint: vnode => ctree = scheduler.startInitialSession(vnode),
     receiveScheduler: s => scheduler = s,
-    apply: (fn) => scheduler.startUpdateSession(fn),
+    apply: fn => scheduler.startUpdateSession(fn),
     dump() {},
     // for debug
     instances: moduleSystem.instances,

@@ -5,6 +5,8 @@ export function initialize(apply) {
     initialize(next) {
       return (cnode, ...argv) => {
         next(cnode, ...argv)
+        if (cnode.type.listeners === undefined) return
+
         cnode.generateListeners = (injectedArgv) => {
           const listeners = mapValues(cnode.type.listeners, (listener, name) => {
             return (...runtimeArgv) => apply(() => {
@@ -24,16 +26,10 @@ export function initialize(apply) {
     inject(next) {
       return (cnode) => {
         const injectedArgv = next(cnode)
-        return {
-          ...injectedArgv,
-          listeners: cnode.generateListeners(injectedArgv),
-        }
+        return cnode.type.listeners === undefined ?
+          injectedArgv :
+          Object.assign(injectedArgv, { listeners: cnode.generateListeners(injectedArgv) })
       }
     },
   }
 }
-
-export function test(cnode) {
-  return cnode.type.listeners !== undefined
-}
-

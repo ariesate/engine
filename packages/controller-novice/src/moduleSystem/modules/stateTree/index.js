@@ -5,7 +5,7 @@ import { once, getReactionCacheFn, getCacheFnFromReactionProxy } from './once'
 import { createUniqueIdGenerator, ensureArray } from '../../../util'
 import exist from '../../exist'
 
-export function initialize(collect) {
+export function initialize(apply, collect) {
   const root = {}
   const generateBind = createUniqueIdGenerator('bind')
   let cnodesToStartReaction = new Set()

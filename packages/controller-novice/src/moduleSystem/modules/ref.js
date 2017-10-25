@@ -2,16 +2,14 @@ export function initialize() {
   return {
     inject(next) {
       return (cnode) => {
-        return {
-          ...next(cnode),
-          refs: cnode.view.getRefs(),
-          viewRefs: cnode.view.getViewRefs(),
-        }
+        const origin = next(cnode)
+        return cnode.isDigested ?
+          Object.assign(origin, {
+            refs: cnode.view.getRefs(),
+            viewRefs: cnode.view.getViewRefs(),
+          }) :
+          origin
       }
     },
   }
-}
-
-export function test(cnode) {
-  return cnode.view !== undefined
 }
