@@ -1,7 +1,7 @@
 import { createElement } from 'novice'
 import definition from '../output/components'
 import StringItem from './StringItem'
-import { map, mapValues } from '../util'
+import { map, mapValues, each } from '../util'
 
 const ItemEditorMap = {
   String: StringItem,
@@ -11,7 +11,12 @@ function getType(obj) {
   return Object.prototype.toString.call(obj).replace(/\[object (\w+)\]/, (_, match) => match)
 }
 
+each(definition, (def) => {
+  def.stateTypes = mapValues(def.getDefaultState(), getType)
+})
+
 export default {
+  displayName: 'Editor',
   actions: {
     changeCurrent({ state }, current, newValue = {}) {
       state.current = current
@@ -42,9 +47,9 @@ export default {
     if (component === undefined) return <div>unknown component {state.current}</div>
 
     return map(state.value, (itemValue, itemKey) => {
-      const ItemEditor = ItemEditorMap[getType(itemValue.value)]
+      const ItemEditor = ItemEditorMap[component.stateTypes[itemKey]]
       return (
-        <div>
+        <div key={itemKey}>
           <span>{itemKey}:</span>
           <ItemEditor bind={['value', itemKey]} listeners={{ onSave: listeners.onSave }} />
         </div>

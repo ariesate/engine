@@ -31,6 +31,7 @@ const App = {
     }
   },
   render() {
+    console.log("app rendering")
     return (
       <div>
         <span>Hello</span>

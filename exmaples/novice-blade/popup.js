@@ -3,8 +3,8 @@ import Editor from './popup/Editor'
 import { mapValues } from './util'
 import * as actionMod from './common/actionMod'
 
-function pickValues(value) {
-  return mapValues(value, ({ value }) => value)
+function pickValues(values) {
+  return mapValues(values, ({ value }) => value)
 }
 
 const listeners = {
@@ -28,10 +28,8 @@ const controller = render(
 // for debug
 window.controller = controller
 window.change = (com) => {
-  // controller.apply(() => {
-  //   controller.instances.stateTree.api.get('editor').current = com
-  // })
-  controller.instances.actions.api.get('editor').changeCurrent(com, JSON.parse(localStorage.getItem(com)))
+  const lastValue = JSON.parse(localStorage.getItem(com)) || {}
+  controller.instances.actions.api.get('editor').changeCurrent(com, lastValue)
 }
 
 window.setTimeout(() => {

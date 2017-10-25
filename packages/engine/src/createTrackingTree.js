@@ -1,39 +1,25 @@
+// CAUTION Magic number
+const MAX_CNODE_LEVEL = 100
+
 export default function createTrackingTree() {
   let locked = false
-  let root = null
+  const trackingQueue = new Array(MAX_CNODE_LEVEL)
+  let minLevel = MAX_CNODE_LEVEL - 1
+  let maxLevel = 0
 
-  function track(cnode, isAncestor = false) {
+  function track(cnode) {
     if (locked) throw new Error(`tracking tree locked, trying to track ${cnode.type.displayName}`)
-    if (cnode.trackNode !== undefined) return
-    const trackNode = { tracking: !isAncestor, owner: cnode, children: new Set() }
-    cnode.trackNode = trackNode
-    if (!cnode.parent) {
-      root = trackNode
-    } else {
-      if (cnode.parent.trackNode === undefined) track(cnode.parent, true)
-      cnode.trackNode.parent = cnode.parent.trackNode
-      cnode.parent.trackNode.children.add(cnode.trackNode)
-    }
+    if (trackingQueue[cnode.level] === undefined) trackingQueue[cnode.level] = new Set()
+    trackingQueue[cnode.level].add(cnode)
+    if (cnode.level < minLevel) minLevel = cnode.level
+    if (cnode.level > maxLevel) maxLevel = cnode.level
   }
 
-  function dispose(cnode, noNeedRecursive = false) {
-    if (cnode.trackNode === undefined) throw new Error(`cnode is not in tracking tree ${cnode.type.displayName}`)
-    if (!noNeedRecursive) {
-      cnode.trackNode.children.forEach(childTrackRef => dispose(childTrackRef.owner))
+  function dispose(cnode) {
+    if (trackingQueue[cnode.level] !== undefined) {
+      trackingQueue[cnode.level].delete(cnode)
+      if (trackingQueue[cnode.level].size === 0) trackingQueue[cnode.level] = undefined
     }
-    if (cnode.trackNode.parent) {
-      cnode.trackNode.parent.children.delete(cnode.trackNode)
-      delete cnode.trackNode.parent
-    }
-    delete cnode.trackNode.owner
-    delete cnode.trackNode.children
-    delete cnode.trackNode
-  }
-
-  function walk(trackNode, handler, shouldDispose) {
-    if (trackNode.tracking) handler(trackNode.owner)
-    trackNode.children.forEach(childTrackNode => walk(childTrackNode, handler, shouldDispose))
-    if (shouldDispose) dispose(trackNode.owner, true)
   }
 
   return {
@@ -42,14 +28,20 @@ export default function createTrackingTree() {
     track,
     dispose,
     walk(handler, shouldDispose) {
-      if (root === null) return
-      walk(root, handler, shouldDispose)
+      if (minLevel === MAX_CNODE_LEVEL - 1) return
+      for (let i = minLevel; i < maxLevel + 1; i++) {
+        if (trackingQueue[i] !== undefined) {
+          trackingQueue[i].forEach(handler)
+          if (shouldDispose) trackingQueue[i] = undefined
+        }
+      }
       if (shouldDispose) {
-        root = null
+        minLevel = MAX_CNODE_LEVEL - 1
+        maxLevel = 0
       }
     },
     isEmpty() {
-      return root === null
+      return minLevel === MAX_CNODE_LEVEL - 1
     },
   }
 }

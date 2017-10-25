@@ -1,4 +1,4 @@
-import { noop } from '../util'
+import { noop, mapValues } from '../util'
 // import * as baseAppearanceMod from './modules/appearance'
 import * as stateTreeMod from './modules/stateTree/index'
 import * as refMod from './modules/ref'
@@ -19,15 +19,25 @@ const API = {
   unit: (unitName, cnode, fn) => fn(),
 }
 
+function attachArgv(mods, ...argv) {
+  return mapValues(mods, mod => ({
+    ...mod,
+    argv: (mod.argv || []).concat(argv),
+  }))
+}
+
 export default function createNoviceModuleSystem(inputMods, apply, collectChangedCnodes) {
   const mods = [
+    // basic layer
     { stateTree: { ...stateTreeMod, argv: [apply, collectChangedCnodes] } },
-    {
-      ref: { ...refMod, argv: [apply, collectChangedCnodes] },
-      listener: { ...listenerMod, argv: [apply, collectChangedCnodes] },
-      lifecycle: { ...lifecycleMod, argv: [apply, collectChangedCnodes] },
-    },
-    inputMods,
+    // novice layer
+    attachArgv({
+      ref: refMod,
+      listener: listenerMod,
+      lifecycle: lifecycleMod,
+    }, apply, collectChangedCnodes),
+    // user layer
+    attachArgv(inputMods, apply, collectChangedCnodes),
   ]
 
   return createMultiLayeredModuleSystem(API, mods)

@@ -50,6 +50,7 @@ export function createCnode(vnode, parent) {
     type: vnode.type,
     props: vnode.attributes || {},
     children: vnode.children,
+    level: parent ? parent.level + 1 : 0,
     parent,
   }
 }

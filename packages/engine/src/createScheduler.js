@@ -55,7 +55,10 @@ export default function createScheduler(painter, view, supervisor) {
   function startInitialSession(vnode) {
     supervisor.session(SESSION_INITIAL, () => {
       ctree = painter.createCnode({
-        type: { render: () => vnode },
+        type: {
+          displayName: 'NOVICE_ROOT',
+          render: () => vnode,
+        },
       })
 
       walkCnodes([ctree], (cnode) => {
