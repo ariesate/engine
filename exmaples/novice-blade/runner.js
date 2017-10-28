@@ -63,3 +63,12 @@ window.render({
   },
   "children": []
 })
+
+window.sketchBridge = function(data) {
+  // console.log(data)
+  document.body.append(JSON.stringify(data))
+  // document.body.write(JSON.stringify(data))
+}
+
+document.write(Math.random())
+// alert(window.webkit.messageHandlers.Sketch.postMessage)

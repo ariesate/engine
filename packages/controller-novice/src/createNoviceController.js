@@ -1,4 +1,5 @@
 import { walkCnodes } from './common'
+import { values } from './util'
 import createNoviceModuleSystem from './moduleSystem/createModuleSystem'
 
 /**
@@ -52,7 +53,7 @@ export default function createNoviceController(mods = {}) {
       filterNext(result) {
         const { toInitialize, toDestroy = {} } = result
         // TODO remove toDestroy in cnodesToRepaint
-        walkCnodes(Object.values(toDestroy), moduleSystem.destroy)
+        walkCnodes(values(toDestroy), moduleSystem.destroy)
         // CAUTION Unlike React, Novice only render new cnode during repaint,
         // while React recursively re-render child components.
         return { toPaint: toInitialize, toDispose: toDestroy }
