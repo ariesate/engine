@@ -1,5 +1,5 @@
 import cloneDeep from 'lodash/clonedeep'
-import { each, createUniqueIdGenerator, isObject } from './util'
+import { each, createUniqueIdGenerator, isObject, values } from './util'
 
 export function isComponent(n) {
   return isObject(n)
@@ -52,7 +52,7 @@ export function walkCnodes(cnodes, handler) {
   cnodes.forEach((cnode) => {
     const shouldStop = handler(cnode) === false
     if (!shouldStop) {
-      walkCnodes(Object.values(cnode.next || {}), handler)
+      walkCnodes(values(cnode.next || {}), handler)
     }
   })
 }

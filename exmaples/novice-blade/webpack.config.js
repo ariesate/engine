@@ -1,16 +1,17 @@
 const webpack = require('webpack')
 const path = require('path')
 
-const isDevMode = process.env.NODE_ENV === 'dev'
+// const isDevMode = process.env.NODE_ENV === 'dev'
 
 const config = {
   entry: {
     popup: './popup.js',
-    output: './output.js',
+    runner: './runner.js',
   },
   output: {
     filename: '[name].js',
     publicPath: '/',
+    path: path.resolve(__dirname, 'webview'),
   },
   module: {
     rules: [
@@ -23,7 +24,7 @@ const config = {
   ],
 }
 
-if (isDevMode) {
+// if (isDevMode) {
   const packagePath = path.resolve(__dirname, '../../packages')
 
   config.resolve = {
@@ -32,6 +33,6 @@ if (isDevMode) {
       '@ariesate/are': path.resolve(packagePath, 'engine/src'),
     },
   }
-}
+// }
 
 module.exports = config
