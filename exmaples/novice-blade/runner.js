@@ -1,20 +1,34 @@
 import { createElement, render } from 'novice'
 import * as keyboardMod from './output/mods/keyboard'
 import defaultComponents from './output/components'
+import { createUniqueIdGenerator } from './util'
 
-function renderConfigToFlatTree(config, components) {
-  const RawCom = components[config.type]
-  if (RawCom === undefined) throw new Error(`unknown Component ${config.type}`)
+const generateBind = createUniqueIdGenerator('child')
+
+function renderConfigToFlatTree({ type, props, bind, children = [] }, components) {
+  const RawCom = components[type]
+  if (RawCom === undefined) throw new Error(`unknown Component ${type}`)
+
+  // assure bind
+  const childBinds = []
+  children.forEach((child) => {
+    child.bind = child.bind ? child.bind : generateBind()
+    childBinds.push(child.bind)
+  })
+
   const Com = {
     ...RawCom,
+    displayName: type,
     getDefaultState() {
-      return {
+      const state = {
         ...RawCom.getDefaultState(),
-        ...config.props,
+        ...props,
       }
+      childBinds.forEach(childBind => state[childBind] = {})
+      return state
     },
   }
-  return <Com bind="child">{config.children.map(child => renderConfigToFlatTree(child, components))}</Com>
+  return <Com bind={bind}>{children.map(child => renderConfigToFlatTree(child, components))}</Com>
 }
 
 const Runner = {
@@ -22,7 +36,7 @@ const Runner = {
   getDefaultState() {
     return {
       config: {},
-      child: {},
+      appState: {},
     }
   },
   render({ state }) {
@@ -30,45 +44,80 @@ const Runner = {
       return <div>wait for input</div>
     }
 
-    return renderConfigToFlatTree(state.config, defaultComponents)
+    // CAUTION must add this bind
+    state.config.bind = 'appState'
+    return renderConfigToFlatTree(state.config, defaultComponents, 'childState')
   },
 }
 
-window.controller = render(
+const controller = render(
   <Runner bind="runner" />,
   document.getElementById('root'),
   { keyboard: keyboardMod },
 )
 
-window.render = (config) => {
-  window.controller.apply(() => {
-    window.controller.instances.stateTree.api.get('runner').config = config
+window.sketchBridge = function (data) {
+  // return document.body.append(data)
+  document.getElementById('data').innerHTML = JSON.stringify(JSON.parse(data), null, 2)
+  const { name, payload } = JSON.parse(data)
+  controller.apply(() => {
+    controller.instances.stateTree.api.get('runner').config = payload
   })
 }
 
-window.render({
-  "type": "Group",
-  "props": {
-    "style": {
-      "background": "rgba(217,217,217,1),rgba(217,217,217,1),rgba(217,217,217,1),rgba(217,217,217,1),rgba(217,217,217,1)",
-      "border": "1px solid rgba(152,152,152,1)",
-      "boxShadow": "0px 2px 4px 0px rgba(0,0,0,0.5),inset 0px 1px 3px 0px rgba(0,0,0,0.5)",
-      "width": 81,
-      "height": 45,
-      "position": "absolute",
-      "left": 224,
-      "top": 123,
-    },
-    "center": false,
-  },
-  "children": []
-})
+// const mockData = JSON.stringify({
+//   "name": "config",
+//   "payload": {
+//   "type": "App",
+//     "props": {
+//     "style": {
+//       "width": 217,
+//         "height": 147,
+//         "position": "absolute",
+//         "left": 0,
+//         "top": 0
+//     },
+//     "center": false
+//   },
+//   "children": [
+//     {
+//       "type": "Unknown",
+//       "props": {
+//         "originName": "xxx"
+//       }
+//     },
+//     {
+//       "type": "Group",
+//       "props": {
+//         "style": {
+//           "width": 81,
+//           "height": 45,
+//           "position": "absolute",
+//           "left": 28,
+//           "top": 28,
+//           "background": "rgba(217,217,217,1),rgba(217,217,217,1),rgba(217,217,217,1),rgba(217,217,217,1),rgba(217,217,217,1)",
+//           "border": "1px solid rgba(152,152,152,1)",
+//           "boxShadow": "0px 2px 4px 0px rgba(0,0,0,0.5),inset 0px 1px 3px 0px rgba(0,0,0,0.5)"
+//         },
+//         "center": false
+//       }
+//     },
+//     {
+//       "type": "Text",
+//       "props": {
+//         "text": "aaaa",
+//         "style": {
+//           "fontSize": 20,
+//           "color": "rgba(74,74,74,1)",
+//           "position": "absolute",
+//           "left": 126,
+//           "top": 126
+//         }
+//       }
+//     }
+//   ]
+// }
+// })
+// sketchBridge(mockData)
 
-window.sketchBridge = function(data) {
-  // console.log(data)
-  document.body.append(JSON.stringify(data))
-  // document.body.write(JSON.stringify(data))
-}
-
-document.write(Math.random())
-// alert(window.webkit.messageHandlers.Sketch.postMessage)
+window.controller = controller
