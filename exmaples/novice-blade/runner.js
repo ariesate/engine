@@ -65,7 +65,8 @@ window.sketchBridge = function (data) {
   })
 }
 
-// const mockData = JSON.stringify({
+// const mockData = JSON.stringify(
+// {
 //   "name": "config",
 //   "payload": {
 //   "type": "App",
@@ -81,9 +82,13 @@ window.sketchBridge = function (data) {
 //   },
 //   "children": [
 //     {
-//       "type": "Unknown",
+//       "type": "Img",
 //       "props": {
-//         "originName": "xxx"
+//         "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGYAAABRCAYAAAAgoNN3AAAAAXNSR0IArs4c6QAAAaNJREFUeAHt3TEKwzAABMEk5GN6pZ6jpzmQYlEqd9EW6+oMAh83du3nnPN6dOkWeOkaVei7QDDSF+G99xpj7LflPy+w1uKJfTFM4QrBuDxoEwxTuEIwLg/aBMMUrhCMy4M2wTCFKwTj8qBNMEzhCsG4PGgTDFO4QjAuD9oEwxSuEIzLgzbBMIUrBOPyoE0wTOEKwbg8aBMMU7hCMC4P2gTDFK4QjMuDNsEwhSsE4/KgTTBM4QrBuDxoEwxTuEIwLg/aBMMUrhCMy4M2wTCFKwTj8qBNMEzhCsG4PGgTDFO4QjAuD9oEwxSuEIzLgzbBMIUrBOPyoE0wTOEKwbg8aBMMU7hCMC4P2gTDFK4QjMuDNsEwhSsE4/KgTTBM4QrBuDxoEwxTuEIwLg/aBMMUrhCMy4M2wTCFKwTj8qBNMEzhCsG4PGgTDFO4QjAuD9oEwxSuEIzLgzbBMIUrBOPyoE0wTOEKwbg8aBMMU7hCMC4P2gTDFK4QjMuDNsEwhSsE4/KgTTBM4QrBuDxo8/NL3/2XspwoHFmgL+bI7PcPDeZ+oyMnPnKeCKdM/xWPAAAAAElFTkSuQmCC",
+//         "style": {
+//           "width": 34,
+//           "height": 27
+//         }
 //       }
 //     },
 //     {
@@ -94,7 +99,7 @@ window.sketchBridge = function (data) {
 //           "height": 45,
 //           "position": "absolute",
 //           "left": 28,
-//           "top": 28,
+//           "top": 74,
 //           "background": "rgba(217,217,217,1),rgba(217,217,217,1),rgba(217,217,217,1),rgba(217,217,217,1),rgba(217,217,217,1)",
 //           "border": "1px solid rgba(152,152,152,1)",
 //           "boxShadow": "0px 2px 4px 0px rgba(0,0,0,0.5),inset 0px 1px 3px 0px rgba(0,0,0,0.5)"
@@ -111,7 +116,10 @@ window.sketchBridge = function (data) {
 //           "color": "rgba(74,74,74,1)",
 //           "position": "absolute",
 //           "left": 126,
-//           "top": 126
+//           "top": 40,
+//           "align": 0,
+//           "letterSpacing": "inherit",
+//           "fontFamily": "KinoMT"
 //         }
 //       }
 //     }

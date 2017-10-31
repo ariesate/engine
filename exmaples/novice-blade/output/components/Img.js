@@ -10,6 +10,6 @@ export default {
 
   render({ state }) {
     if (state.url === '') return null
-    return <image style={state.style} src={state.src} />
+    return <img style={state.style} src={state.src} />
   },
 }
