@@ -43,8 +43,15 @@ export default function createElement(type, attributes, ...rawChildren) {
     delete node.attributes.transferKey
   }
 
-  node.children = normalizeChildren(rawChildren)
+  let childrenToAttach = rawChildren
+  if (node.attributes.children !== undefined) {
+    childrenToAttach = node.attributes.children
+    delete node.attributes.children
+  }
 
+  node.children = normalizeChildren(childrenToAttach)
+  // TODO 之后全改成 props
+  node.props = node.attributes
   return node
 }
 

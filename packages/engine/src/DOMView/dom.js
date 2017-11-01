@@ -94,7 +94,9 @@ export function createElement(node, isSVG, invoke) {
     ? document.createElementNS('http://www.w3.org/2000/svg', node.type)
     : document.createElement(node.type)
 
-  setAttributes(node.attributes, element, invoke)
+  if (node.attributes) {
+    setAttributes(node.attributes, element, invoke)
+  }
 
   return element
 }

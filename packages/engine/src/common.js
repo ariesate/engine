@@ -42,7 +42,7 @@ export function walkRawVnodes(vnodes, handler, parentPath = [], context) {
     const currentPath = parentPath.concat(index)
     const nextContext = handler(vnode, currentPath, context)
 
-    if (vnode.children !== undefined) {
+    if (nextContext !== false && vnode.children !== undefined) {
       walkRawVnodes(vnode.children, handler, currentPath, nextContext)
     }
   })

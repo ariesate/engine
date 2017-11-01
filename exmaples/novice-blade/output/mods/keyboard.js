@@ -1,9 +1,11 @@
+import { CONSTANT } from 'novice'
 
 export function initialize(apply, _, system) {
   return {
-    afterLifecycle: next => (cnode, hookName, ...argv) => {
-      next(cnode, hookName, ...argv)
-      if (cnode.type.onGlobalKeyboard && hookName === 'hookAfterInitialDigest') {
+    unit: next => (unitName, cnode, ...argv) => {
+      next(unitName, cnode, ...argv)
+      // console.log(unitName, CONSTANT)
+      if (cnode.type.onGlobalKeyboard && unitName === CONSTANT.UNIT_INITIAL_DIGEST) {
         const listener = (e) => {
           apply(() => {
             cnode.type.onGlobalKeyboard(system.inject(cnode), e.type, e)
@@ -19,7 +21,8 @@ export function initialize(apply, _, system) {
         }
       }
     },
-    destroy(cnode) {
+    destroy: next => (cnode) => {
+      next(cnode)
       if (cnode.cancelKeyboardListener) {
         cnode.cancelKeyboardListener()
       }

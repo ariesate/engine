@@ -5,6 +5,7 @@ function renderSelector(names, onChange, ref) {
     position: 'absolute',
     top: ref.clientTop + 20,
     left: ref.clientLeft,
+    cursor: 'pointer',
   }
 
   return (
@@ -21,7 +22,10 @@ export default {
   },
 
   listeners: {
+    // TODO case 切换回去就有问题了
     onChange({ state }, name) {
+      if (state.current === name) return
+
       state.current = name
       state.showSelector = false
     },
@@ -34,8 +38,8 @@ export default {
   },
   render({ state, children, listeners, refs = {} }) {
     if (children.length === 0) return null
-    const current = state.current === null ? children[0].attributes.caseName : state.current
-    const currentChild = cloneElement(children.find(child => child.attributes.caseName === current), { ref: 'current' })
-    return state.showSelector ? [currentChild, renderSelector(children.map(child => child.attributes.caseName), listeners.onChange, refs.current)] : currentChild
+    const current = state.current === null ? children[0].props.caseName : state.current
+    const currentChild = cloneElement(children.find(child => child.props.caseName === current), { ref: 'current' })
+    return state.showSelector ? [currentChild, renderSelector(children.map(child => child.props.caseName), listeners.onChange, refs.current)] : currentChild
   },
 }

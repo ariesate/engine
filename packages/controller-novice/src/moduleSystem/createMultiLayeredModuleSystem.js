@@ -13,7 +13,6 @@ function combineModuleApis(layeredInstances, apis) {
 }
 
 export default function createMultiLayeredModuleSystem(apis, layeredMods) {
-
   const system = {}
 
   const layeredInstances = layeredMods.map((oneLayerMods) => {

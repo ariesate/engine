@@ -15,6 +15,7 @@ import createPainter from '@ariesate/are/createPainter'
 import createDOMView from '@ariesate/are/DOMView/createDOMView'
 import createVnodeElement, { cloneElement as cloneVnodeElement } from '@ariesate/are/createElement'
 import createNoviceController from './createNoviceController'
+import * as CONSTANT from '@ariesate/are/constant'
 
 export const createElement = createVnodeElement
 export const cloneElement = cloneVnodeElement
@@ -33,4 +34,8 @@ export function render(vnode, domElement, ...controllerArgv) {
   controller.paint(vnode)
 
   return controller
+}
+
+export {
+  CONSTANT,
 }

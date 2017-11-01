@@ -78,6 +78,10 @@ function prepareRetForAttach(rawRet, cnode) {
       if (vnode.transferKey !== undefined) {
         transferKeyedVnodes[vnode.transferKey] = vnode
       }
+      // TODO 研究这个 feature, 如果组件没有指明 transparent，那么就不穿透
+      if (!vnode.transparent) {
+        return false
+      }
     }
 
     return parentVnodePath.concat(vnode.key)

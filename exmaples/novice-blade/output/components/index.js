@@ -1,6 +1,7 @@
 import A from './A'
 import Case from './Case'
 import Img from './Img'
+import Ignore from './Ignore'
 import * as Group from './Group'
 import * as App from './App'
 import * as Unknown from './Unknown'
@@ -11,6 +12,7 @@ export default {
   App,
   Case,
   Img,
+  Ignore,
   Group,
   Unknown,
   Text,

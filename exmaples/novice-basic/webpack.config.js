@@ -15,6 +15,7 @@ const config = {
     cnodeTransferKey: './cnodeTransferKey/index.js',
     mst: './mst/index.js',
     retArray: './retArray/index.js',
+    deepBind: './deepBind/index.js',
   },
   output: {
     filename: '[name].js',

@@ -2,17 +2,18 @@ import { createElement, render } from 'novice'
 import * as keyboardMod from './output/mods/keyboard'
 import defaultComponents from './output/components'
 import { createUniqueIdGenerator } from './util'
+import mockData from './runnerDemo'
 
 const generateBind = createUniqueIdGenerator('child')
 
-function renderConfigToFlatTree({ type, props, bind, children = [] }, components) {
+function renderConfigToFlatTree({ type, state, props = {}, bind, children = [] }, components) {
   const RawCom = components[type]
   if (RawCom === undefined) throw new Error(`unknown Component ${type}`)
 
-  // assure bind
+  // assure bind, used in getDefaultState
   const childBinds = []
   children.forEach((child) => {
-    child.bind = child.bind ? child.bind : generateBind()
+    child.bind = child.props.bind ? child.props.bind : generateBind()
     childBinds.push(child.bind)
   })
 
@@ -20,22 +21,26 @@ function renderConfigToFlatTree({ type, props, bind, children = [] }, components
     ...RawCom,
     displayName: type,
     getDefaultState() {
-      const state = {
+      const mergedState = {
         ...RawCom.getDefaultState(),
-        ...props,
+        ...state,
       }
-      childBinds.forEach(childBind => state[childBind] = {})
-      return state
+      childBinds.forEach(childBind => mergedState[childBind] = {})
+      return mergedState
     },
   }
-  return <Com bind={bind}>{children.map(child => renderConfigToFlatTree(child, components))}</Com>
+  return (<Com
+    bind={bind}
+    {...props}
+    children={children.map(child => renderConfigToFlatTree(child, components))}
+  />)
 }
 
 const Runner = {
   displayName: 'Runner',
   getDefaultState() {
     return {
-      config: {},
+      config: mockData.payload,
       appState: {},
     }
   },
@@ -46,6 +51,7 @@ const Runner = {
 
     // CAUTION must add this bind
     state.config.bind = 'appState'
+    // console.log(renderConfigToFlatTree(state.config, defaultComponents, 'childState'))
     return renderConfigToFlatTree(state.config, defaultComponents, 'childState')
   },
 }
@@ -65,67 +71,7 @@ window.sketchBridge = function (data) {
   })
 }
 
-// const mockData = JSON.stringify(
-// {
-//   "name": "config",
-//   "payload": {
-//   "type": "App",
-//     "props": {
-//     "style": {
-//       "width": 217,
-//         "height": 147,
-//         "position": "absolute",
-//         "left": 0,
-//         "top": 0
-//     },
-//     "center": false
-//   },
-//   "children": [
-//     {
-//       "type": "Img",
-//       "props": {
-//         "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGYAAABRCAYAAAAgoNN3AAAAAXNSR0IArs4c6QAAAaNJREFUeAHt3TEKwzAABMEk5GN6pZ6jpzmQYlEqd9EW6+oMAh83du3nnPN6dOkWeOkaVei7QDDSF+G99xpj7LflPy+w1uKJfTFM4QrBuDxoEwxTuEIwLg/aBMMUrhCMy4M2wTCFKwTj8qBNMEzhCsG4PGgTDFO4QjAuD9oEwxSuEIzLgzbBMIUrBOPyoE0wTOEKwbg8aBMMU7hCMC4P2gTDFK4QjMuDNsEwhSsE4/KgTTBM4QrBuDxoEwxTuEIwLg/aBMMUrhCMy4M2wTCFKwTj8qBNMEzhCsG4PGgTDFO4QjAuD9oEwxSuEIzLgzbBMIUrBOPyoE0wTOEKwbg8aBMMU7hCMC4P2gTDFK4QjMuDNsEwhSsE4/KgTTBM4QrBuDxoEwxTuEIwLg/aBMMUrhCMy4M2wTCFKwTj8qBNMEzhCsG4PGgTDFO4QjAuD9oEwxSuEIzLgzbBMIUrBOPyoE0wTOEKwbg8aBMMU7hCMC4P2gTDFK4QjMuDNsEwhSsE4/KgTTBM4QrBuDxo8/NL3/2XspwoHFmgL+bI7PcPDeZ+oyMnPnKeCKdM/xWPAAAAAElFTkSuQmCC",
-//         "style": {
-//           "width": 34,
-//           "height": 27
-//         }
-//       }
-//     },
-//     {
-//       "type": "Group",
-//       "props": {
-//         "style": {
-//           "width": 81,
-//           "height": 45,
-//           "position": "absolute",
-//           "left": 28,
-//           "top": 74,
-//           "background": "rgba(217,217,217,1),rgba(217,217,217,1),rgba(217,217,217,1),rgba(217,217,217,1),rgba(217,217,217,1)",
-//           "border": "1px solid rgba(152,152,152,1)",
-//           "boxShadow": "0px 2px 4px 0px rgba(0,0,0,0.5),inset 0px 1px 3px 0px rgba(0,0,0,0.5)"
-//         },
-//         "center": false
-//       }
-//     },
-//     {
-//       "type": "Text",
-//       "props": {
-//         "text": "aaaa",
-//         "style": {
-//           "fontSize": 20,
-//           "color": "rgba(74,74,74,1)",
-//           "position": "absolute",
-//           "left": 126,
-//           "top": 40,
-//           "align": 0,
-//           "letterSpacing": "inherit",
-//           "fontFamily": "KinoMT"
-//         }
-//       }
-//     }
-//   ]
-// }
-// })
-// sketchBridge(mockData)
-
 window.controller = controller
+
+// sketchBridge(JSON.stringify(mockData))
+
