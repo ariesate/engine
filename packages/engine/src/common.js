@@ -112,7 +112,7 @@ export function resolveFirstLayerElements(vnodes, parentPath, cnode) {
       return [vnode.element]
     } else if (vnode.type === Array) {
       return vnode.children.reduce((elements, child) => {
-        return elements.concat(resolveFirstLayerElements(child, createVnodePath(vnode, parentPath), cnode))
+        return elements.concat(resolveFirstLayerElements([child], createVnodePath(vnode, parentPath), cnode))
       }, [])
     } else if (typeof vnode.type === 'object') {
       const nextCnode = cnode.next[getVnodeNextIndex(vnode, parentPath)]
