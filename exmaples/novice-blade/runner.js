@@ -40,7 +40,7 @@ const Runner = {
   displayName: 'Runner',
   getDefaultState() {
     return {
-      config: mockData.payload,
+      config: {},
       appState: {},
     }
   },
@@ -73,5 +73,5 @@ window.sketchBridge = function (data) {
 
 window.controller = controller
 
-// sketchBridge(JSON.stringify(mockData))
+window.sketchBridge(JSON.stringify(mockData))
 

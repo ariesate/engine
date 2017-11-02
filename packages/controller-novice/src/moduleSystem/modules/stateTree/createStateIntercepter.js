@@ -11,7 +11,7 @@ function createLeafTrackTree() {
   function dispose(path) {
     if (path.length === 0) return
     const [targetPath, propPath] = splitPath(path)
-    const target = exist.get(targetPath)
+    const target = exist.get(tree, targetPath)
     delete target[propPath]
     if (Object.keys(target).length === 0) dispose(targetPath)
   }
@@ -58,10 +58,6 @@ export default function createStateIntercepter(cnode) {
         mapValues(newValue, handler)
     }
 
-    // TODO 先就这样，之后要处理 destroy 了，但没有 dispose 的情况
-    if (!attachedChildCnodes.get(path)) {
-      return newValue
-    }
     // it is a leaf
     const childState = attachedChildCnodes.get(childBind).state
     // should trigger child cnode collect!

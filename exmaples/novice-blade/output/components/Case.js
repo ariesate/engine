@@ -8,8 +8,18 @@ function renderSelector(names, onChange, ref) {
     cursor: 'pointer',
   }
 
+  const itemStyle = {
+    display: 'inline-block',
+    background: '#000',
+    color: '#fff',
+    marginRight: '4px',
+    padding: '2px 4px',
+  }
+
   return (
-    <div style={style}>{names.map(name => <span onClick={() => onChange(name)}>{name}</span>)}</div>
+    <div style={style}>
+      {names.map(name => <span style={itemStyle} onClick={() => onChange(name)}>{name}</span>)}
+    </div>
   )
 }
 
@@ -22,7 +32,6 @@ export default {
   },
 
   listeners: {
-    // TODO case 切换回去就有问题了
     onChange({ state }, name) {
       if (state.current === name) return
 
@@ -40,6 +49,10 @@ export default {
     if (children.length === 0) return null
     const current = state.current === null ? children[0].props.caseName : state.current
     const currentChild = cloneElement(children.find(child => child.props.caseName === current), { ref: 'current' })
-    return state.showSelector ? [currentChild, renderSelector(children.map(child => child.props.caseName), listeners.onChange, refs.current)] : currentChild
+    return (
+      <div style={state.style}>
+        {state.showSelector ? [currentChild, renderSelector(children.map(child => child.props.caseName), listeners.onChange, refs.current)] : currentChild}
+      </div>
+    )
   },
 }

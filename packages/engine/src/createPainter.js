@@ -78,7 +78,7 @@ function prepareRetForAttach(rawRet, cnode) {
       if (vnode.transferKey !== undefined) {
         transferKeyedVnodes[vnode.transferKey] = vnode
       }
-      // TODO 研究这个 feature, 如果组件没有指明 transparent，那么就不穿透
+      // TODO 研究这个 feature, 如果组件没有指明 transparent，那么就不穿透。穿透的场景是什么？
       if (!vnode.transparent) {
         return false
       }
@@ -125,7 +125,7 @@ function diffNodeDetail(lastVnode, vnode) {
     }
   }
 
-  // TODO Improve performance. Maybe only a style rule changed.
+  // TODO Improve performance. Maybe only style rules changed.
   if (!deepEqual(lastVnode.attributes, vnode.attributes)) {
     return {
       attributes: vnode.attributes,

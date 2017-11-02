@@ -105,7 +105,6 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
       p.action.type = PATCH_ACTION_REMAIN
       handleInitialVnode(p, cnode, view, nextPatch, parentPath, toInsert, nextPatch.length)
     } else if (p.action.type === PATCH_ACTION_REMOVE) {
-      // TODO parentNode 可以去掉， p 中的 element 可以自己查到 parentNode
       handleRemovePatchNode(p, parentPath, { next: cnode.toDestroyPatch })
     } else if (p.action.type === PATCH_ACTION_REMAIN) {
       // Handle "toInsert" type first.

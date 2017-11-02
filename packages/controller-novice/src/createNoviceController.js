@@ -10,7 +10,6 @@ export default function createNoviceController(mods = {}) {
   let scheduler = null
   let ctree = null
 
-  // TODO use a tree to store
   function collectChangedCnodes(cnodes) {
     scheduler.collectChangedCnodes(cnodes)
   }

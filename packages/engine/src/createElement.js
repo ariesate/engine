@@ -22,7 +22,6 @@ export function normalizeChildren(rawChildren) {
  * @param rawChildren
  * @returns {VNode}
  */
-// TODO 不需要 normalize, 直接在 createElement 判断就行。
 export default function createElement(type, attributes, ...rawChildren) {
   const node = new VNode()
 
