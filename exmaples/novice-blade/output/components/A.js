@@ -9,6 +9,11 @@ export default {
   },
 
   render({ state, children }) {
-    return <a style={state.style} href={state.url}>{children}</a>
+    const toDisplay = state.text ? state.text : children
+    const style = {
+      ...state.style,
+      cursor: 'pointer',
+    }
+    return <div style={style} onClick={() => window.location.href = state.url}>{toDisplay}</div>
   },
 }

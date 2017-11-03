@@ -24,6 +24,7 @@
   },
   "scripts": {
     "start": "webpack-dev-server",
+    "build": "webpack",
     "dev": "NODE_ENV=dev webpack-dev-server --port 3000"
   },
   "author": "sskyy <skyking_H@hotmail.com>",

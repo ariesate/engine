@@ -62,10 +62,13 @@ const controller = render(
   { keyboard: keyboardMod },
 )
 
-window.sketchBridge = function (data) {
+window.sketchBridge = function ({ payload }) {
   // return document.body.append(data)
-  document.getElementById('data').innerHTML = JSON.stringify(JSON.parse(data), null, 2)
-  const { name, payload } = JSON.parse(data)
+  const dataEl = document.getElementById('data')
+  if (dataEl) {
+    dataEl.innerHTML = JSON.stringify(payload, null, 2)
+  }
+
   controller.apply(() => {
     controller.instances.stateTree.api.get('runner').config = payload
   })
@@ -73,5 +76,5 @@ window.sketchBridge = function (data) {
 
 window.controller = controller
 
-window.sketchBridge(JSON.stringify(mockData))
+window.sketchBridge({ payload: mockData })
 
