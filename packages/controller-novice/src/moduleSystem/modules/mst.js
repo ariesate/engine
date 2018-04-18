@@ -79,16 +79,26 @@ export function initialize({ rootType, modelDefs = {}, initialState = {} }, appl
         delete cnode.reaction
       }
     },
-    inject: next => (cnode) => {
-      const originInjectArgv = next(cnode)
-      if (!cnode.reaction) return { ...originInjectArgv, mst: root }
-      // CAUTION Only inject in re-render
-      const mstState = cnode.props.mapMSTToState({ ...originInjectArgv, mst: root })
-      const state = createStateProxy(mstState, cnode.state)
-      return {
-        ...originInjectArgv,
-        state,
-        mst: root,
+    inject: (next) => {
+      return (cnode) => {
+        const originInjectArgv = next(cnode)
+        if (!cnode.reaction) return { ...originInjectArgv, mst: root }
+        // CAUTION Only inject in re-render
+        const mstState = cnode.props.mapMSTToState({ ...originInjectArgv, mst: root })
+        // TODO 这里取了 cnode.state ，这个约定太不好了。全部重新设计！！！！！
+        const state = createStateProxy(mstState, cnode.state)
+
+        if (originInjectArgv.listeners !== undefined) {
+          each(originInjectArgv.listeners, (listener) => {
+            listener.argv.mst = root
+          })
+        }
+
+        return {
+          ...originInjectArgv,
+          state,
+          mst: root,
+        }
       }
     },
     initialRender: next => (cnode, ...argv) => {

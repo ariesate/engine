@@ -8,8 +8,8 @@ export function getDefaultState() {
 
 export function render({ state, children }) {
   const style = {
+    ...state.style,
     position: 'relative',
-    background: state.style.background,
   }
 
   return <div style={style}>{children}</div>

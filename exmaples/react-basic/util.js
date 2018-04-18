@@ -12,22 +12,10 @@ export function concat(fns) {
   }
 }
 
-export function chain(fns, spreadArgs = false) {
+export function compose(fns, spreadArgs = false) {
   return base => fns.reduce((last, fn) => {
     return spreadArgs ? fn(...last) : fn(last)
   }, base)
-}
-
-export function compose(fns) {
-  if (fns.length === 0) {
-    return arg => arg
-  }
-
-  if (fns.length === 1) {
-    return fns[0]
-  }
-
-  return fns.reduce((a, b) => (...args) => a(b(...args)))
 }
 
 export function warning(message) {
@@ -173,7 +161,7 @@ export function isPrimitiveType(type) {
 }
 
 export function indexBy(arr, key) {
-  return arr.reduce((last, v, index) => ({ ...last, [key === undefined ? index : v[key]]: v }), {})
+  return arr.reduce((last, v, index) => ({ ...last, [key === undefined ? index : key]: v }), {})
 }
 
 export function values(obj) {
@@ -228,10 +216,6 @@ export function collect(arr) {
 
 export function isObject(a) {
   return typeof a === 'object' && !Array.isArray(a) && a !== null
-}
-
-export function isFunction(a) {
-  return typeof a === 'function'
 }
 
 export function walk(obj, childrenName, handler, path = []) {
@@ -300,7 +284,7 @@ export function createUniqueIdGenerator(prefix = '') {
   return () => {
     index = (index === LETTER_AND_NUMBER_LEN - 1) ? 0 : (index + 1)
     last = (index === 0 ? last : last.slice(0, last.length - 1)) + LETTER_AND_NUMBER[index]
-    return `${prefix}_${last}`
+    return prefix + '-' + last
   }
 }
 
@@ -320,7 +304,7 @@ export function diff(first, second) {
   const absent = []
   const newBee = second.slice()
 
-  first.forEach((item) => {
+  first.forEach(item => {
     const index = newBee.indexOf(item)
     if (index === -1) {
       absent.push(item)
@@ -329,9 +313,5 @@ export function diff(first, second) {
     }
   })
 
-  return [absent, newBee]
-}
-
-export function ensureArray(o, allowUndefined = false) {
-  return Array.isArray(o) ? o : ((o !== undefined || allowUndefined) ? [o] : [])
+  return [absent, newbee]
 }

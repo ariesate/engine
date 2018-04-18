@@ -2,8 +2,6 @@ import {
   createVnodePath,
   resolveFirstLayerElements,
   resolveLastElement,
-  isComponentVnode,
-  vnodePathToString,
 } from '../common'
 import {
   handleInitialVnode,

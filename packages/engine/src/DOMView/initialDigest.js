@@ -1,7 +1,6 @@
 import {
   createVnodePath,
   vnodePathToString,
-  isComponentVnode,
   cloneVnode,
   resolveFirstLayerElements,
 } from '../common'
@@ -11,6 +10,7 @@ import {
 import createElement from '../createElement'
 import { handleMoveFromPatchNode } from './updateDigest'
 import { mapValues } from '../util'
+import Fragment from '../Fragment'
 
 /**
  * Attach element reference to cnode.
@@ -83,19 +83,19 @@ export function handleInitialVnode(vnode, cnode, view, parentPatch, parentPath, 
 
   // CAUTION we do not flatten array, because React do not too.
   // There will be a empty element in path, it is ok.
-  if (vnode.type === Array) {
+  if (vnode.type === Fragment || vnode.type === Array) {
     /* eslint-disable no-use-before-define */
     return handleInitialVnodeChildren(vnode.children, cnode, view, patch.children, currentPath, parentNode)
     /* eslint-enable no-use-before-define */
   }
 
   // 2) normal node
-  if (!isComponentVnode(vnode)) {
+  if (!view.isComponentVnode(vnode)) {
     return handleInitialNaiveVnode(vnode, cnode, view, patch, currentPath, parentNode)
   }
 
   // 3) component node
-  if (isComponentVnode(vnode)) {
+  if (view.isComponentVnode(vnode)) {
     /* eslint-disable no-use-before-define */
     return handleInitialComponentNode(vnode, cnode, view, patch, currentPath, parentNode)
     /* eslint-enable no-use-before-define */

@@ -1,3 +1,20 @@
+/**
+ * Session 中包装着 Unit。
+ * Session 表示的一次批量的 cnode 变更，例如某一个 dom 事件触发的所有 cnode 改变会在一个 session 中处理。
+ * Unit 表示的是某一个 cnode 的变更。
+ * 在 session 中再触发 collect 还有没有用？ 如果 lock 了就没用。
+ * 现在的策略是：在 session 中 paint 阶段没 lock，可以继续 collect。digest 阶段 lock 了。
+ *
+ * 在 react 中，有哪些生命周期可能再次引起变化？
+ * didMount/didUpdate(都是在 digest 之后，所以是先收集，session 完成后再执行，不想出现 session 套 session 的情况怎么处理)
+ * didCatch(肯定是在 paint 的某一个 unit 中)
+ *
+ * willReceiveProps(static getDerivedStateFromProps) 根据 props 变化(要求能够判断是不是因为 props 引起的变化)
+ * 这个应该是在 paint unit 开始之前，反正要 paint，所以有且仅有一次机会再改一下自己的 state。
+ * 即使改了，也 collect 不进来，不用担心。
+ *
+ * getSnapshotBeforeUpdate() 在 digest 的 unit 之前，不能再 setState(正好也不能，因为 lock 了)。
+ */
 import { walkCnodes } from './common'
 import { each } from './util'
 import {
@@ -21,17 +38,20 @@ export default function createScheduler(painter, view, supervisor) {
   const trackingTree = createTrackingTree()
   let inUpdateSession = false
 
-  function startUpdateSession(fn) {
-    // expect collect cnodes
-    fn()
-    if (inUpdateSession) return
+  function startUpdateSession(potentialChangeTriggerFn) {
+    // Expect scheduler api collectChangedCnodes will be used inside this function
+    // to collect changed cnodes into tracking tree.
+    potentialChangeTriggerFn()
+    // Collect finished
+
+    if (inUpdateSession === true) return
     if (trackingTree.isEmpty()) return
 
     supervisor.session(SESSION_UPDATE, () => {
       inUpdateSession = true
       trackingTree.walk((cnode) => {
         const unit = cnode.isPainted ? UNIT_REPAINT : UNIT_PAINT
-        supervisor.unit(unit, cnode, () => {
+        supervisor.unit(SESSION_UPDATE, unit , cnode, () => {
           const paintMethod = cnode.isPainted ? painter.repaint : painter.paint
           const { toPaint = {}, toRepaint = {}, toDispose = {} } = supervisor.filterNext(paintMethod(cnode), cnode)
           each(toPaint, toPaintCnode => trackingTree.track(toPaintCnode))
@@ -42,7 +62,7 @@ export default function createScheduler(painter, view, supervisor) {
       trackingTree.lock()
       trackingTree.walk((cnode) => {
         const unit = cnode.isDigested ? UNIT_UPDATE_DIGEST : UNIT_INITIAL_DIGEST
-        supervisor.unit(unit, cnode, () => {
+        supervisor.unit(SESSION_UPDATE, unit, cnode, () => {
           const digestMethod = cnode.isDigested ? view.updateDigest : view.initialDigest
           digestMethod(cnode)
         })
@@ -56,20 +76,20 @@ export default function createScheduler(painter, view, supervisor) {
     supervisor.session(SESSION_INITIAL, () => {
       ctree = painter.createCnode({
         type: {
-          displayName: 'NOVICE_ROOT',
+          displayName: 'ARE_ROOT',
           render: () => vnode,
         },
       })
 
       walkCnodes([ctree], (cnode) => {
-        supervisor.unit(UNIT_PAINT, cnode, () => {
+        supervisor.unit(SESSION_INITIAL, UNIT_PAINT, cnode, () => {
           // initialize will create cnode.next, so walkCnode will go on.
           painter.paint(cnode)
         })
       })
 
       walkCnodes([ctree], (cnode) => {
-        supervisor.unit(UNIT_INITIAL_DIGEST, cnode, () => {
+        supervisor.unit(SESSION_INITIAL, UNIT_INITIAL_DIGEST, cnode, () => {
           view.initialDigest(cnode)
         })
       })

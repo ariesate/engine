@@ -1,0 +1,28 @@
+{
+  "name": "@ariesate/are-exmaple-react-todoMVC",
+  "version": "0.0.1",
+  "description": "you should not publish this package.",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-jest": "^21.0.2",
+    "babel-loader": "^7.1.2",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.0",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "classnames": "^2.2.5",
+    "dom-serialize": "^2.2.1",
+    "jest": "^21.0.2",
+    "lodash": "^4.17.4",
+    "webpack": "^3.5.5",
+    "webpack-dev-server": "^2.7.1"
+  },
+  "scripts": {
+    "start": "webpack-dev-server",
+    "dev": "NODE_ENV=dev webpack-dev-server"
+  },
+  "author": "sskyy <skyking_H@hotmail.com>",
+  "license": "MIT"
+}

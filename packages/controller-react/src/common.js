@@ -1,9 +1,8 @@
 import cloneDeep from 'lodash/clonedeep'
-import { each, createUniqueIdGenerator, isObject, isFunction, values } from './util'
-import Fragment from './Fragment'
+import { each, createUniqueIdGenerator, values } from './util'
 
 export function isComponent(n) {
-  return typeof n !== 'string' && n !== null && n !== String && n !== Array && n!== Fragment
+  return typeof n === 'object'
 }
 
 const createUniqueVnodeName = createUniqueIdGenerator('C')
@@ -13,10 +12,9 @@ export function getVnodeType(vnode) {
   if (vnode.type === null) return 'null'
   if (vnode.type === Array) return 'Array'
   if (vnode.type === String) return 'String'
-  if (vnode.type === Fragment) return 'Fragment'
   if (typeof vnode.type === 'string') return vnode.type
 
-  if (typeof vnode.type === 'object' || typeof vnode.type === 'function') {
+  if (typeof vnode.type === 'object') {
     if (vnode.type.displayName === undefined) {
       vnode.type.displayName = createUniqueVnodeName()
     }
@@ -44,7 +42,7 @@ export function walkRawVnodes(vnodes, handler, parentPath = [], context) {
     const currentPath = parentPath.concat(index)
     const nextContext = handler(vnode, currentPath, context)
 
-    if (nextContext !== false && vnode.children !== undefined) {
+    if (vnode.children !== undefined) {
       walkRawVnodes(vnode.children, handler, currentPath, nextContext)
     }
   })
@@ -99,7 +97,7 @@ export function cloneVnode(vnode) {
 
 
 export function isComponentVnode(a) {
-  return isComponent(a.type)
+  return typeof a.type === 'object' && a.type !== Array
 }
 
 export function getVnodeNextIndex(vnode, parentPath) {
@@ -114,7 +112,7 @@ export function resolveFirstLayerElements(vnodes, parentPath, cnode) {
       return [vnode.element]
     } else if (vnode.type === Array) {
       return vnode.children.reduce((elements, child) => {
-        return elements.concat(resolveFirstLayerElements([child], createVnodePath(vnode, parentPath), cnode))
+        return elements.concat(resolveFirstLayerElements(child, createVnodePath(vnode, parentPath), cnode))
       }, [])
     } else if (typeof vnode.type === 'object') {
       const nextCnode = cnode.next[getVnodeNextIndex(vnode, parentPath)]

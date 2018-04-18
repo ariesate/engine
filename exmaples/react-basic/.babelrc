@@ -1,0 +1,24 @@
+{
+  "presets": [
+    "@babel/react",
+    "@babel/stage-0"
+  ],
+  "plugins": [
+    [
+      "@babel/plugin-transform-react-jsx",
+      {
+        "pragma": "createElement",
+        "pragmaFrag": "Fragment"
+      }
+    ],
+    [
+      "module-resolver",{
+      "alias" : {
+        "areact": "../../packages/controller-react/src"
+      }
+    }
+
+    ],
+    "@babel/plugin-proposal-class-properties"
+  ]
+}

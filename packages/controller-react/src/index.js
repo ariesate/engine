@@ -14,17 +14,18 @@ import createScheduler from '@ariesate/are/createScheduler'
 import createPainter from '@ariesate/are/createPainter'
 import createDOMView from '@ariesate/are/DOMView/createDOMView'
 import createVnodeElement, { cloneElement as cloneVnodeElement } from '@ariesate/are/createElement'
-import * as CONSTANT from '@ariesate/are/constant'
-import createNoviceController from './createNoviceController'
+import createReactController from './createReactController'
+import Component from './Component'
+import Fragment from '@ariesate/are/Fragment'
 
 export const createElement = createVnodeElement
 export const cloneElement = cloneVnodeElement
 
 export function render(vnode, domElement, ...controllerArgv) {
-  const controller = createNoviceController(...controllerArgv)
+  const controller = createReactController(...controllerArgv)
 
-  const view = createDOMView(controller.observer, domElement)
-  const painter = createPainter(controller.renderer)
+  const view = createDOMView(controller.observer, domElement, controller.isComponentVnode)
+  const painter = createPainter(controller.renderer, controller.isComponentVnode)
 
   // 传进去的background 是因为 background 实现了 transaction 接口。
   const scheduler = createScheduler(painter, view, controller.supervisor)
@@ -37,5 +38,6 @@ export function render(vnode, domElement, ...controllerArgv) {
 }
 
 export {
-  CONSTANT,
+  Component,
+  Fragment,
 }

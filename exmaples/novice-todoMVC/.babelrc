@@ -1,0 +1,20 @@
+{
+  "presets": [
+    "stage-0"
+  ],
+  "plugins": [
+    ["transform-react-jsx", {
+      "pragma": "createElement"
+    }],
+    ["module-alias", [
+      { "src": "../../packages/controller-novice/src", "expose": "novice" },
+      { "src": "../../packages/engine/src", "expose": "@ariesate/are" }
+    ]]
+  ],
+  "env": {
+    "test": {
+      "presets": [["stage-0"]],
+      "plugins": ["transform-es2015-modules-commonjs"]
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "@ariesate/are-exmaple-react-basic",
+  "version": "0.0.1",
+  "description": "you should not publish this package.",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/core": "^7.0.0-beta.44",
+    "@babel/plugin-proposal-class-properties": "^7.0.0-beta.44",
+    "@babel/plugin-transform-react-jsx": "^7.0.0-beta.44",
+    "@babel/preset-env": "^7.0.0-beta.44",
+    "@babel/preset-react": "^7.0.0-beta.44",
+    "@babel/preset-stage-0": "^7.0.0-beta.44",
+    "babel-loader": "^8.0.0-beta.2",
+    "babel-plugin-module-resolver": "^3.1.1",
+    "classnames": "^2.2.5",
+    "dom-serialize": "^2.2.1",
+    "lodash": "^4.17.4",
+    "webpack": "^3.5.5",
+    "webpack-dev-server": "^2.7.1"
+  },
+  "scripts": {
+    "start": "webpack-dev-server",
+    "dev": "NODE_ENV=dev webpack-dev-server"
+  },
+  "author": "sskyy <skyking_H@hotmail.com>",
+  "license": "MIT"
+}

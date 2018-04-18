@@ -51,9 +51,11 @@ const modelDefs = {
 * define app
 * */
 const headerListeners = {
-  onChange({ state, mst: todoList }, e) {
+  onChange({ state, mst }, e) {
+  // onChange(aa, e) {
+  //   const { state, mst } = aa
     if (e.keyCode === 13) {
-      todoList.insert(state.content)
+      mst.todos.insert(state.content)
       state.content = ''
     }
   },

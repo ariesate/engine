@@ -230,10 +230,6 @@ export function isObject(a) {
   return typeof a === 'object' && !Array.isArray(a) && a !== null
 }
 
-export function isFunction(a) {
-  return typeof a === 'function'
-}
-
 export function walk(obj, childrenName, handler, path = []) {
   handler(obj, path)
   if (obj[childrenName] !== undefined && Array.isArray(obj[childrenName])) {
@@ -332,6 +328,6 @@ export function diff(first, second) {
   return [absent, newBee]
 }
 
-export function ensureArray(o, allowUndefined = false) {
-  return Array.isArray(o) ? o : ((o !== undefined || allowUndefined) ? [o] : [])
+export function ensureArray(o) {
+  return Array.isArray(o) ? o : [o]
 }
