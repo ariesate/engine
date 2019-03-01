@@ -93,7 +93,6 @@ export function handleInitialVnode(vnode, cnode, view, parentPatch, parentPath, 
   if (!view.isComponentVnode(vnode)) {
     return handleInitialNaiveVnode(vnode, cnode, view, patch, currentPath, parentNode)
   }
-
   // 3) component node
   if (view.isComponentVnode(vnode)) {
     /* eslint-disable no-use-before-define */
@@ -126,9 +125,17 @@ function handleInitialComponentNode(vnode, cnode, view, patch, currentPath, pare
   patch.element = nextIndex
 }
 
+/**
+ * digest 完一个 cnode:
+ * 在 cnode 上附加上 view，view 上有 ref 信息。
+ * 在 cnode.patch 上附加 element，之后的 diff 都是跟上一次的 patch diff。
+ */
 
 // initialDigest handle the whole tree
 export default function initialDigest(cnode, view) {
+  if (cnode.isDigested) throw new Error('cnode is digested, please use updateDigest.')
+  // 根节点，要提前 prepare 一下。非根节点后面 handle 的时候会 prepare。
+  // 对于组件里面再嵌套的组件，我们也只是 prepare 一下，不继续递归，渲染。
   if (cnode.parent === undefined) prepareCnodeForView(cnode, createElement(cnode.type), view.getRoot(), view)
   if (cnode.view.placeHolder === undefined) throw new Error(`cnode is not prepared for initial digest ${cnode.type.displayName}`)
   cnode.patch = []

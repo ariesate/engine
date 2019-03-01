@@ -1,12 +1,19 @@
 {
   "presets": [
-    "@babel/react",
-    "@babel/stage-0"
+    "@babel/react"
   ],
   "plugins": [
     ["@babel/plugin-transform-react-jsx", {
       "pragma": "createElement",
       "pragmaFrag": "Fragment"
+    }],
+    ["@babel/plugin-proposal-decorators", {
+      "decoratorsBeforeExport": false
     }]
-  ]
+  ],
+  "env": {
+    "test": {
+      "plugins": ["@babel/plugin-transform-modules-commonjs"]
+    }
+  }
 }

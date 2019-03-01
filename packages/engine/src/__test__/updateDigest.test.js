@@ -1,0 +1,5 @@
+describe('updateDigest', () => {
+  test('ok', () => {
+
+  })
+})

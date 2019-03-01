@@ -119,6 +119,7 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
       // Only "p.type === Array" condition needs previousSibling
       handleRemainPatchNode(p, nextPatch, parentNode, currentLastStableSiblingNode, parentPath, cnode, view)
       // Find last element in patch node to update currentLastStableSiblingNode
+      // debugger
       const lastElement = resolveLastElement(p, parentPath, cnode)
       if (lastElement) {
         currentLastStableSiblingNode = lastElement

@@ -27,7 +27,6 @@ export function render(vnode, domElement, ...controllerArgv) {
   const view = createDOMView(controller.observer, domElement, controller.isComponentVnode)
   const painter = createPainter(controller.renderer, controller.isComponentVnode)
 
-  // 传进去的background 是因为 background 实现了 transaction 接口。
   const scheduler = createScheduler(painter, view, controller.supervisor)
 
   // 这里这么写只是因为我们的 controller 里同时可以控制 repaint

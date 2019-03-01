@@ -116,8 +116,10 @@ export function resolveFirstLayerElements(vnodes, parentPath, cnode) {
       return vnode.children.reduce((elements, child) => {
         return elements.concat(resolveFirstLayerElements([child], createVnodePath(vnode, parentPath), cnode))
       }, [])
-    } else if (typeof vnode.type === 'object') {
+    } else {
+      // CAUTION 剩余的类型，全部认为是组件
       const nextCnode = cnode.next[getVnodeNextIndex(vnode, parentPath)]
+      if (!nextCnode) throw new Error(`unknown vnode`)
       return resolveFirstLayerElements(nextCnode.patch, [], nextCnode)
     }
     return result
@@ -142,9 +144,11 @@ export function resolveLastElement(vnode, parentPath, cnode) {
       result = resolveLastElement(child, createVnodePath(vnode, parentPath), cnode)
       return Boolean(result)
     })
-  } else if (typeof vnode.type === 'object') {
+  } else {
+    // CAUTION 剩余的类型，全部认为是组件
     const nextIndex = getVnodeNextIndex(vnode, parentPath)
     const nextCnode = cnode.next[nextIndex]
+    if (!nextCnode) throw new Error('unknown vnode type')
     if (nextCnode.patch.length > 0) {
       result = resolveLastElement(nextCnode.patch[nextCnode.patch.length - 1], [], nextCnode)
     }

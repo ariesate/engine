@@ -25,14 +25,13 @@ export default function createNoviceController(mods = {}) {
   return {
     renderer: {
       rootRender(cnode) {
-        return cnode.type.render({ children: cnode.children })
+        return cnode.type.render(cnode.props)
       },
       initialRender(cnodeToInitialize, parent) {
         return moduleSystem.initialRender(cnodeToInitialize, (cnode) => {
           const { render } = cnode.type
           moduleSystem.initialize(cnode, parent)
           const injectArgv = moduleSystem.inject(cnode)
-          injectArgv.children = cnode.children
 
           return moduleSystem.hijack(cnode, render, injectArgv)
         })
@@ -42,7 +41,6 @@ export default function createNoviceController(mods = {}) {
           const { render } = cnode.type
           moduleSystem.update(cnode)
           const injectArgv = moduleSystem.inject(cnode)
-          injectArgv.children = cnode.children
 
           return moduleSystem.hijack(cnode, render, injectArgv)
         })

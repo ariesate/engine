@@ -46,19 +46,20 @@ import { normalizeChildren } from './createElement'
  * @returns {{type: Object, props: Object, children: Vnode, parent: Cnode}}
  */
 export function createCnode(vnode, parent) {
-  return {
+  const cnode = {
     type: vnode.type,
     props: vnode.attributes || {},
-    children: vnode.children,
     level: parent ? parent.level + 1 : 0,
     parent,
   }
+  cnode.props.children = vnode.children
+  return cnode
 }
 
 export function updateCnodeByVnode(cnode, vnode) {
   if (cnode.type !== vnode.type) throw new Error('Can not update a cnode to different type')
   cnode.props = vnode.attributes || {}
-  cnode.children = vnode.children
+  cnode.props.children = vnode.children
 }
 
 /**
@@ -382,6 +383,8 @@ function diff(lastVnodesOrPatch, vnodes, parentPath, cnode, nextTransferKeyedVno
   const lastNext = { ...cnode.next }
   const toInitialize = {}
   const toRemain = {}
+  // TODO
+  const toUpdate = {}
   const lastVnodes = lastVnodesOrPatch.filter(lastVnode => lastVnode.action === undefined || lastVnode.action.type !== PATCH_ACTION_MOVE_FROM)
 
   const result = createPatch(lastVnodes, vnodes, parentPath, cnode, nextTransferKeyedVnodes, isComponentVnode)
@@ -396,7 +399,7 @@ function diff(lastVnodesOrPatch, vnodes, parentPath, cnode, nextTransferKeyedVno
   // `lastToDestroyPatch` contains the real dom reference to remove.
   const toDestroyPatch = { ...lastNext, ...lastToDestroyPatch }
 
-  return { toInitialize, toRemain, toDestroy: lastNext, patch: result.patch, toDestroyPatch }
+  return { toInitialize, toRemain, toDestroy: lastNext, patch: result.patch, toDestroyPatch, toUpdate }
 }
 
 
@@ -406,7 +409,11 @@ function diff(lastVnodesOrPatch, vnodes, parentPath, cnode, nextTransferKeyedVno
 function repaint(cnode, renderer, isComponentVnode) {
   const render = renderer.updateRender
   const lastPatch = cnode.patch || cnode.ret
-  const { transferKeyedVnodes, ret } = prepareRetForAttach(render(cnode, cnode.parent), cnode)
+  const renderResult = render(cnode, cnode.parent)
+  // return false to suspense update
+  if (renderResult === false) return {}
+
+  const { transferKeyedVnodes, ret } = prepareRetForAttach(renderResult, cnode)
   const diffResult = diff(lastPatch, ret, [], cnode, transferKeyedVnodes, isComponentVnode)
   cnode.ret = ret
 
@@ -424,6 +431,38 @@ function repaint(cnode, renderer, isComponentVnode) {
  * Diff Algorithm Functions Ends
  ***************************** */
 
+/**
+ * ===使用说明
+ * 1. 创建 painter。需要传入一个 renderer({ rootRender: function, initialRender: function})。rootRender
+ * 用来渲染根组件，剩下的用 initialRender。传入 isComponentVnode 可以判断是否是 component 组件。
+ *
+ * # paint:
+ * 首次对 cnode(component node) 进行渲染。注意只对当前的 cnode 节点执行 render。
+ * 执行完之后，会在 cnode 上存上:
+ * {
+ *   ret: render 执行完的结果
+ *   next: kv 值，表示有哪些子组件
+ *   transferKeyedVnodes: transfer vnode 的标记。
+ * }
+ *
+ * # repaint:
+ * 第二次进行渲染，根据 render 出来的值跟上一次 cnode.ret 上的值来进行 diff，会返回 diff 结果：
+ * {
+ *  toInitialize: 要新建的子组件，
+ *  toRemain: 不动的子组件
+ *  toDestroy: 要删除的子组件
+ *  patch: 一个 vnode tree 的超集，通过对比新 render vnode tree 和上次的对比，在一些节点上标记新增、删除等标记。
+ *  toDestroyPatch: 这一次要删除的子组件，加上可能之前没消费掉的要删除的子组件
+ * }
+ *
+ * 会在 cnode 上存上或者修改：
+ * {
+ *   patch: 要修改的 vnode tree 超集合
+ *   toDestroyPatch: 要删除的部分
+ *   children[修改]: 根据 vnode.children 修改 cnode.children
+ * }
+ *
+ */
 export default function createPainter(renderer, isComponentVnode = defaultIsComponentVnode) {
   return {
     paint: (cnode) => {

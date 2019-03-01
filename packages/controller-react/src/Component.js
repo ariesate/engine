@@ -3,7 +3,7 @@ export default class Component {
     this.state = {}
   }
   setState(nextStateFn) {
-    this.state = { ...this.state, ...nextStateFn(this.state) }
+    this.nextStateFn = nextStateFn
     this.$$reportChange$$()
   }
 }

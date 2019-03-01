@@ -32,22 +32,34 @@ export default function createReactController() {
     renderer: {
       rootRender(cnode) {
         // 根节点 cnode 是由 scheduler 创建的，type 上 只有一个 render 和 displayName
-        return cnode.type.render({ children: cnode.children })
+        return cnode.type.render(cnode.props)
       },
       initialRender(cnodeToInitialize) {
 
         const ComponentClass = cnodeToInitialize.type
         cnodeToInitialize.instance = new ComponentClass(cnodeToInitialize.props)
         cnodeToInitialize.instance.props = cnodeToInitialize.props
+        // 补全无 constructor 的状况
+        if (cnodeToInitialize.instance.state === undefined) cnodeToInitialize.instance.state = {}
         // TODO 为了防止出现循环递归的 session，需要改造一下 reportChange
         cnodeToInitialize.instance.$$reportChange$$ = () => scheduler.collectChangedCnodes([cnodeToInitialize])
         return cnodeToInitialize.instance.render()
       },
       updateRender(cnodeToUpdate) {
+        const nextState = cnodeToUpdate.instance.nextStateFn !== undefined ?
+          {
+            ...cnodeToUpdate.instance.state,
+            ...cnodeToUpdate.instance.nextStateFn(cnodeToUpdate.instance.state)
+          } :  cnodeToUpdate.instance.state
+
 
         cnodeToUpdate.instance.props = cnodeToUpdate.props
-        const result = cnodeToUpdate.instance.render()
-        return result
+        cnodeToUpdate.instance.state = nextState
+        delete cnodeToUpdate.instance.nextStateFn
+
+        // TODO shouldComponentUpdate 机制有问题，用 return false 已经太晚了
+        // return shouldUpdate ? cnodeToUpdate.instance.render() : false
+        return cnodeToUpdate.instance.render()
       },
     },
     isComponentVnode(v) {
@@ -57,17 +69,15 @@ export default function createReactController() {
       // TODO shouldComponentUpdate()
       filterNext(result) {
         const { toInitialize, toRemain, toDestroy = {} } = result
-        // CAUTION Unlike React, Novice only render new cnode during repaint,
-        // while React recursively re-render child components.
         return { toPaint: toInitialize, toRepaint: toRemain, toDispose: toDestroy }
       },
       // TODO static getDerivedStateFromProps() initial
       // TODO static getDerivedStateFromProps() update
-      // TODO componentWillUnmount()
       // TODO getSnapshotBeforeUpdate()
+      // TODO componentWillUnmount()
       // TODO componentDidMount()
-      // TODO componentDidUpdate()
-      // TODO componentDidCatch()
+      // TODO componentDidUpdate() 在 userDidSeeUpdate 中
+      // TODO componentDidCatch() 给 instance 每个方法都包装一下
       session: (sessionName, startSession) => startSession(),
       unit: (sessionName, unitName, cnode, startUnit) => startUnit(),
     },

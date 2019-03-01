@@ -81,7 +81,8 @@ function setAttributes(attributes, element, invoke) {
   each(attributes, (attribute, name) => {
     if (/^on[A-Z]/.test(name) && typeof attribute === 'function') {
       setAttribute(element, name, (...argv) => invoke(attribute, ...argv))
-    } else {
+    } else if (!/^_+/.test(name) && !(typeof attribute === 'object')){
+      // 不允许 _ 开头的私有attribute，不允许 attribute 为数组或者对象
       setAttribute(element, name, attribute)
     }
   })
