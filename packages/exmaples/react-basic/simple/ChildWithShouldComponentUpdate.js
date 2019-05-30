@@ -1,6 +1,6 @@
-import { createElement, Component } from 'areact'
+import * as React from 'areact'
 
-export default class ChildWithShouldComponentUpdate extends Component {
+export default class ChildWithShouldComponentUpdate extends React.Component {
   constructor() {
     super()
     this.state = {

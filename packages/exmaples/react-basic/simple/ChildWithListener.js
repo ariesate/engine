@@ -1,6 +1,6 @@
-import { createElement, Component } from 'areact'
+import * as React from 'areact'
 
-export default class ChildWithListener extends Component {
+export default class ChildWithListener extends React.Component {
   render() {
     return (
       <div>

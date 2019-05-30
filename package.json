@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "description": "you should not publish this package.",
   "main": "index.js",
-  "devDependencies": {},
+  "devDependencies": {
+    "lerna": "^3.14.1"
+  },
   "scripts": {
     "start": "webpack-dev-server",
     "lint": "eslint ./render/src",

@@ -1,6 +1,6 @@
-import { createElement, Component } from 'areact'
+import * as React from 'areact'
 
-export default class ChildWithSetState extends Component {
+export default class ChildWithSetState extends React.Component {
   change = () => {
     this.setState(() => ({
       bg: !this.state.bg,

@@ -1,9 +1,9 @@
-import { createElement, render, Component } from 'areact'
+import * as React from 'areact'
 import ChildWithListener from './ChildWithListener'
 import ChildWithSetState from './ChildWithSetState'
 import ChildWithShouldComponentUpdate from './ChildWithShouldComponentUpdate'
 
-class App extends Component {
+export default class App extends React.Component {
   constructor() {
     super()
     this.state = {
@@ -30,11 +30,3 @@ class App extends Component {
     )
   }
 }
-
-const controller = render((
-  <div>
-    <App />
-  </div>
-), document.getElementById('root'))
-
-window.controller = controller
