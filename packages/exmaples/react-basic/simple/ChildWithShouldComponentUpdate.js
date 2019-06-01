@@ -1,4 +1,4 @@
-import * as React from 'areact'
+import React from 'areact'
 
 export default class ChildWithShouldComponentUpdate extends React.Component {
   constructor() {

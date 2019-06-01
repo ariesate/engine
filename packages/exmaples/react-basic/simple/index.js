@@ -1,4 +1,4 @@
-import * as React from 'areact'
+import React, { render } from 'areact'
 import App from './App'
 
 React.render((

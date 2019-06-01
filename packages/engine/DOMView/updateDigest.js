@@ -120,7 +120,7 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
       handleRemainPatchNode(p, nextPatch, parentNode, currentLastStableSiblingNode, parentPath, cnode, view)
       // Find last element in patch node to update currentLastStableSiblingNode
       // debugger
-      const lastElement = resolveLastElement(p, parentPath, cnode)
+      const lastElement = resolveLastElement(p, parentPath, cnode, view.isComponentVnode)
       if (lastElement) {
         currentLastStableSiblingNode = lastElement
       }

@@ -1,4 +1,4 @@
-import * as React from 'areact'
+import React from 'areact'
 import ChildWithListener from './ChildWithListener'
 import ChildWithSetState from './ChildWithSetState'
 import ChildWithShouldComponentUpdate from './ChildWithShouldComponentUpdate'

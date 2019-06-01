@@ -3,8 +3,9 @@ import VNode from './VNode'
 export function normalizeChildren(rawChildren) {
   return rawChildren.map((rawChild) => {
     let child = rawChild
-    if (rawChild === undefined) throw new Error('element cannot be undefined')
-    if (rawChild === null) {
+    if (rawChild === undefined) {
+      child = { type: String, value: 'undefined'}
+    } else if (rawChild === null) {
       child = { type: null }
     } else if (Array.isArray(child)) {
       child = { type: Array, children: normalizeChildren(rawChild) }

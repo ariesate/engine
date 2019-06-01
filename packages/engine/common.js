@@ -135,23 +135,23 @@ export function makeVnodeTransferKey(vnode) {
   return vnode.rawTransferKey === undefined ? undefined : `${getVnodeType(vnode)}-${vnode.rawTransferKey}`
 }
 
-export function resolveLastElement(vnode, parentPath, cnode) {
+export function resolveLastElement(vnode, parentPath, cnode, isComponentVnode) {
   let result = null
   if (vnode.type === String || typeof vnode.type === 'string') {
     result = vnode.element
   } else if (vnode.type === Array) {
     vnode.children.slice().reverse().some((child) => {
-      result = resolveLastElement(child, createVnodePath(vnode, parentPath), cnode)
+      result = resolveLastElement(child, createVnodePath(vnode, parentPath), cnode, isComponentVnode)
       return Boolean(result)
     })
-  } else {
-    // CAUTION 剩余的类型，全部认为是组件
+  } else if (isComponentVnode(vnode)){
     const nextIndex = getVnodeNextIndex(vnode, parentPath)
     const nextCnode = cnode.next[nextIndex]
     if (!nextCnode) throw new Error('unknown vnode type')
     if (nextCnode.patch.length > 0) {
-      result = resolveLastElement(nextCnode.patch[nextCnode.patch.length - 1], [], nextCnode)
+      result = resolveLastElement(nextCnode.patch[nextCnode.patch.length - 1], [], nextCnode, isComponentVnode)
     }
   }
+  // type: null 的情况
   return result
 }

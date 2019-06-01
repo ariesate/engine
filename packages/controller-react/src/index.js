@@ -15,13 +15,13 @@ import createPainter from '@ariesate/are/createPainter'
 import createDOMView from '@ariesate/are/DOMView/createDOMView'
 import createVnodeElement, { cloneElement as cloneVnodeElement } from '@ariesate/are/createElement'
 import createReactController from './createReactController'
-import Component from './Component'
+import ComponentClass from './Component'
 import Fragment from '@ariesate/are/Fragment'
+import { invariant } from './util';
 
-export const createElement = createVnodeElement
-export const cloneElement = cloneVnodeElement
+invariant(!window.React, 'duplicate window.React')
 
-export function render(vnode, domElement, ...controllerArgv) {
+function render(vnode, domElement, ...controllerArgv) {
   const controller = createReactController(...controllerArgv)
 
   const view = createDOMView(controller.observer, domElement, controller.isComponentVnode)
@@ -36,7 +36,14 @@ export function render(vnode, domElement, ...controllerArgv) {
   return controller
 }
 
-export {
+export const Component = ComponentClass
+
+export default {
   Component,
   Fragment,
+  createElement: createVnodeElement,
+  cloneElement: cloneVnodeElement,
+  render,
 }
+
+
