@@ -17,7 +17,8 @@ import createVnodeElement, { cloneElement as cloneVnodeElement } from '@ariesate
 import createReactController from './createReactController'
 import ComponentClass from './Component'
 import Fragment from '@ariesate/are/Fragment'
-import { invariant } from './util';
+import { invariant } from './util'
+import useStateHook from './useState'
 
 invariant(!window.React, 'duplicate window.React')
 
@@ -37,6 +38,8 @@ function render(vnode, domElement, ...controllerArgv) {
 }
 
 export const Component = ComponentClass
+
+export const useState = useStateHook
 
 export default {
   Component,

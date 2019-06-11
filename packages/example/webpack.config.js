@@ -4,15 +4,15 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
   mode: 'development',
   entry: {
-    'react-basic-simple': './react-basic/simple/index.js',
+    'react-hooks': './react-hooks/index.js',
     'react-todoMVC': './react-todoMVC/index.js',
   },
   devtool: 'inline-source-map',
   plugins: [
     new HtmlWebpackPlugin({
-      title: 'React Basic Example',
-      chunks: ['react-basic-simple'],
-      filename: 'react-basic-simple.html',
+      title: 'React Hooks Example',
+      chunks: ['react-hooks'],
+      filename: 'react-hooks.html',
       template: 'common-template.html'
     }),
     new HtmlWebpackPlugin({

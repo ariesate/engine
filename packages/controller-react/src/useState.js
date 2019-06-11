@@ -1,14 +1,23 @@
 import { invariant } from './util'
+import { getCurrentWorkingCnode } from './createReactController'
 
 export default function useState(initialState) {
-  invariant(!window.React.__internal__.useStateHookCurrentComponent, 'useState should only be used in Component')
+  const [currentCnode, index, setIndex] = getCurrentWorkingCnode(0)
+  invariant(currentCnode !== null, 'useState should only be used in Component')
 
-  const currentCnode = window.React.__internal__.useStateHookCurrentComponent
-  let currentState = initialState
   if (!currentCnode.states) {
     currentCnode.states = []
   }
 
-  return [currentState, () => window.React.__internal__.reportChange(currentCnode)]
+  const currentState = currentCnode.states.length <= index ? initialState : currentCnode.states[index]
 
+  const setCurrentState = (nextValue) => {
+    currentCnode.states[index] = nextValue
+    currentCnode.instance.$$reportChange$$()
+  }
+
+  // 增加 index
+  setIndex(index+1)
+
+  return [currentState, setCurrentState]
 }

@@ -27,6 +27,23 @@ const LIFECYCLE_DID_MOUNT = 'componentDidMount'
 const LIFECYCLE_WILL_UPDATE = 'componentWillUpdate'
 const LIFECYCLE_DID_UPDATE = 'componentDidUpdate'
 const LIFECYCLE_WILL_UNMOUNT = 'componentWillUnmount'
+
+let currentWorkingCnode = null
+let currentWorkingCnodeData = undefined
+function withCurrentWorkingCnode(cnode, fn) {
+  invariant(currentWorkingCnode === null, 'last working unit is not done')
+  currentWorkingCnode = cnode
+  const result = fn()
+  currentWorkingCnode = null
+  currentWorkingCnodeData = undefined
+  return result
+}
+
+export function getCurrentWorkingCnode(initialData) {
+  const data = currentWorkingCnodeData === undefined ? initialData : currentWorkingCnodeData
+  return [currentWorkingCnode, data, (nextData) => currentWorkingCnodeData = nextData]
+}
+
 /**
  * Controller is the backbone to assemble scheduler, painter and view.
  * The module system and lifecycle is provided by Novice controller, not the engine.
@@ -106,7 +123,7 @@ export default function createReactController() {
       // TODO componentDidUpdate() 在 userDidSeeUpdate 中
       // TODO componentDidCatch() 给 instance 每个方法都包装一下
       unit: (sessionName, unitName, cnode, startUnit) => {
-        startUnit()
+        return withCurrentWorkingCnode(cnode, startUnit)
       },
 
       session: (sessionName, startSession) => {
