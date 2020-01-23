@@ -23,11 +23,11 @@ import {
   walkRawVnodes,
   makeVnodeTransferKey,
   vnodePathToString,
-  isComponentVnode as defaultIsComponentVnode,
   createVnodePath,
   makeVnodeKey,
   getVnodeNextIndex,
   walkVnodes,
+  isComponentVnode as defaultIsComponentVnode,
 } from './common'
 import { each, indexBy, ensureArray } from './util'
 import {
@@ -39,6 +39,7 @@ import {
   DEV_MAX_LOOP,
 } from './constant'
 import { normalizeChildren } from './createElement'
+import VNode from './VNode';
 
 /**
  * @param vnode
@@ -69,7 +70,7 @@ export function updateCnodeByVnode(cnode, vnode) {
  *   2. Calculated child cnodes, returned as `next`.
  *   3. Vnodes with transfer key.
  */
-function prepareRetForAttach(rawRet, cnode) {
+function prepareRetForAttach(rawRet, cnode, isComponentVnode) {
   // user may render single component or null, we should normalize it.
   const ret = normalizeChildren(ensureArray(rawRet))
   const next = {}
@@ -78,7 +79,7 @@ function prepareRetForAttach(rawRet, cnode) {
     vnode.key = makeVnodeKey(vnode, path[path.length - 1])
     // CAUTION if transferKey is undefined， then `makeVnodeTransferKey` will return undefined
     vnode.transferKey = makeVnodeTransferKey(vnode)
-    if (isComponent(vnode.type)) {
+    if (isComponentVnode(vnode)) {
       const nextIndex = getVnodeNextIndex(vnode, parentVnodePath)
       // CAUTION cnode has object reference inside: props/children/parent
       next[nextIndex] = createCnode(vnode, cnode)
@@ -106,9 +107,9 @@ function prepareRetForAttach(rawRet, cnode) {
  * Controller may inject extra arguments into render.
  * @returns {{ toInitialize: Object }} The child cnodes to initialize.
  */
-function paint(cnode, renderer) {
+function paint(cnode, renderer, isComponentVnode) {
   const specificRenderer = cnode.parent === undefined ? renderer.rootRender : renderer.initialRender
-  const { next, ret, transferKeyedVnodes } = prepareRetForAttach(specificRenderer(cnode, cnode.parent), cnode)
+  const { next, ret, transferKeyedVnodes } = prepareRetForAttach(specificRenderer(cnode, cnode.parent), cnode, isComponentVnode)
 
   cnode.ret = ret
   cnode.next = next
@@ -146,13 +147,15 @@ function diffNodeDetail(lastVnode, vnode) {
  * from the parent vnode.
  */
 function createPatchNode(lastVnode = {}, vnode, actionType) {
-  return {
+  const patch = new VNode()
+  Object.assign(patch, {
     ...lastVnode,
     ...vnode,
     action: {
       type: actionType,
     },
-  }
+  })
+  return patch
 }
 
 /**
@@ -413,7 +416,7 @@ function repaint(cnode, renderer, isComponentVnode) {
   // return false to suspense update
   if (renderResult === false) return {}
 
-  const { transferKeyedVnodes, ret } = prepareRetForAttach(renderResult, cnode)
+  const { transferKeyedVnodes, ret } = prepareRetForAttach(renderResult, cnode, isComponentVnode)
   const diffResult = diff(lastPatch, ret, [], cnode, transferKeyedVnodes, isComponentVnode)
   cnode.ret = ret
 

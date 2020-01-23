@@ -26,13 +26,13 @@ export function createVnodePath(vnode, parentPath = []) {
   return parentPath.concat(vnode.key)
 }
 
-export function walkVnodes(vnodes, handler, parentPath = []) {
+export function walkVnodes(vnodes, handler, parentPath = [], parent) {
   vnodes.forEach((vnode) => {
     const currentPath = createVnodePath(vnode, parentPath)
-    const shouldStop = handler(vnode, currentPath)
+    const shouldStop = handler(vnode, currentPath, parent)
 
     if (!shouldStop && vnode.children !== undefined) {
-      walkVnodes(vnode.children, handler, currentPath)
+      walkVnodes(vnode.children, handler, currentPath, vnode)
     }
   })
 }

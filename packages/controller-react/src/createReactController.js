@@ -22,12 +22,7 @@ import { invariant, isSubClassOf, isCustomRawFunction } from './util'
  *
  */
 
-const LIFECYCLE_WILL_MOUNT = 'componentWillMount'
-const LIFECYCLE_DID_MOUNT = 'componentDidMount'
-const LIFECYCLE_WILL_UPDATE = 'componentWillUpdate'
-const LIFECYCLE_DID_UPDATE = 'componentDidUpdate'
-const LIFECYCLE_WILL_UNMOUNT = 'componentWillUnmount'
-
+// hooks support
 let currentWorkingCnode = null
 let currentWorkingCnodeData = undefined
 function withCurrentWorkingCnode(cnode, fn) {
@@ -52,15 +47,11 @@ export default function createReactController() {
   let scheduler = null
   let ctree = null
 
-
   return {
     renderer: {
       rootRender(cnode) {
         // 根节点 cnode 是由 scheduler 创建的，type 上 只有一个 render 和 displayName
-        // window.React.__internal__.useStateHookCurrentComponent = cnode
-        const renderResult = cnode.type.render(cnode.props)
-        // window.React.__internal__.useStateHookCurrentComponent = null
-        return renderResult
+        return cnode.type.render(cnode.props)
       },
       initialRender(cnodeToInitialize) {
 
@@ -83,10 +74,7 @@ export default function createReactController() {
         // TODO 为了防止出现循环递归的 session，需要改造一下 reportChange
         cnodeToInitialize.instance.$$reportChange$$ = () => scheduler.collectChangedCnodes([cnodeToInitialize])
         cnodeToInitialize.instance.$$nextStateFns = []
-        // window.React.__internal__.useStateHookCurrentComponent = cnodeToInitialize
-        const renderResult = cnodeToInitialize.instance.render()
-        // window.React.__internal__.useStateHookCurrentComponent = null
-        return renderResult
+        return cnodeToInitialize.instance.render()
       },
       updateRender(cnodeToUpdate) {
         const nextState = cnodeToUpdate.instance.$$nextStateFns.reduce((lastState, nextFn) => {
@@ -99,11 +87,7 @@ export default function createReactController() {
         cnodeToUpdate.instance.state = nextState
 
         // TODO shouldComponentUpdate 机制有问题，用 return false 已经太晚了
-        // return shouldUpdate ? cnodeToUpdate.instance.render() : false
-        // window.React.__internal__.useStateHookCurrentComponent = cnodeToUpdate
-        const renderResult = cnodeToUpdate.instance.render()
-        // window.React.__internal__.useStateHookCurrentComponent = null
-        return renderResult
+        return cnodeToUpdate.instance.render()
       },
     },
     isComponentVnode(v) {
@@ -140,7 +124,6 @@ export default function createReactController() {
     paint: vnode => ctree = scheduler.startInitialSession(vnode),
     receiveScheduler: s => {
       scheduler = s
-      // window.React.__internal__.reportChange = (cnode) = scheduler.collectChangedCnodes([cnode])
     },
     apply: fn => scheduler.startUpdateSession(fn),
     dump() {},

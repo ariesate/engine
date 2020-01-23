@@ -1,0 +1,25 @@
+{
+  "name": "axii",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "author": "ariesate@outlook.com",
+  "license": "MIT",
+  "dependencies": {
+    "fast-json-patch": "^3.0.0-1",
+    "immer": "^5.2.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.0.0-beta.44",
+    "@babel/plugin-transform-react-jsx": "^7.0.0-beta.44",
+    "@babel/preset-env": "^7.0.0-beta.44",
+    "@babel/preset-react": "^7.0.0-beta.44",
+    "@babel/preset-stage-0": "^7.0.0-beta.44",
+    "babel-loader": "^8.0.0-beta.2",
+    "classnames": "^2.2.5",
+    "lodash": "^4.17.15"
+  },
+  "scripts": {
+    "test": "jest"
+  }
+}

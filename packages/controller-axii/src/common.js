@@ -1,9 +1,8 @@
 import cloneDeep from 'lodash/clonedeep'
-import { each, createUniqueIdGenerator, isObject, isFunction, values } from './util'
-import Fragment from './Fragment'
+import { each, createUniqueIdGenerator, values } from './util'
 
 export function isComponent(n) {
-  return typeof n !== 'string' && n !== null && n !== String && n !== Array && n!== Fragment
+  return typeof n === 'object'
 }
 
 const createUniqueVnodeName = createUniqueIdGenerator('C')
@@ -13,10 +12,9 @@ export function getVnodeType(vnode) {
   if (vnode.type === null) return 'null'
   if (vnode.type === Array) return 'Array'
   if (vnode.type === String) return 'String'
-  if (vnode.type === Fragment) return 'Fragment'
   if (typeof vnode.type === 'string') return vnode.type
 
-  if (typeof vnode.type === 'object' || typeof vnode.type === 'function') {
+  if (typeof vnode.type === 'object') {
     if (vnode.type.displayName === undefined) {
       vnode.type.displayName = createUniqueVnodeName()
     }
@@ -31,7 +29,7 @@ export function createVnodePath(vnode, parentPath = []) {
 export function walkVnodes(vnodes, handler, parentPath = []) {
   vnodes.forEach((vnode) => {
     const currentPath = createVnodePath(vnode, parentPath)
-    const shouldStop = handler(vnode, currentPath)
+    const shouldStop = handler(vnode, currentPath, vnodes)
 
     if (!shouldStop && vnode.children !== undefined) {
       walkVnodes(vnode.children, handler, currentPath)
@@ -44,7 +42,7 @@ export function walkRawVnodes(vnodes, handler, parentPath = [], context) {
     const currentPath = parentPath.concat(index)
     const nextContext = handler(vnode, currentPath, context)
 
-    if (nextContext !== false && vnode.children !== undefined) {
+    if (vnode.children !== undefined) {
       walkRawVnodes(vnode.children, handler, currentPath, nextContext)
     }
   })
@@ -99,7 +97,7 @@ export function cloneVnode(vnode) {
 
 
 export function isComponentVnode(a) {
-  return isComponent(a.type)
+  return typeof a.type === 'function' && a.type !== Array
 }
 
 export function getVnodeNextIndex(vnode, parentPath) {
@@ -114,12 +112,10 @@ export function resolveFirstLayerElements(vnodes, parentPath, cnode) {
       return [vnode.element]
     } else if (vnode.type === Array) {
       return vnode.children.reduce((elements, child) => {
-        return elements.concat(resolveFirstLayerElements([child], createVnodePath(vnode, parentPath), cnode))
+        return elements.concat(resolveFirstLayerElements(child, createVnodePath(vnode, parentPath), cnode))
       }, [])
-    } else {
-      // CAUTION 剩余的类型，全部认为是组件
+    } else if (typeof vnode.type === 'object') {
       const nextCnode = cnode.next[getVnodeNextIndex(vnode, parentPath)]
-      if (!nextCnode) throw new Error(`unknown vnode`)
       return resolveFirstLayerElements(nextCnode.patch, [], nextCnode)
     }
     return result
@@ -135,32 +131,29 @@ export function makeVnodeTransferKey(vnode) {
   return vnode.rawTransferKey === undefined ? undefined : `${getVnodeType(vnode)}-${vnode.rawTransferKey}`
 }
 
-export function createResolveElement(first) {
-  return function resolveFirstOrLastElement(vnode, parentPath, cnode, isComponentVnode) {
-    let result = null
-    if (vnode.type === String || typeof vnode.type === 'string') {
-      result = vnode.element
-    } else if (vnode.type === Array) {
-      const children = first ? vnode.children.slice() : vnode.children.slice().reverse()
-      children.some((child) => {
-        result = resolveFirstOrLastElement(child, createVnodePath(vnode, parentPath), cnode, isComponentVnode)
-        return Boolean(result)
-      })
-    } else if (isComponentVnode(vnode)){
-      const nextIndex = getVnodeNextIndex(vnode, parentPath)
-      const nextCnode = cnode.next[nextIndex]
-      if (!nextCnode) {
-        console.log(vnode, nextIndex, cnode)
-        throw new Error(`unknown vnode type ${nextIndex}`)
-      }
-      if (nextCnode.patch.length > 0) {
-        result = resolveFirstOrLastElement(nextCnode.patch[nextCnode.patch.length - 1], [], nextCnode, isComponentVnode)
-      }
+export function resolveLastElement(vnode, parentPath, cnode) {
+  let result = null
+  if (vnode.type === String || typeof vnode.type === 'string') {
+    result = vnode.element
+  } else if (vnode.type === Array) {
+    vnode.children.slice().reverse().some((child) => {
+      result = resolveLastElement(child, createVnodePath(vnode, parentPath), cnode)
+      return Boolean(result)
+    })
+  } else if (typeof vnode.type === 'object') {
+    const nextIndex = getVnodeNextIndex(vnode, parentPath)
+    const nextCnode = cnode.next[nextIndex]
+    if (nextCnode.patch.length > 0) {
+      result = resolveLastElement(nextCnode.patch[nextCnode.patch.length - 1], [], nextCnode)
     }
-    // type: null 的情况
-    return result
   }
+  return result
 }
 
-export const resolveFirstElement = createResolveElement(true)
-export const resolveLastElement = createResolveElement(false)
+export function replaceChild(parent, prev, next) {
+  const index = parent.children.indexOf(prev)
+  if (index !== -1) {
+    parent.children[index] = next
+  }
+
+}

@@ -75,7 +75,7 @@ function setAttributes(attributes, element, invoke) {
       // 不允许 _ 开头的私有attribute，不允许 attribute 为数组或者对象。除非是 style。
       setAttribute(element, name, attribute)
     } else {
-      console.warn(`unknown attributes: ${name}`)
+      console.warn(`invalid attribute: ${name}, value: ${attribute}`)
     }
   })
 }

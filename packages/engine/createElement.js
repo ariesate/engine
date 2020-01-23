@@ -1,21 +1,26 @@
 import VNode from './VNode'
 
-export function normalizeChildren(rawChildren) {
-  return rawChildren.map((rawChild) => {
-    let child = rawChild
-    if (rawChild === undefined) {
-      child = { type: String, value: 'undefined'}
-    } else if (rawChild === null) {
-      child = { type: null }
-    } else if (Array.isArray(child)) {
-      child = { type: Array, children: normalizeChildren(rawChild) }
-    } else if (typeof rawChild === 'number' || typeof rawChild === 'string') {
-      child = { type: String, value: child.toString() }
-    }
-
-    return child
-  })
+export function normalizeLeaf(rawChild) {
+  let child = rawChild
+  if (rawChild === undefined) {
+    child = { type: String, value: 'undefined'}
+  } else if (rawChild === null) {
+    child = { type: null }
+  } else if (Array.isArray(rawChild)) {
+    // Array 要把 raw 传过去。arrayComputed 要用。TODO 怎么更优雅一定
+    child = { type: Array, children: normalizeChildren(rawChild), raw:rawChild }
+    // child = { type: Array, children: normalizeChildren(rawChild)}
+  } else if (typeof rawChild === 'number' || typeof rawChild === 'string') {
+    child = { type: String, value: child.toString() }
+  }
+  // object/function
+  return child
 }
+
+export function normalizeChildren(rawChildren) {
+  return rawChildren.map(normalizeLeaf)
+}
+
 
 /**
  * @param type {Null|Array|String|Number|VNode}
@@ -47,6 +52,11 @@ export default function createElement(type, attributes, ...rawChildren) {
   if (node.attributes.children !== undefined) {
     childrenToAttach = node.attributes.children
     delete node.attributes.children
+  }
+
+  if (node.attributes.forceUpdate !== undefined) {
+    node.forceUpdate = node.attributes.forceUpdate
+    delete node.attributes.forceUpdate
   }
 
   node.children = normalizeChildren(childrenToAttach)

@@ -1,5 +1,5 @@
 import {
-  createVnodePath,
+  createVnodePath, getVnodeNextIndex, resolveFirstElement,
   resolveFirstLayerElements,
   resolveLastElement,
 } from '../common'
@@ -36,11 +36,17 @@ function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, parent
   }
 }
 
-function handleRemovePatchNode(p, parentPath, toDestroy) {
+function handleRemovePatchNode(p, parentPath, toDestroy, view) {
   const elements = resolveFirstLayerElements([p], parentPath, toDestroy)
   elements.forEach((ele) => {
     ele.parentNode.removeChild(ele)
   })
+
+  if (view.isComponentVnode(p)) {
+    // remove placeholder
+    const nextCnode = toDestroy.next[getVnodeNextIndex(p, parentPath)]
+    nextCnode.view.placeholder.parentNode.removeChild(nextCnode.view.placeholder)
+  }
 }
 
 export function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view) {
@@ -103,19 +109,18 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
       p.action.type = PATCH_ACTION_REMAIN
       handleInitialVnode(p, cnode, view, nextPatch, parentPath, toInsert, nextPatch.length)
     } else if (p.action.type === PATCH_ACTION_REMOVE) {
-      handleRemovePatchNode(p, parentPath, { next: cnode.toDestroyPatch })
+      handleRemovePatchNode(p, parentPath, { next: cnode.toDestroyPatch }, view)
     } else if (p.action.type === PATCH_ACTION_REMAIN) {
       // Handle "toInsert" type first.
       // Trying to insert all new element between two remained elements, So we need to find last remained element first.
       if (toInsert.childNodes.length !== 0) {
-        const toInsertBefore = currentLastStableSiblingNode === null ? parentNode.childNodes[0] : currentLastStableSiblingNode.nextSibling
+        const toInsertBefore = currentLastStableSiblingNode ? currentLastStableSiblingNode.nextSibling : parentNode.childNodes[0]
         currentLastStableSiblingNode = toInsertBefore || toInsert.childNodes[toInsert.childNodes.length - 1]
         parentNode.insertBefore(toInsert, toInsertBefore)
         // toInsert is empty now
         // toInsert = view.createFragment()
       }
 
-      // debugger
       // Only "p.type === Array" condition needs previousSibling
       handleRemainPatchNode(p, nextPatch, parentNode, currentLastStableSiblingNode, parentPath, cnode, view)
       // Find last element in patch node to update currentLastStableSiblingNode
@@ -127,9 +132,15 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
     }
   })
 
-
+  /**
+   * TODO 当前没处理完的 toInsert, 说明一直没有没有 remain 节点。
+   *  这时候插到 currentLastStableSibling 的后面。
+   *  如果也没有，既不能插到最后面: 后面可能还有 数组
+   *  也不能插到最前面: 前面有。
+   *  只要是当前组件返回的是个数组就会出现找不到头尾的情况。
+   */
   if (toInsert.childNodes.length !== 0) {
-    parentNode.insertBefore(toInsert, currentLastStableSiblingNode ? currentLastStableSiblingNode.nextSibling : null)
+    parentNode.insertBefore(toInsert, currentLastStableSiblingNode ? currentLastStableSiblingNode.nextSibling : parentNode.childNodes[0])
     toInsert = null
   }
 
@@ -142,7 +153,8 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
 // updateDigest only handle one cnode and its new child cnodes.
 export default function updateDigest(cnode, view) {
   if (cnode.view.parentNode === undefined) throw new Error(`cnode has not been initial digested ${cnode.type.displayName}`)
-  cnode.patch = handlePatchVnodeChildren(cnode.patch, cnode.view.parentNode, null, [], cnode, view)
+  // TODO placeholder 的问题
+  cnode.patch = handlePatchVnodeChildren(cnode.patch, cnode.view.parentNode, cnode.view.placeholder, [], cnode, view)
   // CAUTION toDestroyPatch should be reset after update digest.
   cnode.toDestroyPatch = {}
 }

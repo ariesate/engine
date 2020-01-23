@@ -9,22 +9,23 @@ import {
 } from '../constant'
 import createElement from '../createElement'
 import { handleMoveFromPatchNode } from './updateDigest'
-import { mapValues } from '../util'
+import { mapValues, isObject } from '../util'
 import Fragment from '../Fragment'
+import VNode from '../VNode';
 
 /**
  * Attach element reference to cnode.
  */
 function prepareCnodeForView(cnode, vnode, parentNode, view) {
-  const placeHolder = view.createElement(createElement('div', { style: { display: 'none' } }))
-  parentNode.appendChild(placeHolder)
+  const placeholder = view.createPlaceholder('cnode placeholder')
+  parentNode.appendChild(placeholder)
   if (parentNode._childCnodes === undefined) parentNode._childCnodes = []
   parentNode._childCnodes.push(cnode)
   cnode.view = {
     rootRefs: [],
     refs: {},
     vnode,
-    placeHolder,
+    placeholder,
     getRefs() {
       return mapValues(cnode.view.refs, (ref) => {
         if (typeof ref === 'string') {
@@ -73,7 +74,8 @@ export function handleInitialVnode(vnode, cnode, view, parentPatch, parentPath, 
 
   const currentPath = createVnodePath(vnode, parentPath)
   // vnode types:
-  // 1) text/string/null
+  // 1) string/null。undefined 改成了 type: String, value: 'undefined'
+
   if (vnode.type === null) return
   if (vnode.type === String) {
     const element = view.createElement(vnode)
@@ -90,7 +92,7 @@ export function handleInitialVnode(vnode, cnode, view, parentPatch, parentPath, 
   }
 
   // 2) normal node
-  if (!view.isComponentVnode(vnode)) {
+  if (vnode instanceof VNode && !view.isComponentVnode(vnode)) {
     return handleInitialNaiveVnode(vnode, cnode, view, patch, currentPath, parentNode)
   }
   // 3) component node
@@ -99,6 +101,18 @@ export function handleInitialVnode(vnode, cnode, view, parentPatch, parentPath, 
     return handleInitialComponentNode(vnode, cnode, view, patch, currentPath, parentNode)
     /* eslint-enable no-use-before-define */
   }
+
+  // 4) 没有被组件处理掉的 object/function。
+
+  if (isObject(vnode)|| typeof vnode === 'function') {
+    const stringLikeResult = view.digestObjectLike(vnode)
+    if (stringLikeResult && stringLikeResult.type === String) {
+      const element = view.createElement(stringLikeResult)
+      patch.element = element
+      return parentNode.appendChild(element)
+    }
+  }
+
 }
 
 function handleInitialVnodeChildren(vnodes, cnode, view, patch, parentPath, parentNode) {
@@ -129,7 +143,13 @@ function handleInitialComponentNode(vnode, cnode, view, patch, currentPath, pare
  * digest 完一个 cnode:
  * 在 cnode 上附加上 view，view 上有 ref 信息。
  * 在 cnode.patch 上附加 element，之后的 diff 都是跟上一次的 patch diff。
+ *
+ * view: {
+ *   createFragment,
+ *   createElement
+ * }
  */
+
 
 // initialDigest handle the whole tree
 export default function initialDigest(cnode, view) {
@@ -137,15 +157,17 @@ export default function initialDigest(cnode, view) {
   // 根节点，要提前 prepare 一下。非根节点后面 handle 的时候会 prepare。
   // 对于组件里面再嵌套的组件，我们也只是 prepare 一下，不继续递归，渲染。
   if (cnode.parent === undefined) prepareCnodeForView(cnode, createElement(cnode.type), view.getRoot(), view)
-  if (cnode.view.placeHolder === undefined) throw new Error(`cnode is not prepared for initial digest ${cnode.type.displayName}`)
+  if (cnode.view.placeholder === undefined) throw new Error(`cnode is not prepared for initial digest ${cnode.type.displayName}`)
   cnode.patch = []
   const fragment = view.createFragment()
   handleInitialVnodeChildren(cnode.ret, cnode, view, cnode.patch, [], fragment)
-  const parentNode = cnode.view.placeHolder.parentNode
-  parentNode.insertBefore(fragment, cnode.view.placeHolder.nextSibling)
-  parentNode.removeChild(cnode.view.placeHolder)
-  delete cnode.view.placeHolder
+  const parentNode = cnode.view.placeholder.parentNode
+  parentNode.insertBefore(fragment, cnode.view.placeholder.nextSibling)
+  // 还是留着 placeholder。直到 remove 的时候
+  // parentNode.removeChild(cnode.view.placeholder)
+  // delete cnode.view.placeholder
   cnode.view.parentNode = parentNode
   cnode.isDigested = true
+  view.didMount()
 }
 

@@ -6,6 +6,7 @@ module.exports = {
   entry: {
     'react-hooks': './react-hooks/index.js',
     'react-todoMVC': './react-todoMVC/index.js',
+
   },
   devtool: 'inline-source-map',
   plugins: [
@@ -35,6 +36,7 @@ module.exports = {
   resolve: {
     alias: {
       'areact': path.resolve('../controller-react/src/index.js'),
+      'axii': path.resolve('../controller-axii/src/index.js'),
       '@ariesate/are': path.resolve('../engine'),
     },
   }

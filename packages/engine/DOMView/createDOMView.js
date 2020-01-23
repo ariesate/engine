@@ -4,6 +4,11 @@ import updateDigest from './updateDigest'
 import { partialRight } from '../util'
 import { isComponentVnode as defaultIsComponentVnode} from '../common'
 
+function defaultDigestObjectLike(obj) {
+  // 默认是不要了
+  return undefined
+}
+
 /**
  * 用来消费 painter 所产生的 diff 数据。要求 cnode 的结构：
  * {
@@ -14,15 +19,31 @@ import { isComponentVnode as defaultIsComponentVnode} from '../common'
  * invoke : 用来真实调用 dom 上 listener 的函数。
  * rootElement: 根节点。
  */
-export default function createDOMView({ invoke }, rootDomElement, isComponentVnode = defaultIsComponentVnode,) {
+export default function createDOMView({ invoke, receiveRef }, rootDomElement, isComponentVnode = defaultIsComponentVnode, digestObjectLike = defaultDigestObjectLike) {
+  const refToVnode = new Map()
   const view = {
     // CAUTION svg not support yet
-    createElement: partialRight(createElement, false, invoke),
+    createElement: (vnode )=> {
+      const element = createElement(vnode, false, invoke)
+      if (vnode.ref) {
+        refToVnode.set(element, vnode)
+      }
+      return element
+    },
     updateElement: partialRight(updateElement, invoke),
     createFragment() {
       return document.createDocumentFragment()
     },
+    createPlaceholder: (info) => {
+      return document.createComment(info)
+    },
     isComponentVnode,
+    digestObjectLike,
+    didMount: () => {
+      // Mount 完了以后才真正的通知外部的 Observer
+      refToVnode.forEach((vnode, ref) => receiveRef(ref, vnode))
+      refToVnode.clear()
+    },
     getRoot: () => rootDomElement,
   }
 
