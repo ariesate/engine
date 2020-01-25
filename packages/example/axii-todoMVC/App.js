@@ -15,12 +15,17 @@ import Filter from './Filter'
 
 const TODO_TYPES = ['all', 'uncompleted', 'completed']
 
+const createId = (function() {
+  let i = 0
+  return () => i++
+})()
+
 function randomTodos() {
   const result = []
   for(let i = 0; i< 10; i++) {
     TODO_TYPES.slice(1).forEach(type => {
       result.push({
-        id: `${type}-${i}`,
+        id: createId(),
         content: `${type}-${i}`,
         type
       })
@@ -28,6 +33,8 @@ function randomTodos() {
   }
   return result
 }
+
+
 
 export function App() {
   const todos = reactive(randomTodos())
@@ -38,10 +45,15 @@ export function App() {
 
   const onAddSubmit = (nextProps, prevProps) => {
     const { content } = prevProps
-    todos.push({ content: content.value, type: 'active' })
+    todos.unshift({
+      id: createId(),
+      content: content.value,
+      type: TODO_TYPES[1]
+    })
   }
 
-  const onTextChange = (next) => {
+  const onDelete = (nextProp, { item }) => {
+    todos.splice(todos.findIndex(t => t.id === item.id), 1)
   }
 
   // 不允许两个同名的，这个逻辑放在那里？
@@ -56,10 +68,12 @@ export function App() {
 
   return (
     <div>
-      <Input onAddSubmit={onAddSubmit} onTextChange={onTextChange}/>
-      {arrayComputed(() => {
-        const newList = showTodos.map(todo => <Todo key={todo.id} item={todo}/>)
-        console.log(newList.length)
+      <Input onAddSubmit={onAddSubmit} />
+      {refComputed(() => {
+        const newList = showTodos.map(todo => {
+          console.log(todo)
+          return <Todo key={todo.id} item={todo} onDelete={onDelete}/>
+        })
         return newList
       })}
       {TODO_TYPES.map((type) => (

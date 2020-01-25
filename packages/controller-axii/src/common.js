@@ -23,7 +23,7 @@ export function getVnodeType(vnode) {
 }
 
 export function createVnodePath(vnode, parentPath = []) {
-  return parentPath.concat(vnode.key)
+  return parentPath.concat(vnode ? vnode.key : undefined)
 }
 
 export function walkVnodes(vnodes, handler, parentPath = []) {
@@ -31,7 +31,7 @@ export function walkVnodes(vnodes, handler, parentPath = []) {
     const currentPath = createVnodePath(vnode, parentPath)
     const shouldStop = handler(vnode, currentPath, vnodes)
 
-    if (!shouldStop && vnode.children !== undefined) {
+    if (vnode && !shouldStop && vnode.children !== undefined) {
       walkVnodes(vnode.children, handler, currentPath)
     }
   })

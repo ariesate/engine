@@ -12,6 +12,7 @@ import { handleMoveFromPatchNode } from './updateDigest'
 import { mapValues, isObject } from '../util'
 import Fragment from '../Fragment'
 import VNode from '../VNode';
+import { invariant } from '../propTypes/util';
 
 /**
  * Attach element reference to cnode.
@@ -119,6 +120,7 @@ function handleInitialVnodeChildren(vnodes, cnode, view, patch, parentPath, pare
   // vnodes conditions:
   // 1) vnode children
   // 2) vnode of array type
+  // TODO 同类型、同key或者同没 key 的检测。
   vnodes.forEach((vnode, index) => {
     if (vnode.action && vnode.action.type === PATCH_ACTION_MOVE_FROM) {
       handleMoveFromPatchNode(vnode, patch, parentPath, cnode, parentNode, view)

@@ -59,7 +59,7 @@ export function createCacheablePropsProxyFromState(props, mutatedState, cnode, c
 
   return new Proxy({}, {
     get(target, propName) {
-      if (!stateDerivedPropNames.includes(propName)) return props[propName]
+      if (!stateDerivedPropNames.includes(propName)) return tryToRaw(props[propName])
 
       if (container.has(propName)) return container.get(propName)
       // TODO 支持 immer 形式的修改
@@ -94,7 +94,7 @@ export default function derive(propsToStateFn, propsFromStateFnMap) {
 }
 
 function tryToRaw(obj) {
-  return (isReactiveLike(obj) ? toRaw(obj) : obj)
+  return isReactiveLike(obj) ? toRaw(obj) : obj
 }
 
 
@@ -139,27 +139,30 @@ export function getMutationRunner(cnode, mutateFn) {
 
   return function run(callback) {
     return propComputeCacheContainer.run((cacheContainer) => {
-      const draftState = state ? createDraft(mapValues(state, tryToRaw)) : undefined
+      if (!mutateFn) return callback(valueProps, valueProps)
 
-      const draftProps = createDraft(createCacheablePropsProxyFromState(valueProps, draftState, cnode, cacheContainer))
+      const draftState = (state ? createDraft(mapValues(state, tryToRaw)) : undefined)
+      const draftProps = (createDraft(createCacheablePropsProxyFromState(valueProps, draftState, cnode, cacheContainer)))
       // 这里不会读，也不会动到 derived props
       mutateFn(draftProps, draftState)
       // 这里可能读 derived props, 也可能会改
-      const shouldStopApply = callback(draftProps)
+      const shouldStopApply = callback(draftProps, valueProps)
+
       let [nextState, stateChanges] = state ? finishDraft(draftState) : []
       const propsChanges = finishDraft(draftProps)[1]
+
       if (shouldStopApply) return true
 
       // TODO props 是 computed 的情况！！！！所有相关的 state 和 props 都不要应用。
       // 动态查询 reactive 是否有 computed 的 indep。如果有，就不能应用。
 
       // 1. 所有 draft 里面动过的，包括 derived Props，全部通过正常的链式反应来形成一致，
-      const changedState = watchChangedOnce(cnode.scopeId, state, () => {
+      const changedState = watchChangedOnce(cnode.scopeId, state || {}, () => {
         applyPatch(valueProps, propsChanges)
       })
 
-      // 2. derived props 中没有动过的，同时找到会影响的 state。进行快捷计算。
       if (state) {
+        // 2. derived props 中没有动过的，同时找到会影响的 state。进行快捷计算。
         // state 可能已经因为外部对 props 的修改而发生了变化。
         // 这里的设计的设置，是对 draftState 中，没有被 recomputed 过的变化进行快速设置。
         // 1. 外部改变了的 propNames
@@ -193,7 +196,5 @@ export function getMutationRunner(cnode, mutateFn) {
 /*
  * 需求场景：
  * 1. state 变化 => props 变化。当前的 props 变化和 state 是一致的，可以跳过计算步骤。
- * 2.
- *
  */
 

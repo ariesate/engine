@@ -1,15 +1,17 @@
-import createElement, { cloneElement } from '@ariesate/are/createElement'
+import createElement, { cloneElement, normalizeLeaf } from '@ariesate/are/createElement'
 import Fragment from '@ariesate/are/Fragment'
+import VNode from '@ariesate/are/VNode';
 import propTypes from '@ariesate/are/propTypes'
 import { walkVnodes, isComponentVnode } from './common'
 import { invariant, mapValues, replaceItem } from './util'
 import {
   isReactive, isReactiveLike,
   isRef,
-  subscribe,
+  subscribe, toRaw,
 } from './reactive';
 import { getMutationRunner } from './derive'
 import { getDisplayValue, isDraft } from './draft';
+
 
 // TODO 发现了一个 diff bug， 当刚好 {array} 中新增的一项和后面的节点相同的时候，dom 就不变化了。
 
@@ -37,11 +39,13 @@ function hasRefProps(vnode) {
 
 function createVirtualCnode(reactiveVnode) {
   const type = (changeCallback) => {
+    // 只有可能是 arrayComputed/refComputed。
+    // 当是 refComputed 时，可能是 string/null/undefined/vnode。
+
     const toDisplay = isDraft(reactiveVnode) ? getDisplayValue(reactiveVnode) : reactiveVnode
-    // 只有可能是 arrayComputed/refComputed，不可能有其他。
     const result =  isRef(toDisplay) ? toDisplay.value : toDisplay
     subscribe(toDisplay, changeCallback)
-    return result
+    return normalizeLeaf(result)
   }
 
   type.isVirtual = true
@@ -50,7 +54,6 @@ function createVirtualCnode(reactiveVnode) {
     type,
   }
 }
-
 
 
 function createVirtualCnodeFromRefProps(vnodeWithRefProps) {
@@ -87,7 +90,7 @@ function createVirtualCnodeFromRefProps(vnodeWithRefProps) {
 function replaceReactiveWithVirtualCnode(result) {
   walkVnodes([result], (vnode, currentPath, parentCollection) => {
     // 碰到 component vnode 要中断掉。
-
+    invariant(vnode, 'invalid vnode found')
     if (isComponentVnode(vnode)) return
     // reactive array 也要
     const isReactiveVnode = isReactiveLike(vnode.raw ? vnode.raw : vnode)
@@ -100,7 +103,6 @@ function replaceReactiveWithVirtualCnode(result) {
     }
   })
 }
-
 
 
 
@@ -146,14 +148,18 @@ export default function createAxiiController() {
           }
           result = cnodeToInitialize.type(cnodeToInitialize.changeCallback)
         } else {
+
+          // TODO ？refComputed/arrayComputed 产生 vnode.props 是个 proxy
           // 对于没有的 props 要补全 defaultProps
+          cnodeToInitialize.props = isReactiveLike(cnodeToInitialize.props) ? toRaw(cnodeToInitialize.props) : cnodeToInitialize.props
           Object.entries(cnodeToInitialize.type.propTypes || {}).forEach(([propName, propType]) => {
             if (!(propName in cnodeToInitialize.props)) {
               cnodeToInitialize.props[propName] = propType.defaultValue
             }
           })
 
-          const props = cnodeToInitialize.props
+          const { props } = cnodeToInitialize
+
           // 开始对其中的 mutation回调 prop 进行注入。
           const injectedProps = cnodeToInitialize.type.propTypes ? mapValues(cnodeToInitialize.type.propTypes, (propType, propName) => {
             if (propType.is(propTypes.func)) {

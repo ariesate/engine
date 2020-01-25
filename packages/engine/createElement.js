@@ -1,7 +1,10 @@
 import VNode from './VNode'
 
+// TODO 处理过程优化
 export function normalizeLeaf(rawChild) {
-  let child = rawChild
+  if (rawChild instanceof VNode) return rawChild
+
+  let child
   if (rawChild === undefined) {
     child = { type: String, value: 'undefined'}
   } else if (rawChild === null) {
@@ -11,10 +14,17 @@ export function normalizeLeaf(rawChild) {
     child = { type: Array, children: normalizeChildren(rawChild), raw:rawChild }
     // child = { type: Array, children: normalizeChildren(rawChild)}
   } else if (typeof rawChild === 'number' || typeof rawChild === 'string') {
-    child = { type: String, value: child.toString() }
+    child = { type: String, value: rawChild.toString() }
   }
-  // object/function
-  return child
+
+  if (child) {
+    const node = new VNode()
+    Object.assign(node, child)
+    return node
+  }
+
+  // object/function 只能作为 children 给组件处理的，所以不用 normalize
+  return rawChild
 }
 
 export function normalizeChildren(rawChildren) {

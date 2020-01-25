@@ -1,4 +1,4 @@
-import { createElement, render, reactiveExpression, reactive, ref, computed, propTypes } from 'axii'
+import { createElement, ref, propTypes } from 'axii'
 
 // 参数声明就是 state
 export default function Input({ content, onAddSubmit, onTextChange }) {
