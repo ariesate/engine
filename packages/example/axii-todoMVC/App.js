@@ -5,6 +5,7 @@ import {
   ref,
   refComputed,
   arrayComputed,
+  vnodeComputed,
   propTypes,
   derive,
   effect
@@ -69,10 +70,9 @@ export function App() {
   return (
     <div>
       <Input onAddSubmit={onAddSubmit} />
-      {refComputed(() => {
+      {vnodeComputed(() => {
         const newList = showTodos.map(todo => {
-          console.log(todo)
-          return <Todo key={todo.id} item={todo} onDelete={onDelete}/>
+          return <Todo key={todo.id} item={todo} onDelete={onDelete} />
         })
         return newList
       })}

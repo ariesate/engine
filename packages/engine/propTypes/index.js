@@ -18,7 +18,7 @@ function isStringLike(v) {
 
 // TODO zero-value
 // 这个写法是为了兼容 react 的 prop-types
-function createTypeClass(definition) {
+export function createTypeClass(definition) {
   function Type(...argv) {
     function TypeChecker(v) {
       if (!TypeChecker.check(v)) return new Error('type check failed')
@@ -52,7 +52,7 @@ function createTypeClass(definition) {
 }
 
 
-function createNormalType(type, definition = {}) {
+export function createNormalType(type, definition = {}) {
   const {
     stringify = JSON.stringify, parse = JSON.parse, is,
     ...rest

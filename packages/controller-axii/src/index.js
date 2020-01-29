@@ -90,15 +90,16 @@
 // import createPainter from '../../engine/createPainter'
 // import createDOMView from '../../engine/DOMView/createDOMView'
 // import createVnodeElement, { cloneElement as cloneVnodeElement } from '../../engine/createElement'
-import createScheduler from '../../engine/createScheduler'
-import createPainter from '../../engine/createPainter'
-import createDOMView from '../../engine/DOMView/createDOMView'
-import createVnodeElement, { cloneElement as cloneVnodeElement } from '../../engine/createElement'
+import createScheduler from '@ariesate/are/createScheduler'
+import createPainter from '@ariesate/are/createPainter'
+import createDOMView from '@ariesate/are/DOMView/createDOMView'
 import createAxiiController from './createAxiiController'
-export * from './reactive'
-import deriveState from './derive'
-import enginePropTypes from '../../engine/propTypes'
 
+export { default as createElement,  cloneElement } from '@ariesate/are/createElement'
+export { default as vnodeComputed } from './vnodeComputed'
+export * from './reactive'
+export { default as propTypes } from './propTypes'
+export { default as derive } from './derive'
 
 export function render(vnode, domElement, ...controllerArgv) {
   const controller = createAxiiController(...controllerArgv)
@@ -114,9 +115,3 @@ export function render(vnode, domElement, ...controllerArgv) {
 
   return controller
 }
-
-export const derive = deriveState
-export const createElement = createVnodeElement
-export const  cloneElement = cloneVnodeElement
-export const propTypes = enginePropTypes
-

@@ -44,6 +44,9 @@ function getFromMap(collection, key, createIfUndefined) {
  *   - computed: Reactive
  *   - scopeId: scopeId 用来标记中间变量的。目前用于 derive 中。
  *
+ * 内存模型：
+ * computed 对象的外部引用销毁时。与 computation 的联系，以及自己的 deps 会销毁。
+ * 但同时要通过 computation 主动销毁掉自己的 indeps。
  */
 
 /****************************************
@@ -73,9 +76,11 @@ export function objectComputed(computation) {
   return createComputed(computation, TYPE.OBJECT)
 }
 
-function createComputed(computation, type) {
+class ComputedToken {}
+
+export function createComputed(computation, type) {
   invariant(typeof computation === 'function', 'computation must be a function')
-  const computed = type === TYPE.REF ? ref(undefined) : reactive( type === TYPE.OBJECT ? {} : [])
+  const computed = type ? (type === TYPE.REF ? ref(undefined) : reactive( type === TYPE.OBJECT ? {} : [])) : (new ComputedToken())
   const payload = getFromMap(reactiveToPayloads, toRaw(computed), createPayload)
   payload.computation = computation
 
@@ -84,10 +89,27 @@ function createComputed(computation, type) {
   computation.type = type
   // 用来标记 scope 的，后面可以用 scopeId skip 掉计算过程。
   computation.scopeId = activeScopeId
-  // 这是在创建，第一次跑的时候什么都不要 track。
+  // 执行 compute 的时候 track 依赖。
   compute(computation)
   return computed
 }
+
+export function destroyComputed(computed) {
+  const payload = getFromMap(reactiveToPayloads, toRaw(computed))
+  if (payload) {
+    invariant(Object.values(payload.keys).every(({ computations }) => computations.size === 0), 'computed have deps, can not destroy')
+    if (payload.computations) {
+      delete payload.computation.scopeId
+      delete payload.computation.type
+      delete payload.computation.computed
+      payload.computation.indeps.forEach(keyNode => {
+        keyNode.computations.delete(payload.computation)
+      })
+      delete payload.computation.indeps
+    }
+  }
+}
+
 
 /****************************************
  * Computation
@@ -99,7 +121,9 @@ function applyComputation(computation) {
   }
 
   const nextValue = computation(watchAnyMutation)
-  replace(computation.computed, nextValue)
+  if(!(computation.computed instanceof ComputedToken)) {
+    replace(computation.computed, nextValue)
+  }
 }
 
 
@@ -169,7 +193,6 @@ function digestComputations() {
 }
 
 function scheduleToRun(computations) {
-  // console.log("scheduleTorun", computations.size, computations, inComputationDigestion)
   computations.forEach(c => {
     if (!shouldSkipComputation(c) && !cachedComputations.includes(c)) {
       cachedComputations.push(c)
@@ -220,20 +243,13 @@ function shouldSkipComputation(computation) {
   return scopeIdToSkip && (computation.scopeId === scopeIdToSkip)
 }
 
-function callListener(source, isUnchanged) {
-  const listeners = getFromMap(reactiveToListeners, source)
-  if (listeners) listeners.forEach(listener => listener(isUnchanged))
-}
-
 export function trigger(source, type, key, extraInfo) {
-  // 数据没变的情况
+  // 执行了赋值操作，但数据没变，外部可以要求仍然触发 trigger。
+  // derive 中需要追踪某个数据改变后，所有可能影响的数据，用于保持一致性。所以用 trigger，外部继续监听的方式来找到所有可能影响的。
   if (type === TriggerOpTypes.SET && extraInfo ) {
     if (scopeIdToSpreadUnchanged) triggerUnchangedInScope(source, scopeIdToSpreadUnchanged)
     return
   }
-
-  // 先触发自己的 subscribe。
-  callListener(source)
 
   const { keys } = getFromMap(reactiveToPayloads, toRaw(source), createPayload)
   // 剩下的都是真正改变过的
@@ -281,7 +297,8 @@ export function startScope(fn){
   return id
 }
 
-export function computeScope(scopeId, sourceMutation, depsMutation) {
+// 用 Reverse compute 来实现更好。
+export function unsafeComputeScope(scopeId, sourceMutation, depsMutation) {
   const stopSkip = skipScope(scopeId)
   sourceMutation()
   stopSkip()
@@ -307,7 +324,6 @@ function triggerUnchangedInScope(source, scopeId) {
     computations.forEach(computation => {
       if (computation.scopeId === scopeId) {
         const nextSource = toRaw(computation.computed)
-        callListener(nextSource, true)
         next.push(nextSource)
       }
     })
@@ -370,22 +386,6 @@ function createKeyNode(indep) {
  * 2. 如果发现自己有 sync 标记那么就正常触发一切。
  *
  */
-
-
-const genSubscribeId = createIdGenerator()
-
-export function subscribe(obj, listener) {
-  invariant(isReactiveLike(obj), 'can only subscribe reactive like object')
-  const listeners = getFromMap(reactiveToListeners, toRaw(obj), () => new Set())
-
-  if (!listeners.has(listener)) {
-    listeners.add(listener)
-  }
-
-  return function unsubscribe() {
-    listeners.delete(listener)
-  }
-}
 
 
 export function findIndepsFromDep(dep, candidatesIndexByName) {

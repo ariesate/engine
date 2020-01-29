@@ -46,32 +46,24 @@
  * 变量 $ 开头，就自动 reactive
  * < $ > 存在，其中就自动 reactive。
  */
-import { isReactive as internalIsReactive, toRaw as internalToRaw } from './reactive'
-import { isRef as internalIsRef } from './reactive'
+import { isReactive, isRef, toRaw as internalToRaw } from './reactive'
+
 import { invariant } from '../util';
-export { reactive, ref } from './reactive'
+import { isRef as internalIsRef } from './reactive'
+export { reactive, ref, isRef, isReactive } from './reactive'
 export {
   refComputed,
   objectComputed,
   arrayComputed,
-  subscribe,
+  createComputed,
+  destroyComputed,
   startScope,
-  computeScope,
+  unsafeComputeScope,
   replace,
   findIndepsFromDep,
   findDepsFromIndep,
   spreadUnchangedInScope,
 } from './effect'
-
-export const isReactive = internalIsReactive
-export const isRef = internalIsRef
-
-export function reactiveExpression(expression) {
-  return {
-    expression,
-    isReactive: true
-  }
-}
 
 export function isReactiveLike(obj) {
   return isReactive(obj) || isRef(obj)

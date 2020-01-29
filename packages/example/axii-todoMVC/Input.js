@@ -24,7 +24,7 @@ export default function Input({ content, onAddSubmit, onTextChange }) {
 }
 
 Input.propTypes = {
-  onAddSubmit: propTypes.func,
-  onTextChange: propTypes.func,
+  onAddSubmit: propTypes.callback,
+  onTextChange: propTypes.callback,
   content: propTypes.object.default(() => ref('draft')),
 }

@@ -57,6 +57,13 @@ export function walkCnodes(cnodes, handler) {
   })
 }
 
+export function reverseWalkCnodes(cnodes, handler) {
+  cnodes.forEach((cnode) => {
+    reverseWalkCnodes(values(cnode.next || {}), handler)
+    handler(cnode)
+  })
+}
+
 export function vnodePathToString(path) {
   return path.join('.')
 }

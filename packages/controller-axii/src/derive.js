@@ -1,5 +1,5 @@
-import { getCurrentRenderingNode, onUnmount } from './createAxiiController';
-import { filter, invariant, mapValues, createCacheContainer, pick } from './util';
+import { getCurrentRenderingNode } from './createAxiiController';
+import { filter, invariant, mapValues, createCacheContainer } from './util';
 import {
   isReactiveLike,
   reactive,
@@ -7,10 +7,9 @@ import {
   toRaw,
   startScope,
   isRef,
-  computeScope,
+  unsafeComputeScope,
   replace,
   findIndepsFromDep,
-  subscribe,
   spreadUnchangedInScope
 } from './reactive';
 import { applyPatch, createDraft, finishDraft } from './produce';
@@ -123,7 +122,9 @@ function watchChangedOnce(scopeId, stateIndexByName, applyChange) {
       changed[name] = state
     }))
   })
-  // 一定要去做抵消操作才行。
+  // 由于 state 和 prop 都可能变化，为了保持一致，一切以 Prop 变化为准。所以这里要获取 props 赋值了就一定会影响的 state。
+  // 使用 spreadUnchangedInScope 就是为了追踪所有可能影响的 state。
+  // 由于 reactive 默认是数据没变，那么即使赋值也不会 trigger，那就获取不到可能会改变的 state。
   spreadUnchangedInScope(scopeId, () => {
     applyChange()
   })
@@ -134,8 +135,8 @@ function watchChangedOnce(scopeId, stateIndexByName, applyChange) {
 }
 
 export function getMutationRunner(cnode, mutateFn) {
-  const { props, state } = cnode
-  const valueProps = filter(props, isReactiveLike)
+  const { props, localProps, state } = cnode
+  const valueProps = filter({ ...props, ...localProps }, isReactiveLike)
 
   return function run(callback) {
     return propComputeCacheContainer.run((cacheContainer) => {
@@ -179,7 +180,6 @@ export function getMutationRunner(cnode, mutateFn) {
           return !(path[0] in changedState)
         })
 
-        // console.log("before computeScope", stateChangesToApply)
         computeScope(cnode.scopeId, () => {
           Object.entries(propsToEffectIndexByName).forEach(([propName, prop]) => {
             const nextProp = cacheContainer.get(propName) || getComputedProp(cnode, propName, nextState)
