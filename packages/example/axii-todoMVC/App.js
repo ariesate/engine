@@ -70,7 +70,7 @@ export function App() {
   return (
     <div>
       <Input onAddSubmit={onAddSubmit} />
-      {vnodeComputed(() => {
+      {refComputed(() => {
         const newList = showTodos.map(todo => {
           return <Todo key={todo.id} item={todo} onDelete={onDelete} />
         })

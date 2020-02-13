@@ -40,39 +40,43 @@ export default function createScheduler(painter, view, supervisor) {
   let currentSession = null
 
   function startUpdateSession(potentialChangeTriggerFn) {
+    invariant(!currentSession, `already in session ${currentSession}`)
     currentSession = SESSION_UPDATE
     // Expect scheduler api collectChangedCnodes will be used inside this function
     // to collect changed cnodes into tracking tree.
-    potentialChangeTriggerFn()
-    // Collect finished
-    invariant(currentSession, `already in session ${currentSession}`)
-    if (trackingTree.isEmpty()) return
+    try {
+      potentialChangeTriggerFn && potentialChangeTriggerFn()
+      // Collect finished
+      if (!trackingTree.isEmpty()) {
+        supervisor.session(SESSION_UPDATE, () => {
 
-    supervisor.session(SESSION_UPDATE, () => {
+          trackingTree.walk((cnode) => {
+            const unit = cnode.isPainted ? UNIT_REPAINT : UNIT_PAINT
+            supervisor.unit(SESSION_UPDATE, unit , cnode, () => {
+              const paintMethod = cnode.isPainted ? painter.repaint : painter.paint
+              const { toPaint = {}, toRepaint = {}, toDispose = {} } = supervisor.filterNext(paintMethod(cnode), cnode)
+              each(toPaint, toPaintCnode => trackingTree.track(toPaintCnode))
+              each(toRepaint, toRepaintCnode => trackingTree.track(toRepaintCnode))
+              each(toDispose, toDisposeCnode => trackingTree.dispose(toDisposeCnode, true))
+            })
+          })
+          trackingTree.lock()
+          trackingTree.walk((cnode) => {
+            const unit = cnode.isDigested ? UNIT_UPDATE_DIGEST : UNIT_INITIAL_DIGEST
+            supervisor.unit(SESSION_UPDATE, unit, cnode, () => {
+              const digestMethod = cnode.isDigested ? view.updateDigest : view.initialDigest
+              digestMethod(cnode)
+            })
+          }, true) // the second argument will consume the tree
+          trackingTree.unlock()
 
-      trackingTree.walk((cnode) => {
-        const unit = cnode.isPainted ? UNIT_REPAINT : UNIT_PAINT
-        supervisor.unit(SESSION_UPDATE, unit , cnode, () => {
-          const paintMethod = cnode.isPainted ? painter.repaint : painter.paint
-          const { toPaint = {}, toRepaint = {}, toDispose = {} } = supervisor.filterNext(paintMethod(cnode), cnode)
-          each(toPaint, toPaintCnode => trackingTree.track(toPaintCnode))
-          each(toRepaint, toRepaintCnode => trackingTree.track(toRepaintCnode))
-          each(toDispose, toDisposeCnode => trackingTree.dispose(toDisposeCnode, true))
         })
-      })
-      trackingTree.lock()
-      trackingTree.walk((cnode) => {
-        const unit = cnode.isDigested ? UNIT_UPDATE_DIGEST : UNIT_INITIAL_DIGEST
-        supervisor.unit(SESSION_UPDATE, unit, cnode, () => {
-          const digestMethod = cnode.isDigested ? view.updateDigest : view.initialDigest
-          digestMethod(cnode)
-        })
-      }, true) // the second argument will consume the tree
-      trackingTree.unlock()
-
-    })
-
-    currentSession = null
+      }
+    } catch(e) {
+      console.error(e)
+    } finally {
+      currentSession = null
+    }
   }
 
   function startInitialSession(vnode) {
@@ -108,7 +112,13 @@ export default function createScheduler(painter, view, supervisor) {
   return {
     startInitialSession,
     startUpdateSession,
-    collectChangedCnodes: cnodes => cnodes.forEach(trackingTree.track),
-    getCurrentSessino: () => currentSession
+    collectChangedCnodes: cnodes => {
+      cnodes.forEach(trackingTree.track)
+      if (!currentSession) {
+
+        startUpdateSession()
+      }
+    },
+    getCurrentSession: () => currentSession
   }
 }

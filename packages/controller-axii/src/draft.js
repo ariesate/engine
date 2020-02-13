@@ -4,9 +4,9 @@ import {
   objectComputed,
   reactive, ref,
   refComputed,
-  subscribe,
   toRaw
 } from './reactive'
+import watch from './watch'
 import cloneDeep from 'lodash/clonedeep'
 
 const draftDisplayValue = new WeakMap()
@@ -24,12 +24,12 @@ export function draft(computed) {
   const isComputedRef = isRef(computed)
   const draftValue = isComputedRef ? ref(computed.value) : reactive(cloneDeep(toRaw(computed)))
 
-  subscribe(computed, (isUnchanged) => {
+  watch(() => computed, (isUnchanged) => {
     console.log('computed, changed', isUnchanged)
     !isUnchanged && mutationTimeTable.set(computed, Date.now())
   })
 
-  subscribe(draftValue, (isUnchanged) => {
+  watch(() => draftValue, (isUnchanged) => {
     !isUnchanged && mutationTimeTable.set(draftValue, Date.now())
   })
   // 设置个初始值

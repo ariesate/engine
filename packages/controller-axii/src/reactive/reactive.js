@@ -79,7 +79,6 @@ export function toRaw(observed) {
 /**************************
  * ref
  **************************/
-const convert = (val) => isObject(val) ? reactive(val) : val
 
 export function isRef(r){
   return r ? r._isRef === true : false
@@ -89,7 +88,7 @@ export function ref(raw) {
   if (isRef(raw)) {
     return raw
   }
-  raw = convert(raw)
+  // CAUTION  取消了 convert。
   const r = {
     _isRef: true,
     get value() {
@@ -98,7 +97,7 @@ export function ref(raw) {
     },
     set value(newVal) {
       const isUnChanged = !hasChanged(toRaw(raw), newVal)
-      raw = convert(newVal)
+      raw = newVal
 
       trigger(
         r,

@@ -1,4 +1,5 @@
 import { getCurrentRenderingNode } from './createAxiiController';
+import { getCurrentWorkingCnode } from './renderContext'
 import { filter, invariant, mapValues, createCacheContainer } from './util';
 import {
   isReactiveLike,
@@ -79,9 +80,8 @@ function mapToReactive(obj) {
 }
 
 export default function derive(propsToStateFn, propsFromStateFnMap) {
-  const cnode = getCurrentRenderingNode()
+  const [cnode] = getCurrentWorkingCnode()
   cnodeToPropsFromStateFnMap.set(cnode, propsFromStateFnMap)
-
 
   cnode.scopeId = startScope(() => {
     // 中间的 computed 全部被标记了 id，之后可以 skip 掉

@@ -1,17 +1,18 @@
-import { createIdGenerator } from './util';
+import { createIdGenerator, pushToSet } from './util';
 import { invariant } from '../util';
 import { isRef, reactive, ref, toRaw } from './reactive';
 import { TrackOpTypes, TriggerOpTypes } from './operations'
 import { isReactiveLike } from './index';
 
+// computed 中允许建立再建立 computed，例如在 vnodeComputed 中用到了。建立一个 frame 用来正确地收集数据。
+const computedRelation = new WeakMap()
+
+// 把正在计算中的 compute 都存在这里，这样能检测到循环的 compute 进行报警。
 const computationStack = [];
-let tempComputationIndeps = new Set()
 
 const reactiveToPayloads = new WeakMap()
 const reactiveToListeners = new WeakMap()
 
-
-export let activeComputation;
 export const ITERATE_KEY = Symbol('iterate');
 const ANY_KEY = Symbol('any')
 
@@ -52,7 +53,7 @@ function getFromMap(collection, key, createIfUndefined) {
 /****************************************
  * Computed
  ****************************************/
-const TYPE = {
+export const TYPE = {
   REF: Symbol('ref'),
   ARRAY: Symbol('array'),
   OBJECT: Symbol('object')
@@ -80,6 +81,7 @@ class ComputedToken {}
 
 export function createComputed(computation, type) {
   invariant(typeof computation === 'function', 'computation must be a function')
+
   const computed = type ? (type === TYPE.REF ? ref(undefined) : reactive( type === TYPE.OBJECT ? {} : [])) : (new ComputedToken())
   const payload = getFromMap(reactiveToPayloads, toRaw(computed), createPayload)
   payload.computation = computation
@@ -89,8 +91,10 @@ export function createComputed(computation, type) {
   computation.type = type
   // 用来标记 scope 的，后面可以用 scopeId skip 掉计算过程。
   computation.scopeId = activeScopeId
-  // 执行 compute 的时候 track 依赖。
+
+  // 执行 compute 的时候会 track 依赖。
   compute(computation)
+
   return computed
 }
 
@@ -115,7 +119,8 @@ export function destroyComputed(computed) {
  * Computation
  ****************************************/
 
-function applyComputation(computation) {
+function applyComputation() {
+  const { computation } = computationStack[computationStack.length - 1]
   function watchAnyMutation(source) {
     track(toRaw(source), TrackOpTypes.ANY, ANY_KEY)
   }
@@ -128,44 +133,39 @@ function applyComputation(computation) {
 
 
 /**
- * 逆运算的实现：
- * computation 是由某几个 source 某个字段引起的引起的，可以通过 computation 的 keyNode 反向查到。
- * 当有一个数据是 Reverse(computation, computedValue)，并且要执行 computation 时。
- * 1. 执行 computation, 就直接取值，不用算了。
- * 2. 把对应 Reverse(computation, computedValue) source[key] 的值算出来，替换掉(暂停 trigger)。
- *
- * 如果一个 computation 的多个 indep(keyNode) 对应的值都是 Reverse(computation, computedValue)。
- * 那么应该取最后一个。
+ * compute 的执行时机：
+ * 1. createComputed。第一次建立联系，此时可能出现 computed 中再创建 computed，computationStack 中已有值。
+ * 2. digestComputations。compute 中再触发的 computation 只会加入到 digest 尾部。因此 computationStack 只会有一个。
  */
 function compute(computation) {
-  invariant(!computationStack.includes(computation), 'recursive computation detected')
-  invariant(!tempComputationIndeps.size, 'something wrong, track container not empty')
+  invariant(!computationStack.find(({computation: c}) => c === computation ), 'recursive computation detected')
   try {
-    computationStack.push(computation);
-    activeComputation = computation;
+    computationStack.push({computation, indeps: new Set()});
+    // 会从 computationStack 中读当前的 frame，所以不用传值。
     // 到 compute 的时候一定已经在一个 computations running 周期里了。里面的再触发的加到了队列末尾
-    applyComputation(computation);
-    patchComputation(computation, tempComputationIndeps)
+    applyComputation()
+    patchComputation()
+    // computed
+    patchComputedRelation()
   }
   catch(e) {
     console.error(e)
   }
   finally {
-    tempComputationIndeps = new Set()
     computationStack.pop();
-    activeComputation = computationStack[computationStack.length - 1];
   }
 }
 
 // 清理之前的 indeps
-function patchComputation(computation, nextIndeps) {
+function patchComputation() {
+  const { computation, indeps: nextIndeps } = computationStack[computationStack.length - 1]
   const { indeps: prevIndeps } =  computation
 
   computation.indeps = nextIndeps
   computation.indeps.forEach(keyNode => {
     if (!prevIndeps.has(keyNode)) {
       // 新增的
-      keyNode.computations.add(activeComputation)
+      keyNode.computations.add(computation)
       // TODO sync 标记的判断,只有一个标记时要遍历下去
     } else {
       // 原来就有的，这次还有
@@ -177,6 +177,28 @@ function patchComputation(computation, nextIndeps) {
     toRemoveKeyNode.computations.delete(computation)
     // TODO sync 标记的判断,移除的标记如果没有了，要遍历下去。
   })
+}
+
+function patchComputedRelation() {
+  const { computation } = computationStack[computationStack.length - 1]
+  // 先清理掉依赖于当前项 computed
+  let current
+  const computationToClear = [computation]
+  while(current = computationToClear.shift()) {
+    const childComputations = computedRelation.get(current)
+    if (childComputations) {
+      computationToClear.push(...childComputations)
+      destroyComputed(computation.computed)
+    }
+  }
+
+  // 重新建立当前和 parent 的关系
+  const parentFrame = computationStack[computationStack.length - 2]
+  if (parentFrame) {
+    let children = computedRelation.get(parentFrame)
+    if (!children) computedRelation.set(parentFrame, (children = []))
+    if (!children.includes(computation)) children.push(computation)
+  }
 }
 
 
@@ -227,13 +249,14 @@ export function resumeTracking() {
 }
 
 export function track(indep, type, key) {
-  // CAUTION 应该不能读自己，哪怕能达到稳定态也不行
-  if (!shouldTrack || activeComputation === undefined || indep === toRaw(activeComputation.computed)) {
+  // CAUTION 不能读自己，哪怕能达到稳定态也不行
+  const frame = computationStack[computationStack.length -1]
+  if (!shouldTrack || !frame || indep === toRaw(frame.computation.computed)) {
     return;
   }
   const payload = getFromMap(reactiveToPayloads, toRaw(indep), createPayload)
   const keyNode = getFromMap(payload.keys, key, () => createKeyNode(indep))
-  tempComputationIndeps.add(keyNode)
+  frame.indeps.add(keyNode)
 }
 
 
@@ -335,7 +358,15 @@ function triggerUnchangedInScope(source, scopeId) {
 /****************************************
  * Utilities
  *****************************************/
-
+/**
+ * CAUTION
+ * 这里的 replace 并没有做深度比较，只有 trigger 在触发时做了最浅的比较。
+ * 所以如果某个 computed 依赖另一个 computed 对象上的属性，并且属性还是一个对象，
+ * 那么不管是不是深度相同，都会被触发。
+ *
+ * 目前没有改进计划，因为在实际应用中，视图层已经有 dom diff 来过滤到没有变化的情况。
+ * 也可以认为目前没有看到 computed 依赖造成的性能消耗问题很大的情况。
+ */
 export function replace(source, nextSourceValue) {
   if (isRef(source)) {
     source.value = nextSourceValue

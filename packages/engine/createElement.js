@@ -88,3 +88,15 @@ export function cloneElement(vnode, newAttributes) {
     ...vnode.children,
   )
 }
+
+export function flattenChildren(children) {
+  if (!children) return null
+  return children.reduce((result, child) => {
+    if (child.type === Array) {
+      result.push(...flattenChildren(child.children))
+    } else {
+      result.push(child)
+    }
+    return result
+  }, [])
+}

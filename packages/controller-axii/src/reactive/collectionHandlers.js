@@ -15,8 +15,8 @@ function get(target, key, wrap) {
   return wrap(getProto(target).get.call(target, key))
 }
 
-function has(that, key) {
-  const target = toRaw(that)
+function has(key) {
+  const target = toRaw(this)
   key = toRaw(key)
   track(target, TrackOpTypes.HAS, key)
   return getProto(target).has.call(target, key)
@@ -28,9 +28,9 @@ function size(target) {
   return Reflect.get(getProto(target), 'size', target)
 }
 
-function add(that, value) {
+function add(value) {
   value = toRaw(value)
-  const target = toRaw(that)
+  const target = toRaw(this)
   const proto = getProto(target)
   const hadKey = proto.has.call(target, value)
   const result = proto.add.call(target, value)
@@ -45,9 +45,9 @@ function add(that, value) {
   return result
 }
 
-function set(that, key, value) {
+function set(key, value) {
   value = toRaw(value)
-  const target = toRaw(that)
+  const target = toRaw(this)
   const proto = getProto(target)
   const hadKey = proto.has.call(target, key)
   const oldValue = proto.get.call(target, key)
@@ -62,8 +62,8 @@ function set(that, key, value) {
   return result
 }
 
-function deleteEntry(that, key) {
-  const target = toRaw(that)
+function deleteEntry(key) {
+  const target = toRaw(this)
   const proto = getProto(target)
   const hadKey = proto.has.call(target, key)
   const oldValue = proto.get ? proto.get.call(target, key) : undefined
@@ -80,8 +80,8 @@ function deleteEntry(that, key) {
   return result
 }
 
-function clear(that) {
-  const target = toRaw(that)
+function clear() {
+  const target = toRaw(this)
   const hadItems = target.size !== 0
   const oldTarget = __DEV__
     ? target instanceof Map
@@ -103,11 +103,10 @@ function clear(that) {
 
 function createForEach() {
   return function forEach(
-    that,
     callback,
     thisArg
   ) {
-    const observed = that
+    const observed = this
     const target = toRaw(observed)
     const wrap = toReactive
     track(target, TrackOpTypes.ITERATE, ITERATE_KEY)
@@ -122,8 +121,8 @@ function createForEach() {
 }
 
 function createIterableMethod(method) {
-  return function(that, ...args) {
-    const target = toRaw(that)
+  return function(...args) {
+    const target = toRaw(this)
     const isPair =
       method === 'entries' ||
       (method === Symbol.iterator && target instanceof Map)
@@ -145,7 +144,7 @@ function createIterableMethod(method) {
       },
       // iterable protocol
       [Symbol.iterator]() {
-        return that
+        return this
       }
     }
   }
@@ -153,8 +152,8 @@ function createIterableMethod(method) {
 
 
 const mutableInstrumentations = {
-  get(that, key) {
-    return get(that, key, toReactive)
+  get(key) {
+    return get(this, key, toReactive)
   },
   get size() {
     return size(this)
