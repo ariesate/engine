@@ -1,4 +1,4 @@
-import { createElement, render, reactiveExpression, reactive, ref, computed, propTypes, derive, effect } from 'axii'
+import { createElement, render, reactive, ref, arrayComputed, vnodeComputed, propTypes, derive } from 'axii'
 import Input from './Input'
 import Todo from './Todo'
 import Filter from './Filter'
@@ -11,7 +11,7 @@ import Filter from './Filter'
 
 function FullName({ fullName, onChange }) {
   const { firstName, secondName } = derive(() => {
-    const splitArr =  computed(() => /-/.test(fullName.value) ? fullName.value.split('-') : [fullName.value, ''])
+    const splitArr =  arrayComputed(() => /-/.test(fullName.value) ? fullName.value.split('-') : [fullName.value, ''])
     return {
       firstName:() => splitArr.value[0],
       secondName: () => splitArr.value[1]
@@ -76,23 +76,12 @@ export function App() {
 
   const fullName = ref('john-titor')
 
-  effect(() => {
-    fullName.value = 'jhon-allen'
-    console.log('running1')
-  })
-
-  effect(() => {
-    fullName.value = '111-222'
-    console.log('running2')
-  })
-  console.log("=======")
-  fullName.value = '333-444'
 
   return (
     <div>
       <FullName fullName={fullName} onChange={onFullNameChange}/>
       <Input onAddSubmit={onAddSubmit} onTextChange={onTextChange}/>
-      {computed(() => todos.map(todo => <Todo item={todo}/>))}
+      {vnodeComputed(() => todos.map(todo => <Todo item={todo}/>))}
       {fullName}
       <button onClick={changeFullName} >change full name</button>
     </div>
