@@ -6,7 +6,9 @@
  */
 
 import { cloneElement } from '@ariesate/are/createElement'
+import { UNIT_INITIAL_DIGEST } from '@ariesate/are/constant'
 import propTypes from './propTypes'
+
 import { walkVnodes, isComponentVnode, reverseWalkCnodes } from './common'
 import { invariant, mapValues, replaceItem } from './util'
 import {
@@ -19,8 +21,13 @@ import { getDisplayValue, isDraft } from './draft'
 import watch from './watch'
 import { ComputedVnode } from './vnodeComputed'
 import { flattenChildren } from '../../engine/createElement'
-import { withCurrentWorkingCnode } from './renderContext';
-import createChildrenProxy from './createChildrenProxy';
+import { withCurrentWorkingCnode } from './renderContext'
+import createChildrenProxy from './createChildrenProxy'
+import LayoutManager from './LayoutManager'
+import StyleManager from './StyleManager';
+
+const layoutManager = new LayoutManager()
+const styleManager = new StyleManager()
 
 function isFormElement(target) {
   return (target instanceof HTMLInputElement)
@@ -187,7 +194,6 @@ function createInjectedProps(cnode) {
 }
 
 
-
 /**
  * createAxiiController
  *
@@ -201,6 +207,21 @@ export default function createAxiiController() {
       rootRender(cnode) {
         return cnode.type.render(cnode.props, cnode.ref)
       },
+      /**
+       * TODO 在 render 中要处理啊普通组件的 Style 函数。只能生成 class 文件，没法动态去找到匹配的节点。
+       * 这时就需要处理动态变化的问题了。
+       * Style 函数接受的参数就是props/state，这使得如果有些片段要不想独立成组件，但又需要传参，就坐不到了。例如 TodoItem 的 active，如果没有独立出来。无法处理。
+       * 因此，增加一个规则，只要片段有名字，就可以通过 var-xxx={} 的方式传值。
+       *
+       * Style 也可以做个类似于 vnode 的结构，通过 diff 来动态改变 stylesheet。动态改变的时候比较麻烦，因为只有 index，没有引用。
+       * 可能得考虑用多个 style sheet。
+       *
+       * 如果要像 houdini 一样来支持根据一些需要动态创建 div 的样式，那就得"提前知晓节点是否匹配"。但如果能提前知道，也就不需要 stylesheet 了。
+       * 还是特殊样式只能定义在有名字的节点上？这样能迅速匹配。
+       *
+       * 关于"类型形式"的范匹配如何处理？反过来用 use 的方式。
+       *
+       */
       initialRender(cnodeToInitialize, parent) {
         /**
          * CAUTION 目前还是只有 virtual cnode 会更新，普通组件不会更新。不确定未来会不会有需要。
@@ -234,7 +255,6 @@ export default function createAxiiController() {
           }
 
           cnodeToInitialize.virtualRender = () => {
-            console.log('virtual render')
             cnodeToInitialize.clearWatchTokens()
             return cnodeToInitialize.type(cnodeToInitialize.changeCallback, cnodeToInitialize.saveWatchToken)
           }
@@ -269,21 +289,31 @@ export default function createAxiiController() {
               )
               // CAUTION 要清理回来，因为下次还会用这个 proxy。
               cnodeToInitialize.injectedProps.children.touched = false
-            } else {
-              // 有 children 并且动了
-              // if (hasChildren) debugger
             }
             return result
           }
           // 只会 replace 第一层的，碰到 component 节点就不处理了，交个它 render 的时候处理。
           result = cnodeToInitialize.virtualRender()
+          const [layoutProps, originLayoutProps] =layoutManager.processLayoutProps(cnodeToInitialize.props)
+
+          if (layoutProps) {
+            // console.log(layoutProps, result)
+            // TODO 这里的 attributes 和 props 区别???
+            if(isComponentVnode(result)) {
+              result.attributes = Object.assign({}, result.attributes, originLayoutProps)
+            } else {
+              result.attributes = Object.assign({}, result.attributes, layoutProps)
+            }
+          }
+
+          // CAUTION 直接在这里处理并生成 Style，不能再 digest 之后，否则会出现闪动。
+          styleManager.add(cnodeToInitialize)
         }
 
         /**
          * 不管是哪一种，最后都要继续替换。如果有 vnodeComputed 嵌套的情况，每次处理的时候只替换一层。
          * 下一层的处理等到当前这层变成了 virtualCnode，render 之后又回到这里继续处理。
         */
-
         return replaceReactiveWithVirtualCnode(result)
       },
       updateRender(virtualCnodeToUpdate) {
@@ -314,6 +344,7 @@ export default function createAxiiController() {
         return { toPaint: toInitialize, toDispose: toDestroy }
       },
       unit: (sessionName, unitName, cnode, startUnit) => {
+        if (unitName === UNIT_INITIAL_DIGEST) styleManager.digest(cnode)
         return withCurrentWorkingCnode(cnode, startUnit)
       },
 
@@ -324,7 +355,6 @@ export default function createAxiiController() {
 
     observer: {
       invoke: (fn, e) => {
-
         scheduler.startUpdateSession(() => {
           activeEvent.withEvent(e, () => {
             fn(e)
@@ -339,7 +369,19 @@ export default function createAxiiController() {
       },
       receiveRef: (ref, vnode) => {
          vnode.ref(ref)
-      }
+      },
+      hijackElement: (vnode, cnode) => {
+        /**
+         * 读取 layout 样式，写到 style 上。也可以写到 class 上，如果写到 class 上，就用 Mutation Observer 来监听卸载。
+         */
+        if (layoutManager.match(vnode)) {
+          const style = layoutManager.parse(vnode.attributes, vnode)
+          if (style) {
+            vnode.attributes.style = style
+          }
+        }
+        return vnode
+      },
     },
 
     isComponentVnode(vnode) {

@@ -24,7 +24,7 @@ function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, parent
     /* eslint-enable no-use-before-define */
   } else if (typeof p.type === 'string' || p.type === String) {
     if (p.patch !== undefined) {
-      view.updateElement(p, p.element)
+      view.updateElement(p, p.element, cnode)
       delete p.patch
     }
 

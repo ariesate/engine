@@ -7,7 +7,7 @@ import {
 import {
   PATCH_ACTION_MOVE_FROM,
 } from '../constant'
-import createElement from '../createElement'
+import createVnode from '../createElement'
 import { handleMoveFromPatchNode } from './updateDigest'
 import { mapValues, isObject } from '../util'
 import Fragment from '../Fragment'
@@ -53,7 +53,7 @@ function attachCnodeQuickRefs(cnode, vnode, element) {
 }
 
 function handleInitialNaiveVnode(vnode, cnode, view, patch, currentPath, parentNode) {
-  const element = view.createElement(vnode)
+  const element = view.createElement(vnode, cnode)
   parentNode.appendChild(element)
   // Save it for update
   patch.element = element
@@ -79,7 +79,7 @@ export function handleInitialVnode(vnode, cnode, view, parentPatch, parentPath, 
 
   if (vnode.type === null) return
   if (vnode.type === String) {
-    const element = view.createElement(vnode)
+    const element = view.createElement(vnode, cnode)
     patch.element = element
     return parentNode.appendChild(element)
   }
@@ -108,7 +108,7 @@ export function handleInitialVnode(vnode, cnode, view, parentPatch, parentPath, 
   if (isObject(vnode)|| typeof vnode === 'function') {
     const stringLikeResult = view.digestObjectLike(vnode)
     if (stringLikeResult && stringLikeResult.type === String) {
-      const element = view.createElement(stringLikeResult)
+      const element = view.createElement(stringLikeResult, cnode)
       patch.element = element
       return parentNode.appendChild(element)
     }
@@ -158,7 +158,7 @@ export default function initialDigest(cnode, view) {
   if (cnode.isDigested) throw new Error('cnode is digested, please use updateDigest.')
   // 根节点，要提前 prepare 一下。非根节点后面 handle 的时候会 prepare。
   // 对于组件里面再嵌套的组件，我们也只是 prepare 一下，不继续递归，渲染。
-  if (cnode.parent === undefined) prepareCnodeForView(cnode, createElement(cnode.type), view.getRoot(), view)
+  if (cnode.parent === undefined) prepareCnodeForView(cnode, createVnode(cnode.type), view.getRoot(), view)
   if (cnode.view.placeholder === undefined) throw new Error(`cnode is not prepared for initial digest ${cnode.type.displayName}`)
   cnode.patch = []
   const fragment = view.createFragment()

@@ -103,6 +103,7 @@ export { default as derive } from './derive'
 export { default as useImperativeHandle } from './useImperativeHandle'
 export { default as createRef } from './createRef'
 export { default as watch } from './watch'
+export { StyleEnum, StyleRule } from './StyleManager'
 
 export function render(vnode, domElement, ...controllerArgv) {
   const controller = createAxiiController(...controllerArgv)

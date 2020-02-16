@@ -1,4 +1,5 @@
 export const IS_NON_DIMENSIONAL = /acit|ex(?:s|g|n|p|$)|rph|ows|mnc|ntw|ine[ch]|zoo|^ord/i
+export const IS_ATTR_NUMBER = /flex-grow|flex-shrink/i
 
 export const PATCH_ACTION_REMAIN = 'patch.remain'
 export const PATCH_ACTION_REMOVE = 'patch.remove'

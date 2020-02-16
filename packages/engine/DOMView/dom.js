@@ -1,5 +1,5 @@
 import { each } from '../util'
-import { IS_NON_DIMENSIONAL } from '../constant'
+import { IS_NON_DIMENSIONAL, IS_ATTR_NUMBER } from '../constant'
 
 /** Attempt to set a DOM property to the given value.
  *  IE & FF throw for certain property-value combinations.
@@ -36,7 +36,7 @@ export function setAttribute(node, name, value, isSvg) {
         if (value[k] === undefined) {
           node.style[k] = ''
         } else {
-          node.style[k] = typeof v === 'number' && IS_NON_DIMENSIONAL.test(k) === false ? (`${v}px`) : v
+          node.style[k] = (typeof v === 'number' && !IS_NON_DIMENSIONAL.test(k) && !IS_ATTR_NUMBER.test(k)) ? (`${v}px`) : v
         }
       })
     }
@@ -94,10 +94,10 @@ export function createElement(node, isSVG, invoke) {
   return element
 }
 
-export function updateElement(node, element, invoke) {
-  if (node.type === String) {
-    element.nodeValue = node.value
+export function updateElement(vnode, element, invoke) {
+  if (vnode.type === String) {
+    element.nodeValue = vnode.value
   } else {
-    setAttributes(node.attributes, element, invoke)
+    setAttributes(vnode.attributes, element, invoke)
   }
 }

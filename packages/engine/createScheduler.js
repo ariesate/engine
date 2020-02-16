@@ -29,8 +29,6 @@ import createTrackingTree from './createTrackingTree'
 import { invariant } from '../controller-react/src/util';
 
 
-// 用户的 apply 表示一个用户已知的原子粒度的操作，并且希望启动一个 session。
-// 这里设计的关联在于 module 是否完整知道 session 的概念。既然有 session 的概念，当然是知道。
 
 export default function createScheduler(painter, view, supervisor) {
   let ctree
@@ -115,7 +113,6 @@ export default function createScheduler(painter, view, supervisor) {
     collectChangedCnodes: cnodes => {
       cnodes.forEach(trackingTree.track)
       if (!currentSession) {
-
         startUpdateSession()
       }
     },
