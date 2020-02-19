@@ -118,7 +118,6 @@ function watchChangedOnce(scopeId, stateIndexByName, applyChange) {
   Object.entries(stateIndexByName).forEach(([name, state]) => {
     unsubscribeList.push(subscribe(state, (isUnchanged) => {
       invariant(inWatch, 'already stop watch')
-      if(isUnchanged) console.log('get unchanged notice', name)
       changed[name] = state
     }))
   })

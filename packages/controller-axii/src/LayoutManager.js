@@ -41,14 +41,20 @@ const InlineRules = {
   },
   ...createWithDirection('margin'),
   ...createWithDirection('padding'),
-  ...createWithDirection('border', (key) => ({ [key]: v => ({[`${key}-width`]: v }) }))
+  ...createWithDirection('border', (key) => ({ [key]: v => ({[`${key}-width`]: v }) })),
+  ...createSimpleKeyToValue('white-space'),
+  ...createSimpleKeyToValue('line-height'),
+  ...createSimpleKeyToValue('font-size'),
+
 }
 
 const BaseDefaultRules = {
   block: {
+    ...InlineRules,
     ...createWithRange('width'),
     ...createWithRange('height'),
-    ...InlineRules,
+    ...createSimpleKeyToValue('overflow-x'),
+    ...createSimpleKeyToValue('overflow-y'),
   },
   inline: InlineRules,
   text: {}

@@ -25,7 +25,6 @@ export function draft(computed) {
   const draftValue = isComputedRef ? ref(computed.value) : reactive(cloneDeep(toRaw(computed)))
 
   watch(() => computed, (isUnchanged) => {
-    console.log('computed, changed', isUnchanged)
     !isUnchanged && mutationTimeTable.set(computed, Date.now())
   })
 
@@ -44,7 +43,6 @@ export function draft(computed) {
     const computedMutationTime = mutationTimeTable.get(computed) || 0
     const target = (draftMutationTime > computedMutationTime) ? draftValue : computed
 
-    console.log('update display', isComputedRef, target.value)
     // CAUTION 这里为了性能并没有用 cloneDeep，而是直接包装了一下，因为是 computed，也不会被外部修改。
     return isComputedRef ? target.value : toRaw(target)
   })

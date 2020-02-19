@@ -66,7 +66,6 @@ function createStyleProxy(root= new StyleRoot(),parentPath = []) {
 
       if (Object.keys(varSelectors).length) {
         Object.entries(varSelectors).forEach(([varSelector, attrs]) => {
-          console.log(parentPath.concat(`${key}${varSelector}`), attrs)
           root.add(parentPath.concat(`${key}${varSelector}`), attrs)
         })
       }

@@ -117,7 +117,7 @@ const mutableInstrumentations = {
 
 export default function createChildrenProxy(children) {
   // 定义的 iterator 会 flatten children ，也会去展开 ref。
-  // TODO 如果完全没动过，那么就要给个标记
+  // 如果完全没动过，那么就要给个标记。外面会将 proxy 替换会原本的 children。
   let touched = false
   return new Proxy(children, {
     get: function(target, key) {

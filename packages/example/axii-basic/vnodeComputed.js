@@ -61,7 +61,6 @@ function App() {
   // })
 
   setTimeout(() => {
-    console.log("changing====")
     data.push({ name:3, child: ['child3']})
   })
 

@@ -20,7 +20,6 @@ export default {
     onSave() {},
   },
   render({ state, listeners }) {
-    console.log("should rerender")
     return [
       <input value={state.editingValue} onKeyUp={listeners.onChange} />,
       <span>{state.value === state.editingValue ? '' : '未保存'}</span>,

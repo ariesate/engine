@@ -150,7 +150,6 @@ export function createResolveElement(first) {
       const nextIndex = getVnodeNextIndex(vnode, parentPath)
       const nextCnode = cnode.next[nextIndex]
       if (!nextCnode) {
-        console.log(vnode, nextIndex, cnode)
         throw new Error(`unknown vnode type ${nextIndex}`)
       }
       if (nextCnode.patch.length > 0) {
