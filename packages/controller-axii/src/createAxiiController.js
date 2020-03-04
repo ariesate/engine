@@ -19,8 +19,6 @@ import {
 import { getMutationRunner } from './derive'
 import { getDisplayValue, isDraft } from './draft'
 import watch from './watch'
-import { ComputedVnode } from './vnodeComputed'
-import { flattenChildren } from '../../engine/createElement'
 import { withCurrentWorkingCnode } from './renderContext'
 import createChildrenProxy from './createChildrenProxy'
 import LayoutManager from './LayoutManager'
@@ -142,6 +140,8 @@ function replaceReactiveWithVirtualCnode(renderResult) {
       return [false]
   })
 }
+
+
 
 const activeEvent = (function() {
   let currentEvent = null

@@ -8,7 +8,7 @@
  * It only paint one cnode at a time. For recursive painting,
  * it needs a scheduler to call its handle method from outside.
  *
- * The painting result consists of tow parts:
+ * The painting result consists of two parts:
  * 1) patch: vnode diff result.
  * 2) next: child cnodes.
  *

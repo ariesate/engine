@@ -1,0 +1,24 @@
+{
+  "name": "@ariesate/are-components",
+  "version": "0.0.1",
+  "description": "you should not publish this package.",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/core": "^7.8.0",
+    "@babel/plugin-transform-react-jsx": "^7.8.0",
+    "@babel/preset-env": "^7.8.0",
+    "babel-loader": "^8.0.6",
+    "html-webpack-plugin": "^3.2.0",
+    "lodash": "^4.17.15",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10",
+    "webpack-dev-server": "^3.10.1"
+  },
+  "scripts": {
+    "start": "webpack-dev-server",
+    "dev": "NODE_ENV=dev webpack-dev-server"
+  },
+  "author": "sskyy <skyking_H@hotmail.com>",
+  "license": "MIT"
+}
