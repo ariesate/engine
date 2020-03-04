@@ -69,6 +69,8 @@ export function App() {
 
   return (
     <div>
+      <div>这个 todoMVC 是用来演示 Axii 的基本组件结构、reactive data 的实现的。</div>
+      <div>说明：输入完按回车能提交</div>
       <Input onAddSubmit={onAddSubmit} />
       {refComputed(() => {
         const newList = showTodos.map(todo => {
@@ -76,6 +78,7 @@ export function App() {
         })
         return newList
       })}
+      <div>下面的 radio button 可以用来筛选</div>
       {TODO_TYPES.map((type) => (
         <span key={type}>
           <input type="radio" name={type}
