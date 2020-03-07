@@ -1,4 +1,6 @@
 import { invariant } from './util';
+// TODO 要考虑 value 是 ref 的情况？
+
 
 function createSimpleKeyToValue(key) {
   return {
@@ -51,10 +53,15 @@ const InlineRules = {
 const BaseDefaultRules = {
   block: {
     ...InlineRules,
+    ...createSimpleKeyToValue('position'),
     ...createWithRange('width'),
     ...createWithRange('height'),
     ...createSimpleKeyToValue('overflow-x'),
     ...createSimpleKeyToValue('overflow-y'),
+    ...createSimpleKeyToValue('left'),
+    ...createSimpleKeyToValue('right'),
+    ...createSimpleKeyToValue('top'),
+    ...createSimpleKeyToValue('bottom'),
   },
   inline: InlineRules,
   text: {}
@@ -63,6 +70,13 @@ const BaseDefaultRules = {
 const createFlexProperty = (name) => createWithoutPrefixKeyToValue('flex', name)
 // flex 的处理
 const LayoutRules = {
+  table: {
+    layout(value) {
+      return {'table-layout': value}
+    },
+    ...createSimpleKeyToValue('border-spacing'),
+    ...createSimpleKeyToValue('border-collapse'),
+  },
   flex: {
     display() {
       return { display: 'flex'}
@@ -113,6 +127,7 @@ export default class LayoutManager {
     // this.layoutRules = layoutRules
   }
   match(vnode) {
+
     return this.baseRuleTypes.includes(vnode.type) || this.baseRuleTypes.some(type => type in (vnode.attributes || {}))
   }
   processLayoutProps(props) {

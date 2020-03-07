@@ -1,7 +1,17 @@
 /** @jsx createElement */
 /** @jsxFrag Fragment */
-import { createElement } from 'axii'
-import wrap from '../wrap'
+import {
+  createElement,
+  propTypes,
+  reactive,
+  refComputed,
+  toRaw,
+} from 'axii'
+import wrap, { dynamic } from '../wrap'
+import Expandable from './Expandable'
+import Selectable from './Selectable'
+import StickyLayout from './StickyLayout'
+import { node } from '../../../engine/propTypes';
 /**
  * // TODO
  * 1. 视窗
@@ -9,8 +19,8 @@ import wrap from '../wrap'
  *  1.2 筛选
  *  1.3 过滤
  * 2. 编辑
- * 3. 表头分组
  * 4. 行列合并
+ * 5. refComputed
  */
 
 /**
@@ -31,32 +41,105 @@ import wrap from '../wrap'
  * 5. 处分 table 把每个部分都虚拟化。才能实现对 column 的控制。
  */
 
-export class TableDataSource {
-  // 视窗 limit/offset/total
-  // 排序 sort
-  // 过滤 filter
+function reverseWalkChildren(nodes, level, handle) {
+  let width = 0
+  nodes.forEach(( node, i ) => {
+
+    let currentWidth = 1
+    if (node.children) {
+      currentWidth = reverseWalkChildren(node.children, level + 1, handle)
+      width += currentWidth
+    }
+
+    handle(node, level, currentWidth, i)
+  })
+
+  return width
+}
+
+function walkChildren(nodes, handle) {
+  nodes.forEach(node => {
+    handle(node)
+    if (node.children) walkChildren(node.children, handle)
+  })
+}
+
+function walkLeaf(nodes, handle) {
+  nodes.forEach(node => {
+    if (node.children) {
+      walkLeaf(node.children, handle)
+    } else {
+      handle(node)
+    }
+  })
+}
+
+function makeKey(l, i) {
+  return `${l}:${i}`
 }
 
 
-export function Table( data, pagination, columns ) {
+function readByLevel(nodes, level, handle) {
+  let levelIndex = 0
+  return nodes.map((node) => {
+    let currentWidth = 1
+    if (node.children) {
+      currentWidth = readByLevel(node.children, level+1, handle).reduce((r, c) => r + c , 0)
+    }
+    handle(node, level, currentWidth, levelIndex)
+    levelIndex += currentWidth
+
+    return currentWidth
+  })
+}
+
+export function Table( { data, pagination, columns }, context, index) {
 
   return (
-    <table>
+    <table block table-border-spacing-0 table-border-collapse-separate>
       <thead>
-        <th>
-          {columns.map((column) => (
-            <td data-column={column}>{column.title}</td>
-          ))}
-        </th>
+          {dynamic('heads', () => {
+            index.headCells = new Set()
+
+            let maxLevel = 0
+
+            readByLevel(columns, 0, (column, level, childrenCount, levelIndex) => {
+              if (level > maxLevel) maxLevel = level
+            })
+
+            const result = []
+
+            readByLevel(columns, 0, (column, level, childrenCount, levelIndex) => {
+              if (!result[level]) result[level] = <tr></tr>
+              const colRowProps = {}
+              colRowProps.colSpan = childrenCount
+              if (!column.children) {
+                colRowProps.rowSpan = maxLevel - level + 1
+              }
+              result[level].children.push(<th vnodeRef={v => index.headCells.add(v)} {...colRowProps} data-column={column}>{column.title}</th>)
+            })
+
+            return result
+          })}
       </thead>
       <tbody>
-        {data.map((row) => (
-          <tr data={row}>
-            {columns.map((column) => (
-              <td data-column={column}>{data.get(column.dataIndex)}</td>
-            ))}
-          </tr>
-        ))}
+        {dynamic('rows', () => {
+          index.dataCells = new Set()
+          index.prefixCells = new Map()
+
+          return data.map((row) => (
+            <tr data={row}>
+              {dynamic('cells', () => {
+                const cells = []
+
+                walkLeaf(columns, (column) => {
+                  cells.push(<td vnodeRef={v => index.dataCells.add(v)} data-column={column}>{row[column.dataIndex]}</td>)
+                })
+                return cells
+              }, row)}
+            </tr>
+          ))
+        })}
       </tbody>
       <pagination data={pagination}></pagination>
     </table>
@@ -72,8 +155,26 @@ Table.Render = function() {
 
 }
 
+// TODO layout 中统一控制的部分怎么处理？？
+Table.Style = (style) => {
+  style.table.th = {
+    borderRight: '1px #000 solid',
+    borderBottom: '1px #000 solid',
+    background: '#eee'
+  }
+  style.table.td = {
+    borderRight: '1px #000 solid',
+    borderBottom: '1px #000 solid',
+    background: '#fff'
+  }
+}
+
+Table.propTypes = {
+  data: propTypes.array.default(() => reactive([])),
+  columns: propTypes.array.default(() => reactive([]))
+}
 
 // 应该写成这个形式
-export const WithFeature = Wrap(Table, [])
+export default wrap(Table, [Selectable, Expandable, StickyLayout])
 
 

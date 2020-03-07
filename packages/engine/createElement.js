@@ -1,4 +1,5 @@
 import VNode from './VNode'
+import Fragment from './Fragment';
 
 // TODO 处理过程优化
 export function normalizeLeaf(rawChild) {
@@ -39,6 +40,7 @@ export function normalizeChildren(rawChildren) {
  * @returns {VNode}
  */
 export default function createElement(type, attributes, ...rawChildren) {
+
   const node = new VNode()
 
   Object.assign(node, { type, attributes: attributes || {} })
@@ -46,6 +48,11 @@ export default function createElement(type, attributes, ...rawChildren) {
   if (node.attributes.ref !== undefined) {
     node.ref = node.attributes.ref
     delete node.attributes.ref
+  }
+
+  if (node.attributes.vnodeRef !== undefined) {
+    node.vnodeRef = node.attributes.vnodeRef
+    delete node.attributes.vnodeRef
   }
 
   if (node.attributes.key !== undefined) {
@@ -72,10 +79,13 @@ export default function createElement(type, attributes, ...rawChildren) {
   node.children = normalizeChildren(childrenToAttach)
   // TODO 之后全改成 props
   node.props = node.attributes
+
+  if (node.vnodeRef) node.vnodeRef(node)
+
   return node
 }
 
-export function cloneElement(vnode, newAttributes) {
+export function cloneElement(vnode, newAttributes, ...children) {
   return createElement(
     vnode.type,
     {
@@ -85,14 +95,14 @@ export function cloneElement(vnode, newAttributes) {
       transferKey: vnode.transferKey,
       ...newAttributes,
     },
-    ...vnode.children,
+    ...(children.length ? children : vnode.children),
   )
 }
 
 export function flattenChildren(children) {
   if (!children) return null
   return children.reduce((result, child) => {
-    if (child.type === Array) {
+    if (child.type === Array || child.type === Fragment) {
       result.push(...flattenChildren(child.children))
     } else {
       result.push(child)

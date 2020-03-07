@@ -1,32 +1,57 @@
-import propTypes from '../../../controller-axii/src/propTypes';
+/** @jsx createElement */
+/** @jsxFrag Fragment */
+import {
+  propTypes,
+  createElement,
+  Fragment,
+  cloneElement,
+  vnodeComputed
+} from 'axii';
+import { flatChildren } from '../wrap';
 
-export default function FeatureExpandable({ dataSource, expandedRowRender }, table) {
+export default function FeatureExpandable({ dataSource, expandedRowRender, expandedRowKeys }, mutate, index) {
   const toggleExpandAll = () => {
 
   }
 
   const toggleExpandOne = (key) => {
-
+    if (expandedRowKeys.has(key)) {
+      expandedRowKeys.delete(key)
+    } else {
+      expandedRowKeys.add(key)
+    }
   }
 
-  // TODO 这里的 value 要做缓存计算怎么处理？应该用 computed 做？
-  // TODO 可以直接把 expand 的具体实现写在这里。但是根节点要带上 name。
-  table.thead.tr[0].td.unshift(<td index={table.expandAll}><expand value={} onChange={toggleExpandAll} /></td>)
+  // TODO 这里 block-width 是和 stickyLayout 的约定，要删掉
+  mutate('heads', (result) => {
+    result[0].children.unshift(<th block-width={60} rowSpan={result.length}><expand onChange={toggleExpandAll} /></th>)
+  })
 
-  table.expandRows = []
+  mutate('rows', (result) => {
+    result.forEach((tr, i) => {
+      const rowData = tr.props.data
+      // CAUTION 注意这里对 children 的 spread，不要随意打包，要小心地维护数据结构。
+      result[i] = <>
+        {tr}
+        {vnodeComputed(() => expandedRowKeys.has(rowData.key) ?
+          <tr><td colSpan={flatChildren(tr.children).length + 1}>{expandedRowRender(rowData)}</td></tr> :
+          null)}
+      </>
+    })
+  })
 
-  table.tbody.tr = table.tbody.tr.reduce((result, current) => {
-    const rowData = current.props.data
-    current.td.unshift(<td><expand value={} onChange={() => toggleExpandOne(rowData.key)}/></td>)
-    result.push(current, <tr index={table.expandRows}>{expandedRowRender(rowData)}</tr>)
-    return result
-  }, [])
+  // TODO 这里 block-width 是和 stickyLayout 的约定，要删掉
+  mutate('cells', (result, rowData) => {
+    result.unshift(<td block-width={60}><div onClick={() => toggleExpandOne(rowData.key)}>+</div></td>,)
+  })
 
 }
 
+
 // 默认等于 match。
 FeatureExpandable.propTypes = {
-  expandedRowRender: propTypes.func
+  expandedRowRender: propTypes.func,
+  expandedRowKeys: propTypes.array,
 }
 
 

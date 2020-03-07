@@ -103,10 +103,6 @@ export function cloneVnode(vnode) {
 }
 
 
-export function isComponentVnode(a) {
-  return typeof a.type === 'function' && a.type !== Array
-}
-
 export function getVnodeNextIndex(vnode, parentPath) {
   return vnode.transferKey === undefined ? vnodePathToString(createVnodePath(vnode, parentPath)) : vnode.transferKey
 }

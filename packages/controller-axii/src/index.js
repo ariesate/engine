@@ -95,7 +95,8 @@ import createPainter from '@ariesate/are/createPainter'
 import createDOMView from '@ariesate/are/DOMView/createDOMView'
 import createAxiiController from './createAxiiController'
 
-export { default as createElement,  cloneElement } from '@ariesate/are/createElement'
+export { default as createElement,  cloneElement, normalizeLeaf, normalizeChildren } from '@ariesate/are/createElement'
+export { default as Fragment } from '@ariesate/are/Fragment'
 export { default as vnodeComputed } from './vnodeComputed'
 export * from './reactive'
 export { default as propTypes } from './propTypes'
@@ -104,6 +105,7 @@ export { default as useImperativeHandle } from './useImperativeHandle'
 export { default as createRef } from './createRef'
 export { default as watch } from './watch'
 export { StyleEnum, StyleRule } from './StyleManager'
+export { default as createChildrenProxy } from './createChildrenProxy'
 
 export function render(vnode, domElement, ...controllerArgv) {
   const controller = createAxiiController(...controllerArgv)

@@ -3,13 +3,29 @@
  * axii 的渲染过程实际上是建立 reactive 数据与组件实例之间联系的过程，而不是一个动态的计算过程。
  * 具体表现在组件只会因为依赖的 reactive 数据变化而重新 render，父组件的变化是不会让子组件重新 render 的。
  * 所以不要在 vnodeComputed 里面或者任何组件里去改变传给子组件的数据的引用，包括传给子组件的 children 的结构。
+ *
+ * axii 中 reactive 的内存模型：
+ * reactive/ref 的持有环境：
+ * 1. 组件体系外
+ * 2. 组件的函数主体创建的
+ *
+ * computed 的持有环境：
+ * 1. 函数主体创建，函数作用域持有(如果 indep 的生命周期超出当前函数，需要主动销毁)
+ * 2. vnodeComputed，函数作用域持有(同上)
+ *
+ * 注意：
+ * 1. 如果子 component 使用 children。那么应该自己创建 refComputed。销毁时也是销毁的自己的。
+ * 2. virtual cnode 只是虚拟持有，不负责销毁。virtual cnode 不应该修改原本的 vnode ？
+ *
+ *
  */
 
 import { cloneElement } from '@ariesate/are/createElement'
+import Fragment from '@ariesate/are/Fragment'
 import { UNIT_INITIAL_DIGEST } from '@ariesate/are/constant'
 import propTypes from './propTypes'
 
-import { walkVnodes, isComponentVnode, reverseWalkCnodes } from './common'
+import { walkVnodes, reverseWalkCnodes } from './common'
 import { invariant, mapValues, replaceItem } from './util'
 import {
   isReactiveLike,
@@ -35,6 +51,10 @@ function isFormElement(target) {
 
 function isFormVnode(vnode) {
   return ['input', 'select', 'textarea'].includes(vnode.type)
+}
+
+function isComponentVnode(vnode) {
+  return (typeof vnode.type === 'function') && vnode.type !== String && vnode.type !== Array && vnode.type !== Fragment
 }
 
 const formElementToReactive = new WeakMap()
@@ -126,6 +146,7 @@ function replaceChildrenProxy(vnode, proxy, origin) {
 
 
 function replaceReactiveWithVirtualCnode(renderResult) {
+  // TODO 应该创建一个 proxy，原本的结构要让 cnode 在销毁时回收 vnodeCompouted。
   return replaceVnodeWith(renderResult, (vnode) => {
       if (!vnode) return [false]
       // 一旦碰到 component vnode 就要中断掉。里面的 replace 要交给这个组件 render 的时候处理。
@@ -252,6 +273,11 @@ export default function createAxiiController() {
             // CAUTION destroy 的顺序不能乱，必须是从依赖->被依赖项。state 可能依赖于 localProps， 所以先 destroy state。
             cnodeToInitialize.state && Object.values(cnodeToInitialize.state).forEach(state => destroyComputed(state))
             cnodeToInitialize.localProps && Object.values(cnodeToInitialize.localProps).forEach(prop => destroyComputed(prop))
+            /**
+             * CAUTION 不需要 destroy 掉用来创造 virtual cnode 的 refComputed vnode。因为这是 virtualCnode。
+             * 理论上 unmount 的时候是上层组件 unmount 了触发了。那么依赖的数据会 destroy 掉。自己也就被 destroy 了。
+             */
+
           }
 
           cnodeToInitialize.virtualRender = () => {
@@ -324,6 +350,7 @@ export default function createAxiiController() {
          *
          * 其他情况都不会更新，包括使用 vnodeComputed 创建的数组中 key 相同的组件。这是通过在 filterNext 中丢掉 toRemain 实现的。
          * 所以不要在 vnodeComputed 中去改变 prop 的引用。
+
          */
         return replaceReactiveWithVirtualCnode(virtualCnodeToUpdate.virtualRender())
       },
@@ -341,6 +368,7 @@ export default function createAxiiController() {
         // 如果不允许，那么就是不允许 动态改变 props 的绑定数据，不允许动态创建 computed，不允许动态创建 props。
         // 不允许，如果需要动态创建，应该生成新组件，用 derive。
         // vnodeComputed 只适用于不创建、不修改绑定的情况。
+        // TODO 但是如果改变 prop 的值呢？！！！还是应该要更新啊。比如简单写 true/false 这种。
         return { toPaint: toInitialize, toDispose: toDestroy }
       },
       unit: (sessionName, unitName, cnode, startUnit) => {
@@ -384,9 +412,7 @@ export default function createAxiiController() {
       },
     },
 
-    isComponentVnode(vnode) {
-      return (typeof vnode.type === 'function') && vnode.type !== String && vnode.type !== Array
-    },
+    isComponentVnode,
 
     paint: vnode => ctree = scheduler.startInitialSession(vnode),
     receiveScheduler: s => scheduler = s,
