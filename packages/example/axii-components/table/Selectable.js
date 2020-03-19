@@ -7,7 +7,7 @@ import {
   refComputed,
 } from 'axii';
 
-export default function FeatureSelectable({ data, expandedRowRender, selectedRowKeys }, mutate, index) {
+export default function FeatureSelectable({ data, expandedRowRender, selectedRowKeys }, context, { fragments, index }) {
 
   const toggleAll = () => {
     if (selectedRowKeys.size === data.length) {
@@ -28,19 +28,19 @@ export default function FeatureSelectable({ data, expandedRowRender, selectedRow
   }
 
   // TODO 这里 block-width 是和 stickyLayout 的约定，要删掉
-  mutate('heads', (result) => {
+  fragments.heads.mutations = (result) => {
     const allSelected = refComputed(() => {
       return selectedRowKeys.size === data.length
     })
     result[0].children.unshift(<th block-width={60} rowSpan={result.length}><input type="checkbox" onClick={toggleAll} checked={allSelected}/></th>)
-  })
+  }
 
-  mutate('cells', (result, rowData) => {
+  fragments.cells.mutations = (result, {row: rowData }) => {
     const selected = refComputed(() => {
       return selectedRowKeys.has(rowData.key)
     })
     result.unshift(<td block-width={60}><input type="checkbox" onClick={() => toggleOne(rowData.key)} checked={selected}/></td>)
-  })
+  }
 }
 
 // 默认等于 match。

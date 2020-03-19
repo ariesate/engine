@@ -26,7 +26,7 @@ export default function createDOMView({ invoke, receiveRef, hijackElement = x =>
   const view = {
     // CAUTION svg not support yet
     createElement: (vnode, cnode )=> {
-      const element = createElement(hijackElement(vnode, cnode), false, invoke)
+      const element = createElement(hijackElement(vnode, cnode), invoke)
       if (vnode.ref) {
         refToVnode.set(element, vnode)
       }

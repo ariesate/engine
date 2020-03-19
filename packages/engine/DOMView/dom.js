@@ -61,34 +61,36 @@ export function setAttribute(node, name, value, isSvg) {
       if (ns) node.removeAttributeNS('http://www.w3.org/1999/xlink', name.toLowerCase())
       else node.removeAttribute(name)
     } else if (typeof value !== 'function') {
-      if (ns) node.setAttributeNS('http://www.w3.org/1999/xlink', name.toLowerCase(), value)
-      else node.setAttribute(name, value)
+      if (ns) {
+        node.setAttributeNS('http://www.w3.org/1999/xlink', name.toLowerCase(), value)
+      } else {
+        node.setAttribute(name, value)
+      }
     }
   }
 }
 
-function setAttributes(attributes, element, invoke) {
+function setAttributes(attributes, element, isSVG, invoke) {
   each(attributes, (attribute, name) => {
     if (/^on[A-Z]/.test(name) && typeof attribute === 'function') {
-      setAttribute(element, name, (...argv) => invoke(attribute, ...argv))
+      setAttribute(element, name, (...argv) => invoke(attribute, ...argv), isSVG)
     } else if (name === 'style' || !/^_+/.test(name) && !(typeof attribute === 'object')){
       // 不允许 _ 开头的私有attribute，不允许 attribute 为数组或者对象。除非是 style。
-      setAttribute(element, name, attribute)
+      setAttribute(element, name, attribute, isSVG)
     } else {
       console.warn(`invalid attribute: ${name}, value: ${attribute}`)
     }
   })
 }
 
-export function createElement(node, isSVG, invoke) {
+export function createElement(node, invoke) {
   if (node.type === String) return document.createTextNode(node.value)
-
-  const element = isSVG || node.tag === 'svg'
+  const element = node.isSVG
     ? document.createElementNS('http://www.w3.org/2000/svg', node.type)
     : document.createElement(node.type)
 
   if (node.attributes) {
-    setAttributes(node.attributes, element, invoke)
+    setAttributes(node.attributes, element, node.isSVG, invoke)
   }
 
   return element
@@ -98,6 +100,6 @@ export function updateElement(vnode, element, invoke) {
   if (vnode.type === String) {
     element.nodeValue = vnode.value
   } else {
-    setAttributes(vnode.attributes, element, invoke)
+    setAttributes(vnode.attributes, element, vnode.isSVG, invoke)
   }
 }

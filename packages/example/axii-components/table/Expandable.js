@@ -5,11 +5,12 @@ import {
   createElement,
   Fragment,
   cloneElement,
-  vnodeComputed
+  vnodeComputed,
+  flatChildren
 } from 'axii';
-import { flatChildren } from '../wrap';
+import { Table } from './Table'
 
-export default function FeatureExpandable({ dataSource, expandedRowRender, expandedRowKeys }, mutate, index) {
+export default function FeatureExpandable({ dataSource, expandedRowRender, expandedRowKeys }, context,  { fragments, index}) {
   const toggleExpandAll = () => {
 
   }
@@ -23,11 +24,11 @@ export default function FeatureExpandable({ dataSource, expandedRowRender, expan
   }
 
   // TODO 这里 block-width 是和 stickyLayout 的约定，要删掉
-  mutate('heads', (result) => {
+  fragments.heads.mutations= (result) => {
     result[0].children.unshift(<th block-width={60} rowSpan={result.length}><expand onChange={toggleExpandAll} /></th>)
-  })
+  }
 
-  mutate('rows', (result) => {
+  fragments.rows.mutations = (result) => {
     result.forEach((tr, i) => {
       const rowData = tr.props.data
       // CAUTION 注意这里对 children 的 spread，不要随意打包，要小心地维护数据结构。
@@ -38,12 +39,12 @@ export default function FeatureExpandable({ dataSource, expandedRowRender, expan
           null)}
       </>
     })
-  })
+  }
 
   // TODO 这里 block-width 是和 stickyLayout 的约定，要删掉
-  mutate('cells', (result, rowData) => {
+  fragments.cells.mutations = (result, { row: rowData }) => {
     result.unshift(<td block-width={60}><div onClick={() => toggleExpandOne(rowData.key)}>+</div></td>,)
-  })
+  }
 
 }
 

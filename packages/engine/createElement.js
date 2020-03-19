@@ -65,6 +65,11 @@ export default function createElement(type, attributes, ...rawChildren) {
     delete node.attributes.transferKey
   }
 
+  if (node.attributes.isSVG !== undefined) {
+    node.isSVG = node.attributes.isSVG
+    delete node.attributes.isSVG
+  }
+
   let childrenToAttach = rawChildren
   if (node.attributes.children !== undefined) {
     childrenToAttach = node.attributes.children

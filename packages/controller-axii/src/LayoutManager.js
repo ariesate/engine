@@ -43,6 +43,7 @@ const InlineRules = {
   },
   ...createWithDirection('margin'),
   ...createWithDirection('padding'),
+  // CAUTION 注意，要配合 css reset 将所有默认值设置为 0。border width 默认是 3px，会导致只设置一个方向的时候，其他也跟着以 3px 显示出来了。
   ...createWithDirection('border', (key) => ({ [key]: v => ({[`${key}-width`]: v }) })),
   ...createSimpleKeyToValue('white-space'),
   ...createSimpleKeyToValue('line-height'),
@@ -79,7 +80,10 @@ const LayoutRules = {
   },
   flex: {
     display() {
-      return { display: 'flex'}
+      return { display : 'flex'}
+    },
+    'display-inline': () => {
+      return { display : 'inline-flex'}
     },
     ...createFlexProperty('basis'),
     ...createFlexProperty('grow'),

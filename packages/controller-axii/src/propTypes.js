@@ -1,4 +1,4 @@
-import enginePropTypes, { createNormalType } from '../../engine/propTypes'
+import enginePropTypes, { createNormalType } from '@ariesate/are/propTypes'
 
 export default {
   ...enginePropTypes,
@@ -6,5 +6,8 @@ export default {
     stringify(v) { return v.toString() },
     // eslint-disable-next-line no-new-func
     parse(v) { return new Function(v) },
-  })
+  }),
+  slot: createNormalType((v) => {
+    return (typeof v === 'object' && !Array.isArray(v))
+  }, { zeroValue: null })
 }

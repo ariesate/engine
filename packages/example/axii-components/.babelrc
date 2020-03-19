@@ -5,6 +5,7 @@
       "pragma": "createElement",
       "pragmafrag": "Fragment",
       "throwIfNamespace": false
-    }]
+    }],
+    ["@babel/plugin-proposal-class-properties"]
   ]
 }

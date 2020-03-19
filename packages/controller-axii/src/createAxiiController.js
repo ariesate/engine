@@ -5,18 +5,29 @@
  * 所以不要在 vnodeComputed 里面或者任何组件里去改变传给子组件的数据的引用，包括传给子组件的 children 的结构。
  *
  * axii 中 reactive 的内存模型：
- * reactive/ref 的持有环境：
- * 1. 组件体系外
- * 2. 组件的函数主体创建的
+ * reactive/ref 的持有者：
+ * 1. 组件体系外的作用域。
+ * 2. 组件的主体函数创建的，函数作用域。
+ * 3. axii 为组件创建的 defaultProps，最后会挂载到 cnode.localProps 上。axii 持有。
  *
- * computed 的持有环境：
+ * computed 的持有者：
  * 1. 函数主体创建，函数作用域持有(如果 indep 的生命周期超出当前函数，需要主动销毁)
  * 2. vnodeComputed，函数作用域持有(同上)
  *
- * 注意：
- * 1. 如果子 component 使用 children。那么应该自己创建 refComputed。销毁时也是销毁的自己的。
- * 2. virtual cnode 只是虚拟持有，不负责销毁。virtual cnode 不应该修改原本的 vnode ？
+ * computed 回收:
+ * 1. 如果是 computed 中再创造出来的 computed。例如 createComponent 中 fragment 下再嵌套 fragment 就是这种情况。
+ * 父 computed 再变化时，会自动回收上一次的。
  *
+ * 2. 如果是 render 过程中创建的 computed，也不需要需要组件自己回收。因为 computed props 或者 vnode 所在的节点会被替换
+ * 成 virtual cnode。由 virtual cnode 回收即可。
+ *
+ *
+ * cnode 和 virtual cnode 在生命周期上的区别
+ * initialRender: 两者都正常，都需要对结果再进行 reactive 替换成 virtual cnode。每次只替换一层。
+ * updateRender: cnode 是父亲传递的 props 引用发生了变化时才会 update。父亲一定重新 render 了。
+ *              virtual cnode 是自身 watch 触发的回调。父亲一定没有重新 render，否则自己就被卸载了。
+ * unmount: cnode 一定是父亲重新 render 导致自己 unmount。filterNext 中的 toDestroy 一定是 cnode。
+ *          virtual cnode unmount 一定是父亲也销毁了。filterNext 中的 toDestroy 一定不是 virtual cnode。
  *
  */
 
@@ -26,7 +37,7 @@ import { UNIT_INITIAL_DIGEST } from '@ariesate/are/constant'
 import propTypes from './propTypes'
 
 import { walkVnodes, reverseWalkCnodes } from './common'
-import { invariant, mapValues, replaceItem } from './util'
+import { filter, invariant, mapValues, replaceItem } from './util'
 import {
   isReactiveLike,
   isRef,
@@ -39,6 +50,7 @@ import { withCurrentWorkingCnode } from './renderContext'
 import createChildrenProxy from './createChildrenProxy'
 import LayoutManager from './LayoutManager'
 import StyleManager from './StyleManager';
+import { isComputed } from './reactive/effect';
 
 const layoutManager = new LayoutManager()
 const styleManager = new StyleManager()
@@ -53,7 +65,7 @@ function isFormVnode(vnode) {
   return ['input', 'select', 'textarea'].includes(vnode.type)
 }
 
-function isComponentVnode(vnode) {
+export function isComponentVnode(vnode) {
   return (typeof vnode.type === 'function') && vnode.type !== String && vnode.type !== Array && vnode.type !== Fragment
 }
 
@@ -93,7 +105,7 @@ function createVirtualCnodeForComputedVnodeOrText(reactiveVnode) {
 
 
 function createVirtualCnodeForReactiveProps(vnodeWithRefProps) {
-  const type = (changeCallback, saveWatchToken, onUnmount) => {
+  const type = (changeCallback, saveWatchToken) => {
     const unwrappedProps = {}
     const formVnode = isFormVnode(vnodeWithRefProps)
     Object.entries(vnodeWithRefProps.props).forEach(([name, prop]) => {
@@ -146,16 +158,15 @@ function replaceChildrenProxy(vnode, proxy, origin) {
 
 
 function replaceReactiveWithVirtualCnode(renderResult) {
-  // TODO 应该创建一个 proxy，原本的结构要让 cnode 在销毁时回收 vnodeCompouted。
   return replaceVnodeWith(renderResult, (vnode) => {
       if (!vnode) return [false]
-      // 一旦碰到 component vnode 就要中断掉。里面的 replace 要交给这个组件 render 的时候处理。
+      // 一旦碰到 component vnode 就要中断掉。里面的 replace 要交给这个组件 render 的时候自己处理。
       if (isComponentVnode(vnode)) return [false, undefined, true]
-
+      // 替换为 virtual cnode 之后也要停止 walk，让 virtual cnode render 的时候再处理里面的。
       if (hasRefProps(vnode)) {
-        return [true, createVirtualCnodeForReactiveProps(vnode), false]
+        return [true, createVirtualCnodeForReactiveProps(vnode), true]
       } else if (isRef(vnode)) {
-        return [true, createVirtualCnodeForComputedVnodeOrText(vnode), false]
+        return [true, createVirtualCnodeForComputedVnodeOrText(vnode), true]
       }
 
       return [false]
@@ -214,6 +225,92 @@ function createInjectedProps(cnode) {
   return injectedProps
 }
 
+/**
+ * ComponentNode
+ */
+class ComponentNode {
+  constructor() {
+    this.watchTokens = new Set()
+    this.localProps = {}
+    // render 过程中创造的 reactive prop/reactive vnode 收集在这里，之后要回收。
+    this.computed = []
+    this.saveWatchToken = this.saveWatchToken.bind(this)
+  }
+
+  saveWatchToken(token) {
+    this.watchTokens.add(token)
+  }
+  // unmount 的时候也会调用
+  clearWatchTokens () {
+    // token 引用没了，trigger 就不会再发生了。
+    this.watchTokens.forEach(token => destroyComputed(token))
+    this.watchTokens.clear()
+  }
+
+  clearComputed()  {
+    this.computed.forEach(computed => destroyComputed(computed))
+    this.computed = []
+  }
+  collectComputed(vnodes) {
+    walkVnodes(Array.isArray(vnodes) ? vnodes : [vnodes], (vnode) => {
+      // CAUTION 注意，这里要穿透 Component 收集，只要是本作用域产生的 computed。都要收集起来
+      // 但是不穿透 computed。因为 computed 自己会处理内部的 computed.
+      if (isComputed(vnode)) {
+        this.computed.push(vnode)
+        return false
+      } else {
+        Object.values(vnode.attributes || {}).forEach(value => {
+          if (isComputed(value)) this.computed.push(vnode)
+        })
+      }
+    })
+  }
+  // TODO 还要支持本身的 unmount
+  unmount() {
+    this.clearWatchTokens()
+    // CAUTION destroy 的顺序不能乱，必须是从依赖->被依赖项。state 可能依赖于 localProps， 所以先 destroy state。
+    if (this.type.isVirtual) return
+
+    // 1. 回收 render 中间产生的所有 computed。
+    this.clearComputed()
+    // 2. 回收 state computed, state 是从 props 产生的。
+    this.state && Object.values(this.state).forEach(state => destroyComputed(state))
+    // 3. 回收 props computed.
+    Object.values(this.localProps).forEach(prop => destroyComputed(prop))
+  }
+  render() {
+    return this.type.isVirtual ? this.virtualCnodeRender() : this.cnodeRender()
+  }
+  cnodeRender() {
+    this.clearWatchTokens()
+    this.clearComputed()
+
+    // 开始处理 props
+    const injectedProps = createInjectedProps(this)
+    const hasChildren = this.props.children.length !== 0
+    injectedProps.children = hasChildren ?
+      createChildrenProxy(this.props.children) :
+      this.props.children
+
+    let result = this.type(injectedProps, this.ref)
+    // 收集所产生的 computed。之后要销毁
+    this.collectComputed(result)
+
+    // 如果 render 完发现 children 没被动过，返回的结果里要替换回来。免得 painter 去渲染的时候读了 proxy。
+    if (hasChildren && !injectedProps.children.touched) {
+      // 将 result 中的 children proxy 替换回原本的 children
+      result = replaceChildrenProxy(result,
+        injectedProps.children,
+        this.props.children
+      )
+    }
+    return result
+  }
+  virtualCnodeRender() {
+    this.clearWatchTokens()
+    return this.type(this.changeCallback, this.saveWatchToken)
+  }
+}
 
 /**
  * createAxiiController
@@ -228,103 +325,22 @@ export default function createAxiiController() {
       rootRender(cnode) {
         return cnode.type.render(cnode.props, cnode.ref)
       },
-      /**
-       * TODO 在 render 中要处理啊普通组件的 Style 函数。只能生成 class 文件，没法动态去找到匹配的节点。
-       * 这时就需要处理动态变化的问题了。
-       * Style 函数接受的参数就是props/state，这使得如果有些片段要不想独立成组件，但又需要传参，就坐不到了。例如 TodoItem 的 active，如果没有独立出来。无法处理。
-       * 因此，增加一个规则，只要片段有名字，就可以通过 var-xxx={} 的方式传值。
-       *
-       * Style 也可以做个类似于 vnode 的结构，通过 diff 来动态改变 stylesheet。动态改变的时候比较麻烦，因为只有 index，没有引用。
-       * 可能得考虑用多个 style sheet。
-       *
-       * 如果要像 houdini 一样来支持根据一些需要动态创建 div 的样式，那就得"提前知晓节点是否匹配"。但如果能提前知道，也就不需要 stylesheet 了。
-       * 还是特殊样式只能定义在有名字的节点上？这样能迅速匹配。
-       *
-       * 关于"类型形式"的范匹配如何处理？反过来用 use 的方式。
-       *
-       */
-      initialRender(cnodeToInitialize, parent) {
-        /**
-         * CAUTION 目前还是只有 virtual cnode 会更新，普通组件不会更新。不确定未来会不会有需要。
-         */
+
+      initialRender(cnode) {
         let result
         // 建立 watch 关系，这里把这个函数引用单独声明出来，这样即使 type 中 subscribe 执行多次，由于用的是 set，也不会多次执行回调。
-        cnodeToInitialize.changeCallback = (isUnchanged) => {
+        cnode.changeCallback = (isUnchanged) => {
           // 可能会受到 isUnchanged === true 的消息
-          !isUnchanged && scheduler.collectChangedCnodes([cnodeToInitialize])
+          !isUnchanged && scheduler.collectChangedCnodes([cnode])
         }
 
-        cnodeToInitialize.watchTokens = new Set()
-        cnodeToInitialize.saveWatchToken = (token) => {
-          cnodeToInitialize.watchTokens.add(token)
-        }
+        result = cnode.render()
 
-        // unmount 的时候也会调用
-        cnodeToInitialize.clearWatchTokens = () => {
-          // token 引用没了，trigger 就不会再发生了。
-          cnodeToInitialize.watchTokens.forEach(token => destroyComputed(token))
-          cnodeToInitialize.watchTokens.clear()
-        }
-
-        // 1. virtualCnode，这是在正常 cnode render 过程中动态分析返回结果创造出来的
-        if (cnodeToInitialize.type.isVirtual) {
-          cnodeToInitialize.unmount = () => {
-            cnodeToInitialize.clearWatchTokens()
-            // CAUTION destroy 的顺序不能乱，必须是从依赖->被依赖项。state 可能依赖于 localProps， 所以先 destroy state。
-            cnodeToInitialize.state && Object.values(cnodeToInitialize.state).forEach(state => destroyComputed(state))
-            cnodeToInitialize.localProps && Object.values(cnodeToInitialize.localProps).forEach(prop => destroyComputed(prop))
-            /**
-             * CAUTION 不需要 destroy 掉用来创造 virtual cnode 的 refComputed vnode。因为这是 virtualCnode。
-             * 理论上 unmount 的时候是上层组件 unmount 了触发了。那么依赖的数据会 destroy 掉。自己也就被 destroy 了。
-             */
-
-          }
-
-          cnodeToInitialize.virtualRender = () => {
-            cnodeToInitialize.clearWatchTokens()
-            return cnodeToInitialize.type(cnodeToInitialize.changeCallback, cnodeToInitialize.saveWatchToken)
-          }
-
-          result = cnodeToInitialize.virtualRender()
-        } else {
+        if (!cnode.type.isVirtual) {
           // 2. 普通组件
-          cnodeToInitialize.localProps = {}
-          // TODO 还要支持本身的 unmount
-          cnodeToInitialize.unmount = () => {
-            cnodeToInitialize.clearWatchTokens()
-            cnodeToInitialize.state && Object.values(cnodeToInitialize.state).forEach(state => destroyComputed(state))
-            Object.values(cnodeToInitialize.localProps).forEach(prop => destroyComputed(prop))
-          }
-
-          // 存起来，之后 updateRender 就不再计算了。注意下面的 children 还是重新算
-          cnodeToInitialize.injectedProps = createInjectedProps(cnodeToInitialize)
-          const hasChildren = cnodeToInitialize.props.children.length !== 0
-          cnodeToInitialize.injectedProps.children = hasChildren ?
-            createChildrenProxy(cnodeToInitialize.props.children) :
-            cnodeToInitialize.props.children
-
-          cnodeToInitialize.virtualRender = () => {
-            cnodeToInitialize.clearWatchTokens()
-            // 如果 render 完发现 children 没动过，返回的结果里要替换回来。免得 painter 去渲染的时候读了 proxy。
-            let result = cnodeToInitialize.type(cnodeToInitialize.injectedProps, cnodeToInitialize.ref)
-            if (hasChildren && !cnodeToInitialize.injectedProps.children.touched) {
-              // 替换掉 result 中的 children proxy 为原本的 children
-              result = replaceChildrenProxy(result,
-                cnodeToInitialize.injectedProps.children,
-                cnodeToInitialize.props.children
-              )
-              // CAUTION 要清理回来，因为下次还会用这个 proxy。
-              cnodeToInitialize.injectedProps.children.touched = false
-            }
-            return result
-          }
-          // 只会 replace 第一层的，碰到 component 节点就不处理了，交个它 render 的时候处理。
-          result = cnodeToInitialize.virtualRender()
-          const [layoutProps, originLayoutProps] =layoutManager.processLayoutProps(cnodeToInitialize.props)
+          const [layoutProps, originLayoutProps] =layoutManager.processLayoutProps(cnode.props)
 
           if (layoutProps) {
-            // console.log(layoutProps, result)
-            // TODO 这里的 attributes 和 props 区别???
             if(isComponentVnode(result)) {
               result.attributes = Object.assign({}, result.attributes, originLayoutProps)
             } else {
@@ -333,7 +349,7 @@ export default function createAxiiController() {
           }
 
           // CAUTION 直接在这里处理并生成 Style，不能再 digest 之后，否则会出现闪动。
-          styleManager.add(cnodeToInitialize)
+          styleManager.add(cnode)
         }
 
         /**
@@ -342,34 +358,31 @@ export default function createAxiiController() {
         */
         return replaceReactiveWithVirtualCnode(result)
       },
-      updateRender(virtualCnodeToUpdate) {
+      updateRender(cnode) {
         /**
          * 会进行 updateRender 组件只有两种情况:
          * 1. virtualCnode。也可以理解成 cnode 中使用 reactive 的片段更新。
-         * 2. 在 render 过程中读取了 children 上的 reactive prop 或者 vnodeComputed 的 cnode.
-         *
-         * 其他情况都不会更新，包括使用 vnodeComputed 创建的数组中 key 相同的组件。这是通过在 filterNext 中丢掉 toRemain 实现的。
-         * 所以不要在 vnodeComputed 中去改变 prop 的引用。
-
+         * 2. cnode props 的引用发生了变化。
          */
-        return replaceReactiveWithVirtualCnode(virtualCnodeToUpdate.virtualRender())
+        return replaceReactiveWithVirtualCnode(cnode.render())
       },
     },
     supervisor: {
       filterNext(result) {
-        const { toInitialize, toDestroy = {} } = result
+        const { toInitialize, toDestroy = {}, toRemain = {} } = result
 
         reverseWalkCnodes(Object.values(toDestroy), cnode => {
           cnode.unmount && cnode.unmount()
         })
-        // CAUTION 是否仍然保持 通过 props 更新的能力？
-        // 这种情况只存在于 vnodeComputed 中，变成 vnodeComputed 中是否允许
-        // 改变产生的 vnode 的 props？如果允许，那么 vnodeComputed 中可以再动态生成 computed。
-        // 如果不允许，那么就是不允许 动态改变 props 的绑定数据，不允许动态创建 computed，不允许动态创建 props。
-        // 不允许，如果需要动态创建，应该生成新组件，用 derive。
-        // vnodeComputed 只适用于不创建、不修改绑定的情况。
-        // TODO 但是如果改变 prop 的值呢？！！！还是应该要更新啊。比如简单写 true/false 这种。
-        return { toPaint: toInitialize, toDispose: toDestroy }
+
+        const toRepaint = filter(toRemain, (cnode) => {
+          // 只要有属性发生了引用变化，就要重新 render。包括 children 的应用变化。
+          return Object.entries(cnode.props).some(([propName, propValue]) => {
+            return propValue !== cnode.lastProps[propName]
+          })
+        })
+
+        return { toPaint: toInitialize, toDispose: toDestroy, toRepaint }
       },
       unit: (sessionName, unitName, cnode, startUnit) => {
         if (unitName === UNIT_INITIAL_DIGEST) styleManager.digest(cnode)
@@ -405,7 +418,7 @@ export default function createAxiiController() {
         if (layoutManager.match(vnode)) {
           const style = layoutManager.parse(vnode.attributes, vnode)
           if (style) {
-            vnode.attributes.style = style
+            vnode.attributes.style = Object.assign({}, vnode.attributes.style, style)
           }
         }
         return vnode
@@ -413,7 +426,7 @@ export default function createAxiiController() {
     },
 
     isComponentVnode,
-
+    ComponentNode,
     paint: vnode => ctree = scheduler.startInitialSession(vnode),
     receiveScheduler: s => scheduler = s,
     apply: fn => scheduler.startUpdateSession(fn),

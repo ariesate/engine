@@ -9,6 +9,8 @@ const isDevMode = process.env.NODE_ENV === 'dev'
 const config = {
   entry: {
     table: './table.js',
+    input: './input.js',
+    icon: './icon.js',
   },
   output: {
     filename: '[name].js',
@@ -16,6 +18,7 @@ const config = {
   },
   module: {
     rules: [
+      { test: /\.css$/, use: ['style-loader', 'css-loader'] },
       { test: /\.js?$/, exclude: /node_modules/, loader: 'babel-loader' },
     ],
   },
@@ -24,6 +27,18 @@ const config = {
       title: 'AXII Table',
       chunks: ['table'],
       filename: 'table.html',
+      template: 'common-template.html'
+    }),
+    new HtmlWebpackPlugin({
+      title: 'AXII Input',
+      chunks: ['input'],
+      filename: 'input.html',
+      template: 'common-template.html'
+    }),
+    new HtmlWebpackPlugin({
+      title: 'AXII Icon',
+      chunks: ['icon'],
+      filename: 'icon.html',
       template: 'common-template.html'
     }),
     new webpack.HotModuleReplacementPlugin(),

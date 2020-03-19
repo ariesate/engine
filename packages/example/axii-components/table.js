@@ -108,7 +108,7 @@ const expandedRowKeys = reactive(new Set())
 // const selectedRowKeys = reactive(['1'])
 const selectedRowKeys = reactive(new Set())
 
-const scroll = reactive({ x: 900, y: 100 })
+const scroll = reactive({ x: 900, y: 300 })
 
 render(<Table
   data={data}

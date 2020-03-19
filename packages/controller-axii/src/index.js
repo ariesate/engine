@@ -97,6 +97,7 @@ import createAxiiController from './createAxiiController'
 
 export { default as createElement,  cloneElement, normalizeLeaf, normalizeChildren } from '@ariesate/are/createElement'
 export { default as Fragment } from '@ariesate/are/Fragment'
+export { default as VNode } from '@ariesate/are/VNode'
 export { default as vnodeComputed } from './vnodeComputed'
 export * from './reactive'
 export { default as propTypes } from './propTypes'
@@ -106,12 +107,16 @@ export { default as createRef } from './createRef'
 export { default as watch } from './watch'
 export { StyleEnum, StyleRule } from './StyleManager'
 export { default as createChildrenProxy } from './createChildrenProxy'
+export { isComponentVnode } from './createAxiiController'
+export { invariant } from './util'
+export { default as createComponent, flatChildren } from './component/createComponent'
+export { default as Scenario, createRange } from './Scenario'
 
 export function render(vnode, domElement, ...controllerArgv) {
   const controller = createAxiiController(...controllerArgv)
 
   const view = createDOMView(controller.observer, domElement, controller.isComponentVnode, controller.digestObjectLike)
-  const painter = createPainter(controller.renderer, controller.isComponentVnode)
+  const painter = createPainter(controller.renderer, controller.isComponentVnode, controller.ComponentNode)
 
   const scheduler = createScheduler(painter, view, controller.supervisor)
 

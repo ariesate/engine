@@ -179,6 +179,10 @@ function patchComputation() {
   })
 }
 
+/**
+ * 因为我们的 computed 中允许再建立 computed。
+ * 这意味每次 computed 重新执行的时候都会新建，所以必须要清理掉上次的子 computed。否则会造成内存泄露。
+ */
 function patchComputedRelation() {
   const { computation } = computationStack[computationStack.length - 1]
   // 先清理掉依赖于当前项 computed

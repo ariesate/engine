@@ -4,14 +4,11 @@ import {
   createElement,
   propTypes,
   reactive,
-  refComputed,
-  toRaw,
+  createComponent
 } from 'axii'
-import wrap, { dynamic } from '../wrap'
 import Expandable from './Expandable'
 import Selectable from './Selectable'
 import StickyLayout from './StickyLayout'
-import { node } from '../../../engine/propTypes';
 /**
  * // TODO
  * 1. 视窗
@@ -41,28 +38,6 @@ import { node } from '../../../engine/propTypes';
  * 5. 处分 table 把每个部分都虚拟化。才能实现对 column 的控制。
  */
 
-function reverseWalkChildren(nodes, level, handle) {
-  let width = 0
-  nodes.forEach(( node, i ) => {
-
-    let currentWidth = 1
-    if (node.children) {
-      currentWidth = reverseWalkChildren(node.children, level + 1, handle)
-      width += currentWidth
-    }
-
-    handle(node, level, currentWidth, i)
-  })
-
-  return width
-}
-
-function walkChildren(nodes, handle) {
-  nodes.forEach(node => {
-    handle(node)
-    if (node.children) walkChildren(node.children, handle)
-  })
-}
 
 function walkLeaf(nodes, handle) {
   nodes.forEach(node => {
@@ -72,10 +47,6 @@ function walkLeaf(nodes, handle) {
       handle(node)
     }
   })
-}
-
-function makeKey(l, i) {
-  return `${l}:${i}`
 }
 
 
@@ -93,50 +64,50 @@ function readByLevel(nodes, level, handle) {
   })
 }
 
-export function Table( { data, pagination, columns }, context, index) {
-
+export function Table( { data, pagination, columns }, context, { index, fragments }) {
   return (
     <table block table-border-spacing-0 table-border-collapse-separate>
       <thead>
-          {dynamic('heads', () => {
+          {fragments.heads(() => {
             index.headCells = new Set()
 
             let maxLevel = 0
 
-            readByLevel(columns, 0, (column, level, childrenCount, levelIndex) => {
+            readByLevel(columns, 0, (column, level) => {
               if (level > maxLevel) maxLevel = level
             })
 
             const result = []
 
-            readByLevel(columns, 0, (column, level, childrenCount, levelIndex) => {
+            readByLevel(columns, 0, (column, level, childrenCount) => {
               if (!result[level]) result[level] = <tr></tr>
               const colRowProps = {}
               colRowProps.colSpan = childrenCount
               if (!column.children) {
                 colRowProps.rowSpan = maxLevel - level + 1
               }
-              result[level].children.push(<th vnodeRef={v => index.headCells.add(v)} {...colRowProps} data-column={column}>{column.title}</th>)
+              result[level].children.push(fragments.headCell(() => (
+                <th block-border-right-1px vnodeRef={v => index.headCells.add(v)} {...colRowProps} data-column={column}>{column.title}</th>
+              ), { column }))
             })
 
             return result
           })}
       </thead>
       <tbody>
-        {dynamic('rows', () => {
+        {fragments.rows(() => {
           index.dataCells = new Set()
           index.prefixCells = new Map()
 
           return data.map((row) => (
             <tr data={row}>
-              {dynamic('cells', () => {
+              {fragments.cells(() => {
                 const cells = []
-
                 walkLeaf(columns, (column) => {
-                  cells.push(<td vnodeRef={v => index.dataCells.add(v)} data-column={column}>{row[column.dataIndex]}</td>)
+                  cells.push(fragments.cell(() => <td block-border-right-1px vnodeRef={v => index.dataCells.add(v)} data-column={column}>{row[column.dataIndex]}</td>, { column }))
                 })
                 return cells
-              }, row)}
+              }, { row })}
             </tr>
           ))
         })}
@@ -144,7 +115,6 @@ export function Table( { data, pagination, columns }, context, index) {
       <pagination data={pagination}></pagination>
     </table>
   )
-
 }
 
 Table.methods = () => {
@@ -156,15 +126,19 @@ Table.Render = function() {
 }
 
 // TODO layout 中统一控制的部分怎么处理？？
-Table.Style = (style) => {
-  style.table.th = {
-    borderRight: '1px #000 solid',
-    borderBottom: '1px #000 solid',
+Table.Style = (props, context, { fragments }) => {
+  fragments.heads.types.th = {
+    borderRightColor: '#000',
+    borderRightStyle: 'solid',
+    borderBottomColor: '#000',
+    borderBottomStyle: 'solid',
     background: '#eee'
   }
-  style.table.td = {
-    borderRight: '1px #000 solid',
-    borderBottom: '1px #000 solid',
+  fragments.cells.types.td = {
+    borderRightColor: '#000',
+    borderRightStyle: 'solid',
+    borderBottomColor: '#000',
+    borderBottomStyle: 'solid',
     background: '#fff'
   }
 }
@@ -175,6 +149,6 @@ Table.propTypes = {
 }
 
 // 应该写成这个形式
-export default wrap(Table, [Selectable, Expandable, StickyLayout])
+export default createComponent(Table, [Selectable, Expandable, StickyLayout])
 
 

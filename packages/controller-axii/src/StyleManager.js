@@ -206,10 +206,15 @@ function applyDecare(unResolvedVars, getOptions, fn, resolvedVars = []) {
  *   background(active) {},
  * }
  *
- * 7. 级联参数有值
- * style.selector1(active=true).selector = {}
+ * 7. 级联参数有确定值
+ * style.selector1[active=true].selector = {}
  *
- * 8. TODO 伪类
+ * 8. 级联参数要取不确定值
+ * style.selector1[active].selector = {
+ *   attr: function(active) {}
+ * }
+ *
+ * CAUTION 去掉了伪类的概念，全部让用户通过 props\参数 来实现。
  *
  */
 export default class StyleManager{
