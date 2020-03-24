@@ -409,7 +409,11 @@ export default function createAxiiController() {
         })
       },
       receiveRef: (ref, vnode) => {
-         vnode.ref(ref)
+        if (typeof vnode.ref === 'function') {
+          vnode.ref(ref)
+        } else {
+          vnode.ref.current = ref
+        }
       },
       hijackElement: (vnode, cnode) => {
         /**

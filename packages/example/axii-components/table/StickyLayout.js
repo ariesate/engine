@@ -7,115 +7,96 @@ import {
   reactive
 } from 'axii'
 
-export default function FeatureStickyLayout({ columns }, context, { fragments, index }) {
+export default function FeatureStickyLayout(fragments) {
 
-  fragments.heads.mutations = (result) => {
+  /**
+   * TODO
+   * 即要修改 collection。又要修改里面的 cell。
+   * 并且里面的的改动，需要一个"上层作用域"的变量才行。
+   *
+   * 为什么很难改？是因为动态更新的这个节点，是根据一个函数计算出来，所以只能通过劫持的"计算过程"的方式来搞，
+   * 才能保证每次节点更新，都把劫持的这个过程也算进去。
+   * 不能通过计算完的结果进行操作。
+   *
+   * 1. 同时这个劫持过程，不在同一个作用域下，也很难形成作用域的继承关系，所以难以实现，是否能通过类似于 generator 的方式？？？
+   * 例如
+   * father(( childMutation ) => {
+   *   let variable = 111
+   *   renderChildren(function dynamicHijack() {
+   *     // read variable
+   *   })
+   * })
+   *
+   * 2. 还有一种方式，在上层作用域声明一个变量容器(数组)。将 cell 中需要修改的部分都"使用引用"，把引用扔到容器里。
+   * 最后再由上层作用域的 mutation 来批量修改这些引用。
+   * 如果是这种方式，是否一开始就应该废除掉 fragment，全部使用 Component? 由框架来劫持 Component 的渲染。
+   * 这样的话，参数不用显式声明。对子组件的修改也更容易理解？？？？
+   *
+   * 只是这样，controller 的改动就比较大，跟引擎耦合深。这件事情的本质是什么？
+   */
+  fragments.heads.argv.offsets = () => ({
+    left: [],
+    right: []
+  })
 
-    const left = []
-    const right = []
+  fragments.headCell.mutations = (props, result, { offsets, column }) => {
+    if (column.fixed) {
+      let offset = ref(0)
 
-    // 只读第一行的
-    result[0].children.forEach((th) => {
-
-      const { column } = fragments.getArgv(th)
-
-      if (column) {
-
-        if (column.fixed) {
-          if (column.children) {
-            console.warn('fixed column can not have children')
-            return
-          }
-
-          if (!column.width) {
-            console.warn('fixed column must have width')
-            return
-          }
-
-          if (column.fixed === 'left') {
-            left.push(th)
-          } else {
-            right.push(th)
-          }
-        }
-      } else {
-        left.push(th)
-        // 其他
+      if (column.fixed==='left') {
+        offsets[column.fixed].push({ offset, width: column.width})
       }
-    })
+      result.props['block-position-sticky'] = true
+      result.props[`block-${column.fixed}`] = offset
+    }
+  }
 
+  fragments.heads.mutations = (props, result, { columns, offsets }) => {
     let leftOffset = 0
-    left.forEach((th) => {
-      th.props.block = true
-      th.props['block-position-sticky'] = true
-      th.props['block-left'] = leftOffset
-      const { column } = fragments.getArgv(th)
-      leftOffset += column ? th.props['data-column'].width : th.props['block-width']
+    offsets.left.forEach(({ offset, width }) => {
+      offset.value = leftOffset
+      leftOffset += width
     })
 
     let rightOffset = 0
-    right.reverse().forEach((th) => {
-      th.props.block = true
-      th.props['block-position-sticky'] = true
-      th.props['block-right'] = rightOffset
-      const { column } = fragments.getArgv(th)
-      rightOffset += column ? th.props['data-column'].width : th.props['block-width']
+    offsets.right.reverse().forEach(({offset, width}) => {
+      offset.value = rightOffset
+      rightOffset += width
     })
-
   }
 
-  fragments.cells.mutations = (result, row) => {
-    // 重新排列, 1, 功能性column 如 select checkbox。 2, stick left ...
-    const left = []
-    const right = []
-    const middle = []
-    const noDataLeft = []
-    const noDataRight = []
+  // cells
+  fragments.cells.argv.offsets = () => ({
+    left: [],
+    right: []
+  })
 
-    let dataColumnFound = false
+  fragments.cell.mutations = (props, result, { offsets, column }) => {
+    if (column.fixed) {
+      let offset = ref(0)
 
-    // TODO 给警告，不需要 reorder。因为和分组表头结合的时候，无法自动排到左右，用用户自己确定才行。
-    result.forEach(cell => {
-      const { column } = fragments.getArgv(cell)
-      if (column) {
-        dataColumnFound = true
-
-        if (column.fixed === 'left') {
-          left.push(cell)
-        } else if (column.fixed === 'right') {
-          right.push(cell)
-        } else {
-          middle.push(cell)
-        }
-      } else {
-        if (!dataColumnFound) {
-          // 前缀的。
-          noDataLeft.push(cell)
-        } else {
-          // 后面缀
-          noDataRight.push(cell)
-        }
+      if (column.fixed==='left') {
+        offsets[column.fixed].push({ offset, width: column.width})
       }
-    })
+      result.props['block-position-sticky'] = true
+      result.props[`block-${column.fixed}`] = offset
+    }
+  }
 
+  fragments.cells.mutations = (props, result, { offsets }) => {
     let leftOffset = 0
-    noDataLeft.concat(left).forEach(cell => {
-      cell.props.block = true
-      cell.props['block-position-sticky'] = true
-      cell.props['block-left'] = leftOffset
-      leftOffset += cell.props['block-width']
+    offsets.left.forEach(({ offset, width }) => {
+      offset.value = leftOffset
+      leftOffset += width
     })
 
     let rightOffset = 0
-    right.concat(noDataRight).reverse().forEach(cell=>{
-      cell.props.block = true
-      cell.props['block-position-sticky'] = true
-      cell.props['block-right'] = rightOffset
-      rightOffset += cell.props['block-width']
+    offsets.right.reverse().forEach(({offset, width}) => {
+      offset.value = rightOffset
+      rightOffset += width
     })
-
-    result.splice(0, result.length, ...noDataLeft, ...left, ...middle, ...right, ...noDataRight)
   }
+
 
   fragments.root.mutations = ({ columns, scroll }, result) => {
     result.props['block'] = true

@@ -109,7 +109,8 @@ export { StyleEnum, StyleRule } from './StyleManager'
 export { default as createChildrenProxy } from './createChildrenProxy'
 export { isComponentVnode } from './createAxiiController'
 export { invariant } from './util'
-export { default as createComponent, flatChildren } from './component/createComponent'
+export { default as createComponent} from './component/createComponent'
+export { flatChildren } from './component/utils'
 export { default as Scenario, createRange } from './Scenario'
 
 export function render(vnode, domElement, ...controllerArgv) {

@@ -98,6 +98,25 @@ function createEachLike(callHandler, createInitialResult) {
   }
 }
 
+function createSomeLike(callHandler, initialResult) {
+  return function(handler, ...argv) {
+    const iterator = createIterator(this)
+    let item = iterator.next()
+    let count = 0
+    let finalResult = initialResult
+    while(!item.done) {
+      const { result, shouldStop } = callHandler(handler, item.value, count, ...argv)
+      finalResult = result
+      if (shouldStop) break
+
+      item = iterator.next()
+      count++
+    }
+
+    return finalResult
+  }
+}
+
 const mutableInstrumentations = {
   map: createEachLike(function(lastResult, handler, value, count) {
     lastResult.push(handler(value, count))
@@ -110,6 +129,14 @@ const mutableInstrumentations = {
     const last = count === 0 ? initialResult : lastResult
     return handler(last, value, count)
   }),
+  some: createSomeLike(function(handler, value, count) {
+    const result = handler(value, count)
+    return { result, shouldStop: result}
+  }, false),
+  every: createSomeLike(function(handler, value, count) {
+    const result = handler(value, count)
+    return { result, shouldStop: !result}
+  }, true),
   [Symbol.iterator]: function() {
     return createIterator(this)
   }

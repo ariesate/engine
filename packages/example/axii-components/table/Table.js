@@ -9,6 +9,8 @@ import {
 import Expandable from './Expandable'
 import Selectable from './Selectable'
 import StickyLayout from './StickyLayout'
+
+import scen from '../pattern'
 /**
  * // TODO
  * 1. 视窗
@@ -64,12 +66,11 @@ function readByLevel(nodes, level, handle) {
   })
 }
 
-export function Table( { data, pagination, columns }, context, { index, fragments }) {
+export function Table( { data, pagination, columns }, context, fragments) {
   return (
-    <table block table-border-spacing-0 table-border-collapse-separate>
+    <table inline block-display-table table-border-spacing-0 table-border-collapse-collapse>
       <thead>
           {fragments.heads(() => {
-            index.headCells = new Set()
 
             let maxLevel = 0
 
@@ -87,7 +88,7 @@ export function Table( { data, pagination, columns }, context, { index, fragment
                 colRowProps.rowSpan = maxLevel - level + 1
               }
               result[level].children.push(fragments.headCell(() => (
-                <th block-border-right-1px vnodeRef={v => index.headCells.add(v)} {...colRowProps} data-column={column}>{column.title}</th>
+                <th inline inline-display="table-cell" inline-border-width-1px  {...colRowProps} data-column={column}>{column.title}</th>
               ), { column }))
             })
 
@@ -96,15 +97,13 @@ export function Table( { data, pagination, columns }, context, { index, fragment
       </thead>
       <tbody>
         {fragments.rows(() => {
-          index.dataCells = new Set()
-          index.prefixCells = new Map()
 
           return data.map((row) => (
             <tr data={row}>
               {fragments.cells(() => {
                 const cells = []
                 walkLeaf(columns, (column) => {
-                  cells.push(fragments.cell(() => <td block-border-right-1px vnodeRef={v => index.dataCells.add(v)} data-column={column}>{row[column.dataIndex]}</td>, { column }))
+                  cells.push(fragments.cell(() => <td inline inline-display="table-cell"  inline-border-width-1px data-column={column}>{row[column.dataIndex]}</td>, { column }))
                 })
                 return cells
               }, { row })}
@@ -126,19 +125,15 @@ Table.Render = function() {
 }
 
 // TODO layout 中统一控制的部分怎么处理？？
-Table.Style = (props, context, { fragments }) => {
-  fragments.heads.types.th = {
-    borderRightColor: '#000',
-    borderRightStyle: 'solid',
-    borderBottomColor: '#000',
-    borderBottomStyle: 'solid',
-    background: '#eee'
+Table.Style = (fragments) => {
+  fragments.headCell.elements.th.style = {
+    borderColor: scen().separateColor(),
+    borderStyle: 'solid',
+    background: scen().fieldColor()
   }
-  fragments.cells.types.td = {
-    borderRightColor: '#000',
-    borderRightStyle: 'solid',
-    borderBottomColor: '#000',
-    borderBottomStyle: 'solid',
+  fragments.cell.elements.td.style = {
+    borderStyle: 'solid',
+    borderColor: scen().separateColor(),
     background: '#fff'
   }
 }
@@ -149,6 +144,7 @@ Table.propTypes = {
 }
 
 // 应该写成这个形式
-export default createComponent(Table, [Selectable, Expandable, StickyLayout])
+export default createComponent(Table, [StickyLayout])
+// export default createComponent(Table, [Selectable, Expandable])
 
 

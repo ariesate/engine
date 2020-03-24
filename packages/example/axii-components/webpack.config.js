@@ -8,9 +8,10 @@ const isDevMode = process.env.NODE_ENV === 'dev'
 
 const config = {
   entry: {
-    table: './table.js',
-    input: './input.js',
-    icon: './icon.js',
+    // table: './table.js',
+    // input: './input.js',
+    // icon: './icon.js',
+    tabs: './tabs.js',
   },
   output: {
     filename: '[name].js',
@@ -23,22 +24,28 @@ const config = {
     ],
   },
   plugins: [
+    // new HtmlWebpackPlugin({
+    //   title: 'AXII Table',
+    //   chunks: ['table'],
+    //   filename: 'table.html',
+    //   template: 'common-template.html'
+    // }),
+    // new HtmlWebpackPlugin({
+    //   title: 'AXII Input',
+    //   chunks: ['input'],
+    //   filename: 'input.html',
+    //   template: 'common-template.html'
+    // }),
+    // new HtmlWebpackPlugin({
+    //   title: 'AXII Icon',
+    //   chunks: ['icon'],
+    //   filename: 'icon.html',
+    //   template: 'common-template.html'
+    // }),
     new HtmlWebpackPlugin({
-      title: 'AXII Table',
-      chunks: ['table'],
-      filename: 'table.html',
-      template: 'common-template.html'
-    }),
-    new HtmlWebpackPlugin({
-      title: 'AXII Input',
-      chunks: ['input'],
-      filename: 'input.html',
-      template: 'common-template.html'
-    }),
-    new HtmlWebpackPlugin({
-      title: 'AXII Icon',
-      chunks: ['icon'],
-      filename: 'icon.html',
+      title: 'AXII Tabs',
+      chunks: ['tabs'],
+      filename: 'tabs.html',
       template: 'common-template.html'
     }),
     new webpack.HotModuleReplacementPlugin(),

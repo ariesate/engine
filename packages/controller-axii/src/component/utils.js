@@ -176,13 +176,15 @@ export function createFragment(fragmentName) {
 
 function createFragmentsContainer() {
   const container = {
-    $$fragments: {}
+    $$fragments: {},
+    $$argv: new WeakMap()
   }
 
   const instruments = {
     forEach(target, fn) {
       Object.entries(target.$$fragments).forEach(fn)
-    }
+    },
+
   }
 
   return new Proxy(container, {
@@ -253,6 +255,7 @@ export function replaceSlot(vnodes, childrenBySlot) {
   walkVnodes(vnodes, (walkChildren, vnode) => {
     if (isComponentVnode(vnode)) return false
     if (!(vnode instanceof VNode)) return false
+    if (!vnode.attributes) return false
 
     if (!vnode.attributes.slot) return vnode.children ? walkChildren(vnode.children) : null
 

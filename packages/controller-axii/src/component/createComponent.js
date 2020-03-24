@@ -136,6 +136,8 @@ export default function createComponent(Base, featureDefs=[]) {
 
 
   function Component(props, context) {
+    const vnodeToArgv = new Map()
+
     // CAUTION，在收集过程中要用到 props，所以写在 Component 函数里。
     // props 要合并 methods，还要根据 useXXXSlot 修改 children
     const processedProps = { ...props }
@@ -160,7 +162,6 @@ export default function createComponent(Base, featureDefs=[]) {
 
     // 这里得到的 activeFragmentsContainer 就是所有 active feature 合并后的了
     const activeFragmentsContainers = fragmentsContainerFactory.filter((Feature) => {
-      console.log(Feature)
       return activeFeatures.includes(Feature)
     })
 
@@ -176,7 +177,7 @@ export default function createComponent(Base, featureDefs=[]) {
       }
     })
 
-    return renderFragments(rootFragment, processedProps, context, activeFragmentsContainers, {}, Base.useNamedChildrenSlot)
+    return renderFragments(rootFragment, processedProps, context, activeFragmentsContainers, props, Base.useNamedChildrenSlot, vnodeToArgv)
   }
 
   // 合并 features propTypes。
@@ -194,7 +195,7 @@ export const GLOBAL_NAME = 'global'
  * 因此刷新时机就是在 render 中依赖的对象的刷新时机。TODO Style 中新建的 reactive 变化会引起当前的变化？computed 的变化？理论上不应该，新建的都不应该引起当前变化！
  *
  */
-function renderFragments(fragment, props, context, fragmentsContainers, upperArgv, useNamedChildrenSlot) {
+function renderFragments(fragment, props, context, fragmentsContainers, upperArgv, useNamedChildrenSlot, vnodeToArgv) {
   /**
    * 整个流程是后续遍历。做四件事。
    * 0。 渲染当前节点
@@ -207,16 +208,25 @@ function renderFragments(fragment, props, context, fragmentsContainers, upperArg
   // TODO fragment 重新 render 的时候，要回收 index 上次注册的 vnode.
   function renderProcess() {
     // 0. render
-    const renderResult = fragment.render()
-    const renderResultToWalk = Array.isArray(renderResult) ? renderResult : [renderResult]
+    let renderResult = fragment.render()
+    let renderResultToWalk = Array.isArray(renderResult) ? renderResult : [renderResult]
 
-    // 1. 渲染子节点 CAUTION 注意是先 render 完子节点，再处理自己。
+    // 1. 创建动态参数
+    const dynamicArgv = {}
+    fragmentsContainers.forEach(fragmentsContainer => {
+
+      Object.assign(dynamicArgv, mapValues(fragmentsContainer[fragment.name].argv, (createArgv) => {
+        return createArgv()
+      }))
+    })
+
+    // 2. 渲染子节点 CAUTION 注意是先 render 完子节点，再处理自己。
     walkVnodes(renderResultToWalk, (walkChildren, originVnode, vnodes) => {
       if (originVnode instanceof FragmentDynamic) {
         // 建立 vnodeComputed，替换掉外面的引用。Fragment 本质上就是个 computed。
-        const combinedArgv = Object.assign({}, upperArgv, originVnode.argv)
+        const combinedArgv = Object.assign({}, upperArgv, originVnode.argv, dynamicArgv)
 
-        vnodes[vnodes.indexOf(originVnode)] = renderFragments(originVnode, props, context, fragmentsContainers, combinedArgv, useNamedChildrenSlot)
+        vnodes[vnodes.indexOf(originVnode)] = renderFragments(originVnode, props, context, fragmentsContainers, combinedArgv, useNamedChildrenSlot, vnodeToArgv)
 
       } else if ((originVnode instanceof VNode) && originVnode.children){
         invariant(Array.isArray(originVnode.children), 'something wrong, children is not a Array')
@@ -224,25 +234,26 @@ function renderFragments(fragment, props, context, fragmentsContainers, upperArg
       }
     })
 
-
-    // 2. 开始执行 mutations，mutations 放在外面是因为可能读子 dynamic 里面的内容。
+    // 3. 开始执行 mutations，mutations 放在外面是因为可能读子 dynamic 里面的内容。
     fragmentsContainers.forEach(fragmentsContainer => {
+      fragmentsContainer.getArgv = (vnode) => vnodeToArgv.get(vnode)
+
       const mutations = fragmentsContainer[fragment.name].mutations()
       if (mutations) {
         // TODO 如果有返回值，就要替换原节点。 resultResult
-        mutations.forEach((mutateFn) => mutateFn(renderResult, fragment.argv))
+        mutations.forEach((mutateFn) => {
+          const alterResult = mutateFn(props, renderResult, { ...upperArgv, ...fragment.argv, ...dynamicArgv })
+          if (alterResult) {
+            renderResult = alterResult
+            renderResultToWalk = Array.isArray(renderResult) ? renderResult : [renderResult]
+          }
+        })
       }
+      // CAUTION 一定要删除
+      delete fragmentsContainer.getArgv
     })
 
-    // 3. 创建动态参数
-    const dynamicArgv = {}
-    fragmentsContainers.forEach(fragmentsContainer => {
-      Object.assign(dynamicArgv, mapValues(fragmentsContainer[fragment.name].argv, (createArgv) => {
-        return createArgv()
-      }))
-    })
-
-    // 4. 计算 style && 5. TODO 要绑定事件
+    // 4. 计算 style && 5. 要绑定事件
     walkVnodes(renderResultToWalk, (walkChildren, originVnode) => {
       if (!originVnode) return
       if (!originVnode instanceof VNode) return
@@ -312,5 +323,9 @@ function renderFragments(fragment, props, context, fragmentsContainers, upperArg
     return renderResult
   }
 
-  return fragment.nonReactive ? renderProcess() : vnodeComputed(renderProcess)
+  const result = fragment.nonReactive ? renderProcess() : vnodeComputed(renderProcess)
+
+  result.mark = 111
+  vnodeToArgv.set(result, upperArgv)
+  return result
 }

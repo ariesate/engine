@@ -7,9 +7,8 @@ import {
   refComputed,
 } from 'axii';
 
-export default function FeatureSelectable({ data, expandedRowRender, selectedRowKeys }, context, { fragments, index }) {
-
-  const toggleAll = () => {
+export default function FeatureSelectable(fragments) {
+  const toggleAll = (selectedRowKeys, data) => {
     if (selectedRowKeys.size === data.length) {
       selectedRowKeys.clear()
     } else {
@@ -19,7 +18,7 @@ export default function FeatureSelectable({ data, expandedRowRender, selectedRow
     }
   }
 
-  const toggleOne = (key) => {
+  const toggleOne = (selectedRowKeys, key) => {
     if (selectedRowKeys.has(key)) {
       selectedRowKeys.delete(key)
     } else {
@@ -28,18 +27,18 @@ export default function FeatureSelectable({ data, expandedRowRender, selectedRow
   }
 
   // TODO 这里 block-width 是和 stickyLayout 的约定，要删掉
-  fragments.heads.mutations = (result) => {
+  fragments.heads.mutations = ({ data, expandedRowRender, selectedRowKeys }, result) => {
     const allSelected = refComputed(() => {
       return selectedRowKeys.size === data.length
     })
-    result[0].children.unshift(<th block-width={60} rowSpan={result.length}><input type="checkbox" onClick={toggleAll} checked={allSelected}/></th>)
+    result[0].children.unshift(<th block-width={60} rowSpan={result.length}><input type="checkbox" onClick={() => toggleAll(selectedRowKeys, data)} checked={allSelected}/></th>)
   }
 
-  fragments.cells.mutations = (result, {row: rowData }) => {
+  fragments.cells.mutations = ({ data, expandedRowRender, selectedRowKeys }, result, {row: rowData }) => {
     const selected = refComputed(() => {
       return selectedRowKeys.has(rowData.key)
     })
-    result.unshift(<td block-width={60}><input type="checkbox" onClick={() => toggleOne(rowData.key)} checked={selected}/></td>)
+    result.unshift(<td block-width={60}><input type="checkbox" onClick={() => toggleOne(selectedRowKeys, rowData.key)} checked={selected}/></td>)
   }
 }
 

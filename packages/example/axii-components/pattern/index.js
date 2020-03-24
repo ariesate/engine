@@ -32,7 +32,7 @@ import * as antColors from '@ant-design/colors';
  * size: 正常 1 小 size 2 size
  *
  * 得到的值：
- * 颜色类： color/bgColor/fieldColor
+ * 颜色类： color/bgColor/fieldColor/separateColor
  *
  * 字体类：
  * family
@@ -155,14 +155,14 @@ const valueRules = {
     const fontSize = valueRules.fontSize({ size }, offset)
     return fontSize + 8
   },
-  weight({ stress }) {
-    return stress ? 'bold' : undefined
+  weight({ stressed }) {
+    return stressed ? 'bold' : undefined
   },
   spacing({ size }, offset = 0) {
     const matrix = [
       [undefined, spaceValues(offset)],
-      [RULE.size.small, fontSizes(-1 + offset)],
-      [RULE.size.large, fontSizes(1 + offset)],
+      [RULE.size.small, spaceValues(-1 + offset)],
+      [RULE.size.large, spaceValues(1 + offset)],
     ]
     return matrixMatch([size], matrix)
   },

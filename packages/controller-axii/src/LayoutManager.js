@@ -33,6 +33,9 @@ function createWithDirection(name, handler = createSimpleKeyToValue) {
 }
 
 const InlineRules = {
+  display(type) {
+    return { display: type }
+  },
   visible(type) {
     // display: none; visible:hidden
     if(type === 'none') {
@@ -63,6 +66,7 @@ const BaseDefaultRules = {
     ...createSimpleKeyToValue('right'),
     ...createSimpleKeyToValue('top'),
     ...createSimpleKeyToValue('bottom'),
+    ...createSimpleKeyToValue('white-space'),
   },
   inline: InlineRules,
   text: {}
@@ -162,7 +166,14 @@ export default class LayoutManager {
         const partialStyle = fn(...argv, shouldApply)
         if (shouldApply === false && argv.length !== 0) {
           Object.keys(partialStyle).forEach(k => {
-            partialStyle[k] = undefined
+            // CAUTION  注意这里一定要有这个判断，因为可能多个规则操作统一个属性，例如
+            // display 可以被 flex 等操作，如果之前有别的规则操作了，那么自然会被复写掉，就不用设置 undefined 来清除了。
+            if (!style.hasOwnProperty(k) ) {
+              partialStyle[k] = undefined
+            } else {
+              // 如果有的话，就不用管了
+              delete partialStyle[k]
+            }
           })
         }
         Object.assign(style, partialStyle)
