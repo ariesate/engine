@@ -18,7 +18,7 @@ import { invariant } from '../propTypes/util';
  * Attach element reference to cnode.
  */
 function prepareCnodeForView(cnode, vnode, parentNode, view) {
-  const placeholder = view.createPlaceholder('cnode placeholder')
+  const placeholder = view.createPlaceholder(`cnode placeholder ${vnode.key}`)
   parentNode.appendChild(placeholder)
   if (parentNode._childCnodes === undefined) parentNode._childCnodes = []
   parentNode._childCnodes.push(cnode)

@@ -36,3 +36,5 @@ draft 的本质是什么？？？
 # 核心代码
 
  - createAxiiController: 使用 ariesate/are 中各部件实现框架的核心代码。 
+
+# Component
