@@ -112,14 +112,15 @@ export function resolveFirstLayerElements(vnodes, parentPath, cnode) {
       return result
     } else if (vnode.type === String || typeof vnode.type === 'string') {
       return [vnode.element]
-    } else if (vnode.type === Array) {
+    } else if (vnode.type === Array || vnode.type === Fragment) {
       return vnode.children.reduce((elements, child) => {
         return elements.concat(resolveFirstLayerElements([child], createVnodePath(vnode, parentPath), cnode))
       }, [])
     } else {
       // CAUTION 剩余的类型，全部认为是组件
-      const nextCnode = cnode.next[getVnodeNextIndex(vnode, parentPath)]
-      if (!nextCnode) throw new Error(`unknown vnode`)
+      const nextPath = getVnodeNextIndex(vnode, parentPath)
+      const nextCnode = cnode.next[nextPath]
+      if (!nextCnode) throw new Error(`unknown vnode with path ${nextPath}`)
       return resolveFirstLayerElements(nextCnode.patch, [], nextCnode)
     }
     return result
@@ -140,7 +141,7 @@ export function createResolveElement(first) {
     let result = null
     if (vnode.type === String || typeof vnode.type === 'string') {
       result = vnode.element
-    } else if (vnode.type === Array) {
+    } else if (vnode.type === Array || vnode.type === Fragment) {
       const children = first ? vnode.children.slice() : vnode.children.slice().reverse()
       children.some((child) => {
         result = resolveFirstOrLastElement(child, createVnodePath(vnode, parentPath), cnode, isComponentVnode)

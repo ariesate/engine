@@ -22,17 +22,21 @@ export function getVnodeType(vnode) {
   }
 }
 
-export function createVnodePath(vnode, parentPath = []) {
-  return parentPath.concat(vnode ? vnode.key : undefined)
+export function createVnodePath(vnode, parentPath = [], index) {
+  return parentPath.concat(vnode ? vnode.key : `index@${index}`)
 }
 
 export function walkVnodes(vnodes, handler, parentPath = []) {
-  vnodes.forEach((vnode) => {
-    const currentPath = createVnodePath(vnode, parentPath)
-    const shouldStop = handler(vnode, currentPath, vnodes)
+  vnodes.forEach((vnode, index) => {
+    const currentPath = createVnodePath(vnode, parentPath, index)
+    if (Array.isArray(vnode)) {
+      walkVnodes(vnode, handler, currentPath)
+    } else {
+      const shouldStop = handler(vnode, currentPath, vnodes)
 
-    if (vnode && !shouldStop && vnode.children !== undefined) {
-      walkVnodes(vnode.children, handler, currentPath)
+      if (vnode && !shouldStop && vnode.children !== undefined) {
+        walkVnodes(vnode.children, handler, currentPath)
+      }
     }
   })
 }

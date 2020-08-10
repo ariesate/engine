@@ -26,7 +26,7 @@ import {
   UNIT_UPDATE_DIGEST,
 } from './constant'
 import createTrackingTree from './createTrackingTree'
-import { invariant } from '../controller-react/src/util';
+import { invariant } from './util';
 
 
 
@@ -96,6 +96,7 @@ export default function createScheduler(painter, view, supervisor) {
       })
 
       walkCnodes([ctree], (cnode) => {
+        console.log(ctree)
         supervisor.unit(SESSION_INITIAL, UNIT_INITIAL_DIGEST, cnode, () => {
           view.initialDigest(cnode)
         })
@@ -111,6 +112,7 @@ export default function createScheduler(painter, view, supervisor) {
     startInitialSession,
     startUpdateSession,
     collectChangedCnodes: cnodes => {
+      console.log("track", cnodes.map(c => c.type.displayName), cnodes)
       cnodes.forEach(trackingTree.track)
       if (!currentSession) {
         startUpdateSession()

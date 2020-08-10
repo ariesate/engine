@@ -13,6 +13,7 @@ import {
   PATCH_ACTION_REMOVE,
   PATCH_ACTION_TO_MOVE,
 } from '../constant'
+import { invariant } from '../util';
 
 function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, parentPath, cnode, view) {
   nextPatch.push(p)
@@ -111,6 +112,7 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
     } else if (p.action.type === PATCH_ACTION_REMOVE) {
       handleRemovePatchNode(p, parentPath, { next: cnode.toDestroyPatch }, view)
     } else if (p.action.type === PATCH_ACTION_REMAIN) {
+      invariant(p.patch !== undefined, 'detect no patch vnode, you probably collected un-repainted cnode')
       // Handle "toInsert" type first.
       // Trying to insert all new element between two remained elements, So we need to find last remained element first.
       if (toInsert.childNodes.length !== 0) {
@@ -124,7 +126,7 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
       // Only "p.type === Array" condition needs previousSibling
       handleRemainPatchNode(p, nextPatch, parentNode, currentLastStableSiblingNode, parentPath, cnode, view)
       // Find last element in patch node to update currentLastStableSiblingNode
-      // debugger
+
       const lastElement = resolveLastElement(p, parentPath, cnode, view.isComponentVnode)
       if (lastElement) {
         currentLastStableSiblingNode = lastElement

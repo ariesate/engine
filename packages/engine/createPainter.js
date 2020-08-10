@@ -396,6 +396,7 @@ function diff(lastVnodesOrPatch, vnodes, parentPath, cnode, nextTransferKeyedVno
  * The entry point of updating a rendered cnode.
  */
 function repaint(cnode, renderer, isComponentVnode, createCnode) {
+  console.log('repaint', cnode)
   const render = renderer.updateRender
   const lastPatch = cnode.patch || cnode.ret
   const renderResult = render(cnode, cnode.parent)

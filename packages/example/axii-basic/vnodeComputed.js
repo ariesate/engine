@@ -34,7 +34,7 @@ function ReadChildren({ children }, ref) {
 }
 
 
-function App() {
+export default function App() {
 
   const data = reactive([
     {

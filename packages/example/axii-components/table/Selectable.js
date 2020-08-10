@@ -34,6 +34,7 @@ export default function FeatureSelectable(fragments) {
     result[0].children.unshift(<th block-width={60} rowSpan={result.length}><input type="checkbox" onClick={() => toggleAll(selectedRowKeys, data)} checked={allSelected}/></th>)
   }
 
+
   fragments.cells.mutations = ({ data, expandedRowRender, selectedRowKeys }, result, {row: rowData }) => {
     const selected = refComputed(() => {
       return selectedRowKeys.has(rowData.key)

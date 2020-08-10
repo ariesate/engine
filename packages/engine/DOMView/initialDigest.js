@@ -114,6 +114,7 @@ export function handleInitialVnode(vnode, cnode, view, parentPatch, parentPath, 
     }
   }
 
+  throw new Error('unknown vnode detected')
 }
 
 function handleInitialVnodeChildren(vnodes, cnode, view, patch, parentPath, parentNode) {
