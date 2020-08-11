@@ -1,4 +1,4 @@
-const { default: createPainter, createCnode }= require('../createPainter')
+const { default: createPainter } = require('../createPainter')
 const createElement = require('../createElement').default
 const {
   PATCH_ACTION_INSERT,
@@ -36,7 +36,7 @@ describe('painter paint', () => {
       }
     }
 
-    const ctree = createCnode(<App/>)
+    const ctree = painter.createCnode(<App/>)
     painter.paint(ctree)
     expect(ctree.ret[0]).toMatchObject(<div>app</div>)
   })
@@ -59,7 +59,7 @@ describe('painter paint', () => {
       }
     }
 
-    const ctree = createCnode(<App/>)
+    const ctree = painter.createCnode(<App/>)
     painter.paint(ctree)
     expect(ctree.ret[0]).toMatchObject((
       <div>
@@ -68,7 +68,7 @@ describe('painter paint', () => {
       </div>
     ))
 
-    const subCnode = createCnode(<Sub />, ctree)
+    const subCnode = painter.createCnode(<Sub />, ctree)
     // 不删的话 toMatchObject 会循环递归
     delete subCnode.parent
     expect(Object.values(ctree.next).length).toBe(1)
@@ -107,7 +107,7 @@ describe('painter repaint basic', () => {
       }
     }
 
-    const ctree = createCnode(<App/>)
+    const ctree = painter.createCnode(<App/>)
     painter.paint(ctree)
     expect(ctree.ret[0]).toMatchObject(<div>0</div>)
 
@@ -162,7 +162,7 @@ describe('repaint key diff', () => {
       }
     }
 
-    const ctree = createCnode(<App/>)
+    const ctree = painter.createCnode(<App/>)
     painter.paint(ctree)
     const diffResult = painter.repaint(ctree)
 
@@ -199,7 +199,7 @@ describe('repaint key diff', () => {
       }
     }
 
-    const ctree = createCnode(<App/>)
+    const ctree = painter.createCnode(<App/>)
     painter.paint(ctree)
     const diffResult = painter.repaint(ctree)
 
@@ -236,7 +236,7 @@ describe('repaint key diff', () => {
       }
     }
 
-    const ctree = createCnode(<App/>)
+    const ctree = painter.createCnode(<App/>)
     painter.paint(ctree)
     const diffResult = painter.repaint(ctree)
 

@@ -1,7 +1,7 @@
 import VNode from './VNode'
 import Fragment from './Fragment';
 
-// TODO 处理过程优化
+// 会进行递归的 normalize
 export function normalizeLeaf(rawChild) {
   if (rawChild instanceof VNode) return rawChild
 

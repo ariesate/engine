@@ -31,12 +31,12 @@
  *
  */
 
-import { cloneElement } from '@ariesate/are/createElement'
+import createElement, { cloneElement } from '@ariesate/are/createElement'
 import Fragment from '@ariesate/are/Fragment'
 import { UNIT_INITIAL_DIGEST } from '@ariesate/are/constant'
 import propTypes from './propTypes'
 
-import { walkVnodes, reverseWalkCnodes } from './common'
+import { reverseWalkCnodes, walkRawVnodes } from './common'
 import { filter, invariant, mapValues, replaceItem } from './util'
 import {
   isReactiveLike,
@@ -95,12 +95,17 @@ function createVirtualCnodeForComputedVnodeOrText(reactiveVnode) {
   type.isVirtual = true
 
   // CAUTION 伪装成了一个既是 ref 又是 component node 的节点。ref 是 children proxy 中要判断的。
-  return {
-    type,
+  const vnode = createElement(type)
+  Object.defineProperties(vnode, {
     // CAUTION 这里的判断很危险，和 isRef 耦合
-    _isRef: true,
-    get value(){ return reactiveVnode.value }
-  }
+    _isRef: {
+      value: true,
+    },
+    value: {
+      get(){ return reactiveVnode.value }
+    }
+  })
+  return vnode
 }
 
 
@@ -131,16 +136,14 @@ function createVirtualCnodeForReactiveProps(vnodeWithRefProps) {
 
   type.isVirtual = true
 
-  return {
-    type,
-  }
+  return createElement(type)
 }
 
 function replaceVnodeWith(vnode, matchAndReplace) {
   // return vnode
   const isArray = Array.isArray(vnode)
   const start = isArray ? vnode : [vnode]
-  walkVnodes(start, (vnode, currentPath, parentCollection) => {
+  walkRawVnodes(start, (vnode, currentPath, parentCollection) => {
     const [matched, next, shouldStop] = matchAndReplace(vnode)
     if (matched) replaceItem(parentCollection, vnode, next)
     return shouldStop
@@ -252,7 +255,7 @@ class ComponentNode {
     this.computed = []
   }
   collectComputed(vnodes) {
-    walkVnodes(Array.isArray(vnodes) ? vnodes : [vnodes], (vnode) => {
+    walkRawVnodes(Array.isArray(vnodes) ? vnodes : [vnodes], (vnode) => {
       // CAUTION 注意，这里要穿透 Component 收集，只要是本作用域产生的 computed。都要收集起来
       // 但是不穿透 computed。因为 computed 自己会处理内部的 computed.
       if (isComputed(vnode)) {

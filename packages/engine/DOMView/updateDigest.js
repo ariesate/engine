@@ -112,7 +112,7 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
     } else if (p.action.type === PATCH_ACTION_REMOVE) {
       handleRemovePatchNode(p, parentPath, { next: cnode.toDestroyPatch }, view)
     } else if (p.action.type === PATCH_ACTION_REMAIN) {
-      invariant(p.patch !== undefined, 'detect no patch vnode, you probably collected un-repainted cnode')
+      // CAUTION 注意 p.patch 可以是 undefined，表示没有任何变化
       // Handle "toInsert" type first.
       // Trying to insert all new element between two remained elements, So we need to find last remained element first.
       if (toInsert.childNodes.length !== 0) {

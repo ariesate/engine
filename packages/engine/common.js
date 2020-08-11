@@ -18,7 +18,7 @@ export function getVnodeType(vnode) {
 
   if (typeof vnode.type === 'object' || typeof vnode.type === 'function') {
     if (vnode.type.displayName === undefined) {
-      vnode.type.displayName = vnode.type.displayName || (/[A-Z]/.test(vnode.type.name[0]) ? vnode.type.name : createUniqueVnodeName())
+      vnode.type.displayName = (vnode.type.name && /[A-Z]/.test(vnode.type.name[0])) ? vnode.type.name : createUniqueVnodeName()
     }
     return vnode.type.displayName
   }

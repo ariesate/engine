@@ -12,7 +12,6 @@ import { handleMoveFromPatchNode } from './updateDigest'
 import { mapValues, isObject } from '../util'
 import Fragment from '../Fragment'
 import VNode from '../VNode';
-import { invariant } from '../propTypes/util';
 
 /**
  * Attach element reference to cnode.

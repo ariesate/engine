@@ -96,7 +96,6 @@ export default function createScheduler(painter, view, supervisor) {
       })
 
       walkCnodes([ctree], (cnode) => {
-        console.log(ctree)
         supervisor.unit(SESSION_INITIAL, UNIT_INITIAL_DIGEST, cnode, () => {
           view.initialDigest(cnode)
         })
@@ -112,7 +111,6 @@ export default function createScheduler(painter, view, supervisor) {
     startInitialSession,
     startUpdateSession,
     collectChangedCnodes: cnodes => {
-      console.log("track", cnodes.map(c => c.type.displayName), cnodes)
       cnodes.forEach(trackingTree.track)
       if (!currentSession) {
         startUpdateSession()

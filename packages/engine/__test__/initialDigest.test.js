@@ -1,4 +1,4 @@
-const { default: createPainter, createCnode }= require('../createPainter')
+const { default: createPainter }= require('../createPainter')
 const createElement = require('../createElement').default
 const createDOMView = require('../DOMView/createDOMView').default
 
@@ -37,7 +37,7 @@ describe('initialDigest', () => {
       }
     }
 
-    const ctree = createCnode(<App/>)
+    const ctree = painter.createCnode(<App/>)
     painter.paint(ctree)
     view.initialDigest(ctree)
 

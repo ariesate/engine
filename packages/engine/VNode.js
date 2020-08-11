@@ -1,1 +1,5 @@
-export default class VNode {}
+export default class VNode {
+  someting() {
+
+  }
+}
