@@ -174,7 +174,6 @@ describe('basic reactive', () => {
     base2.value = 'jom'
     expect(computed.value).toBe('jom-no')
   })
-
 })
 
 

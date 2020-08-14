@@ -15,15 +15,16 @@
   },
   "devDependencies": {
     "@babel/core": "^7.3.4",
+    "@babel/plugin-proposal-decorators": "^7.3.0",
     "@babel/plugin-transform-modules-commonjs": "^7.2.0",
     "@babel/plugin-transform-react-jsx": "^7.3.0",
-    "@babel/plugin-proposal-decorators": "^7.3.0",
     "@babel/preset-env": "^7.3.4",
     "@babel/preset-react": "^7.0.0",
     "@babel/preset-stage-0": "^7.0.0",
     "babel-jest": "^24.1.0",
     "dom-serialize": "^2.2.1",
     "jest": "^24.1.0",
+    "jquery": "^3.5.1",
     "webpack": "^3.5.5"
   },
   "jest": {

@@ -14,6 +14,15 @@ module.exports = {
     ],
     [
       "@babel/plugin-proposal-class-properties"
+    ],
+    ["module-resolver",
+      {
+        "alias": {
+          "@ariesate/are": "../engine"
+        }
+      }],
+    [
+      "@babel/plugin-proposal-export-default-from"
     ]
   ],
   "include": ["./src", "../engine"]

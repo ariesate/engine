@@ -24,11 +24,11 @@ export function draft(computed) {
   const isComputedRef = isRef(computed)
   const draftValue = isComputedRef ? ref(computed.value) : reactive(cloneDeep(toRaw(computed)))
 
-  watch(() => computed, (isUnchanged) => {
+  watch((watchAnyMutation) => watchAnyMutation(computed), (isUnchanged) => {
     !isUnchanged && mutationTimeTable.set(computed, Date.now())
   })
 
-  watch(() => draftValue, (isUnchanged) => {
+  watch((watchAnyMutation) => watchAnyMutation(draftValue), (isUnchanged) => {
     !isUnchanged && mutationTimeTable.set(draftValue, Date.now())
   })
   // 设置个初始值

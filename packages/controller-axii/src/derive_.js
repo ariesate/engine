@@ -2,20 +2,17 @@ import { getCurrentWorkingCnode } from './renderContext'
 import { filter, invariant, mapValues, createCacheContainer } from './util';
 import {
   isReactiveLike,
+  reactive,
+  ref,
   toRaw,
   startScope,
   isRef,
+  unsafeComputeScope,
   replace,
   findIndepsFromDep,
   spreadUnchangedInScope
 } from './reactive';
 import { applyPatch, createDraft, finishDraft } from './produce';
-
-/*
- * 需求场景：
- * 1. state 变化 => props 变化。当前的 props 变化和 state 是一致的，可以跳过计算步骤。
- */
-
 
 /**
  * 1. 将 props 和 state 间的关系通过 computed 建立起来
@@ -26,6 +23,26 @@ import { applyPatch, createDraft, finishDraft } from './produce';
  *
  * 这样整个系统里面也不需要 effect 了，只有 source 和 computed。
  *
+ * // scrollTop 之类的怎么处理？
+ * $scrollTop = reactive((v) => {
+ *    // debounce 可以在这里自己处理。
+ *   const stop = window.addxxx((xxxx) => {
+ *     v.value = xxxx
+ *   })
+ *   return function dispose() {
+ *     stop()
+ *   }
+ * }, 0)
+ *
+ *
+ * draft 的实现：
+ * [input, draft] => finalShowValue。
+ * 当在组件要显示 draft 时，显示的其实是 finalShowValue。
+ * 对 draft 修改时，存着的数据是 reverseComputed(nextValue, now())
+ * compute 在计算时会对比 input 和 draft 的时间，决定显示哪个。
+ *
+ * 所以我们的 computed 要实现一种自定义类型：
+ * 用户动态决定是重新跑一遍 computed， 还是直接取值。
  */
 
 const cnodeToPropsFromStateFnMap = new WeakMap()
@@ -35,7 +52,7 @@ function getComputedProp(cnode, propName, state) {
   return (typeof result === 'object') ? result : { value: result }
 }
 
-function createCacheablePropsProxyFromState(props, mutatedState, cnode, container) {
+export function createCacheablePropsProxyFromState(props, mutatedState, cnode, container) {
   const fnMap = cnodeToPropsFromStateFnMap.get(cnode) || {}
   const stateDerivedPropNames = Object.keys(fnMap)
 
@@ -57,12 +74,10 @@ function createCacheablePropsProxyFromState(props, mutatedState, cnode, containe
 
 const propComputeCacheContainer = createCacheContainer()
 
-/*
- * 建立 prop 和 state 的连接。
- * prop 是已经有的 reactive，state 是衍生出来的。
- * 当改变 state 时，prop 要变化，但是不想再重复计算 state 了，中间的一致性是靠用户的函数保证的。
- * 当改变 prop 时，state 要变化。
- */
+function mapToReactive(obj) {
+  return mapValues(obj, (value) => (typeof value === 'object' ? reactive(value) : ref(value)))
+}
+
 export default function derive(propsToStateFn, propsFromStateFnMap) {
   const [cnode] = getCurrentWorkingCnode()
   cnodeToPropsFromStateFnMap.set(cnode, propsFromStateFnMap)
@@ -163,7 +178,7 @@ export function getMutationRunner(cnode, mutateFn) {
           return !(path[0] in changedState)
         })
 
-        computeScope(cnode.scopeId, () => {
+        unsafeComputeScope(cnode.scopeId, () => {
           Object.entries(propsToEffectIndexByName).forEach(([propName, prop]) => {
             const nextProp = cacheContainer.get(propName) || getComputedProp(cnode, propName, nextState)
             replace(prop, isRef(prop) ? nextProp.value : nextProp)
@@ -175,3 +190,9 @@ export function getMutationRunner(cnode, mutateFn) {
     })
   }
 }
+
+/*
+ * 需求场景：
+ * 1. state 变化 => props 变化。当前的 props 变化和 state 是一致的，可以跳过计算步骤。
+ */
+

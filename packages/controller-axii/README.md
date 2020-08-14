@@ -38,3 +38,8 @@ draft 的本质是什么？？？
  - createAxiiController: 使用 ariesate/are 中各部件实现框架的核心代码。 
 
 # Component
+
+# 测试
+
+ - 在 babel 中需要将 ../engine 设为 include
+ - 使用 testing-library/dom-testing-library 来做 dom 对比

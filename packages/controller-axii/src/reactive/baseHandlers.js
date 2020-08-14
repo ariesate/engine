@@ -11,20 +11,22 @@ const builtInSymbols = new Set(
 
 const get = createGetter()
 
+/*
+ */
 function createGetter(isReadonly = false, shallow = false) {
   return function get(target, key, receiver) {
     const res = Reflect.get(target, key, receiver)
     if (isSymbol(key) && builtInSymbols.has(key)) {
       return res
     }
-    if (shallow) {
-      track(target, TrackOpTypes.GET, key)
-      // TODO strict mode that returns a shallow-readonly version of the value
-      return res
-    }
+    //TODO 如果是 ref 为什么要直接 return res.value????
     if (isRef(res)) {
       return res.value
     }
+    //TODO 叶子节点取到的不是 ref 怎么办？在组件里面的心智有问题。
+    // 默认叶子节点应该要变成 ref!!! 因为即使组件是 stateless，也要利用 ref 才能享受自动变化！！！
+    // 对于真的不会变的情况，可以使用一个 fakeReactive 来模拟 .value 的形式，提升性能。
+    // 设计的时候，要考虑整个叶子节点被 delete 或者 set 的情况。考虑是不是不允许发生。
     track(target, TrackOpTypes.GET, key)
     return isObject(res)
       ? reactive(res)
@@ -62,6 +64,7 @@ function createSetter(isReadonly = false, shallow = false) {
       if (!hadKey) {
         trigger(target, TriggerOpTypes.ADD, key, extraInfo)
       } else {
+        // 在这里不处理性能优化，又要有操作都通知外面。用参数告诉外面变化了没有
         trigger(target, TriggerOpTypes.SET, key, !hasChanged(oldValue, value))
       }
     }
