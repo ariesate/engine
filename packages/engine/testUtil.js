@@ -2,8 +2,35 @@ import { walkRawVnodes } from './common';
 import $ from 'jquery'
 
 export function match() {
-
+  // TODO
 }
+
+function getStyleDeclaration(document, css) {
+  const styles = {}
+
+  // The next block is necessary to normalize colors
+  const copy = document.createElement('div')
+  Object.keys(css).forEach(property => {
+    copy.style[property] = css[property]
+    styles[property] = copy.style[property]
+  })
+
+  return styles
+}
+
+
+function isSubset(styles, computedStyle) {
+  return (
+    !!Object.keys(styles).length &&
+    Object.entries(styles).every(
+      ([prop, value]) =>
+        computedStyle[prop] === value ||
+        computedStyle.getPropertyValue(prop.toLowerCase()) === value,
+    )
+  )
+}
+
+
 
 export function partialMatch(inputDomNodes, inputVnode) {
   const isArray = Array.isArray(inputVnode)
@@ -23,9 +50,15 @@ export function partialMatch(inputDomNodes, inputVnode) {
       const classNames = vnode.className ? vnode.className.split(/\s+/) : []
       const domClassNames = Array.from(currentDomNode.classList.values())
       if (!classNames.every(name => domClassNames.includes(name))) throw new Error(`classNames not match ${classNames.join(' ')} | ${domClassNames.join(' ')}}`)
-      // TODO compare style
 
-      // TODO compare key
+      if (vnode.props?.style) {
+        const {getComputedStyle} = currentDomNode.ownerDocument.defaultView
+        const expected = getStyleDeclaration(currentDomNode.ownerDocument, vnode.props.style)
+        const received = getComputedStyle(currentDomNode)
+        if (!isSubset(expected, received)) {
+          throw new Error(`style not match: ${JSON.stringify(vnode.props.style)} | ${JSON.stringify(received)}`)
+        }
+      }
 
       // filter comment node
       if (!currentDomNode.childNodes.filter) {

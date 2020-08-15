@@ -142,9 +142,9 @@ export function getMutationRunner(cnode, mutateFn) {
 
       const draftState = (state ? createDraft(mapValues(state, tryToRaw)) : undefined)
       const draftProps = (createDraft(createCacheablePropsProxyFromState(valueProps, draftState, cnode, cacheContainer)))
-      // 这里不会读，也不会动到 derived props
+      // 这里是组件自带的 listener，也不会动到 derived props，只会操作 state。
       mutateFn(draftProps, draftState)
-      // 这里可能读 derived props, 也可能会改
+      // 这里是用户的事件回调，里面可能读 derived props, 也可能会改
       const shouldStopApply = callback(draftProps, valueProps)
 
       let [nextState, stateChanges] = state ? finishDraft(draftState) : []

@@ -73,3 +73,30 @@ export function createIdGenerator() {
 export function pushToSet(set, arrayOrSet) {
   arrayOrSet.forEach(item => set.add(item))
 }
+
+export function insertIntoOrderedArray(array, item, findPlace) {
+  const inserted = array.some((current, index) => {
+    if (findPlace(current, item)) {
+      array.splice(index, 0, item)
+    }
+  })
+
+  if (!inserted) array.push(item)
+}
+
+export function filterOut(list, itemsToFilter) {
+  if (!itemsToFilter.length ) return []
+
+  let i = 0
+  const filteredItems = []
+  if (itemsToFilter)
+  while(list[i]) {
+    if (itemsToFilter.includes(list[i])){
+      filteredItems.push(list[i])
+      list.splice(i, 1)
+    } else {
+      i++
+    }
+  }
+  return filteredItems
+}

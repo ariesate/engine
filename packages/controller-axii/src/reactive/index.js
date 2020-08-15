@@ -64,6 +64,7 @@ export {
   findIndepsFromDep,
   findDepsFromIndep,
   spreadUnchangedInScope,
+  debounceComputed,
 } from './effect'
 
 export function isReactiveLike(obj) {

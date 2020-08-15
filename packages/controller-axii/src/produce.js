@@ -1,4 +1,4 @@
-import { finishDraft as internalFinishDraft, setUseProxies } from 'immer'
+import { createDraft, finishDraft as internalFinishDraft, setUseProxies } from 'immer'
 export { createDraft } from 'immer'
 import { applyPatch as internalApplyPatch } from 'fast-json-patch'
 

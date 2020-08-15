@@ -1,4 +1,4 @@
-import { createIdGenerator, pushToSet } from './util';
+import { createIdGenerator, insertIntoOrderedArray, filterOut } from './util';
 import { invariant } from '../util';
 import { isRef, reactive, ref, toRaw } from './reactive';
 import { TrackOpTypes, TriggerOpTypes } from './operations'
@@ -30,7 +30,7 @@ function getFromMap(collection, key, createIfUndefined) {
  * computed 可以是其他 computed 的 indep。同时也必然是某个 computation 的 dep。
  *
  * 整体关系：
- * source <-[1:n]-> key <-[n:n]-> computation <-[1:1]-> computed
+ * (source|computed) <-indep[1:n]$$payload.keys-> key <-indeps[n:n]computations-> computation <-$$payload.computation[1:1]computed-> computed
  *
  * source|computed: Reactive
  *   - $$payload.keys: Map<keyName, key>
@@ -44,10 +44,12 @@ function getFromMap(collection, key, createIfUndefined) {
  *   - indeps: Set<Key>
  *   - computed: Reactive
  *   - scopeId: scopeId 用来标记中间变量的。目前用于 derive 中。
+ *   - levelParent: 用来记录自己当前认识的最长路径的 parent。
+ *   - levelChildren: 用来记录把自己当做最长路径 parent 的 children。当自己发生变化时，要 children 自己重新选择一下 parent。
+ *   - level: 记录计算出来的层级
  *
  * 内存模型：
- * computed 对象的外部引用销毁时。与 computation 的联系，以及自己的 deps 会销毁。
- * 但同时要通过 computation 主动销毁掉自己的 indeps。
+ * CAUTION computed 的销毁需要外部主动执行 destroyComputed(computed)。否则会一直在内存中。
  */
 
 /****************************************
@@ -79,6 +81,13 @@ export function objectComputed(computation) {
 
 class ComputedToken {}
 
+/*
+ * CAUTION 在 computed 中应该是不允许再嵌套 reactive，
+ *  因为每次就算都会导致原本的 reactive 引用丢失。
+ * TODO 在 dev 环境下检测是否有嵌套的 reactive
+ *
+ * TODO computed 要限制只能用 computation 修改，不能用户修改。
+ */
 export function createComputed(computation, type) {
   invariant(typeof computation === 'function', 'computation must be a function')
 
@@ -88,6 +97,8 @@ export function createComputed(computation, type) {
 
   computation.computed = computed
   computation.indeps = new Set()
+  computation.levelChildren = new Set()
+  computation.level = 0
   computation.type = type
   // 用来标记 scope 的，后面可以用 scopeId skip 掉计算过程。
   computation.scopeId = activeScopeId
@@ -102,14 +113,21 @@ export function destroyComputed(computed) {
   const payload = getFromMap(reactiveToPayloads, toRaw(computed))
   if (payload) {
     invariant(Object.values(payload.keys).every(({ computations }) => computations.size === 0), 'computed have deps, can not destroy')
-    if (payload.computations) {
-      delete payload.computation.scopeId
-      delete payload.computation.type
-      delete payload.computation.computed
-      payload.computation.indeps.forEach(keyNode => {
-        keyNode.computations.delete(payload.computation)
+    const { computation } = payload
+    if (computation) {
+      delete computation.scopeId
+      delete computation.type
+      delete computation.computed
+      // 清理 computation 和前面的依赖
+      computation.indeps.forEach(keyNode => {
+        keyNode.computations.delete(computation)
       })
-      delete payload.computation.indeps
+      delete computation.indeps
+
+      // 断开连接
+      if (computation.levelParent) {
+        computation.levelParent.levelChildren.delete(computation)
+      }
     }
   }
 }
@@ -127,6 +145,7 @@ function applyComputation() {
 
   const nextValue = computation(watchAnyMutation)
   if(!(computation.computed instanceof ComputedToken)) {
+
     replace(computation.computed, nextValue)
   }
 }
@@ -137,6 +156,8 @@ function applyComputation() {
  * 1. createComputed。第一次建立联系，此时可能出现 computed 中再创建 computed，computationStack 中已有值。
  * 2. digestComputations。compute 中再触发的 computation 只会加入到 digest 尾部。因此 computationStack 只会有一个。
  */
+
+
 function compute(computation) {
   invariant(!computationStack.find(({computation: c}) => c === computation ), 'recursive computation detected')
   try {
@@ -161,12 +182,13 @@ function patchComputation() {
   const { computation, indeps: nextIndeps } = computationStack[computationStack.length - 1]
   const { indeps: prevIndeps } =  computation
 
+  let depsChanged = false
   computation.indeps = nextIndeps
   computation.indeps.forEach(keyNode => {
     if (!prevIndeps.has(keyNode)) {
       // 新增的
       keyNode.computations.add(computation)
-      // TODO sync 标记的判断,只有一个标记时要遍历下去
+      depsChanged = true
     } else {
       // 原来就有的，这次还有
       prevIndeps.delete(keyNode)
@@ -174,10 +196,60 @@ function patchComputation() {
   })
   // 最后 prevIndeps 里面还剩下的就是要删除的
   prevIndeps.forEach(toRemoveKeyNode => {
+    depsChanged = true
     toRemoveKeyNode.computations.delete(computation)
-    // TODO sync 标记的判断,移除的标记如果没有了，要遍历下去。
   })
+
+  // 重新计算一下 levelParent。如果发生了变化，会链式通知后面的 computation 重新计算
+  if (depsChanged) updateLevelParent(computation)
 }
+
+function updateLevelParent(computation, nextParentLevel) {
+  // 如果有 nextParentLevel 并且是增大了，说明只要更新一下自己就行了，如果不是就要全部重新计算出最大的。
+  if (nextParentLevel && computation.level < nextParentLevel + 1) {
+    computation.level = nextParentLevel + 1
+    return
+  }
+
+  let maxLevel = 0
+  let levelParent
+  computation.indeps.forEach(keyNode => {
+    // 能不能确保indeps 的level 都是正确的呢？如果每次修改都保证通知后面的话，那么就能保证。
+    const parentComputation = getComputationFromKeyNode(keyNode)
+    if (parentComputation && parentComputation.level > maxLevel) {
+      maxLevel = parentComputation.level
+      levelParent = parentComputation
+    }
+  })
+
+  // 所有的 indeps 都是 reactive，那么 levelParent 就不存在
+  if (levelParent) {
+    if (computation.levelParent !== levelParent) {
+      // 不要忘了从原来的地方删掉自己
+      if (computation.levelParent) computation.levelParent.levelChildren.delete(computation)
+      // 建立新的链接
+      computation.levelParent = levelParent
+      levelParent.levelChildren.add(computation)
+    }
+  }
+
+
+  if (computation.level !== maxLevel + 1) {
+    computation.level = maxLevel + 1
+    // 标记一下，如果这个 computation 已经在队列了，那么可能要重新排序
+    levelChangedComputations.push(computation)
+    // 继续通知后辈，每次都保证 level 是稳定的
+    computation.levelChildren.forEach(levelChild => updateLevelParent(levelChild), computation.level)
+  }
+}
+
+function getComputationFromKeyNode(keyNode) {
+  const payload = getFromMap(reactiveToPayloads, toRaw(keyNode.indep))
+  if (payload) {
+    return payload.computation
+  }
+}
+
 
 /**
  * 因为我们的 computed 中允许再建立 computed。
@@ -208,27 +280,63 @@ function patchComputedRelation() {
 
 const cachedComputations = []
 let inComputationDigestion = false
+// 用来临时记录在 computation 中改变了层级的
+let levelChangedComputations = []
 function digestComputations() {
   invariant(!inComputationDigestion, 'already in computation digestion')
   inComputationDigestion = true
   let computation
   while(computation = cachedComputations.shift()) {
     compute(computation)
+    // 产生了层级变化的 computation， 要重新排序。
+    // 绝大部分场景，应该不会有层级频繁变化的 computaion。
+    const changedLevelComputations = filterOut(cachedComputations, levelChangedComputations)
+    changedLevelComputations.forEach(c => {
+      insertIntoOrderedArray(cachedComputations, c)
+    })
+    // 一定不要忘了清空
+    levelChangedComputations = []
   }
   inComputationDigestion = false
 }
 
+/**
+ * TODO 可以通过一个分层算法来合并重复的 computation。
+ * computation 有一个层级字段，表示当前 computed 到 source 的最长路经。
+ * 我们把小层级的 computation 放到前面计算，大的放大后面，因为小层级计算的后可能会加入新的 computation，
+ * 这时加入的 computation 就可能是和谋面的一样的，这时就能跳过了。
+ */
 function scheduleToRun(computations) {
   computations.forEach(c => {
     if (!shouldSkipComputation(c) && !cachedComputations.includes(c)) {
-      cachedComputations.push(c)
+      insertIntoOrderedArray(cachedComputations, c, (a, b) => b.level < a.level)
     }
   })
-  if (!inComputationDigestion) {
+  if (!inComputationDigestion && !debounced) {
     digestComputations()
   }
 }
 
+/**
+ * cache:
+ * 在一个连续的过程中，可以进行多次 source 的操作，这些操作可能引发相同的 computed 计算，
+ * 使用 cache，能将这些 computed 的计算合并到整个过程的最后。
+ * 注意，在这个连续的过程中，如果出现了要读取 computed 的情况，会自动触发该 computed 所有依赖的计算。
+ *
+ * 不采用 dirty 字段标记，因为我们的依赖链，是一种"可能的"依赖。具体会不会影响后辈，是要靠 computed 重新计算才知道的。
+ * 所以只要中途读了 computed，就直接应用所有计算。
+ */
+let debounced = false
+export function debounceComputed(operations) {
+  // 已经在 debounce 中了，直接执行就行
+  if (debounced) return operations()
+
+  debounced = true
+  // TODO 如果遇到了读 computed 就要去掉 debounced，直接开始执行
+  operations()
+  debounced = false
+  digestComputations()
+}
 
 /****************************************
  *
@@ -264,13 +372,13 @@ export function track(indep, type, key) {
 }
 
 
-
 // CAUTION 过滤掉要 skip 的 computation。 这个标记先打在 computation 上。这是专门给 inverseComputed 用的。
 function shouldSkipComputation(computation) {
   return scopeIdToSkip && (computation.scopeId === scopeIdToSkip)
 }
 
 export function trigger(source, type, key, extraInfo) {
+  // 当 type === type === TriggerOpTypes.SET 时，extraInfo 是个 bool， 用来表示数据是不是没变化。
   // 执行了赋值操作，但数据没变，外部可以要求仍然触发 trigger。
   // derive 中需要追踪某个数据改变后，所有可能影响的数据，用于保持一致性。所以用 trigger，外部继续监听的方式来找到所有可能影响的。
   if (type === TriggerOpTypes.SET && extraInfo ) {
@@ -324,7 +432,11 @@ export function startScope(fn){
   return id
 }
 
-// 用 Reverse compute 来实现更好。
+/**
+ * 直接应用所有的 sourceMutation 和 depsMutation。
+ * 通过 skip 来断掉中间的链式反应。
+ * 这是在已知 source 和 deps 能保持一致时的加速方案。
+ */
 export function unsafeComputeScope(scopeId, sourceMutation, depsMutation) {
   const stopSkip = skipScope(scopeId)
   sourceMutation()
@@ -377,6 +489,9 @@ export function replace(source, nextSourceValue) {
   } else if (Array.isArray(source)){
     source.splice(0, source.length, ...nextSourceValue)
   } else {
+    if (!nextSourceValue) {
+      debugger
+    }
     const nextKeys = Object.keys(nextSourceValue)
     const keysToDelete = Object.keys(source).filter(k => !nextKeys.includes(k))
     keysToDelete.forEach(k => delete source[k])
@@ -407,21 +522,9 @@ function createKeyNode(indep) {
   }
 }
 
-/**
- * mutation cache TODO
- */
-
-
-/**
- * subscribe
- * 需求：
- * 1. trigger 的时候如果发现当前 keyNode 上没有 sync 标记。
- * 那么就把所有 computation 对应的 computed，以及之后的 computed，全部标记为 dirty，不计算。
- * 遇到已经标记过了的就不用标记了。
- * 2. 如果发现自己有 sync 标记那么就正常触发一切。
- *
- */
-
+/**********************
+ * Cache computed mutation
+ **********************/
 
 export function findIndepsFromDep(dep, candidatesIndexByName) {
   const { computation } = getFromMap(reactiveToPayloads, toRaw(dep))
@@ -476,20 +579,4 @@ export function findDepsFromIndep(indep, candidatesIndexByName) {
   })
 
   return matchedCandidates
-}
-
-function markAsSync(start, id, isSource) {
-  // 1. 已经有了 sync 标记
-  // 2. 没有 sync 标记
-  // 1. 找到 computation -> key，把 computation 移动到 keyNode.syncComputation 中。继续把所有 indep 的 computation 都移动到 indepComputation 中。
-
-  const payload = getFromMap(reactiveToPayloads, start)
-  // 如果当前节点已经是 sync 了
-  if (!payload.syncIds) payload.syncIds
-
-  if (!payload.computation) return
-
-  payload.computation.indeps.forEach(keyNode => {
-
-  })
 }

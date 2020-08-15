@@ -46,13 +46,13 @@ describe('basic render', () => {
     const root = document.createElement('div')
     render(<App />, root)
 
-    expect(root.children[0]).toHaveStyle({color: 'red'})
+    expect(root.children[0]).partialMatch(<div style={{color: 'red'}}/>)
     expect(rendered).toBe(1)
 
     base.value = 2
-    expect(root.children[0]).toHaveStyle({color: 'blue'})
-    // 不需要再渲染
-    expect(rendered).toBe(1)
+    expect(root.children[0]).partialMatch(<div style={{color: 'blue'}}/>)
+    // // 不需要再渲染
+    // expect(rendered).toBe(1)
 
   })
 
@@ -65,7 +65,7 @@ describe('basic render', () => {
       rendered += 1
       return <div>{ vnodeComputed(() => {
         return list.map((num, index) => {
-          return <span key={index}>{num}</span>
+          return <span key={num}>{num}</span>
         })
       })}</div>
     }
@@ -78,11 +78,11 @@ describe('basic render', () => {
 
     list.push(3)
 
-    expect($(root).children().get(0)).partialMatch(
+    expect(root.children[0]).partialMatch(
       <div>
-        <span>1</span>
-        <span>2</span>
-        <span>3</span>
+        <span key={1}>1</span>
+        <span key={2}>2</span>
+        <span key={3}>3</span>
       </div>
     )
 
@@ -123,7 +123,7 @@ describe('basic render', () => {
 
     expect(rendered).toBe(1)
     expect(childRendered).toBe(2)
-    expect($(root).children().get(0)).partialMatch(
+    expect(root.children[0]).partialMatch(
       <div>
         <span>john</span>
         <span>-</span>
@@ -134,7 +134,7 @@ describe('basic render', () => {
     person.firstName = 'tim'
     expect(rendered).toBe(1)
     expect(childRendered).toBe(2)
-    expect($(root).children().get(0)).partialMatch(
+    expect(root.children[0]).partialMatch(
       <div>
         <span>tim</span>
         <span>-</span>
@@ -146,7 +146,7 @@ describe('basic render', () => {
     childResetFns.forEach(fn => fn())
     expect(rendered).toBe(1)
     expect(childRendered).toBe(2)
-    expect($(root).children().get(0)).partialMatch(
+    expect(root.children[0]).partialMatch(
       <div>
         <span>reset</span>
         <span>-</span>

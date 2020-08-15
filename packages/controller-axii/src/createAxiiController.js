@@ -33,7 +33,7 @@
 
 import createElement, { cloneElement } from '@ariesate/are/createElement'
 import Fragment from '@ariesate/are/Fragment'
-import { UNIT_INITIAL_DIGEST } from '@ariesate/are/constant'
+import { UNIT_INITIAL_DIGEST, UNIT_PAINT } from '@ariesate/are/constant'
 import propTypes from './propTypes'
 
 import { reverseWalkCnodes, walkRawVnodes } from './common'
@@ -80,19 +80,37 @@ function hasRefProps(vnode) {
   return vnode.props && Object.values(vnode.props).some(prop => isRef(prop))
 }
 
-
+const reactiveVnodeToType = new WeakMap()
 function createVirtualCnodeForComputedVnodeOrText(reactiveVnode) {
-  // debugger
-  const type = (changeCallback, saveWatchToken) => {
-    const toDisplay = isDraft(reactiveVnode) ? getDisplayValue(reactiveVnode) : reactiveVnode
-    const [value, watchToken] = watch(() => toDisplay.value, () => {
-      changeCallback()
-    })
-    saveWatchToken(watchToken)
-    return value
-  }
+  let type = reactiveVnodeToType.get(reactiveVnode)
+  if (!type) {
+    const cnodeToTypeToken = new WeakMap()
+    type = () => {
+      const toDisplay = isDraft(reactiveVnode) ? getDisplayValue(reactiveVnode) : reactiveVnode
+      return toDisplay.value
+    }
 
-  type.isVirtual = true
+    type.startWatch = (cnode) => {
+      // 理论上，我们可以为同一个 reactiveVnode 只创建一个 type 来节约性能。
+      // 这里做了判断，即使调用多次 startWatch 也没有关系。
+      if (!cnodeToTypeToken.get(cnode)) {
+        const [value, watchToken] = watch(() => {
+          const toDisplay = isDraft(reactiveVnode) ? getDisplayValue(reactiveVnode) : reactiveVnode
+          return toDisplay.value
+        }, () => {
+          // 职能这样写？因为 startWatch 的时候 cnode.changeCallback 还没有
+          cnode.changeCallback()
+        })
+        cnodeToTypeToken.set(cnode, watchToken)
+      }
+      return [cnodeToTypeToken.get(cnode)]
+    }
+
+    type.isVirtual = true
+    type.displayName = `VirtualReactiveVnodeOrText`
+
+    reactiveVnodeToType.set(reactiveVnode, type)
+  }
 
   // CAUTION 伪装成了一个既是 ref 又是 component node 的节点。ref 是 children proxy 中要判断的。
   const vnode = createElement(type)
@@ -108,20 +126,21 @@ function createVirtualCnodeForComputedVnodeOrText(reactiveVnode) {
   return vnode
 }
 
-
+/**
+ * 这里不像 vnodeComputed 或者 ref，props 是 reactive 的 vnode 基本上都是新建的。
+ * 要找到正确的上一个 type 有点难，要用所有的 props 的组合。
+ */
 function createVirtualCnodeForReactiveProps(vnodeWithRefProps) {
-  const type = (changeCallback, saveWatchToken) => {
+  const type = () => {
     const unwrappedProps = {}
     const formVnode = isFormVnode(vnodeWithRefProps)
     Object.entries(vnodeWithRefProps.props).forEach(([name, prop]) => {
       // 普通属性
       if (!isReactiveLike(prop)) return unwrappedProps[name] = prop
-
       invariant(isRef(prop), `should not have non-ref reactive prop on dom attribute: ${name}`)
       const propToDisplay = isDraft(prop) ? getDisplayValue(prop) : prop
-      const [propValue, watchToken] = watch(() => propToDisplay.value, changeCallback)
-      unwrappedProps[name] = propValue
-      saveWatchToken(watchToken)
+
+      unwrappedProps[name] = propToDisplay.value
       // 保存一下 form value 类型的 ref, 之后用来修正实现 controller form element.
       if (formVnode && name === 'value') {
         const originRef = unwrappedProps.ref
@@ -134,7 +153,24 @@ function createVirtualCnodeForReactiveProps(vnodeWithRefProps) {
     return cloneElement(vnodeWithRefProps, unwrappedProps)
   }
 
+  type.startWatch = (cnode) => {
+    const tokens = []
+    Object.entries(vnodeWithRefProps.props).forEach(([name, prop]) => {
+      const [propValue, watchToken] = watch(() => {
+        const propToDisplay = isDraft(prop) ? getDisplayValue(prop) : prop
+        return propToDisplay.value
+      }, () => {
+        // 职能这样写？因为 startWatch 的时候 cnode.changeCallback 还没有
+        cnode.changeCallback()
+      })
+      tokens.push(watchToken)
+    })
+
+    return tokens
+  }
+
   type.isVirtual = true
+  type.displayName = `VirtualReactiveProps`
 
   return createElement(type)
 }
@@ -230,6 +266,8 @@ function createInjectedProps(cnode) {
 
 /**
  * ComponentNode
+ * 这个对象最终会传个 painter 作为创建 cnode 的依据。
+ * 使用这个对象可以将很多代码从 controller 的 initialRender/updateRender 中抽出来
  */
 class ComponentNode {
   constructor() {
@@ -237,12 +275,8 @@ class ComponentNode {
     this.localProps = {}
     // render 过程中创造的 reactive prop/reactive vnode 收集在这里，之后要回收。
     this.computed = []
-    this.saveWatchToken = this.saveWatchToken.bind(this)
   }
 
-  saveWatchToken(token) {
-    this.watchTokens.add(token)
-  }
   // unmount 的时候也会调用
   clearWatchTokens () {
     // token 引用没了，trigger 就不会再发生了。
@@ -254,6 +288,7 @@ class ComponentNode {
     this.computed.forEach(computed => destroyComputed(computed))
     this.computed = []
   }
+  // TODO 再考虑一下，需要吗？
   collectComputed(vnodes) {
     walkRawVnodes(Array.isArray(vnodes) ? vnodes : [vnodes], (vnode) => {
       // CAUTION 注意，这里要穿透 Component 收集，只要是本作用域产生的 computed。都要收集起来
@@ -268,7 +303,14 @@ class ComponentNode {
       }
     })
   }
-  // TODO 还要支持本身的 unmount
+  // AXII lifeCycle: 在 supervisor 中发现是 toInitialize 的节点时调用
+  willMount() {
+    if (this.type.isVirtual) {
+      // 有可能有很多 watch token
+      this.watchTokens = this.type.startWatch(this)
+    }
+  }
+  // AXII lifeCycle: 在 supervisor 中发现不存在了时直接调用。
   unmount() {
     this.clearWatchTokens()
     // CAUTION destroy 的顺序不能乱，必须是从依赖->被依赖项。state 可能依赖于 localProps， 所以先 destroy state。
@@ -285,9 +327,6 @@ class ComponentNode {
     return this.type.isVirtual ? this.virtualCnodeRender() : this.cnodeRender()
   }
   cnodeRender() {
-    this.clearWatchTokens()
-    this.clearComputed()
-
     // 开始处理 props
     const injectedProps = createInjectedProps(this)
     const hasChildren = this.props.children.length !== 0
@@ -296,7 +335,8 @@ class ComponentNode {
       this.props.children
 
     let result = this.type(injectedProps, this.ref)
-    // 收集所产生的 computed。之后要销毁
+    // 收集新所产生的 computed。之后要销毁。
+    this.clearComputed()
     this.collectComputed(result)
 
     // 如果 render 完发现 children 没被动过，返回的结果里要替换回来。免得 painter 去渲染的时候读了 proxy。
@@ -310,8 +350,7 @@ class ComponentNode {
     return result
   }
   virtualCnodeRender() {
-    this.clearWatchTokens()
-    return this.type(this.changeCallback, this.saveWatchToken)
+    return this.type()
   }
 }
 
@@ -331,10 +370,8 @@ export default function createAxiiController() {
 
       initialRender(cnode) {
         let result
-        // 建立 watch 关系，这里把这个函数引用单独声明出来，这样即使 type 中 subscribe 执行多次，由于用的是 set，也不会多次执行回调。
-        cnode.changeCallback = (isUnchanged) => {
-          // 可能会受到 isUnchanged === true 的消息
-          !isUnchanged && scheduler.collectChangedCnodes([cnode])
+        cnode.changeCallback = () => {
+          scheduler.collectChangedCnodes([cnode])
         }
 
         result = cnode.render()
@@ -389,6 +426,10 @@ export default function createAxiiController() {
       },
       unit: (sessionName, unitName, cnode, startUnit) => {
         if (unitName === UNIT_INITIAL_DIGEST) styleManager.digest(cnode)
+
+        // 第一渲染，执行一下 willMount 的生命周期
+        if (unitName === UNIT_PAINT) cnode.willMount && cnode.willMount()
+        // 记录一下，其他功能要用
         return withCurrentWorkingCnode(cnode, startUnit)
       },
 
