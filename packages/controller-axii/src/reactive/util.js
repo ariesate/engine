@@ -78,6 +78,7 @@ export function insertIntoOrderedArray(array, item, findPlace) {
   const inserted = array.some((current, index) => {
     if (findPlace(current, item)) {
       array.splice(index, 0, item)
+      return true
     }
   })
 

@@ -211,13 +211,14 @@ function updateLevelParent(computation, nextParentLevel) {
     return
   }
 
-  let maxLevel = 0
+  // 所有 computation level 默认是 1
+  let maxParentLevel = -1
   let levelParent
   computation.indeps.forEach(keyNode => {
     // 能不能确保indeps 的level 都是正确的呢？如果每次修改都保证通知后面的话，那么就能保证。
     const parentComputation = getComputationFromKeyNode(keyNode)
-    if (parentComputation && parentComputation.level > maxLevel) {
-      maxLevel = parentComputation.level
+    if (parentComputation && parentComputation.level > maxParentLevel) {
+      maxParentLevel = parentComputation.level
       levelParent = parentComputation
     }
   })
@@ -233,11 +234,16 @@ function updateLevelParent(computation, nextParentLevel) {
     }
   }
 
-
-  if (computation.level !== maxLevel + 1) {
-    computation.level = maxLevel + 1
-    // 标记一下，如果这个 computation 已经在队列了，那么可能要重新排序
-    levelChangedComputations.push(computation)
+  // 注意，一个 computation 是有可能计算多次，但这是必须的。
+  // 比如 a 依赖了 b、c，同时 c 也依赖了 b。那么 b 的高度会引起 a 变化，导致 a 选择 c。
+  // 然后 b 的变化也引起了 c 的变化，c 也要 a 重新计算一下才能达到稳定。
+  if (computation.level !== maxParentLevel + 1) {
+    computation.level = maxParentLevel + 1
+    // 只在 digest 的时候标记一下，如果这个 computation 已经在队列了，那么可能要重新排序。平时不需要标记，比如创建的时候。
+    // 还要考虑可能
+    if (inComputationDigestion && !levelChangedComputations.includes(computation)) {
+      levelChangedComputations.push(computation)
+    }
     // 继续通知后辈，每次都保证 level 是稳定的
     computation.levelChildren.forEach(levelChild => updateLevelParent(levelChild), computation.level)
   }
@@ -287,15 +293,15 @@ function digestComputations() {
   inComputationDigestion = true
   let computation
   while(computation = cachedComputations.shift()) {
+    // 一定不要忘了清空
+    levelChangedComputations = []
     compute(computation)
     // 产生了层级变化的 computation， 要重新排序。
     // 绝大部分场景，应该不会有层级频繁变化的 computaion。
     const changedLevelComputations = filterOut(cachedComputations, levelChangedComputations)
     changedLevelComputations.forEach(c => {
-      insertIntoOrderedArray(cachedComputations, c)
+      insertIntoOrderedArray(cachedComputations, c, (a, b) => b.level < a.level)
     })
-    // 一定不要忘了清空
-    levelChangedComputations = []
   }
   inComputationDigestion = false
 }
