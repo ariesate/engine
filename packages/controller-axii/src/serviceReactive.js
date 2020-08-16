@@ -1,7 +1,4 @@
 import { ref, isRef, reactive, debounceComputed } from './reactive';
-import { getFromMap } from './util';
-import watch from './watch';
-import request, { CancelToken } from 'umi-request'
 
 function patchData(data, next) {
   if (isRef(data)) {

@@ -24,6 +24,7 @@ export function draft(computed) {
   const isComputedRef = isRef(computed)
   const draftValue = isComputedRef ? ref(computed.value) : reactive(cloneDeep(toRaw(computed)))
 
+  // 什么时候 destroy watchToken? 不需要手动销毁，因为外部的 computed 会被手动销毁，这时候会连带销毁依赖的 watchToken。
   watch((watchAnyMutation) => watchAnyMutation(computed), (isUnchanged) => {
     !isUnchanged && mutationTimeTable.set(computed, Date.now())
   })

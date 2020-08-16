@@ -1,3 +1,5 @@
+import { isReactiveLike, toRaw } from './reactive';
+
 export function compact(path = []) {
   // only positive values
   return path.filter(p => Boolean(p))
@@ -393,4 +395,8 @@ export function getFromMap(collection, key, createIfUndefined) {
   let result = collection.get(key)
   if (!result && createIfUndefined) collection.set(key, (result = createIfUndefined()))
   return result
+}
+
+export function tryToRaw(obj) {
+  return isReactiveLike(obj) ? toRaw(obj) : obj
 }

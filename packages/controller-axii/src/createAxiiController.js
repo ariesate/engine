@@ -37,7 +37,7 @@ import { UNIT_INITIAL_DIGEST, UNIT_PAINT } from '@ariesate/are/constant'
 import propTypes from './propTypes'
 
 import { reverseWalkCnodes, walkRawVnodes } from './common'
-import { filter, invariant, mapValues, replaceItem } from './util'
+import { filter, invariant, mapValues, replaceItem, tryToRaw } from './util'
 import {
   isReactiveLike,
   isRef,
@@ -51,6 +51,8 @@ import createChildrenProxy from './createChildrenProxy'
 import LayoutManager from './LayoutManager'
 import StyleManager from './StyleManager';
 import { isComputed } from './reactive/effect';
+import { applyPatch, createDraft, finishDraft } from './produce';
+import { createCacheablePropsProxyFromState } from './callListener';
 
 const layoutManager = new LayoutManager()
 const styleManager = new StyleManager()
@@ -236,11 +238,13 @@ const activeEvent = (function() {
 
 
 function createInjectedProps(cnode) {
-  const { props, localProps } = cnode
+  const { props, localProps, state } = cnode
   const { propTypes: thisPropTypes } = cnode.type
 
   Object.entries(thisPropTypes || {}).forEach(([propName, propType]) => {
     if (!(propName in props)) {
+      // 这里和 propTypes 有约定，每次读 defaultValue 时都会用定义的 createDefaultValue 创造新的对象，
+      // 所以不用担心引用的问题。
       localProps[propName] = propType.defaultValue
     }
   })
@@ -248,15 +252,27 @@ function createInjectedProps(cnode) {
   const mergedProps = { ...props, ...localProps }
   // 开始对其中的 mutation 回调 prop 进行注入。
   const injectedProps = thisPropTypes ? mapValues(thisPropTypes, (propType, propName) =>
-    propType.is(propTypes.callback) ? (mutateFn) => {
-      const listener = mergedProps[propName]
+    propType.is(propTypes.callback) ? (...runtimeArgv) => {
+      const userMutateFn = props[propName]
+      const defaultMutateFn = propType.defaultValue
 
-      const mutationRunner = getMutationRunner(cnode, mutateFn)
-      const shouldStopApply = mutationRunner((nextProps) => {
-        // 显式 return false 表示要 stopApply
-        return listener ? listener(nextProps, mergedProps) === false : false
-      })
-      if (shouldStopApply) activeEvent.preventCurrentEventDefault()
+      const valueProps = filter(mergedProps, isReactiveLike)
+      const draftState = (state ? createDraft(mapValues(state, tryToRaw)) : undefined)
+      const draftProps = createDraft(mapValues(valueProps, tryToRaw))
+
+      defaultMutateFn(draftProps, draftState, ...runtimeArgv)
+      // 显式的返回 false 就是不要应用原本的修改。
+      // TODO 是不是要有别的设计, 例如 preventDefault, 而不是 return false
+      // TODO 还要考虑 beforeCapture ？
+      const shouldStopApply = userMutateFn ? userMutateFn(draftProps, draftState, ...runtimeArgv) === false : false
+      if (shouldStopApply) {
+        activeEvent.preventCurrentEventDefault()
+      } else {
+        let [nextState, stateChanges] = state ? finishDraft(draftState) : []
+        if (stateChanges) applyPatch(state, stateChanges)
+        const propsChanges = finishDraft(draftProps)[1]
+        applyPatch(valueProps, propsChanges)
+      }
     } : mergedProps[propName]
 
   ) : mergedProps

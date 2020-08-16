@@ -92,6 +92,7 @@ export function createNormalType(type, definition = {}) {
   }
 
   if (!TypeChecker.createDefaultValue) {
+    // 提供一个 default 函数，可以动态将 TypeChecker 变成带 defaultValue 的(其实是动态再创建的)。
     Object.defineProperty(TypeChecker, 'default', {
       get() {
         return (createDefaultValue) => createNormalType(type, {
