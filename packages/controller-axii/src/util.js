@@ -388,3 +388,9 @@ export function createCacheContainer() {
     }
   }
 }
+
+export function getFromMap(collection, key, createIfUndefined) {
+  let result = collection.get(key)
+  if (!result && createIfUndefined) collection.set(key, (result = createIfUndefined()))
+  return result
+}
