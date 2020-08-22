@@ -1,5 +1,4 @@
-import cloneDeep from 'lodash/clonedeep'
-import { each, createUniqueIdGenerator, isObject, isFunction, values } from './util'
+import { createUniqueIdGenerator, values } from './util'
 import Fragment from './Fragment'
 
 export function isComponent(n) {

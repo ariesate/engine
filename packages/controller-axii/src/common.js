@@ -1,5 +1,5 @@
 import VNode from '@ariesate/are/VNode'
-import cloneDeep from 'lodash/clonedeep'
+import cloneDeep from 'lodash/cloneDeep.js'
 import { each, values, invariant } from './util'
 
 export function createVnodePath(vnode, parentPath = [], index) {

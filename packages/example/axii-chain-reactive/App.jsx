@@ -1,7 +1,6 @@
 /* @jsx createElement */
-import { createElement, render, reactive, ref, arrayComputed, vnodeComputed, propTypes, derive, refComputed, Fragment } from 'axii'
+import { createElement, render, objectComputed, reactive, ref, arrayComputed, vnodeComputed, propTypes, derive, refComputed, Fragment } from 'axii'
 import { makeLinkMatrix, isLineNotConflict, insertIntoOrderedArray, indexBy, getRandomLinks, getRandomViews, randomAddView, randomAddLink} from './util'
-import { objectComputed } from '../../controller-axii/src/reactive';
 /**
  * 1. 当个组件的 vnode 更新和 data
  * 2. 传入的 data 更新的时候组件也要更新。

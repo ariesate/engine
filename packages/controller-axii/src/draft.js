@@ -7,7 +7,7 @@ import {
   toRaw
 } from './reactive'
 import watch from './watch'
-import cloneDeep from 'lodash/clonedeep'
+import cloneDeep from 'lodash/cloneDeep.js'
 
 const draftDisplayValue = new WeakMap()
 const mutationTimeTable = new WeakMap()
