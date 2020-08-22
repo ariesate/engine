@@ -1,7 +1,7 @@
 const { ref, reactive, refComputed, objectComputed, arrayComputed } = require('../reactive/index.js')
 const serviceReactive = require('../serviceReactive').default
 
-describe('serviceReactive test', async() => {
+describe('serviceReactive test', () => {
 
   test('serviceReactive', async () => {
     const resValue = 11111

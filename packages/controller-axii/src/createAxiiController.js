@@ -50,7 +50,7 @@ import { withCurrentWorkingCnode } from './renderContext'
 import createChildrenProxy from './createChildrenProxy'
 import LayoutManager from './LayoutManager'
 import StyleManager from './StyleManager';
-import { isComputed, getComputation, collectComputed } from './reactive/effect';
+import { isComputed, getComputation, collectComputed, afterDigestion } from './reactive/effect';
 import { applyPatch, createDraft, finishDraft } from './produce';
 import { createCacheablePropsProxyFromState } from './callListener';
 
@@ -126,7 +126,7 @@ function createVirtualCnodeForComputedVnodeOrText(reactiveVnode, cnode, currentP
 
     // CAUTION 每次 watch 执行都会创建一个 computed，所以外部再调用的时候一定要使用 collectComputed 收集起来，再次调用前销毁上次的。
     type.startWatch = (cnode) => {
-      const [value, watchToken] = watch(() => {
+      const [value, watchToken] = watch(function watchReactiveVnode() {
         const toDisplay = isDraft(reactiveVnode) ? getDisplayValue(reactiveVnode) : reactiveVnode
         return toDisplay.value
       }, () => {
@@ -418,6 +418,11 @@ export default function createAxiiController() {
   let scheduler = null
   let ctree = null
 
+  const changedCnodes = []
+  function scheduleToRepaint() {
+    scheduler.collectChangedCnodes(changedCnodes.splice(0))
+  }
+
   return {
     renderer: {
       rootRender(cnode) {
@@ -427,7 +432,10 @@ export default function createAxiiController() {
       initialRender(cnode) {
         let result
         cnode.changeCallback = () => {
-          scheduler.collectChangedCnodes([cnode])
+          changedCnodes.push(cnode)
+          // 每个 cnode 变化都会把当前 cnode 进去，但是 afterDigestion 会合并回调，所以 scheduleToRepaint 只会在最后调用一次
+          // 所以我们的变化的方式是先 digest 完所有的数据，然后调用 callback ，开始 repaint 受影响的节点。
+          afterDigestion(scheduleToRepaint)
         }
 
         result = cnode.render()

@@ -157,17 +157,17 @@ export function destroyComputed(computed) {
 
 function applyComputation() {
   const { computation } = computationStack[computationStack.length - 1]
+  const isToken = computation.computed instanceof ComputedToken
   function watchAnyMutation(source) {
     track(toRaw(source), TrackOpTypes.ANY, ANY_KEY)
   }
 
   const nextValue = computation(watchAnyMutation)
-  if(!(computation.computed instanceof ComputedToken)) {
-
+  // 未来可能提供能力让 computed token 可以销毁自己。所以这里的 isToken 变量要在前面定义，否则到这里的时候 computation 已经被清理得差不多了
+  if(!isToken) {
     replace(computation.computed, nextValue)
   }
 }
-
 
 
 /**
@@ -333,6 +333,15 @@ function hasInnerComputed() {
   return computedRelation.get(computation) && computedRelation.get(computation).length
 }
 
+// 用来记录 digest 后要执行的回调，这些回调通常在 digest 过程中红产生，这样就可以让回调脱离 compute。
+// 回调里不能再触发 digest，不然可能出现循环
+let inDigestionCallback = false
+const digestionCallbacks = []
+export function afterDigestion(callback) {
+  if (!digestionCallbacks.includes(callback)) {
+    digestionCallbacks.push(callback)
+  }
+}
 
 const cachedComputations = []
 let inComputationDigestion = false
@@ -340,6 +349,7 @@ let inComputationDigestion = false
 let levelChangedComputations = []
 function digestComputations() {
   invariant(!inComputationDigestion, 'already in computation digestion')
+  invariant(!inDigestionCallback, 'in digestion callback loop, should not trigger digest')
   inComputationDigestion = true
   let computation
   while(computation = cachedComputations.shift()) {
@@ -354,17 +364,29 @@ function digestComputations() {
     })
   }
   inComputationDigestion = false
+  inDigestionCallback = true
+  let callback
+  while(callback = digestionCallbacks.shift()) {
+    callback()
+  }
+  inDigestionCallback = false
+}
+
+function isValidComputation(computation) {
+  return typeof computation === 'function' && computation.computed !== undefined && !computation.indeps !== undefined &&!computation.deleted
 }
 
 /**
- * TODO 可以通过一个分层算法来合并重复的 computation。
  * computation 有一个层级字段，表示当前 computed 到 source 的最长路经。
  * 我们把小层级的 computation 放到前面计算，大的放大后面，因为小层级计算的后可能会加入新的 computation，
  * 这时加入的 computation 就可能是和谋面的一样的，这时就能跳过了。
  */
 function scheduleToRun(computations) {
   computations.forEach(c => {
-    if (!shouldSkipComputation(c) && !cachedComputations.includes(c)) {
+    if (!isValidComputation(c)) {
+      debugger
+      console.error(`invalid computation`, c)
+    } else if (!shouldSkipComputation(c) && !cachedComputations.includes(c)) {
       insertIntoOrderedArray(cachedComputations, c, (a, b) => b.level < a.level)
     }
   })
@@ -417,11 +439,14 @@ export function resumeTracking() {
 }
 
 export function track(indep, type, key) {
-  // CAUTION 不能读自己，哪怕能达到稳定态也不行
+
   const frame = computationStack[computationStack.length -1]
+  // CAUTION 不能读自己，哪怕能达到稳定态也不行
   if (!shouldTrack || !frame || indep === toRaw(frame.computation.computed)) {
     return;
   }
+  // CAUTION 不能 track ComputedToken，如果有这种情况，很可能程序写错了
+  invariant(!(indep instanceof ComputedToken), 'cannot track computedToken')
   const payload = getFromMap(reactiveToPayloads, toRaw(indep), createPayload)
   const keyNode = getFromMap(payload.keys, key, () => createKeyNode(indep))
   frame.indeps.add(keyNode)
@@ -464,7 +489,9 @@ export function trigger(source, type, key, extraInfo) {
     // 如果触发了长度变化(add|delete)，那么还要触发监听了 length 或进行过遍历的 computed
     if (type === "add" /* ADD */ || type === "delete" /* DELETE */) {
       // length/ITERATE_KEY 都要，即使是数组，Object.keys 也是触发的 ITERATE_KEY。
-      computationsToRun.push(...getFromMap(keys, 'length', () => createKeyNode(source)).computations)
+      if (Array.isArray(source)) {
+        computationsToRun.push(...getFromMap(keys, 'length', () => createKeyNode(source)).computations)
+      }
       computationsToRun.push(...getFromMap(keys, ITERATE_KEY, () => createKeyNode(source)).computations)
     }
   }
@@ -657,6 +684,7 @@ export function collectComputed(operation, includeInner = false) {
   try{
     operation()
   } catch(e) {
+    debugger
     console.error(e)
   } finally {
     computedCollectFrame.pop()

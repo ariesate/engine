@@ -61,10 +61,6 @@ export function partialMatch(inputDomNodes, inputVnode) {
         }
       }
 
-      // filter comment node
-      if (!currentDomNode.childNodes.filter) {
-        // console.log(currentDomNode.childNodes)
-      }
       return [...currentDomNode.childNodes].filter(node => node.nodeType !== 8)
     }
 
