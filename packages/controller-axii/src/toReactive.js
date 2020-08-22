@@ -10,7 +10,7 @@ function getPureRaw(obj) {
 }
 
 /**
- * 用来给一下副作用对象使用，例如 title 等。
+ * 用来给一下副作用对象使用，例如 window.title 等。
  */
 export default function toReactive(obj) {
   if (objToReactiveMap.get(obj)) return objToReactiveMap.get(obj)

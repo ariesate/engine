@@ -256,4 +256,22 @@ describe('repaint key diff', () => {
     expect(diffResult.patch[0].children[0].children[1]).toMatchObject(secondKeySpan)
 
   })
+
+  // test('diff with null vnode', () => {
+  //   let isFirst = true
+  //   const App = {
+  //     render() {
+  //       if (isFirst) {
+  //         return [<span key={1}>1</span>, <span key={2}>2</span>, null]
+  //       } else {
+  //         return [<span key={1}>1</span>, null, <span key={2}>2</span>]
+  //       }
+  //     }
+  //   }
+  //
+  //   const ctree = painter.createCnode(<App/>)
+  //   painter.paint(ctree)
+  //   isFirst = false
+  //   const diffResult = painter.repaint(ctree)
+  // })
 })

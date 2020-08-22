@@ -45,6 +45,7 @@ export function partialMatch(inputDomNodes, inputVnode) {
 
     } else {
       // compare node name
+      if (!currentDomNode) debugger
       if (vnode.type.toUpperCase() !== currentDomNode.nodeName) throw new Error(`type not match : ${vnode.type.toUpperCase()} | ${currentDomNode.nodeName}`)
       // compare className
       const classNames = vnode.className ? vnode.className.split(/\s+/) : []

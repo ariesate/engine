@@ -19,7 +19,7 @@ function defaultDigestObjectLike(obj) {
  * invoke : 用来真实调用 dom 上 listener 的函数。
  * receiveRef: 获取真实的节点 ref。
  * hijackElement: 在创建真实节点前，将自定义 attribute 翻译成 element 可接受的。
- * rootElement: 根节点。
+ * rootElement: 根节点。                                                                
  */
 export default function createDOMView({ invoke, receiveRef, hijackElement = x => x }, rootDomElement, isComponentVnode = defaultIsComponentVnode, digestObjectLike = defaultDigestObjectLike) {
   const refToVnode = new Map()

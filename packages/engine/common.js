@@ -130,8 +130,9 @@ export function createResolveElement(first) {
       if (!nextCnode) {
         throw new Error(`unknown vnode type ${nextIndex}`)
       }
-      if (nextCnode.patch.length > 0) {
-        result = resolveFirstOrLastElement(nextCnode.patch[nextCnode.patch.length - 1], [], nextCnode, isComponentVnode)
+      const nextVnodes = nextCnode.patch || nextCnode.ret
+      if (nextVnodes.length > 0) {
+        result = resolveFirstOrLastElement(nextVnodes[nextVnodes.length - 1], [], nextCnode, isComponentVnode)
       }
     }
     // type: null 的情况

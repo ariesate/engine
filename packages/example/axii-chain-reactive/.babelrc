@@ -6,6 +6,7 @@
       "pragmaFrag": "Fragment",
       "throwIfNamespace": false
     }],
-    ["@babel/plugin-proposal-class-properties"]
+    ["@babel/plugin-proposal-class-properties"],
+    ["@babel/plugin-proposal-export-default-from"]
   ]
 }

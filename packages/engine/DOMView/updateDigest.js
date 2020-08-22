@@ -13,13 +13,13 @@ import {
   PATCH_ACTION_REMOVE,
   PATCH_ACTION_TO_MOVE,
 } from '../constant'
-import { invariant } from '../util';
+import Fragment from '../Fragment'
 
 function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, parentPath, cnode, view) {
   nextPatch.push(p)
   if (typeof p.type === 'object') return
 
-  if (p.type === Array) {
+  if (p.type === Array || p.type === Fragment) {
     /* eslint-disable no-use-before-define */
     p.children = handlePatchVnodeChildren(p.children, parentNode, prevSiblingNode, createVnodePath(p, parentPath), cnode, view)
     /* eslint-enable no-use-before-define */
@@ -35,6 +35,8 @@ function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, parent
       /* eslint-enable no-use-before-define */
     }
   }
+  // CAUTION 理论上剩下的都是 ComponentVnode 了，不需要进一步对比它的 children。
+
 }
 
 function handleRemovePatchNode(p, parentPath, toDestroy, view) {

@@ -220,6 +220,10 @@ function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, currentPat
  * last patch to current render result. In this circumstance, the returned patch represent
  * the difference between current result and the result before last patch.
  * With this feature, users can skip real dom manipulation for request like performance concern, etc..
+ *
+ * We only compare vnode.type & vnode.key, prop change is not in consideration.
+ * If consumer need to compare props, should do it self with toRemain prop in result.
+ * See Controller Axii for example.
  */
 function createPatch(lastVnodes, vnodes, parentPath, cnode, nextTransferKeyedVnodes, isComponentVnode, createCnode) {
   const toRemain = {}
@@ -242,7 +246,7 @@ function createPatch(lastVnodes, vnodes, parentPath, cnode, nextTransferKeyedVno
 
     const lastVnode = lastVnodes[lastVnodesIndex]
     const vnode = vnodes[vnodesIndex]
-
+    if (vnode === undefined) throw new Error('cannot use undefined as vnode, use null instead.')
     // Handle transferKey first. Only component vnode may have transferKey.
     if (lastVnode !== undefined &&
       isComponentVnode(lastVnode) &&
@@ -372,7 +376,7 @@ function diff(lastVnodesOrPatch, vnodes, parentPath, cnode, nextTransferKeyedVno
   const lastNext = { ...cnode.next }
   const toInitialize = {}
   const toRemain = {}
-  // TODO
+
   const toUpdate = {}
   const lastVnodes = lastVnodesOrPatch.filter(lastVnode => lastVnode.action === undefined || lastVnode.action.type !== PATCH_ACTION_MOVE_FROM)
 
@@ -401,6 +405,7 @@ function repaint(cnode, renderer, isComponentVnode, createCnode) {
   const renderResult = render(cnode, cnode.parent)
   // return false to suspense update
   if (renderResult === false) return {}
+
 
   const { transferKeyedVnodes, ret } = prepareRetForAttach(renderResult, cnode, isComponentVnode, createCnode)
   const diffResult = diff(lastPatch, ret, [], cnode, transferKeyedVnodes, isComponentVnode, createCnode)

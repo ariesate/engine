@@ -1,4 +1,5 @@
-import { vnodeComputed, createElement } from '../index';
+/** @jsx createElement */
+import { vnodeComputed, createElement, Fragment } from '../index';
 import $ from 'jquery'
 
 const { ref, reactive, refComputed, objectComputed, arrayComputed, delegateLeaf } = require('../reactive/index.js')
@@ -157,8 +158,151 @@ describe('basic render', () => {
     expect(person.secondName).toBe('reset')
   })
 
-  test('children proxy', () => {
+  // test('children proxy', () => {
     // 读取了 children 的情况，最复杂。
+  // })
+})
+
+describe('complex vnodeComputed', () => {
+
+  // TODO vnodeComputed 返回 fragment 之后，就不更新视图了！！！！
+  test('single vnodeComputed', () => {
+    const base = ref(1)
+    let rendered = 0
+    let computedCalled = 0
+    function App() {
+      rendered +=1
+      return <div>
+        {vnodeComputed(() => {
+          computedCalled += 1
+          return (
+            <>
+              {base.value === 1 ? <span>1</span> : <div>2</div>}
+            </>
+          )
+        })}
+      </div>
+    }
+
+    const root = document.createElement('div')
+    render(<App />, root)
+
+    expect(rendered).toBe(1)
+    expect(computedCalled).toBe(1)
+    expect(root.children[0]).partialMatch(
+      <div>
+        <span>1</span>
+      </div>
+    )
+
+    base.value = 2
+    expect(rendered).toBe(1)
+    expect(computedCalled).toBe(2)
+    expect(root.children[0]).partialMatch(
+      <div>
+        <div>2</div>
+      </div>
+    )
   })
 
+  test('vnodeComputed should not prevent inner component remain', () => {
+
+    let childRendered = 0
+    function Child() {
+      childRendered += 1
+      return <div>child</div>
+    }
+
+    const base = ref(1)
+    let rendered = 0
+    function App() {
+      rendered +=1
+      return <div>
+        {vnodeComputed(() => {
+          return (
+            <div>
+              <Child />
+              {base.value === 1? <span>1</span> : <div>2</div>}
+            </div>
+          )
+        })}
+      </div>
+    }
+
+    const root = document.createElement('div')
+    render(<App />, root)
+
+    expect(rendered).toBe(1)
+    expect(childRendered).toBe(1)
+    expect(root.children[0]).partialMatch(
+      <div>
+        <div>
+          <div>child</div>
+          <span>1</span>
+        </div>
+      </div>
+    )
+
+    base.value = 2
+    expect(rendered).toBe(1)
+    expect(childRendered).toBe(1)
+    expect(root.children[0]).partialMatch(
+      <div>
+        <div>
+          <div>child</div>
+          <div>2</div>
+        </div>
+      </div>
+    )
+  })
+
+  test('side effect computed should be destroyed', () => {
+    const base = ref(1)
+    let rendered = 0
+    let innerComputedCalled = 0
+    function App() {
+      rendered +=1
+      return <div>
+        {vnodeComputed(() => {
+          const innerComputed = refComputed(() => {
+            innerComputedCalled += 1
+            return base.value + 1
+          })
+          return <span>{innerComputed}</span>
+        })}
+      </div>
+    }
+
+    const root = document.createElement('div')
+    render(<App />, root)
+
+    expect(rendered).toBe(1)
+    expect(innerComputedCalled).toBe(1)
+    expect(root.children[0]).partialMatch(
+      <div>
+        <span>2</span>
+      </div>
+    )
+
+    base.value = 2
+    expect(rendered).toBe(1)
+    expect(innerComputedCalled).toBe(2)
+    expect(root.children[0]).partialMatch(
+      <div>
+        <span>3</span>
+      </div>
+    )
+
+    base.value = 3
+    expect(rendered).toBe(1)
+    expect(innerComputedCalled).toBe(3)
+    expect(root.children[0]).partialMatch(
+      <div>
+        <span>4</span>
+      </div>
+    )
+  })
+
+  // TODO vnodeComputed 下面又有 reactive prop，多次渲染也要正确响应
 })
+

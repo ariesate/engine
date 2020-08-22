@@ -174,6 +174,27 @@ describe('basic reactive', () => {
     base2.value = 'jom'
     expect(computed.value).toBe('jom-no')
   })
+
+  test('computed inside computed should be destroyed', () => {
+    const base1 = ref(1)
+    const base2 = ref(1)
+    let innerRun = 0
+    const computed1 = refComputed(( ) => {
+      return {
+        num : base1.value+1,
+        inner: refComputed(() => {
+          innerRun ++
+          return base2.value + 1
+        })
+      }
+    })
+
+    expect(innerRun).toBe(1)
+    base1.value += 1
+    expect(innerRun).toBe(2)
+    base2.value += 1
+    expect(innerRun).toBe(3)
+  })
 })
 
 

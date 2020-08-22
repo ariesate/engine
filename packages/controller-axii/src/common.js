@@ -3,7 +3,7 @@ import cloneDeep from 'lodash/clonedeep'
 import { each, values, invariant } from './util'
 
 export function createVnodePath(vnode, parentPath = [], index) {
-  return parentPath.concat(vnode ? vnode.key : `index@${index}`)
+  return parentPath.concat((vnode && vnode.key) ? vnode.key : `index@${index}`)
 }
 
 export function walkVnodes(vnodes, handler, parentPath = []) {

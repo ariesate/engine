@@ -105,8 +105,19 @@ export function createComputed(computation, type) {
 
   // 执行 compute 的时候会 track 依赖。
   compute(computation)
-
+  applyCollectComputed(computed)
   return computed
+}
+
+function applyCollectComputed(computed) {
+  // 1. 看有没有收集的需要
+  if (!computedCollectFrame.length) return
+
+  const collectFrame = computedCollectFrame[computedCollectFrame.length - 1]
+  // 2. 如果不是第一层，并且又没有标记 includeInner
+  if (computationStack.length && !collectFrame.includeInner ) return
+  // 3. 是第一层，或者不是第一层但标记了 includeInner ，那么收集一下
+  collectFrame.computed.push(computed)
 }
 
 export function destroyComputed(computed) {
@@ -128,8 +139,15 @@ export function destroyComputed(computed) {
       if (computation.levelParent) {
         computation.levelParent.levelChildren.delete(computation)
       }
+
+      // 最后标记一下，可以用于调试等
+      computation.deleted = true
     }
+    reactiveToPayloads.delete(toRaw(computed))
+  } else {
+    console.warn('object is not computed or already destroyed')
   }
+
 }
 
 
@@ -151,23 +169,30 @@ function applyComputation() {
 }
 
 
+
 /**
  * compute 的执行时机：
  * 1. createComputed。第一次建立联系，此时可能出现 computed 中再创建 computed，computationStack 中已有值。
  * 2. digestComputations。compute 中再触发的 computation 只会加入到 digest 尾部。因此 computationStack 只会有一个。
  */
-
-
 function compute(computation) {
   invariant(!computationStack.find(({computation: c}) => c === computation ), 'recursive computation detected')
   try {
     computationStack.push({computation, indeps: new Set()});
+    // computed 里面可以在创建 computed，我们在重新计算之前要清理一下。
+    destroyInnerComputed()
     // 会从 computationStack 中读当前的 frame，所以不用传值。
     // 到 compute 的时候一定已经在一个 computations running 周期里了。里面的再触发的加到了队列末尾
     applyComputation()
-    patchComputation()
-    // computed
-    patchComputedRelation()
+    const indepsChanged = patchComputation()
+    // 可能创建子的 computed，这个关系记录一下
+    updateComputedRelation()
+
+    // 这里做这个判断可以优化性能。
+    if (indepsChanged || hasInnerComputed(computation)) {
+      // 可以更新 level 了，我们的 compute 也是洋葱模式，最里层的 computed 先计算。
+      updateLevelParent(computation)
+    }
   }
   catch(e) {
     console.error(e)
@@ -182,13 +207,13 @@ function patchComputation() {
   const { computation, indeps: nextIndeps } = computationStack[computationStack.length - 1]
   const { indeps: prevIndeps } =  computation
 
-  let depsChanged = false
+  let indepsChanged = false
   computation.indeps = nextIndeps
   computation.indeps.forEach(keyNode => {
     if (!prevIndeps.has(keyNode)) {
       // 新增的
       keyNode.computations.add(computation)
-      depsChanged = true
+      indepsChanged = true
     } else {
       // 原来就有的，这次还有
       prevIndeps.delete(keyNode)
@@ -196,12 +221,10 @@ function patchComputation() {
   })
   // 最后 prevIndeps 里面还剩下的就是要删除的
   prevIndeps.forEach(toRemoveKeyNode => {
-    depsChanged = true
     toRemoveKeyNode.computations.delete(computation)
+    indepsChanged = true
   })
-
-  // 重新计算一下 levelParent。如果发生了变化，会链式通知后面的 computation 重新计算
-  if (depsChanged) updateLevelParent(computation)
+  return indepsChanged
 }
 
 function updateLevelParent(computation, nextParentLevel) {
@@ -223,7 +246,20 @@ function updateLevelParent(computation, nextParentLevel) {
     }
   })
 
-  // 所有的 indeps 都是 reactive，那么 levelParent 就不存在
+
+  // 还要看所有的内部 computed 的高度
+  const innerComputations = computedRelation.get(computation)
+  if (innerComputations) {
+    innerComputations.forEach(innerComputation => {
+      if (innerComputation.level && innerComputation.level > maxParentLevel) {
+        maxParentLevel = innerComputation.level
+        levelParent = innerComputation
+      }
+    })
+  }
+
+
+  // 所有的 indeps 都是 reactive，那么 levelParent 就不存在，所以这里有个判断。
   if (levelParent) {
     if (computation.levelParent !== levelParent) {
       // 不要忘了从原来的地方删掉自己
@@ -256,31 +292,45 @@ function getComputationFromKeyNode(keyNode) {
   }
 }
 
-
 /**
  * 因为我们的 computed 中允许再建立 computed。
  * 这意味每次 computed 重新执行的时候都会新建，所以必须要清理掉上次的子 computed。否则会造成内存泄露。
  */
-function patchComputedRelation() {
+function destroyInnerComputed() {
   const { computation } = computationStack[computationStack.length - 1]
   // 先清理掉依赖于当前项 computed
   let current
-  const computationToClear = [computation]
-  while(current = computationToClear.shift()) {
-    const childComputations = computedRelation.get(current)
-    if (childComputations) {
-      computationToClear.push(...childComputations)
-      destroyComputed(computation.computed)
+  const computationToClear = computedRelation.get(computation)
+  if (computationToClear) {
+    const computedToDestroy = []
+    while(current = computationToClear.shift()) {
+      // 销毁
+      computedToDestroy.push(current.computed)
+      // 再把更里面的也放进去等着销毁
+      computationToClear.push(...(computedRelation.get(current) || []))
     }
+    computedToDestroy.forEach(computed => {
+      destroyComputed(computed)
+    })
   }
+}
 
-  // 重新建立当前和 parent 的关系
-  const parentFrame = computationStack[computationStack.length - 2]
-  if (parentFrame) {
-    let children = computedRelation.get(parentFrame)
-    if (!children) computedRelation.set(parentFrame, (children = []))
-    if (!children.includes(computation)) children.push(computation)
+function updateComputedRelation() {
+  // 建立自己和 parent 的关系。 <2 说明没有自己不是在别的 computed 中创建的。
+  if (computationStack.length < 2) return
+
+  const { computation } = computationStack[computationStack.length - 1]
+  const { computation: outerComputation } = computationStack[computationStack.length - 2]
+  if (outerComputation) {
+    let inner = computedRelation.get(outerComputation)
+    if (!inner) computedRelation.set(outerComputation, (inner = []))
+    if (!inner.includes(computation)) inner.push(computation)
   }
+}
+
+function hasInnerComputed() {
+  const { computation } = computationStack[computationStack.length - 1]
+  return computedRelation.get(computation) && computedRelation.get(computation).length
 }
 
 
@@ -392,33 +442,38 @@ export function trigger(source, type, key, extraInfo) {
     return
   }
 
+  // 不要直接使用 scheduleToRun, 因为会直接执行。
+  // 在一个对象的 trigger 中，依赖的 computed 也会有层级关系。因此这里要一起插进去，利用
+  //系统的排序能力保证顺序是正确的
+  const computationsToRun = []
   const { keys } = getFromMap(reactiveToPayloads, toRaw(source), createPayload)
   // 剩下的都是真正改变过的
-
   if (type === TriggerOpTypes.CLEAR /* CLEAR */) {
     // collection being cleared, trigger all effects for target
     // 触发所有依赖于此 indep 的 computation
     keys.forEach(({ computations }) => {
-      scheduleToRun(computations)
+      computationsToRun.push(...computations)
     });
   }
   else {
     // SET | ADD | DELETE 触发依赖于相应的 key 的 computation
     if (key) {
       const { computations } = getFromMap(keys, key, () => createKeyNode(source))
-      scheduleToRun(computations)
+      computationsToRun.push(...computations)
     }
     // 如果触发了长度变化(add|delete)，那么还要触发监听了 length 或进行过遍历的 computed
     if (type === "add" /* ADD */ || type === "delete" /* DELETE */) {
-      const iterationKey = Array.isArray(source) ? 'length' : ITERATE_KEY;
-      const { computations} = getFromMap(keys, iterationKey, () => createKeyNode(source))
-      scheduleToRun(computations);
+      // length/ITERATE_KEY 都要，即使是数组，Object.keys 也是触发的 ITERATE_KEY。
+      computationsToRun.push(...getFromMap(keys, 'length', () => createKeyNode(source)).computations)
+      computationsToRun.push(...getFromMap(keys, ITERATE_KEY, () => createKeyNode(source)).computations)
     }
   }
 
   // 把 any 取出来
   const { computations} = getFromMap(keys, ANY_KEY, () => createKeyNode(source))
-  scheduleToRun(computations)
+  computationsToRun.push(...computations)
+
+  scheduleToRun(computationsToRun)
 }
 
 /****************************************
@@ -495,9 +550,6 @@ export function replace(source, nextSourceValue) {
   } else if (Array.isArray(source)){
     source.splice(0, source.length, ...nextSourceValue)
   } else {
-    if (!nextSourceValue) {
-      debugger
-    }
     const nextKeys = Object.keys(nextSourceValue)
     const keysToDelete = Object.keys(source).filter(k => !nextKeys.includes(k))
     keysToDelete.forEach(k => delete source[k])
@@ -585,4 +637,30 @@ export function findDepsFromIndep(indep, candidatesIndexByName) {
   })
 
   return matchedCandidates
+}
+
+export function getComputation(computed) {
+  const payload = getFromMap(reactiveToPayloads, toRaw(computed))
+  return payload ? payload.computation : undefined
+}
+
+/**
+ * 如果用户想要手机某个操作中的创建的 computed。
+ * 可以通过第二个参数指定是否要手机 computed 里面再创建的。
+ * 注意如果在 operation 中又出现了 collectComputed，那么上层的 frame 收集不到里面的。
+ */
+const computedCollectFrame = []
+export function collectComputed(operation, includeInner = false) {
+  const frame = { includeInner, computed: []}
+  computedCollectFrame.push(frame)
+  // 执行
+  try{
+    operation()
+  } catch(e) {
+    console.error(e)
+  } finally {
+    computedCollectFrame.pop()
+  }
+
+  return frame.computed
 }

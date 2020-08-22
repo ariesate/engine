@@ -23,10 +23,7 @@ function createGetter(isReadonly = false, shallow = false) {
     if (isRef(res)) {
       return res.value
     }
-    //TODO 叶子节点取到的不是 ref 怎么办？在组件里面的心智有问题。
-    // 默认叶子节点应该要变成 ref!!! 因为即使组件是 stateless，也要利用 ref 才能享受自动变化！！！
-    // 对于真的不会变的情况，可以使用一个 fakeReactive 来模拟 .value 的形式，提升性能。
-    // 设计的时候，要考虑整个叶子节点被 delete 或者 set 的情况。考虑是不是不允许发生。
+
     track(target, TrackOpTypes.GET, key)
     return isObject(res)
       ? reactive(res)

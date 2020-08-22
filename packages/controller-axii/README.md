@@ -43,3 +43,48 @@ draft 的本质是什么？？？
 
  - 在 babel 中需要将 ../engine 设为 include
  - 使用 testing-library/dom-testing-library 来做 dom 对比
+ 
+# Performance Guideline
+
+建立尽量精确的依赖。不要把对列表数据的预处理写到一个统一的 computed 中，
+这样会导致每次新增的时候，都重新预处理全部的数据，应该把每个数据的预处理的结果写成一个 computed。
+这样数据在进行调整时，能够只根据依赖进行计算。
+
+
+=== computed 是更具一个列表来动态产生的，如何优化，不重复为其中的元素产生 computed 的过程？？
+computed((memo) => {
+    xxx = memo(computed(() => {
+        // 这个 computed 不会重复创建。
+    }))
+})
+
+问题产生的本质是：
+1. 正常的情况，有哪些 computed 是确定的，这时 computed 的变化就是依赖于 computation 中的 indep。
+2. 现在的情况：为已有的列表里的每一项创建 computed。因为是列表，当列表新增了的时候，computed 也要创建。
+这是个连续的过程，写成 computed 的话可以保持一致性，但会有重复创建 computed 的情况。
+
+3. 如果把列表的新增，和创建 computed 的过程都手动维持，那么可能出现数据不一致的情况。需要一个更好的性能优化方案。保持数据的一致性优先。
+
+# AXII 的官网设计
+
+ - 完全无样式的简介
+ - 好看的字体
+ - 非常简短的教程和效果直接放在首页。
+   - 数据如何放在视图上，如何自动关联(直接操作数据即可)
+     - ref 和 各种 computed ？
+     - 动态的结构？
+   - 组件的获得数据引用后直接修改的实现？上层可以阻止的实现。（这里就要将组件和和上层逻辑的区别了）？？？
+   - 组件系统要单独讲？
+     - 组件的 layout system 分离？
+       - layout manager
+       - scenario
+     - feature based 体系？
+     - listener 自动实现 controlled 和 uncontrolled
+   - 数据的高级应用 
+     - draft
+     - toReactive
+     - do not use watch/ make everything reactive
+     - use with rxjs
+     - 性能提升
+       - batchOperation
+       - debounceComputed
