@@ -106,11 +106,11 @@ export { default as useImperativeHandle } from './useImperativeHandle'
 export { default as createRef } from './createRef'
 export { default as watch } from './watch'
 export { StyleEnum, StyleRule } from './StyleManager'
-export { default as createChildrenProxy } from './createChildrenProxy'
+export { default as createFlatChildrenProxy } from './createFlatChildrenProxy'
 export { isComponentVnode } from './createAxiiController'
 export { invariant } from './util'
 export { default as createComponent} from './component/createComponent'
-export { flatChildren } from './component/utils'
+export { flattenChildren } from './component/utils'
 export { default as Scenario, createRange } from './Scenario'
 
 export function render(vnode, domElement, ...controllerArgv) {

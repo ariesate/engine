@@ -43,11 +43,9 @@ import {
   isRef,
   destroyComputed
 } from './reactive';
-import { getMutationRunner } from './derive'
 import { getDisplayValue, isDraft } from './draft'
 import watch from './watch'
 import { withCurrentWorkingCnode } from './renderContext'
-import createChildrenProxy from './createChildrenProxy'
 import LayoutManager from './LayoutManager'
 import StyleManager from './StyleManager';
 import { isComputed, getComputation, collectComputed, afterDigestion } from './reactive/effect';
@@ -384,23 +382,10 @@ class ComponentNode {
   }
   cnodeRender() {
     // 开始处理 props
-    const injectedProps = createInjectedProps(this)
-    const hasChildren = this.props.children.length !== 0
-    injectedProps.children = hasChildren ?
-      createChildrenProxy(this.props.children) :
-      this.props.children
-
-    let result = this.type(injectedProps, this.ref)
-
-    // 如果 render 完发现 children 没被动过，返回的结果里要替换回来。免得 painter 去渲染的时候读了 proxy。
-    if (hasChildren && !injectedProps.children.touched) {
-      // 将 result 中的 children proxy 替换回原本的 children
-      result = replaceChildrenProxy(result,
-        injectedProps.children,
-        this.props.children
-      )
-    }
-    return result
+    // CAUTION 注意，这里不再自动为用户创建 flatten children proxy
+    // 和 react 保持一样，用户需要手动去创建。
+    // 同时当用户触碰 children 的时候，应该自己包裹在 computed 里面监听 children 的变化。 和其他 props 没有区别。
+    return this.type(createInjectedProps(this), this.ref)
   }
   virtualCnodeRender() {
     const result = this.type()

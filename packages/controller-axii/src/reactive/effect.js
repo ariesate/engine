@@ -87,6 +87,7 @@ class ComputedToken {}
  * TODO 在 dev 环境下检测是否有嵌套的 reactive
  *
  * TODO computed 要限制只能用 computation 修改，不能用户修改。
+ *
  */
 export function createComputed(computation, type) {
   invariant(typeof computation === 'function', 'computation must be a function')
@@ -384,7 +385,6 @@ function isValidComputation(computation) {
 function scheduleToRun(computations) {
   computations.forEach(c => {
     if (!isValidComputation(c)) {
-      debugger
       console.error(`invalid computation`, c)
     } else if (!shouldSkipComputation(c) && !cachedComputations.includes(c)) {
       insertIntoOrderedArray(cachedComputations, c, (a, b) => b.level < a.level)
@@ -405,15 +405,24 @@ function scheduleToRun(computations) {
  * 所以只要中途读了 computed，就直接应用所有计算。
  */
 let debounced = false
-export function debounceComputed(operations) {
+export function debounceComputed(operation) {
   // 已经在 debounce 中了，直接执行就行
-  if (debounced) return operations()
+  if (debounced) return operation()
 
   debounced = true
   // TODO 如果遇到了读 computed 就要去掉 debounced，直接开始执行
-  operations()
-  debounced = false
-  digestComputations()
+  let error
+  try {
+    operation()
+  } catch( e ) {
+    error = e
+  } finally {
+    debounced = false
+  }
+
+  if (error) throw error
+
+  if (!inComputationDigestion) digestComputations()
 }
 
 /****************************************
@@ -680,15 +689,18 @@ const computedCollectFrame = []
 export function collectComputed(operation, includeInner = false) {
   const frame = { includeInner, computed: []}
   computedCollectFrame.push(frame)
+
+  let error
   // 执行
   try{
     operation()
   } catch(e) {
-    debugger
-    console.error(e)
+    error = e
   } finally {
     computedCollectFrame.pop()
   }
+
+  if (error) throw error
 
   return frame.computed
 }

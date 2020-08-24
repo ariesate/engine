@@ -1,6 +1,6 @@
 import { reactive, toRaw, isRef } from './reactive'
 import { TrackOpTypes, TriggerOpTypes } from './operations'
-import { track, trigger, ITERATE_KEY } from './effect'
+import { track, trigger, ITERATE_KEY, debounceComputed } from './effect'
 import { isObject, hasOwn, isSymbol, hasChanged } from './util'
 
 const builtInSymbols = new Set(
@@ -11,7 +11,20 @@ const builtInSymbols = new Set(
 
 const get = createGetter()
 
-/*
+const debouncedArrayMethods = ['unshift', 'push', 'splice']
+
+function createDebouncedMethod(method) {
+  return function(...argv) {
+    let result
+    debounceComputed(() => {
+      result = method.call(this, ...argv)
+    })
+    return result
+  }
+}
+
+/**
+ * 数组的 unshift/push/splice 都可能引起多次 add 和 set，需要 debounce 一下？否则可能引起 computed 无意义的多次变化。
  */
 function createGetter(isReadonly = false, shallow = false) {
   return function get(target, key, receiver) {
@@ -22,6 +35,11 @@ function createGetter(isReadonly = false, shallow = false) {
     //TODO 如果是 ref 为什么要直接 return res.value????
     if (isRef(res)) {
       return res.value
+    }
+
+    // 如果是数组需要 debounced 的操作
+    if (Array.isArray(target) && debouncedArrayMethods.includes(key)) {
+      return createDebouncedMethod(res)
     }
 
     track(target, TrackOpTypes.GET, key)

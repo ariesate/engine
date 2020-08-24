@@ -1,6 +1,6 @@
 import { normalizeLeaf } from '@ariesate/are/createElement'
 import VNode from '@ariesate/are/VNode'
-import createChildrenProxy from '../createChildrenProxy'
+import createFlatChildrenProxy from '../createFlatChildrenProxy'
 import { isComponentVnode } from '../createAxiiController'
 import { invariant, mapValues } from '../util'
 import { isRef } from '../reactive'
@@ -299,8 +299,8 @@ export function createDefaultMatch(featurePropsTypes) {
   }
 }
 
-export function flatChildren(children) {
-  return createChildrenProxy(children)
+export function flattenChildren(children) {
+  return createFlatChildrenProxy(children)
 }
 
 export function packChildren(name, children) {

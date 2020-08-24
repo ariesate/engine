@@ -1,14 +1,21 @@
-import { hasOwn } from './reactive/util';
 import { isRef } from './reactive';
 
 /**
  * 对 children 的使用一定在 vnodeComputed 或者其他 computed 里面。
+ *
+ * React children 的遍历规则：
+ * 1. 永远不对 Fragment 展开
+ * 2. 默认不对 array 进行展开
+ * 3. 如果使用 React.Children.toArray 的话，会对children 中的数组递归展开。
  */
 
 function getChildrenFromArrayType(vnode) {
   if (isRef(vnode)) {
     return Array.isArray(vnode.value) ? vnode.value : undefined
   }
+  // 因为 vnodeComputed 的节点阻断了 normalizeChildren 的过程，我们又不愿意在 vnodeComputed 里面去处理，
+  // 而是希望保持数组原貌，所以这里来做判断兼容。
+  if (Array.isArray(vnode)) return vnode
 
   return vnode.type === Array ? vnode.children : undefined
 }
@@ -142,8 +149,8 @@ const mutableInstrumentations = {
   }
 }
 
-export default function createChildrenProxy(children) {
-  // 定义的 iterator 会 flatten children ，也会去展开 ref。
+export default function createFlatChildrenProxy(children) {
+  // 定义的 iterator 会 flatten children ，也会去展开 vnodeComputed。
   // 如果完全没动过，那么就要给个标记。外面会将 proxy 替换会原本的 children。
   let touched = false
   return new Proxy(children, {
