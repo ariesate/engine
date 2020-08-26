@@ -1,5 +1,6 @@
 import { walkRawVnodes } from './common';
 import $ from 'jquery'
+import initialDigest  from './DOMView/initialDigest';
 
 export function match() {
   // TODO
@@ -68,6 +69,16 @@ export function partialMatch(inputDomNodes, inputVnode) {
 }
 
 export function stringifyVnodes(vnodes, changeLine) {
+
+}
+
+export function createDOMFromVnode(vnodes) {
+  // 伪造 cnode
+  const cnode = {
+    ret: vnodes
+  }
+
+
 
 }
 

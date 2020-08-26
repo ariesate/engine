@@ -437,8 +437,6 @@ export default function createAxiiController() {
             }
           }
 
-          // CAUTION 直接在这里处理并生成 Style，不能再 digest 之后，否则会出现闪动。
-          styleManager.add(cnode)
         }
 
         /**
@@ -481,7 +479,8 @@ export default function createAxiiController() {
         return { toPaint: toInitialize, toDispose: toDestroy, toRepaint }
       },
       unit: (sessionName, unitName, cnode, startUnit) => {
-        if (unitName === UNIT_INITIAL_DIGEST) styleManager.digest(cnode)
+        // TODO 是否要提前生成 Style，不能再 digest 之后，否则会出现闪动？
+        if (unitName === UNIT_INITIAL_DIGEST && cnode.Style) styleManager.digest(Style)
 
         // 第一渲染，执行一下 willMount 的生命周期
         if (unitName === UNIT_PAINT) cnode.willMount && cnode.willMount()

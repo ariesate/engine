@@ -111,7 +111,7 @@ export { isComponentVnode } from './createAxiiController'
 export { invariant } from './util'
 export { default as createComponent} from './component/createComponent'
 export { flattenChildren } from './component/utils'
-export { default as Scenario, createRange } from './Scenario'
+export { default as Scenario, createRange, matrixMatch } from './Scenario'
 
 export function render(vnode, domElement, ...controllerArgv) {
   const controller = createAxiiController(...controllerArgv)

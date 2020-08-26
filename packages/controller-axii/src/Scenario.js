@@ -2,12 +2,12 @@ import { invariant } from './util';
 
 /**
  * 用法
- *
  * this.ruleName().ruleName2().xxxValue()
+ * 见 AXII component pattern。
  */
 
 export default class Scenario {
-  constructor(rules, values) {
+  constructor(index, values) {
     // 获取指的函数
     Object.keys(values).forEach((name) => {
       this[name] = (offset) => {
@@ -16,7 +16,7 @@ export default class Scenario {
     })
 
     this.rules = {}
-    Object.entries(rules).forEach(([ruleName, ruleValues]) => {
+    Object.entries(index).forEach(([ruleName, ruleValues]) => {
       invariant(!Object.keys(values).some(({ name }) => name === ruleName), `${ruleName} is a value name` )
       this.rules[ruleName] = undefined
       if (typeof ruleValues === 'object') {
@@ -43,4 +43,16 @@ export function createRange(values, baseIndex) {
     const range = [0, values.length -1]
     return values[index < range[0] ? 0 : (index > range[1] ? range[1] : index)]
   }
+}
+
+export function matrixMatch(conditionValues, matrix) {
+  const matchedRule = matrix.find((thisConditionValues) => {
+    return conditionValues.every((conditionValue, i) => {
+      return thisConditionValues[i] === conditionValue
+    })
+  })
+  // 必须有默认值。
+
+  invariant(matchedRule, 'rule not exist')
+  return matchedRule[matchedRule.length - 1]
 }

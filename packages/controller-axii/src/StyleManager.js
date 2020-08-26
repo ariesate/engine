@@ -32,7 +32,25 @@ class StyleRoot {
   }
 }
 
-
+/**
+ * 创建一个 proxy 用来记录用户所有的 style 规则。
+ * 这个 proxy 会递归的去创建，把路径上的信息都记录下来，例如：
+ * style.selector1.selector2 实际上创建了 selector1 selector2 这li两个 proxy。
+ * style 是 StyleRoot 类型，最终信息都记在了 styleRoot 上。
+ *
+ * selector 可以写成 selector1[active=true] 的形式，就像 css 一样，active 是这个 selector 上的变量。
+ * 我们的 proxy 其实只是一个 规则收集器，并不遵循对象赋值的规律，所以可以写成:
+ *
+ * style.selector1.selector2 = {
+ *   color: blue
+ * }
+ *
+ * style.selector1 = {
+ *   color: red
+ * }
+ *
+ * 不会产生覆盖。
+ */
 function createStyleProxy(root= new StyleRoot(),parentPath = []) {
   const traps = {
     get(target, key) {
@@ -40,7 +58,7 @@ function createStyleProxy(root= new StyleRoot(),parentPath = []) {
     },
     set(target, key, value) {
       if (value['@define'] !== undefined) {
-        invariant(parentPath.length === 0, '@define can only used in tagName')
+        invariant(parentPath.length === 0, '@define can only be used with tagName')
         root.addVar(key, value['@define'])
         delete value['@define']
       }
@@ -177,22 +195,24 @@ function applyDecare(unResolvedVars, getOptions, fn, resolvedVars = []) {
 }
 
 /**
- * 核心原则：组织代码的维度应该是 dom/attr 受什么影响，应该写在一起。而不是按结构组织。
- * 所以第一层是 dom 和 各种级联情况下的 dom。
- * 第二层是 attr, 和各种情况下的attr。
+ * 实现 StyleManager 的核心思路：样式组织代码的维度应该按照 dom/attr 所受的影响写在一起，而不是按结构组织。
+ * 例如 style.selector1 和 style.selector1.selector2.selector3 都受到某个变量影响，那么就应该写在一起。
+ *
+ * 以下写法中的 selector 就像 css selector 一样，可以通过 . 表示层级。
+ * style.selector1.selector2 就像 css 中的 "selector1 selector2" 一样。
  *
  * 写法:
  * 1. 普通
  * style.selector = {}
- * 2. 要参数
+ * 2. 要参数。使用 @define 可以定义参数，接下来就能在同级或者后面的 selector 中用了
  * style.selector = {
  *   '@define': { arguments }
  * }
- * 3. 用参数
+ * 3. 用参数，可以直接写在 attribute 上，在后面的 function 中就会按顺序接收到，在函数中根据参数不同可以返回不同的值。
  * style.selector = {
  *   'color[active]': function(active) {}
  * }
- * 4. 参数有值
+ * 4. 参数有值。直接对参数为某一个固定值的情况进行赋值，这通常适合于参数是可枚举的情况。
  * style.selector = {
  *   'color[active=true]' : 'red'
  * }
@@ -200,7 +220,7 @@ function applyDecare(unResolvedVars, getOptions, fn, resolvedVars = []) {
  * 5. 级联
  * style.selector1.selector = {}
  *
- * 6. 级联要参数
+ * 6. 级联中有参数
  * style.selector1[active].selector = {
  *   color(active) {},
  *   background(active) {},
@@ -216,33 +236,39 @@ function applyDecare(unResolvedVars, getOptions, fn, resolvedVars = []) {
  *
  * CAUTION 去掉了伪类的概念，全部让用户通过 props\参数 来实现。
  *
+ * StyleManager 具体实现：
+ * 1. 在 constructor 中直接关在了一个 styleSheet，用来实现样式控制。
+ * 2. cnode 上的 Style 函数里面就是对 styleRoot 使用，执行一次就能收集到所有样式。
+ * 3. 通过 styleManager.digest(Style) 来执行 Style，得到样式，并且挂载在 stylesheet 上。
+ * 4. 当 cnode 变化时，又会重新执行 digest(cnode)，重新得到样式并且应用。因为插入到 stylesheet 上可以覆盖前面的规则。所以不用考虑删除前面的。
+ * CAUTION 这里重复执行 Style 的时机，外来可能可以通过 vnodeComputed 根据数据变化决定，提升性能。
+ *
+ * 还可以考虑把 cnode 的概念和 Style
+ *
+ * TODO 要解决 style 会产生全局影响的问题，如果有组件的 selector 重名了怎么办。
+ * 要增加 Scope，digest 的时候返回一个 scopeId 给外部，让外部自己打在 dom 上。
+ * 这个方案也有个问题，就是我们的 style 写的规则可能是从 root 开始的，也可能不是。
+ * 那么生成规则的时候就难以区分到底是用 root#xxxx 还是 #xxxx root 这样表示。
+ *
+ * 即使能解决，光在 root 上打 tag 还不够，因为还有组件里面又有组件的问题，会穿透。
+ * 一定要从更底层，像 css-modules 一样为每个样式分配独立的标识才行。
  */
 export default class StyleManager{
-  constructor() {
-    this.cnodeToStyle = new Map()
+  constructor(doc = document) {
     this.styleToStyleEle = new Map()
 
     // setup sheet
-    const style = document.createElement('style')
-    document.head.appendChild(style)
+    this.doc = doc
+    const style = this.doc.createElement('style')
+    this.doc.head.appendChild(style)
     this.sheet = style.sheet
   }
   createStyleEle() {
-    const style = document.createElement('style')
-    document.head.appendChild(style)
+    const style = this.doc.createElement('style')
+    this.doc.head.appendChild(style)
     return style
   }
-  add(cnode) {
-    if(this.cnodeToStyle.get(cnode)) return
-    const { Style } = cnode.type
-    if (!Style) return
-
-    this.cnodeToStyle.set(cnode, Style)
-  }
-  digest(cnode) {
-    const Style = this.cnodeToStyle.get(cnode)
-    if (!Style) return
-
+  digest(Style) {
     let styleEle = this.styleToStyleEle.get(Style)
     if (styleEle) return
     this.styleToStyleEle.set(Style, styleEle = this.createStyleEle())

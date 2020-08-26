@@ -39,12 +39,16 @@
     "classnames": "^2.2.5",
     "jest": "^26.4.0",
     "jquery": "^3.5.1",
+    "jsdom": "^16.4.0",
     "lodash": "^4.17.20"
   },
   "jest": {
     "moduleFileExtensions": [
       "js",
       "jsx"
+    ],
+    "coverageReporters": [
+      "text"
     ],
     "moduleDirectories": [
       "<rootDir>/src",
@@ -62,6 +66,7 @@
     ]
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "coverage": "jest --coverage"
   }
 }

@@ -44,7 +44,7 @@ describe('children proxy', () => {
   })
 
 
-  test('should reactive', () => {
+  test('should be reactive', () => {
     const base = reactive([1,2])
 
     const { children } = (<>

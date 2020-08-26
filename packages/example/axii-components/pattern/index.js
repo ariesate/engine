@@ -1,7 +1,5 @@
-import { Scenario, createRange, invariant } from 'axii'
+import { Scenario, createRange, matrixMatch } from 'axii'
 import * as antColors from '@ant-design/colors';
-
-
 
 /**
  * 规划该组件库的 Pattern
@@ -64,9 +62,9 @@ const spaceValues = createRange([4, 8, 12, 20, 32, 48, 80, 128], 1)
 const PRIMARY_COLOR = 'geekblue'
 
 /***************
- * RULES
+ * Index
  **************/
-const RULE = {
+const INDEX = {
   interactable: 1,
 
   active: {
@@ -104,12 +102,12 @@ const valueRules = {
      */
     const matrix = [
       [undefined, undefined, undefined, undefined, undefined, colors.black(offset)],
-      [undefined, RULE.stressed, undefined, undefined, undefined, colors.black(1 + offset)],
-      [RULE.interactable, undefined, RULE.inverted, undefined, undefined, colors.white()], // 反色
-      [RULE.interactable, undefined, undefined, undefined, undefined, colors.black(offset)], // 正色正常状态
-      [RULE.interactable, undefined, undefined, RULE.active.active, undefined, colors[color](offset)], // 正色常亮状态
-      [RULE.interactable, undefined, undefined, RULE.active.inactive, undefined, colors.gray()], // 正色 disable 状态
-      [RULE.interactable, undefined, undefined, RULE.active.active, RULE.interact, colors[color](-1 + offset)], // 正色 interacting 状态
+      [undefined, INDEX.stressed, undefined, undefined, undefined, colors.black(1 + offset)],
+      [INDEX.interactable, undefined, INDEX.inverted, undefined, undefined, colors.white()], // 反色
+      [INDEX.interactable, undefined, undefined, undefined, undefined, colors.black(offset)], // 正色正常状态
+      [INDEX.interactable, undefined, undefined, INDEX.active.active, undefined, colors[color](offset)], // 正色常亮状态
+      [INDEX.interactable, undefined, undefined, INDEX.active.inactive, undefined, colors.gray()], // 正色 disable 状态
+      [INDEX.interactable, undefined, undefined, INDEX.active.active, INDEX.interact, colors[color](-1 + offset)], // 正色 interacting 状态
     ]
 
     return matrixMatch([interactable, stress, invert, active, interact], matrix)
@@ -128,10 +126,10 @@ const valueRules = {
      */
     const matrix = [
       [undefined, undefined, undefined, 'transparent'],
-      [RULE.inverted, undefined, undefined, colors[color]()],
-      [RULE.inverted, RULE.disabled, undefined, colors.gray()],
-      [RULE.inverted, undefined, RULE.interact, colors[color](-1)],
-      [RULE.inverted, RULE.active, RULE.interact, colors[color](-1)],
+      [INDEX.inverted, undefined, undefined, colors[color]()],
+      [INDEX.inverted, INDEX.disabled, undefined, colors.gray()],
+      [INDEX.inverted, undefined, INDEX.interact, colors[color](-1)],
+      [INDEX.inverted, INDEX.active, INDEX.interact, colors[color](-1)],
     ]
 
     return matrixMatch([invert, active, interact], matrix)
@@ -146,8 +144,8 @@ const valueRules = {
   fontSize({ size }, offset = 0) {
     const matrix = [
       [undefined, fontSizes(offset)],
-      [RULE.size.small, fontSizes(-1 + offset)],
-      [RULE.size.large, fontSizes(1 + offset)],
+      [INDEX.size.small, fontSizes(-1 + offset)],
+      [INDEX.size.large, fontSizes(1 + offset)],
     ]
     return matrixMatch([size], matrix)
   },
@@ -161,8 +159,8 @@ const valueRules = {
   spacing({ size }, offset = 0) {
     const matrix = [
       [undefined, spaceValues(offset)],
-      [RULE.size.small, spaceValues(-1 + offset)],
-      [RULE.size.large, spaceValues(1 + offset)],
+      [INDEX.size.small, spaceValues(-1 + offset)],
+      [INDEX.size.large, spaceValues(1 + offset)],
     ]
     return matrixMatch([size], matrix)
   },
@@ -181,26 +179,11 @@ const valueRules = {
 }
 
 
-/***************
- * Utils
- **************/
-function matrixMatch(conditionValues, matrix) {
-  const matchedRule = matrix.find((thisConditionValues) => {
-    return conditionValues.every((conditionValue, i) => {
-      return thisConditionValues[i] === conditionValue
-    })
-  })
-  // 必须有默认值。
-
-  invariant(matchedRule, 'rule not exist')
-  return matchedRule[matchedRule.length - 1]
-}
-
 
 /***************
  * export
  **************/
 export default function scen() {
-  return new Scenario(RULE, valueRules)
+  return new Scenario(INDEX, valueRules)
 }
 
