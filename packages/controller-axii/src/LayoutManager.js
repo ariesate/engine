@@ -125,6 +125,11 @@ function flatten(obj, parentPath=[], result = {}) {
 
 const NAMESPACE = 'layout'
 
+/**
+ * Layout 用法:
+ * 类似于 Style，但是在组件内部是写在 render 函数里的。
+ * 这里暴露 Layout 是让外部有机会通过替换 Layout 来动态修改部分值。
+ */
 // TODO restrictions。要支持 base 的模式选择。例如 inline 下不能有 block-xxx。这可能需要 vnode 上又 parent。否则像 flex 的 restriction 没法做。
 export default class LayoutManager {
   constructor(baseRules = BaseDefaultRules, layoutRules = LayoutRules) {

@@ -29,7 +29,7 @@ import {
   walkVnodes,
   isComponentVnode as defaultIsComponentVnode,
 } from './common'
-import { each, indexBy, ensureArray } from './util'
+import { each, indexBy, ensureArray, createUniqueIdGenerator } from './util'
 import {
   PATCH_ACTION_INSERT,
   PATCH_ACTION_MOVE_FROM,
@@ -459,6 +459,8 @@ function repaint(cnode, renderer, isComponentVnode, createCnode) {
  */
 export default function createPainter(renderer, isComponentVnode = defaultIsComponentVnode, ComponentNode) {
 
+  const generateCnodeId = createUniqueIdGenerator('com')
+
   function createCnode(vnode, parent) {
     const cnode = ComponentNode ? new ComponentNode() : {}
     Object.assign(cnode, {
@@ -467,6 +469,7 @@ export default function createPainter(renderer, isComponentVnode = defaultIsComp
       level: parent ? parent.level + 1 : 0,
       ref: vnode.ref,
       parent,
+      id: generateCnodeId()
     })
 
     cnode.props.children = vnode.children

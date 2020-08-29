@@ -18,22 +18,22 @@ function defaultDigestObjectLike(obj) {
  * 接受的参数：
  * invoke : 用来真实调用 dom 上 listener 的函数。
  * receiveRef: 获取真实的节点 ref。
- * hijackElement: 在创建真实节点前，将自定义 attribute 翻译成 element 可接受的。
+ * hijackDigestElement: 在创建真实节点前，将自定义 attribute 翻译成 element 可接受的。
  * rootElement: 根节点。                                                                
  */
-export default function createDOMView({ invoke, receiveRef, hijackElement = x => x }, rootDomElement, isComponentVnode = defaultIsComponentVnode, digestObjectLike = defaultDigestObjectLike) {
+export default function createDOMView({ invoke, receiveRef, hijackDigestElement = x => x }, rootDomElement, isComponentVnode = defaultIsComponentVnode, digestObjectLike = defaultDigestObjectLike) {
   const refToVnode = new Map()
   const view = {
     // CAUTION svg not support yet
     createElement: (vnode, cnode )=> {
-      const element = createElement(hijackElement(vnode, cnode), invoke)
+      const element = createElement(hijackDigestElement(vnode, cnode), invoke)
       if (vnode.ref) {
         refToVnode.set(element, vnode)
       }
       return element
     },
     updateElement: (vnode, element, cnode) => {
-      return updateElement(hijackElement(vnode, cnode), element, invoke)
+      return updateElement(hijackDigestElement(vnode, cnode), element, invoke)
     },
     createFragment() {
       return document.createDocumentFragment()

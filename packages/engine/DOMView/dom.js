@@ -55,6 +55,7 @@ export function setAttribute(node, name, value, isSvg) {
   } else if (name !== 'list' && name !== 'type' && !isSvg && name in node) {
     setProperty(node, name, value == null ? '' : value)
     if (value == null || value === false) node.removeAttribute(name)
+
   } else {
     const ns = isSvg && (name !== (name = name.replace(/^xlink\:?/, '')))
     if (value == null || value === false) {
@@ -83,6 +84,13 @@ function setAttributes(attributes, element, isSVG, invoke) {
   })
 }
 
+function setData(data, element) {
+  if (!data) return
+  each(data, (v, k) => {
+    element.dataset[k] = v
+  })
+}
+
 export function createElement(node, invoke) {
   if (node.type === String) return document.createTextNode(node.value)
   const element = node.isSVG
@@ -93,6 +101,10 @@ export function createElement(node, invoke) {
     setAttributes(node.attributes, element, node.isSVG, invoke)
   }
 
+  if (node.data) {
+    setData(node.data, element)
+  }
+
   return element
 }
 
@@ -101,5 +113,6 @@ export function updateElement(vnode, element, invoke) {
     element.nodeValue = vnode.value
   } else {
     setAttributes(vnode.attributes, element, vnode.isSVG, invoke)
+    setData(vnode.data, element)
   }
 }

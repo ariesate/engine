@@ -47,13 +47,11 @@ import { getDisplayValue, isDraft } from './draft'
 import watch from './watch'
 import { withCurrentWorkingCnode } from './renderContext'
 import LayoutManager from './LayoutManager'
-import StyleManager from './StyleManager';
 import { isComputed, getComputation, collectComputed, afterDigestion } from './reactive/effect';
 import { applyPatch, createDraft, finishDraft } from './produce';
 import { createCacheablePropsProxyFromState } from './callListener';
 
 const layoutManager = new LayoutManager()
-const styleManager = new StyleManager()
 
 function isFormElement(target) {
   return (target instanceof HTMLInputElement)
@@ -300,29 +298,30 @@ function createInjectedProps(cnode) {
 
   const mergedProps = { ...props, ...localProps }
   // 开始对其中的 mutation 回调 prop 进行注入。
-  const injectedProps = thisPropTypes ? mapValues(thisPropTypes, (propType, propName) =>
-    propType.is(propTypes.callback) ? (...runtimeArgv) => {
+  const injectedProps = thisPropTypes ? mapValues(thisPropTypes, (propType, propName) => {
+    return propType.is(propTypes.callback) ? (...runtimeArgv) => {
       const userMutateFn = props[propName]
+      debugger
       const defaultMutateFn = propType.defaultValue
 
       const valueProps = filter(mergedProps, isReactiveLike)
-      const draftState = (state ? createDraft(mapValues(state, tryToRaw)) : undefined)
       const draftProps = createDraft(mapValues(valueProps, tryToRaw))
 
-      defaultMutateFn(draftProps, draftState, ...runtimeArgv)
+      // TODO 这里没考虑本地变量！state
+      defaultMutateFn(draftProps, ...runtimeArgv)
       // 显式的返回 false 就是不要应用原本的修改。
       // TODO 是不是要有别的设计, 例如 preventDefault, 而不是 return false
       // TODO 还要考虑 beforeCapture ？
-      const shouldStopApply = userMutateFn ? userMutateFn(draftProps, draftState, ...runtimeArgv) === false : false
+      const shouldStopApply = userMutateFn ? userMutateFn(draftProps, ...runtimeArgv) === false : false
       if (shouldStopApply) {
         activeEvent.preventCurrentEventDefault()
       } else {
-        let [nextState, stateChanges] = state ? finishDraft(draftState) : []
-        if (stateChanges) applyPatch(state, stateChanges)
         const propsChanges = finishDraft(draftProps)[1]
         applyPatch(valueProps, propsChanges)
       }
     } : mergedProps[propName]
+    }
+
 
   ) : mergedProps
 
@@ -479,9 +478,6 @@ export default function createAxiiController() {
         return { toPaint: toInitialize, toDispose: toDestroy, toRepaint }
       },
       unit: (sessionName, unitName, cnode, startUnit) => {
-        // TODO 是否要提前生成 Style，不能再 digest 之后，否则会出现闪动？
-        if (unitName === UNIT_INITIAL_DIGEST && cnode.Style) styleManager.digest(Style)
-
         // 第一渲染，执行一下 willMount 的生命周期
         if (unitName === UNIT_PAINT) cnode.willMount && cnode.willMount()
         // 记录一下，其他功能要用
@@ -514,7 +510,28 @@ export default function createAxiiController() {
           vnode.ref.current = ref
         }
       },
-      hijackElement: (vnode, cnode) => {
+      hijackCreateElement: (vnode, cnode) => {
+        // TODO
+      },
+      hijackDigestElement: (vnode, cnode) => {
+        /**
+         * 把 scopeId 写到 data attribute 上。
+         * TODO 还需要更全面的劫持。这里的劫持是在创建真实的 dom 之前。
+         * 我们有可能一个 vnode 是由 parent cnode 创建的，作为 children 传递给了 child cnode。
+         * 这个时候这些传进去的 vnode 应该打上父组件的 id，这样父组件就还是能控制它们的样式。
+         * 总体原则是，谁创建的 vnode ，就应该打上谁的标签。
+         *
+         * TODO createElement 也要有个 withOwnerId(() => {})
+         * 然后在 controller 的 各种 render 调用时包装一下，就能打上 ownerId
+         * hijack 的时候使用 ownerId 而不是 cnode Id
+         *
+         */
+        if (cnode.scopeId) {
+          vnode.data = {
+            ...vnode.data || {},
+            scopeId: cnode.id
+          }
+        }
         /**
          * 读取 layout 样式，写到 style 上。也可以写到 class 上，如果写到 class 上，就用 Mutation Observer 来监听卸载。
          */

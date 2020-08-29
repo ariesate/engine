@@ -20,16 +20,20 @@ describe("style manager", () => {
       }
     }
 
+    const scopeId = 'scope1'
+    styleManager.digest(styleFn, scopeId)
+
     render(
-      <root>
-        <child />
+      <root data={{scopeId}}>
+        <child data={{scopeId}}/>
       </root>,
       document.body
     )
 
     // 通过 children 可以去掉 comment node
     const root = document.body.children[0]
-    styleManager.digest(styleFn)
+
+    console.log(root.outerHTML)
     expect(root).toHaveStyle({ color : 'blue'})
     expect(root.childNodes[0]).toHaveStyle({ color : 'red'})
   })

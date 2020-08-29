@@ -198,7 +198,7 @@ function createFragmentsContainer() {
 }
 
 
-export function createFragmentsContainerFactory() {
+export function createFeatureFunctionCollectors() {
   const keyToFragmentsContainer = new Map()
   return {
     derive(key) {
@@ -239,6 +239,10 @@ export function makeCallbackName(methodName) {
   return `on${methodName[0].toUpperCase()}${methodName.slice(1)}`
 }
 
+export function makeMethodName(callbackName) {
+  return `${callbackName[2].toLowerCase()}${callbackName.slice(3)}`
+}
+
 export function isPlainObject(obj) {
   if (typeof obj !== 'object' || obj === null) return false
 
@@ -250,8 +254,7 @@ export function isPlainObject(obj) {
   return Object.getPrototypeOf(obj) === proto
 }
 
-// TODO 还要注入 state 啊！！！
-export function replaceSlot(vnodes, childrenBySlot) {
+export function replaceSlot(vnodes, childrenBySlot, props, availableArgv) {
   walkVnodes(vnodes, (walkChildren, vnode) => {
     if (isComponentVnode(vnode)) return false
     if (!(vnode instanceof VNode)) return false
@@ -262,7 +265,7 @@ export function replaceSlot(vnodes, childrenBySlot) {
     invariant(vnode.children === undefined || vnode.children.length === 0, `${vnode.type} cannot have both children and be slot `)
     const slotChild = childrenBySlot[vnode.attributes.name || vnode.type]
     if (slotChild) {
-      vnode.children = [normalizeLeaf((typeof slotChild === 'function') ? slotChild() : slotChild)]
+      vnode.children = [normalizeLeaf((typeof slotChild === 'function') ? slotChild(props, availableArgv) : slotChild)]
     } else {
     }
   })
@@ -324,11 +327,37 @@ export function createCallback(props, methodFn, methodName) {
     const callMethod = () => {
       methodFn(props, ...argv)
     }
-
     if (props[callbackName]) {
       props[callbackName](callMethod)
     } else {
       callMethod()
     }
+  }
+}
+
+export function chainMethod(originMethod, methodFn) {
+  return (...argv) => {
+    return methodFn(...argv, originMethod)
+  }
+}
+
+export function zipObject(keys, fn) {
+  return keys.reduce((result, current) => {
+    return {
+      ...result,
+      [current] : fn(current)
+    }
+  }, {})
+}
+
+export function tranform(obj, fn) {
+
+}
+
+export function compose(methods) {
+  if (!methods.length) return
+  const last = methods[methods.length - 1]
+  return (...argv) => {
+    last(...argv, compose(methods.slice(0, methods.length - 1)))
   }
 }

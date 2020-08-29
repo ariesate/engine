@@ -95,6 +95,7 @@ import createPainter from '@ariesate/are/createPainter'
 import createDOMView from '@ariesate/are/DOMView/createDOMView'
 import createAxiiController from './createAxiiController'
 
+// TODO createElement 是不是应该在这里重写，这样才能通过 renderContext 来实现劫持！。
 export { default as createElement,  cloneElement, normalizeLeaf, normalizeChildren } from '@ariesate/are/createElement'
 export { default as Fragment } from '@ariesate/are/Fragment'
 export { default as VNode } from '@ariesate/are/VNode'
@@ -127,3 +128,4 @@ export function render(vnode, domElement, ...controllerArgv) {
 
   return controller
 }
+

@@ -130,7 +130,16 @@ function parseSelector(selector) {
   return {tag, resolvedVars, unresolvedVars, resolve}
 }
 
-function resolveSelector(rawInputSelector) {
+/**
+ * scope style 是通过在组件里面的每个节点都打上 data-scopeId 实现的。
+ * 所以这里的 selector 也使用这个。
+ */
+function getScopeSelector(scopeId) {
+  // CAUTION 特别注意这里驼峰会变成 -
+  return `[data-scope-id="${scopeId}"]`
+}
+
+function resolveSelector(rawInputSelector, scopeId) {
   const inputSelector = [...rawInputSelector]
   const resolvedSelectorPieces = []
 
@@ -173,7 +182,7 @@ function resolveSelector(rawInputSelector) {
             // 这是 applyDecare 要的格式
             const currentArgv = argv.slice(readArgvIndex, readArgvIndex + p.unresolvedVars.length)
             readArgvIndex += p.unresolvedVars.length
-            result[index] = p.resolve(...currentArgv)
+            result[index] = `${p.resolve(...currentArgv)}${getScopeSelector(scopeId)}`
           }
         })
 
@@ -181,7 +190,7 @@ function resolveSelector(rawInputSelector) {
       }
     }]
   } else {
-    return [resolvedSelectorPieces.join(' ')]
+    return [resolvedSelectorPieces.map(piece => `${piece}${getScopeSelector(scopeId)}`).join(' ')]
   }
 }
 
@@ -243,19 +252,27 @@ function applyDecare(unResolvedVars, getOptions, fn, resolvedVars = []) {
  * 4. 当 cnode 变化时，又会重新执行 digest(cnode)，重新得到样式并且应用。因为插入到 stylesheet 上可以覆盖前面的规则。所以不用考虑删除前面的。
  * CAUTION 这里重复执行 Style 的时机，外来可能可以通过 vnodeComputed 根据数据变化决定，提升性能。
  *
- * 还可以考虑把 cnode 的概念和 Style
+ * scope style 的实现，是通过在每个 dom 上打上 [data-scope-id="xxx"] ，
+ * 同时我们在生成的样式里面也 selector 都加上对相应的 [data-scope-id="xxx"] 来实现的。
  *
- * TODO 要解决 style 会产生全局影响的问题，如果有组件的 selector 重名了怎么办。
- * 要增加 Scope，digest 的时候返回一个 scopeId 给外部，让外部自己打在 dom 上。
- * 这个方案也有个问题，就是我们的 style 写的规则可能是从 root 开始的，也可能不是。
- * 那么生成规则的时候就难以区分到底是用 root#xxxx 还是 #xxxx root 这样表示。
+ * 哪些 style 适合放在 StyleManager 里？
+ * 虽然所有的样式都可以放到里面，但是我们推荐：
+ * 将跟"元素位置信息"有关的 style（如 display）放到 vnode 上，由 LayoutManager 管理。
+ * 其他的放到 StyleManager 中。区分的思路在于：
+ * 用户依据什么来判断是不是同一个组件？主要是由组成组件的元素的位置来判断的。整个组件大一点还是小一点、
+ * 颜色如何，都不易影响用户的判断。
+ * 因此一般将 display/width/height/padding/margin/border-width 这些肯定会、或者可能影响元素布局的
+ * style 放到 LayoutManager 中. 其中除了 display，后面的几个都是"可能会"影响父子、兄弟节点的位置。
+ * 注意，虽然 font-size、line-height 也可能影响，但从语义上来说，字体行高大一点还是小一点，用户也应该认为是同一个组件。
  *
- * 即使能解决，光在 root 上打 tag 还不够，因为还有组件里面又有组件的问题，会穿透。
- * 一定要从更底层，像 css-modules 一样为每个样式分配独立的标识才行。
+ * TODO
+ * 1. selector 上的 var 从哪里来？
+ * 2. 怎么写才体验最好
+ * 3. 能否解决所有的问题。
  */
 export default class StyleManager{
   constructor(doc = document) {
-    this.styleToStyleEle = new Map()
+    this.styleToStyleEle = new WeakMap()
 
     // setup sheet
     this.doc = doc
@@ -268,13 +285,14 @@ export default class StyleManager{
     this.doc.head.appendChild(style)
     return style
   }
-  digest(Style) {
+  digest(Style, scopeId) {
+
     let styleEle = this.styleToStyleEle.get(Style)
     if (styleEle) return
     this.styleToStyleEle.set(Style, styleEle = this.createStyleEle())
 
 
-    const styleProxy = createStyleProxy()
+    const styleProxy = createStyleProxy(new StyleRoot())
     Style(styleProxy)
     const rules = styleProxy.getRules()
     const definedVars = styleProxy.getVars()
@@ -295,7 +313,7 @@ export default class StyleManager{
        * 4. 参数带值。attrName(varName=value): value
        */
 
-      const [selector, selectorResolver] = resolveSelector(inputSelector)
+      const [selector, selectorResolver] = resolveSelector(inputSelector, scopeId)
       if (!selector) {
         // 如果不能 resolve, 说明需要运算
         applyDecare(selectorResolver.vars, (([tag, varName]) => definedVars[tag][varName]), (...argv) => {
