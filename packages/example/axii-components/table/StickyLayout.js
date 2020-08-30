@@ -40,6 +40,17 @@ export default function FeatureStickyLayout(fragments) {
     right: []
   })
 
+  /**
+   * TODO 整理这里关于 argv 的需求
+   * 1. 里层的 modify 先执行。影响了正常的理解顺序，
+   * 2. 本来应该是在执行 heads 整体的时候，用 columns 开始算 sticky 的每个 column 的位置。
+   * 3. 在 headCell 渲染的时候应用算好的数据就行了。
+   * 4. 1.修改时序，2. 需要一个机制要存储这种中间计算的数据，并且还要能传递
+   *
+   * TODO 把 Feature 的执行放到 render 里面？以此创造一个可以写变量的安全空间？？？
+   */
+
+  // 如果 column 上面有 left 标记，就修改一下 layout 样式实现 sticky.
   fragments.headCell.modify((result, { offsets, column }) => {
     if (column.fixed) {
       let offset = ref(0)
@@ -54,6 +65,7 @@ export default function FeatureStickyLayout(fragments) {
 
   fragments.heads.modify((result, { columns, offsets }) => {
     let leftOffset = 0
+
     offsets.left.forEach(({ offset, width }) => {
       offset.value = leftOffset
       leftOffset += width

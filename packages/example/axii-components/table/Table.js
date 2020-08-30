@@ -97,7 +97,6 @@ export function Table( { data, pagination, columns }, context, fragments) {
       </thead>
       <tbody>
         {fragments.rows()(() => {
-
           return data.map((row) => (
             <tr data={row}>
               {fragments.cells({row})(() => {
@@ -116,26 +115,23 @@ export function Table( { data, pagination, columns }, context, fragments) {
   )
 }
 
-Table.methods = () => {
-
-}
-
-Table.Render = function() {
-
-}
 
 // TODO layout 中统一控制的部分怎么处理？？
+export const thStyle = {
+  borderColor: scen().separateColor(),
+  borderStyle: 'solid',
+  background: scen().fieldColor()
+}
+
+export const tdStyle = {
+  borderStyle: 'solid',
+  borderColor: scen().separateColor(),
+  background: '#fff'
+}
+
 Table.Style = (fragments) => {
-  fragments.headCell.elements.th.style({
-    borderColor: scen().separateColor(),
-    borderStyle: 'solid',
-    background: scen().fieldColor()
-  })
-  fragments.cell.elements.td.style({
-    borderStyle: 'solid',
-    borderColor: scen().separateColor(),
-    background: '#fff'
-  })
+  fragments.headCell.elements.th.style(thStyle)
+  fragments.cell.elements.td.style(tdStyle)
 }
 
 Table.propTypes = {

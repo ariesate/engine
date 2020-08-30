@@ -515,8 +515,9 @@ export default function createAxiiController() {
          *
          */
         if (cnode.scopeId) {
-          vnode.data = {
-            ...vnode.data || {},
+          // TODO 这里得有个关于 dataset 关键字的提示。
+          vnode.dataset = {
+            ...vnode.dataset || {},
             scopeId: cnode.id
           }
         }

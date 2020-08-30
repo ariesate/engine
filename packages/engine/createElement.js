@@ -86,8 +86,8 @@ export default function createElement(type, attributes, ...rawChildren) {
   node.props = node.attributes
 
   // 用于支持 data-* 自定义属性
-  node.data = node.attributes.data
-  delete node.attributes.data
+  node.dataset = node.attributes.dataset
+  delete node.attributes.dataset
 
   if (node.vnodeRef) node.vnodeRef(node)
 

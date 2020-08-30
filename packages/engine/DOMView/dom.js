@@ -84,9 +84,9 @@ function setAttributes(attributes, element, isSVG, invoke) {
   })
 }
 
-function setData(data, element) {
-  if (!data) return
-  each(data, (v, k) => {
+function setData(dataset, element) {
+  if (!dataset) return
+  each(dataset, (v, k) => {
     element.dataset[k] = v
   })
 }
@@ -101,8 +101,8 @@ export function createElement(node, invoke) {
     setAttributes(node.attributes, element, node.isSVG, invoke)
   }
 
-  if (node.data) {
-    setData(node.data, element)
+  if (node.dataset) {
+    setData(node.dataset, element)
   }
 
   return element
@@ -113,6 +113,6 @@ export function updateElement(vnode, element, invoke) {
     element.nodeValue = vnode.value
   } else {
     setAttributes(vnode.attributes, element, vnode.isSVG, invoke)
-    setData(vnode.data, element)
+    setData(vnode.dataset, element)
   }
 }

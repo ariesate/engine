@@ -6,6 +6,8 @@ import {
   Fragment,
   refComputed,
 } from 'axii';
+import scen from '../pattern';
+import { thStyle, tdStyle } from './Table';
 
 export default function FeatureSelectable(fragments) {
   const toggleAll = (selectedRowKeys, data) => {
@@ -27,20 +29,25 @@ export default function FeatureSelectable(fragments) {
   }
 
   // TODO 这里 block-width 是和 stickyLayout 的约定，要删掉
-  fragments.heads.modify(({ data, expandedRowRender, selectedRowKeys }, result) => {
+  fragments.heads.modify((result, { data, selectedRowKeys }) => {
     const allSelected = refComputed(() => {
       return selectedRowKeys.size === data.length
     })
-    result[0].children.unshift(<th block-width={60} rowSpan={result.length}><input type="checkbox" onClick={() => toggleAll(selectedRowKeys, data)} checked={allSelected}/></th>)
+    result[0].children.unshift(<th inline inline-display="table-cell" inline-border-width-1px block-width={60} rowSpan={result.length}><input type="checkbox" onClick={() => toggleAll(selectedRowKeys, data)} checked={allSelected}/></th>)
   })
 
 
-  fragments.cells.modify(({ data, expandedRowRender, selectedRowKeys }, result, {row: rowData }) => {
+  fragments.cells.modify((result, { data, expandedRowRender, selectedRowKeys, row: rowData }) => {
     const selected = refComputed(() => {
       return selectedRowKeys.has(rowData.key)
     })
-    result.unshift(<td block-width={60}><input type="checkbox" onClick={() => toggleOne(selectedRowKeys, rowData.key)} checked={selected}/></td>)
+    result.unshift(<td inline inline-display="table-cell"  inline-border-width-1px block-width={60}><input type="checkbox" onClick={() => toggleOne(selectedRowKeys, rowData.key)} checked={selected}/></td>)
   })
+}
+
+FeatureSelectable.Style = (fragments) => {
+  fragments.heads.elements.th.style(thStyle)
+  fragments.cells.elements.td.style(tdStyle)
 }
 
 // 默认等于 match。

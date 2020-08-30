@@ -130,7 +130,7 @@ export default function createComponent(Base, featureDefs=[]) {
   function Component(props, context) {
     // 1. 先统一处理一下 props, 其中 children 要考虑 slot 的情况。
     const processedProps = { ...props }
-    processedProps.children = props.children ? (Base.useNamedChildrenSlot ? createNamedChildrenSlotProxy(props.children[0]) : props.children[0]) : undefined
+    processedProps.children = props.children ? (Base.useNamedChildrenSlot ? createNamedChildrenSlotProxy(props.children[0]) : props.children) : undefined
 
     // 2. 开始渲染 Base，注意，这里还没有 render 其中的 fragments。在后面 renderFragments 中 render。
     // 虽然把 base 也当做一个 fragment。但 render base 参数不同，base render 时要直接用到 props，没有必要强行统一。
