@@ -38,9 +38,10 @@ describe('component', () => {
     }
 
     const root = document.createElement('div')
-    const userOnChange = (({ name }) => {
+    // 补足的第二个参数是个数组，数组中是 [draftProps, props]
+    const userOnChange = ({ name }) => {
       name.value = `${name.value}2`
-    })
+    }
 
     render(<App onChange={userOnChange}/>, root)
 
@@ -64,9 +65,9 @@ describe('component', () => {
     }
 
     const root = document.createElement('div')
-    const userOnChange = (() => {
+    const userOnChange = () => {
       return false
-    })
+    }
 
     render(<App onChange={userOnChange}/>, root)
 

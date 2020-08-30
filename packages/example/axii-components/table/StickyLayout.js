@@ -34,12 +34,13 @@ export default function FeatureStickyLayout(fragments) {
    *
    * 只是这样，controller 的改动就比较大，跟引擎耦合深。这件事情的本质是什么？
    */
+  // TODO 移出去
   fragments.heads.argv.offsets = () => ({
     left: [],
     right: []
   })
 
-  fragments.headCell.mutations = (props, result, { offsets, column }) => {
+  fragments.headCell.modify((result, { offsets, column }) => {
     if (column.fixed) {
       let offset = ref(0)
 
@@ -49,9 +50,9 @@ export default function FeatureStickyLayout(fragments) {
       result.props['block-position-sticky'] = true
       result.props[`block-${column.fixed}`] = offset
     }
-  }
+  })
 
-  fragments.heads.mutations = (props, result, { columns, offsets }) => {
+  fragments.heads.modify((result, { columns, offsets }) => {
     let leftOffset = 0
     offsets.left.forEach(({ offset, width }) => {
       offset.value = leftOffset
@@ -63,15 +64,15 @@ export default function FeatureStickyLayout(fragments) {
       offset.value = rightOffset
       rightOffset += width
     })
-  }
+  })
 
-  // cells
+  // TODO 移出去
   fragments.cells.argv.offsets = () => ({
     left: [],
     right: []
   })
 
-  fragments.cell.mutations = (props, result, { offsets, column }) => {
+  fragments.cell.modify((result, { offsets, column }) => {
     if (column.fixed) {
       let offset = ref(0)
 
@@ -81,9 +82,9 @@ export default function FeatureStickyLayout(fragments) {
       result.props['block-position-sticky'] = true
       result.props[`block-${column.fixed}`] = offset
     }
-  }
+  })
 
-  fragments.cells.mutations = (props, result, { offsets }) => {
+  fragments.cells.modify((result, { offsets }) => {
     let leftOffset = 0
     offsets.left.forEach(({ offset, width }) => {
       offset.value = leftOffset
@@ -95,10 +96,10 @@ export default function FeatureStickyLayout(fragments) {
       offset.value = rightOffset
       rightOffset += width
     })
-  }
+  })
 
 
-  fragments.root.mutations = ({ columns, scroll }, result) => {
+  fragments.root.modify((result, { columns, scroll }) => {
     result.props['block'] = true
     result.props['table-layout-fixed'] = true
     result.props['block-width'] = scroll.x
@@ -115,7 +116,7 @@ export default function FeatureStickyLayout(fragments) {
         {result}
       </div>
     )
-  }
+  })
 
 }
 

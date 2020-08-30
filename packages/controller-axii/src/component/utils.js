@@ -114,17 +114,17 @@ function createElementProxy() {
   return new Proxy({}, {
     get(target, key) {
       if (instruments[key]) return (...argv) => instruments[key](target, ...argv)
-    },
-    set(target, key,value) {
-      if (key === 'style') {
-        styles.push(value)
-      } else if (typeof value === 'function') {
-        if (!listeners[key]) listeners[key] = []
-        listeners[key].push(value)
-      } else {
-        return false
+
+      return (value) => {
+        if (key === 'style') {
+          styles.push(value)
+        } else if (typeof value === 'function'){
+          if (!listeners[key]) listeners[key] = []
+          listeners[key].push(value)
+        } else {
+          throw new Error(`unknown action: key: ${key} value: ${value}`)
+        }
       }
-      return true
     }
   })
 }
@@ -163,14 +163,17 @@ export function createFragment(fragmentName) {
   fragmentSetterAsFragment.elements = createElementsContainer()
   fragmentSetterAsFragment.argv = {}
 
-  fragmentSetterAsFragment.$$mutations = []
-  Object.defineProperty(fragmentSetterAsFragment, 'mutations', {
+  fragmentSetterAsFragment.$$modifications = []
+  Object.defineProperty(fragmentSetterAsFragment, 'modify', {
     get() {
-      return () => fragmentSetterAsFragment.$$mutations
+      return (modifyFn) => fragmentSetterAsFragment.$$modifications.push(modifyFn)
     },
-    set(value) {
-      fragmentSetterAsFragment.$$mutations.push(value)
-    }
+  })
+
+  Object.defineProperty(fragmentSetterAsFragment, 'getModifications', {
+    get() {
+      return () => fragmentSetterAsFragment.$$modifications
+    },
   })
 
   return fragmentSetterAsFragment
@@ -256,7 +259,7 @@ export function isPlainObject(obj) {
   return Object.getPrototypeOf(obj) === proto
 }
 
-export function replaceSlot(vnodes, childrenBySlot, props, availableArgv) {
+export function replaceSlot(vnodes, childrenBySlot, availableArgv) {
   walkVnodes(vnodes, (walkChildren, vnode) => {
     if (isComponentVnode(vnode)) return false
     if (!(vnode instanceof VNode)) return false
@@ -267,7 +270,7 @@ export function replaceSlot(vnodes, childrenBySlot, props, availableArgv) {
     invariant(vnode.children === undefined || vnode.children.length === 0, `${vnode.type} cannot have both children and be slot `)
     const slotChild = childrenBySlot[vnode.attributes.name || vnode.type]
     if (slotChild) {
-      vnode.children = [normalizeLeaf((typeof slotChild === 'function') ? slotChild(props, availableArgv) : slotChild)]
+      vnode.children = [normalizeLeaf((typeof slotChild === 'function') ? slotChild(availableArgv) : slotChild)]
     } else {
     }
   })

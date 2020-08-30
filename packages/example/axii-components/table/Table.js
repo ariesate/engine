@@ -126,16 +126,16 @@ Table.Render = function() {
 
 // TODO layout 中统一控制的部分怎么处理？？
 Table.Style = (fragments) => {
-  fragments.headCell.elements.th.style = {
+  fragments.headCell.elements.th.style({
     borderColor: scen().separateColor(),
     borderStyle: 'solid',
     background: scen().fieldColor()
-  }
-  fragments.cell.elements.td.style = {
+  })
+  fragments.cell.elements.td.style({
     borderStyle: 'solid',
     borderColor: scen().separateColor(),
     background: '#fff'
-  }
+  })
 }
 
 Table.propTypes = {

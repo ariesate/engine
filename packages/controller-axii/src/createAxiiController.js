@@ -45,7 +45,7 @@ import {
 } from './reactive';
 import { getDisplayValue, isDraft } from './draft'
 import watch from './watch'
-import { withCurrentWorkingCnode } from './renderContext'
+import { withCurrentWorkingCnode, activeEvent } from './renderContext'
 import LayoutManager from './LayoutManager'
 import { isComputed, getComputation, collectComputed, afterDigestion } from './reactive/effect';
 import { applyPatch, createDraft, finishDraft } from './produce';
@@ -260,29 +260,6 @@ function replaceReactiveWithVirtualCnode(renderResult, cnode) {
   })
 }
 
-
-
-const activeEvent = (function() {
-  let currentEvent = null
-  let shouldPreventDefault = false
-  function withEvent(event, handler) {
-    currentEvent = event
-    handler(() => shouldPreventDefault)
-    currentEvent = null
-    shouldPreventDefault = false
-  }
-
-  function preventCurrentEventDefault() {
-    if (currentEvent) shouldPreventDefault = true
-  }
-
-  return {
-    withEvent,
-    preventCurrentEventDefault
-  }
-})()
-
-
 function createInjectedProps(cnode) {
   const { props, localProps } = cnode
   const { propTypes: thisPropTypes } = cnode.type
@@ -298,27 +275,43 @@ function createInjectedProps(cnode) {
   const mergedProps = { ...props, ...localProps }
   // 开始对其中的 mutation 回调 prop 进行注入。
   const callbackProps = mapValues(thisPropTypes || {}, (propType, propName) => {
-    return propType.is(propTypes.callback) ? (...runtimeArgv) => {
+
+    if (!propType.is(propTypes.callback)) return mergedProps[propName]
+
+    return (event, ...restArgv) => {
+      // CAUTION 参数判断非常重要，用户既有可能把这个函数直接传给 onClick 作为回调，也可能在其他函数中手动调用。
+      // 当直接传给事件回调时，由于事件回调会补足 event，而我们不需要，因此在这里判断一下。
+      // 注意，我们认为用户不可能自己把 event 当第一参数传入，没有这样的需求场景。
+      const runtimeArgv = (event === activeEvent.getCurrentEvent() && restArgv.length === 0) ? [] : [event, ...restArgv]
+
       const userMutateFn = props[propName]
-      const defaultMutateFn = propType.defaultValue
+      // 注意这里，defaultMutateFn 可以拿到 props 的引用，这样我们就不用在调用的时候去往第一个参数去传了。
+      const defaultMutateFn = propType.createDefaultValue(props)
 
       const valueProps = filter(mergedProps, isReactiveLike)
       const draftProps = createDraft(mapValues(valueProps, tryToRaw))
 
-      defaultMutateFn(draftProps, ...runtimeArgv)
+      // 我们为开发者补足三个参数，这里和 react 不一样，我们把 event 放在了最后，这是我们按照实践中的权重判断的。
+      // 因为我们的组件既是受控的又是非受控的，理论上用户只需要知道组件默认会怎么改 props 就够了，即 draftProps，
+      // 常见的我们在 input onChange 中去取 event.target.value 实际上也就是去取 nextProps，如果能拿到，就不需要 event。
+      // 补足参数永远放在最后，这样开发者心智负担更小。
+      const extraArgv = [draftProps, props, activeEvent.getCurrentEvent()]
+      defaultMutateFn(...runtimeArgv, ...extraArgv)
       // 显式的返回 false 就是不要应用原本的修改。
-      // TODO 是不是要有别的设计, 例如 preventDefault, 而不是 return false
-      // TODO 还要考虑 beforeCapture ？
-      const shouldStopApply = userMutateFn ? userMutateFn(draftProps, ...runtimeArgv) === false : false
+      // CAUTION 注意这里的补全参数设计，补全的第一参数是事件，第二参数是现在的 prop 和 nextProps
+      const shouldStopApply = userMutateFn ?
+        userMutateFn(...runtimeArgv, ...extraArgv) === false :
+        false
+
       if (shouldStopApply) {
         activeEvent.preventCurrentEventDefault()
       } else {
         const propsChanges = finishDraft(draftProps)[1]
         applyPatch(valueProps, propsChanges)
       }
-    } : mergedProps[propName]
     }
-  )
+
+  })
 
   return {...mergedProps, ...callbackProps}
 }

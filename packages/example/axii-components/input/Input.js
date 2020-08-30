@@ -16,26 +16,26 @@ import scen from '../pattern'
  * 或者有个规划位置的作为 base。
  */
 
-export function Input({ value, changeValue, children }, context, fragments ) {
+export function Input({ value, onChange, children }, context, fragments ) {
   const prefixLikeProps = {
     'flex-display-inline': true ,
     'flex-align-items-center': true,
     'inline-padding': `0 ${scen().spacing()}px `
   }
 
-  const prefixVnode = fragments.prefix(() => {
+  const prefixVnode = fragments.prefix()(() => {
     return children.prefix ? <prefix slot inline {...prefixLikeProps} inline-border-right-width-1px /> : null
   })
 
-  const suffixVnode = fragments.suffix(() => {
+  const suffixVnode = fragments.suffix()(() => {
     return children.suffix ? <suffix slot inline {...prefixLikeProps} inline-border-left-width-1px /> : null
   })
 
-  const beforeVnode = fragments.before(() => {
+  const beforeVnode = fragments.before()(() => {
     return children.before ? <before slot inline {...prefixLikeProps} inline-border-right-width-1px /> : null
   })
 
-  const afterVnode = fragments.after(() => {
+  const afterVnode = fragments.after()(() => {
     return children.after ? <after slot inline {...prefixLikeProps} inline-border-left-width-1px /> : null
   })
 
@@ -50,7 +50,7 @@ export function Input({ value, changeValue, children }, context, fragments ) {
                inline-font-size={scen().fontSize()}
                inline-padding={`${scen().spacing(-1)}px ${scen().spacing()}px `}
                value={value}
-               onInput={e => changeValue(e.target.value)}
+               onInput={onChange}
         ></input>
         {afterVnode}
       </middle>
@@ -64,28 +64,23 @@ Input.useNamedChildrenSlot = true
 
 Input.propTypes = {
   value: propTypes.string.default(() => ref('')),
-}
-
-Input.methods = {
-  changeValue({ value }, rawValue) {
-    value.value = rawValue
-  }
+  onChange: propTypes.callback.default(() => ({ value }, props, e) => {
+    value.value = e.target.value
+  })
 }
 
 Input.Style = (fragments) => {
   const rootElements = fragments.root.elements
 
-  fragments.root.argv.focused = () => ref(false)
-      // 这个函数也是伴随 dynamic 的。
-  rootElements.input.onFocus = (props, { focused }, e) => {
+  rootElements.input.onFocus((e, { focused }) => {
     focused.value = true
-  }
+  })
 
-  rootElements.input.onBlur = (props, { focused }) => {
+  rootElements.input.onBlur((e, { focused }) => {
     focused.value = false
-  }
+  })
 
-  rootElements.container.style = {
+  rootElements.container.style(() => ({
     borderStyle: 'solid',
     borderRadius: scen().radius(),
     borderColor({ focused }){
@@ -98,26 +93,34 @@ Input.Style = (fragments) => {
         `0 0 0 ${scen().outlineWidth()}px ${scen().interactable().active().shadowColor()}` :
         undefined
     }
-  }
+  }))
 
-  rootElements.input.style = {
+  rootElements.input.style(() => ({
     color: scen().color(),
     lineHeight: `${scen().lineHeight()}px`,
-  }
+  }))
 
-  fragments.prefix.elements.prefix.style = fragments.suffix.elements.suffix.style = {
+  const commonPrefixStyle = {
     color: scen().color(),
     backgroundColor: scen().fieldColor(),
     borderStyle: 'solid',
     borderColor: scen().separateColor()
   }
 
-  fragments.before.elements.before.style = fragments.after.elements.after.style = {
+  fragments.prefix.elements.prefix.style(commonPrefixStyle)
+  fragments.suffix.elements.suffix.style(commonPrefixStyle)
+
+  const commonAfterStyle = {
     color: scen().color(),
     borderStyle: 'solid',
     borderColor: scen().separateColor()
   }
+  fragments.before.elements.before.style(commonAfterStyle)
+  fragments.after.elements.after.style(commonAfterStyle)
+}
 
+Input.Style.propType = {
+  focused: propTypes.bool.default(() => ref(false))
 }
 
 export default createComponent(Input)

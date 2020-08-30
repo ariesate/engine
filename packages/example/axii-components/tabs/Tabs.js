@@ -18,7 +18,7 @@ import scen from '../pattern'
  * TODO
  * tab 左右移动的代码怎么写，需要判断渲染后的宽度
  */
-function Tabs({ children, activeKey, changeActiveKey }, context, fragments) {
+function Tabs({ children, activeKey, onChangeActiveKey }, context, fragments) {
 
   const visibleKey = refComputed(() => {
     if (activeKey.value && children.some((child) => child.props.tabKey === activeKey.value)) {
@@ -58,7 +58,7 @@ function Tabs({ children, activeKey, changeActiveKey }, context, fragments) {
           {fragments.tabHeaders({visibleKey})(() => {
             return children.map(child =>
               fragments.tabHeader({ tabKey: child.props.tabKey})(() =>
-                <tabHeader inline inline-padding={scen().spacing()} onClick={() => changeActiveKey(child.props.tabKey) }>{child.props.title}</tabHeader>
+                <tabHeader inline inline-padding={scen().spacing()} onClick={() => onChangeActiveKey(child.props.tabKey) }>{child.props.title}</tabHeader>
               )
             )
           })}
@@ -68,7 +68,7 @@ function Tabs({ children, activeKey, changeActiveKey }, context, fragments) {
         </tabHeaderScrollRight>
       </tabHeadersContainer>
       <tabContents block>
-        {fragments.tabContents(() => {
+        {fragments.tabContents()(() => {
           return children.map(child => {
             const hidden = refComputed(() => child.props.tabKey !== visibleKey.value)
             return <tabContent block block-visible-none={hidden}>{child.children}</tabContent>
@@ -82,41 +82,35 @@ function Tabs({ children, activeKey, changeActiveKey }, context, fragments) {
 Tabs.TabPane = function() {}
 
 Tabs.propTypes = {
-  activeKey: propTypes.string.default(() => ref())
-}
-
-Tabs.methods = {
-  changeActiveKey({ activeKey }, key) {
+  activeKey: propTypes.string.default(() => ref()),
+  onChangeActiveKey({ activeKey }, key) {
     activeKey.value = key
   }
 }
 
+
 Tabs.Style = (fragments) => {
   const rootElements = fragments.root.elements
-  rootElements.tabHeadersContainer.style = {
+  rootElements.tabHeadersContainer.style({
     borderColor: scen().separateColor(),
     borderStyle: 'solid',
-  }
+  })
 
-  rootElements.tabHeaderScrollLeft.style = rootElements.tabHeaderScrollRight.style = {
+  const pointerStyle = {
     cursor: 'pointer'
   }
 
-  fragments.tabHeader.elements.tabHeader.style = {
-    color({ tabKey, visibleKey }) {
-      return tabKey === visibleKey.value ? scen().interactable().active().color() : scen().color()
-    },
-    fontWeight({ tabKey, visibleKey }) {
-      return tabKey === visibleKey.value ? scen().stressed().weight() : scen().weight()
-    },
-    boxShadow({ tabKey, visibleKey }) {
-      return tabKey === visibleKey.value ?
-        `0 1px 0 0 ${scen().interactable().active().color()}` :
-        undefined
-    },
-    cursor: 'pointer'
+  rootElements.tabHeaderScrollLeft.style(pointerStyle)
+  rootElements.tabHeaderScrollRight.style(pointerStyle)
 
-  }
+  fragments.tabHeader.elements.tabHeader.style(({ tabKey, visibleKey }) => ({
+    color: tabKey === visibleKey.value ? scen().interactable().active().color() : scen().color(),
+    fontWeight: tabKey === visibleKey.value ? scen().stressed().weight() : scen().weight(),
+    boxShadow: tabKey === visibleKey.value ?
+      `0 1px 0 0 ${scen().interactable().active().color()}` :
+      undefined,
+    cursor: 'pointer'
+  }))
 
 }
 

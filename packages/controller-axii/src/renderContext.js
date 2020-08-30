@@ -15,3 +15,28 @@ export function getCurrentWorkingCnode(initialData) {
   const data = currentWorkingCnodeData === undefined ? initialData : currentWorkingCnodeData
   return [currentWorkingCnode, data, (nextData) => currentWorkingCnodeData = nextData]
 }
+
+export const activeEvent = (function() {
+  let currentEvent = null
+  let shouldPreventDefault = false
+  function withEvent(event, handler) {
+    currentEvent = event
+    handler(() => shouldPreventDefault)
+    currentEvent = null
+    shouldPreventDefault = false
+  }
+
+  function preventCurrentEventDefault() {
+    if (currentEvent) shouldPreventDefault = true
+  }
+
+  function getCurrentEvent() {
+    return currentEvent
+  }
+
+  return {
+    withEvent,
+    preventCurrentEventDefault,
+    getCurrentEvent,
+  }
+})()

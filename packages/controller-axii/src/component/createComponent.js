@@ -9,16 +9,8 @@ import {
   replaceSlot,
   walkVnodes,
   FragmentDynamic,
-  chainMethod,
-  makeCallbackName,
-  compose,
-  makeMethodName,
-  tranform,
-  hasComputedAttr, createCallback, zipObject
 } from './utils'
 import { isComponentVnode } from '../createAxiiController';
-import { propTypes } from '../index';
-
 
 function filterActiveFeatures(features, props) {
   return features.filter(Feature => {
@@ -30,14 +22,13 @@ function filterActiveFeatures(features, props) {
 /**
  * createComponent 的用途:
  * 1. [Feature Based]将组件的代码按照 base + feature 的方式来拆分。能够更灵活地扩展 feature。
- * 2. [Method invoke callbacks]将组件里面修改数据的 method 单独声明出来，在使用时自动判断传入的 Props 有没有同名的，如果有自动调用。类似于自动实现外部回调。
- * 3. [Transparent listener]元素具名化之后，外部可以任意监听想监听的元素。
- * 4. [Slot]将组件的各个元素都取名，如果标上 slot，就能从外部传入参数。
- * 5. [Partial Rewrite]外部复写部分元素。
+ * 2. [Transparent listener]元素具名化之后，外部可以任意监听想监听的元素。
+ * 3. [Slot]将组件的各个元素都取名，如果标上 slot，就能从外部传入参数。
+ * 4. [Partial Rewrite]外部复写部分元素。
  *
- * 2-5 需求的本质是：
+ * 2-4 需求的本质是：
  * 作为通用组件，应该最大的化地方便使用者少写胶水代码。
- * Method invoke callbacks & 是 Transparent listener 是满足外部对逻辑控制的需求。
+ * Transparent listener 是满足外部对逻辑控制的需求。
  * Slot & Partial Rewrite 是满足对样式控制的需求。
  * 这些都是运行时的动态控制。如果还不能满足，那么用户还可以把自己的需求写成业务 feature，通过 fragments 来劫持渲染过程。
  *
@@ -58,14 +49,6 @@ function filterActiveFeatures(features, props) {
  * 在 mutateFn 中会收到两个参数:
  *  - result: 前面产生的 vnode 结果。
  *  - localVars: fragment 计算所用到的变量。注意，Base 在声明的时候应该自己保证把所用到了的变量都传到了参数中。
- */
-
-/**
- * Methods 用法:
- * Base.methods = {
- *   methodName: function(props, ...argv) {}
- * }
- * function 第一个参数是自动注入的 props。
  */
 
 /**
@@ -127,7 +110,7 @@ export default function createComponent(Base, featureDefs=[]) {
   // 把 Feature 的 Style 也当成一个 Feature, 这样在 Style 上面也可以定义 methods/propTypes
   const FeaturesWithBase = [baseAsFeature].concat(featureDefs).reduce((last, Feature) => last.concat(
     Feature,
-    // Feature.Style || []
+    Feature.Style || []
   ), [])
   /**
    * 开始通过 注入的参数 `fragments` 收集 feature 中的改动
@@ -141,7 +124,6 @@ export default function createComponent(Base, featureDefs=[]) {
     const featureFunctionCollector = featureFunctionCollectors.derive(Feature)
     // 进行 mutations/style/listener 收集。
     Feature(featureFunctionCollector)
-    if (Feature.Style) Feature.Style(featureFunctionCollector)
   })
 
 
@@ -173,43 +155,14 @@ export default function createComponent(Base, featureDefs=[]) {
       return activeFeatures.includes(Feature)
     })
 
-    // 5. 把对 method 的调用全部转发到 on{Method} 上。我们在回调的 PropType 的 default 声明中来真实调用 method。
-    // 这样就能利用 AXII 框架的能力实现运行时传入回调 通过 return false 等来控制组件的行为。
-    const activeMethodNames = activeFeatures.reduce((last, Feature) => last.concat( Object.keys(Feature.methods || []) ), [])
-    Object.assign(processedProps, zipObject(
-      activeMethodNames,
-      (callBackName) => props[makeCallbackName(callBackName)]
-    ))
-
     return renderFragments(rootFragment, processedProps, context, activeFeatureFunctionCollectors, props, Base.useNamedChildrenSlot)
   }
 
-
-  // 合并 features propTypes。为每一个 method 生成名为 on{Method} 的回调 propType
-  const methodCallbacks = FeaturesWithBase.reduce((result, Feature) => {
-    const names = Object.keys(Feature.methods || {}).map(makeCallbackName)
-    return {
-      ...result,
-      // TODO 未来这里的参数还可能会修改，这取决于 AXII 是如何给回到传值的，目前只默认传了 props。
-      ...zipObject(names, (callbackName) => propTypes.callback.default(() => (props, ...restArgv) => {
-        // 反向查找 method name
-        const methodName = makeMethodName(callbackName)
-        // 在执行默认 callback 的时候动态判断哪些 feature method 是需要
-        const activeFeatures = filterActiveFeatures(FeaturesWithBase, restArgv)
-
-        const methods = activeFeatures.reduce(( last, Feature) => last.concat(Feature.methods[methodName] || []), [])
-        // compose 一下，这样后面 Feature 的 method 可以决定要不要覆盖、复用前面同名的 method.
-        // method 不需要任何默认参数，这是和 onXXX 回调不同的地方。
-        compose(methods)(...restArgv)
-      }))
-    }
-  }, {})
-
-
+  // 5. TODO 作为 Feature，会需要去修改、抑制 Base 或者其他 Feature 的默认 callback 行为吗？
+  // 我们目前没有处理，如果有需求，目前 Feature 声明 propTypes 时会覆盖前面，自己也可以做。
   Component.propTypes = Object.assign({},
     Base.propTypes,
     ...featureDefs.map(f => f.propTypes || {}),
-    methodCallbacks
   )
 
   return Component
@@ -262,11 +215,11 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
 
     // 3. 开始执行每个 feature 中的 mutations。
     featureFunctionCollectors.forEach(featureFunctionCollector => {
-      const mutations = featureFunctionCollector[fragment.name].mutations()
-      if (mutations) {
-        // 如果有返回值，就要替换原节点。因为有时候 mutation 写起来没有直接写想要的结构来得方便。
-        mutations.forEach((mutateFn) => {
-          const alterResult = mutateFn(props, renderResult, commonArgv)
+      const modifications = featureFunctionCollector[fragment.name].getModifications()
+      if (modifications) {
+        // 如果有返回值，就要替换原节点。因为有时候 modification 写起来没有直接写想要的结构来得方便。
+        modifications.forEach((modify) => {
+          const alterResult = modify(renderResult, commonArgv)
           if (alterResult) {
             renderResult = alterResult
             renderResultToWalk = Array.isArray(renderResult) ? renderResult : [renderResult]
@@ -276,6 +229,7 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
     })
 
     // 4. 收集 style 和 开始绑定事件
+    // TODO 这里可以改善一下性能，先取出所有有定义的 elements，再在遍历中去匹配，而不是每个节点都试探去取一次。
     walkVnodes(renderResultToWalk, (walkChildren, originVnode) => {
       if (!originVnode) return
       if (!originVnode instanceof VNode) return
@@ -288,16 +242,15 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
         const matchedStyles = []
         const listenersByEventName = {}
 
-        featureFunctionCollectors.forEach(fragmentsProxy => {
+        featureFunctionCollectors.forEach(collector => {
           // 收集样式
           matchedStyles.push(
-            ...fragmentsProxy[GLOBAL_NAME].elements[originVnode.type].getStyle(),
-            ...fragmentsProxy[fragment.name].elements[originVnode.type].getStyle()
+            ...collector[GLOBAL_NAME].elements[originVnode.type].getStyle(),
+            ...collector[fragment.name].elements[originVnode.type].getStyle()
           )
 
           // 收集 listeners
-          console.log(fragment.name, originVnode.type, fragmentsProxy[fragment.name].elements[originVnode.type].getListeners())
-          Object.entries(fragmentsProxy[fragment.name].elements[originVnode.type].getListeners()).forEach(([eventName, listeners ]) => {
+          Object.entries(collector[fragment.name].elements[originVnode.type].getListeners()).forEach(([eventName, listeners ]) => {
             if (!listenersByEventName[eventName]) listenersByEventName[eventName] = []
             listenersByEventName[eventName].push(...listeners)
           })
@@ -323,7 +276,8 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
             originVnode.attributes[eventName] = (...argv) => {
               if (originListener) originListener(...argv)
               listeners.forEach(listener => {
-                listener(props, commonArgv, ...argv)
+                // 注意补足当前作用域下所有可用的 variable 作为参数。
+                listener(...argv, commonArgv)
               })
             }
           })
@@ -338,7 +292,7 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
 
     // 5. 开始执行 replace slot。replaceSlot 内部必须保证不要再穿透 vnodeComputed。
     if (renderResult) {
-      replaceSlot([renderResult], props.children, props, commonArgv) // 这里的 children 已经是处理过 slot 的了
+      replaceSlot([renderResult], props.children, commonArgv) // 这里的 children 已经是处理过 slot 的了
     }
 
     return renderResult

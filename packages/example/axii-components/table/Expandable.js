@@ -24,11 +24,11 @@ export default function FeatureExpandable(fragments) {
   }
 
   // TODO 这里 block-width 是和 stickyLayout 的约定，要删掉
-  fragments.heads.mutations= ({ dataSource, expandedRowRender, expandedRowKeys }, result) => {
+  fragments.heads.modify(({ dataSource, expandedRowRender, expandedRowKeys }, result) => {
     result[0].children.unshift(<th block-width={60} rowSpan={result.length}><expand onChange={() => toggleExpandAll(expandedRowKeys)} /></th>)
-  }
+  })
 
-  fragments.rows.mutations = ({ dataSource, expandedRowRender, expandedRowKeys }, result) => {
+  fragments.rows.modify(({ dataSource, expandedRowRender, expandedRowKeys }, result) => {
     result.forEach((tr, i) => {
       const rowData = tr.props.data
       // CAUTION 注意这里对 children 的 spread，不要随意打包，要小心地维护数据结构。
@@ -39,12 +39,12 @@ export default function FeatureExpandable(fragments) {
           null)}
       </>
     })
-  }
+  })
 
   // TODO 这里 block-width 是和 stickyLayout 的约定，要删掉
-  fragments.cells.mutations = ({ dataSource, expandedRowRender, expandedRowKeys }, result, { row: rowData }) => {
+  fragments.cells.modify(({ dataSource, expandedRowRender, expandedRowKeys }, result, { row: rowData }) => {
     result.unshift(<td block-width={60}><div onClick={() => toggleExpandOne(expandedRowKeys, rowData.key)}>+</div></td>,)
-  }
+  })
 
 }
 
