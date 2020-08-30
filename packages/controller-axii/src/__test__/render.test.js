@@ -358,5 +358,6 @@ describe('complex vnodeComputed', () => {
     expect(root.children[0]).partialMatch(<div><div style={{color: 'blue'}}/></div>)
     expect(computedCalled).toBe(4)
   })
+
 })
 

@@ -95,10 +95,10 @@ import vnodeComputed from '../vnodeComputed'
  */
 
 export class FragmentDynamic {
-  constructor(name, render, argv, nonReactive) {
+  constructor(name, render, localVars, nonReactive) {
     this.name = name
     this.render = render
-    this.argv = argv
+    this.localVars = localVars
     this.nonReactive = nonReactive
   }
 }
@@ -153,8 +153,10 @@ export function createElementsContainer() {
 }
 
 export function createFragment(fragmentName) {
-  function fragmentSetterAsFragment(fragFn, argvMap, nonReactive) {
-    return new FragmentDynamic(fragmentName, fragFn, argvMap, nonReactive)
+  function fragmentSetterAsFragment(localVars, nonReactive) {
+    return (fragFn) => {
+      return new FragmentDynamic(fragmentName, fragFn, localVars, nonReactive)
+    }
   }
 
   // 收集 fragment 作用域下对 element 的 style 定义，对 element 的事件监听
@@ -174,7 +176,7 @@ export function createFragment(fragmentName) {
   return fragmentSetterAsFragment
 }
 
-function createFragmentsContainer() {
+function createFeatureFunctionCollector() {
   const container = {
     $$fragments: {},
     $$argv: new WeakMap()
@@ -199,16 +201,16 @@ function createFragmentsContainer() {
 
 
 export function createFeatureFunctionCollectors() {
-  const keyToFragmentsContainer = new Map()
+  const keyToFeatureFunctionCollector = new Map()
   return {
     derive(key) {
-      let fragmentsContainer = keyToFragmentsContainer.get(key)
-      if (!fragmentsContainer) keyToFragmentsContainer.set(key, (fragmentsContainer = createFragmentsContainer()))
-      return fragmentsContainer
+      let featureFunctionCollector = keyToFeatureFunctionCollector.get(key)
+      if (!featureFunctionCollector) keyToFeatureFunctionCollector.set(key, (featureFunctionCollector = createFeatureFunctionCollector()))
+      return featureFunctionCollector
     },
     filter(fn) {
       const filteredContainers = []
-      keyToFragmentsContainer.forEach((container, key) => {
+      keyToFeatureFunctionCollector.forEach((container, key) => {
         if (fn(key)) {
           filteredContainers.push(container)
         }

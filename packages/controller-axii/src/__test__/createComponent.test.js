@@ -77,22 +77,53 @@ describe('create component', () => {
   })
 
   test('transparent listener', () => {
+    let callbackCalled = false
+    function Base() {
+      return <container><child /></container>
+    }
 
+    const props = {
+      listeners: ({root}) => {
+        root.elements.child.onClick = () => {
+          callbackCalled = true
+        }
+      }
+    }
+
+    const BaseComponent = createComponent(Base)
+    const root = document.createElement('div')
+    render(<BaseComponent {...props}/>, root)
+
+    $(root).find('child').click()
+    expect(callbackCalled).toBe(true)
   })
 
   test('slot children', () => {
+    function Base() {
+      return <container><child slot/></container>
+    }
 
+
+    const BaseComponent = createComponent(Base)
+    const root = document.createElement('div')
+    render(<BaseComponent>{
+      {
+        child: <span>1</span>
+      }
+    }</BaseComponent>, root)
+
+    expect(root.children[0]).partialMatch(<container><child><span>1</span></child></container>)
   })
 
   test('partial rewrite', () => {
-
+    // TODO
   })
 })
 
 
 
 describe('Feature based', () => {
-  test('pass right local vars to method/mutation/Style', () => {
+  test('pass right local vars to method/mutation/Style/children', () => {
 
   })
 

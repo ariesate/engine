@@ -33,7 +33,6 @@ describe("style manager", () => {
     // 通过 children 可以去掉 comment node
     const root = document.body.children[0]
 
-    console.log(root.outerHTML)
     expect(root).toHaveStyle({ color : 'blue'})
     expect(root.childNodes[0]).toHaveStyle({ color : 'red'})
   })

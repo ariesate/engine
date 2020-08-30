@@ -55,14 +55,13 @@ function Tabs({ children, activeKey, changeActiveKey }, context, fragments) {
           <Icon type="left" />
         </tabHeaderScrollLeft>
         <tabHeaders block block-white-space-nowrap block-overflow-x-hidden flex-grow-1 ref={headerRef}>
-          {fragments.tabHeaders(() => {
+          {fragments.tabHeaders({visibleKey})(() => {
             return children.map(child =>
-              fragments.tabHeader(() =>
-                  <tabHeader inline inline-padding={scen().spacing()} onClick={() => changeActiveKey(child.props.tabKey) }>{child.props.title}</tabHeader>
-                , { tabKey: child.props.tabKey}
+              fragments.tabHeader({ tabKey: child.props.tabKey})(() =>
+                <tabHeader inline inline-padding={scen().spacing()} onClick={() => changeActiveKey(child.props.tabKey) }>{child.props.title}</tabHeader>
               )
             )
-          }, {visibleKey})}
+          })}
         </tabHeaders>
         <tabHeaderScrollRight inline  flex-grow-0 flex-display flex-align-items-center inline-display-none={headerNotOverflow} onClick={scrollRight}>
           <Icon type="right" />

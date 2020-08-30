@@ -124,29 +124,24 @@ export default function createComponent(Base, featureDefs=[]) {
   baseAsFeature.methods = Base.methods
   baseAsFeature.propsTypes = Base.propsTypes
 
+  // 把 Feature 的 Style 也当成一个 Feature, 这样在 Style 上面也可以定义 methods/propTypes
+  const FeaturesWithBase = [baseAsFeature].concat(featureDefs).reduce((last, Feature) => last.concat(
+    Feature,
+    // Feature.Style || []
+  ), [])
   /**
    * 开始通过 注入的参数 `fragments` 收集 feature 中的改动
    * 1. 执行 Feature，通过通过 fragments.xxx.mutations = 收集 mutation
-   * 2. 执行 Style，通过 fragments.xxx.elements[elementName] = {} 收集 style
-   * 3. 执行 Style，通过 fragments.xxx.argv[argvName] = reactive 收集参数
+   * 2. 执行 Style，通过 fragments.xxx.elements[elementName].style = {} 收集 style
    * 4. 执行 Style，通过 fragments.xxx.elements[elementName].onXXX = function() {} 收集回调事件
    *
-   * 需要合并的:
-   * 1. 通过 Feature.methods 注入回调。
-   * 2. 通过 Feature.propTypes 合并 propType, 并用 Feature.match 来验证是否启用 feature。
    */
-  const FeaturesWithBase = [baseAsFeature].concat(featureDefs)
+
   FeaturesWithBase.forEach(Feature => {
     const featureFunctionCollector = featureFunctionCollectors.derive(Feature)
-
-    // 1. 收集 mutations
+    // 进行 mutations/style/listener 收集。
     Feature(featureFunctionCollector)
-
-    // 收集 style & Layout 和注册的参数(参数中的)
-    // TODO 还有收集注册的回调！是否考虑把 Style 也变成 Feature，可以有自己独立的 methods。
-    if (Feature.Style) {
-      Feature.Style(featureFunctionCollector)
-    }
+    if (Feature.Style) Feature.Style(featureFunctionCollector)
   })
 
 
@@ -158,12 +153,20 @@ export default function createComponent(Base, featureDefs=[]) {
     // 2. 开始渲染 Base，注意，这里还没有 render 其中的 fragments。在后面 renderFragments 中 render。
     // 虽然把 base 也当做一个 fragment。但 render base 参数不同，base render 时要直接用到 props，没有必要强行统一。
     const baseFeatureFunctionCollector = featureFunctionCollectors.derive(Base)
-    const rootFragment = baseFeatureFunctionCollector[ROOT_FRAGMENT_NAME](() => {
+    // 最后一个 true 参数表示不需要生成 computed
+    const rootFragment = baseFeatureFunctionCollector[ROOT_FRAGMENT_NAME]({}, true)(() => {
       return Base(processedProps, context, baseFeatureFunctionCollector) //注意，base 的参数是和 Feature 的参数不同
-    }, {}, true) // 最后一个参数表示不需要生成 computed
+    })
+
+    // 2. 把 prop 中的 transparent listener 也当成一个 feature.
+    if (props.listeners) {
+      const listenerFeatureFunctionCollector = featureFunctionCollectors.derive(props.listeners)
+      props.listeners(listenerFeatureFunctionCollector)
+    }
 
     // 3. 不一定每个 feature 都要激活，一般会要根据是否传入了标志性的 props 来看，所以这里过滤一下。
-    const activeFeatures = filterActiveFeatures(FeaturesWithBase, props)
+    // 注意最后 concat 了一下 base 和 listeners， 是为了在下一步获取他们的 collector。
+    const activeFeatures = filterActiveFeatures(FeaturesWithBase, props).concat(Base, props.listeners || [])
 
     // 4. 相应的，得到激活的 feature 的 fragmentsProxy
     const activeFeatureFunctionCollectors = featureFunctionCollectors.filter((Feature) => {
@@ -238,20 +241,12 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
    */
   // TODO fragment 重新 render 的时候，要回收 index 上次注册的 vnode.
   function renderProcess() {
-    // 0. render
+    // 1. render
     let renderResult = fragment.render()
     let renderResultToWalk = Array.isArray(renderResult) ? renderResult : [renderResult]
 
-    // 1. 创建动态参数。这些参数是使用 fragments.argv[argvName] = () => xxx 定义的。可以看做是渲染时需要的局部变量。在 Style 里面可能用到。
-    const dynamicArgv = {}
-    featureFunctionCollectors.forEach(featureFunctionCollector => {
-      Object.assign(dynamicArgv, mapValues(featureFunctionCollector[fragment.name].argv, (createArgv) => {
-        return createArgv()
-      }))
-    })
-
-    // 2. 在当前作用域下的参数合集，包括 上层的参数、当前 fragment 上定义的参数、动态创建的参数。这就是单签 fragment 下所有能用到的变量。
-    const commonArgv = {...upperArgv, ...fragment.argv, ...dynamicArgv}
+    // 2. 在当前作用域下的参数合集，包括 上层的参数、当前 fragment 上定义的参数。这就是当前 fragment 下所有能用到的变量。
+    const commonArgv = {...upperArgv, ...fragment.localVars}
 
     // 2. 开始递归从自己 render 的结果里寻找还有没有 fragment，如果有进行 render.
     // CAUTION 虽然是先 render 完自己，但是后续操作（例如 mutation）是先处理完子几点再处理自己。
@@ -301,6 +296,7 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
           )
 
           // 收集 listeners
+          console.log(fragment.name, originVnode.type, fragmentsProxy[fragment.name].elements[originVnode.type].getListeners())
           Object.entries(fragmentsProxy[fragment.name].elements[originVnode.type].getListeners()).forEach(([eventName, listeners ]) => {
             if (!listenersByEventName[eventName]) listenersByEventName[eventName] = []
             listenersByEventName[eventName].push(...listeners)

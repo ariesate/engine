@@ -49,7 +49,6 @@ import { withCurrentWorkingCnode } from './renderContext'
 import LayoutManager from './LayoutManager'
 import { isComputed, getComputation, collectComputed, afterDigestion } from './reactive/effect';
 import { applyPatch, createDraft, finishDraft } from './produce';
-import { createCacheablePropsProxyFromState } from './callListener';
 
 const layoutManager = new LayoutManager()
 
@@ -285,7 +284,7 @@ const activeEvent = (function() {
 
 
 function createInjectedProps(cnode) {
-  const { props, localProps, state } = cnode
+  const { props, localProps } = cnode
   const { propTypes: thisPropTypes } = cnode.type
 
   Object.entries(thisPropTypes || {}).forEach(([propName, propType]) => {
@@ -298,16 +297,14 @@ function createInjectedProps(cnode) {
 
   const mergedProps = { ...props, ...localProps }
   // 开始对其中的 mutation 回调 prop 进行注入。
-  const injectedProps = thisPropTypes ? mapValues(thisPropTypes, (propType, propName) => {
+  const callbackProps = mapValues(thisPropTypes || {}, (propType, propName) => {
     return propType.is(propTypes.callback) ? (...runtimeArgv) => {
       const userMutateFn = props[propName]
-      debugger
       const defaultMutateFn = propType.defaultValue
 
       const valueProps = filter(mergedProps, isReactiveLike)
       const draftProps = createDraft(mapValues(valueProps, tryToRaw))
 
-      // TODO 这里没考虑本地变量！state
       defaultMutateFn(draftProps, ...runtimeArgv)
       // 显式的返回 false 就是不要应用原本的修改。
       // TODO 是不是要有别的设计, 例如 preventDefault, 而不是 return false
@@ -321,11 +318,9 @@ function createInjectedProps(cnode) {
       }
     } : mergedProps[propName]
     }
+  )
 
-
-  ) : mergedProps
-
-  return injectedProps
+  return {...mergedProps, ...callbackProps}
 }
 
 /**

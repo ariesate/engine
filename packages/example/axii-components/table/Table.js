@@ -70,7 +70,7 @@ export function Table( { data, pagination, columns }, context, fragments) {
   return (
     <table inline block-display-table table-border-spacing-0 table-border-collapse-collapse>
       <thead>
-          {fragments.heads(() => {
+          {fragments.heads()(() => {
 
             let maxLevel = 0
 
@@ -87,26 +87,26 @@ export function Table( { data, pagination, columns }, context, fragments) {
               if (!column.children) {
                 colRowProps.rowSpan = maxLevel - level + 1
               }
-              result[level].children.push(fragments.headCell(() => (
+              result[level].children.push(fragments.headCell({column, level, childrenCount})(() => (
                 <th inline inline-display="table-cell" inline-border-width-1px  {...colRowProps} data-column={column}>{column.title}</th>
-              ), { column }))
+              )))
             })
 
             return result
           })}
       </thead>
       <tbody>
-        {fragments.rows(() => {
+        {fragments.rows()(() => {
 
           return data.map((row) => (
             <tr data={row}>
-              {fragments.cells(() => {
+              {fragments.cells({row})(() => {
                 const cells = []
                 walkLeaf(columns, (column) => {
-                  cells.push(fragments.cell(() => <td inline inline-display="table-cell"  inline-border-width-1px data-column={column}>{row[column.dataIndex]}</td>, { column }))
+                  cells.push(fragments.cell({ column })(() => <td inline inline-display="table-cell"  inline-border-width-1px data-column={column}>{row[column.dataIndex]}</td>))
                 })
                 return cells
-              }, { row })}
+              })}
             </tr>
           ))
         })}
