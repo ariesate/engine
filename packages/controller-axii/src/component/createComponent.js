@@ -164,8 +164,6 @@ export default function createComponent(Base, featureDefs=[]) {
     ...FeaturesWithBase.map(f => f.propTypes || {}),
   )
 
-  console.log(FeaturesWithBase)
-
   return Component
 }
 
