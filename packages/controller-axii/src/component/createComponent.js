@@ -105,7 +105,7 @@ export default function createComponent(Base, featureDefs=[]) {
   baseAsFeature.match = () => true
   baseAsFeature.Style = Base.Style
   baseAsFeature.methods = Base.methods
-  baseAsFeature.propsTypes = Base.propsTypes
+  baseAsFeature.propTypes = Base.propTypes
 
   // 把 Feature 的 Style 也当成一个 Feature, 这样在 Style 上面也可以定义 methods/propTypes
   const FeaturesWithBase = [baseAsFeature].concat(featureDefs).reduce((last, Feature) => last.concat(
@@ -161,9 +161,10 @@ export default function createComponent(Base, featureDefs=[]) {
   // 5. TODO 作为 Feature，会需要去修改、抑制 Base 或者其他 Feature 的默认 callback 行为吗？
   // 我们目前没有处理，如果有需求，目前 Feature 声明 propTypes 时会覆盖前面，自己也可以做。
   Component.propTypes = Object.assign({},
-    Base.propTypes,
-    ...featureDefs.map(f => f.propTypes || {}),
+    ...FeaturesWithBase.map(f => f.propTypes || {}),
   )
+
+  console.log(FeaturesWithBase)
 
   return Component
 }

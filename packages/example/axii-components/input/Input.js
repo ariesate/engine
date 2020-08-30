@@ -72,27 +72,23 @@ Input.propTypes = {
 Input.Style = (fragments) => {
   const rootElements = fragments.root.elements
 
-  rootElements.input.onFocus((e, { focused }) => {
-    focused.value = true
+  rootElements.input.onFocus((e, { onChangeFocus }) => {
+    onChangeFocus(true)
   })
 
-  rootElements.input.onBlur((e, { focused }) => {
-    focused.value = false
+  rootElements.input.onBlur((e, { onChangeFocus }) => {
+    onChangeFocus(false)
   })
 
-  rootElements.container.style(() => ({
+  rootElements.container.style(({ focused }) => ({
     borderStyle: 'solid',
     borderRadius: scen().radius(),
-    borderColor({ focused }){
-      return focused.value ?
-        scen().interactable().active().color() :
-        scen().separateColor()
-    },
-    boxShadow({ focused }) {
-      return focused.value ?
-        `0 0 0 ${scen().outlineWidth()}px ${scen().interactable().active().shadowColor()}` :
-        undefined
-    }
+    borderColor: focused.value ?
+      scen().interactable().active().color() :
+      scen().separateColor(),
+    boxShadow: focused.value ?
+      `0 0 0 ${scen().outlineWidth()}px ${scen().interactable().active().shadowColor()}` :
+      undefined
   }))
 
   rootElements.input.style(() => ({
@@ -119,8 +115,9 @@ Input.Style = (fragments) => {
   fragments.after.elements.after.style(commonAfterStyle)
 }
 
-Input.Style.propType = {
-  focused: propTypes.bool.default(() => ref(false))
+Input.Style.propTypes = {
+  focused: propTypes.bool.default(() => ref(false)),
+  onChangeFocus: propTypes.callback.default(() => (nextFocused, { focused }) => focused.value = nextFocused)
 }
 
 export default createComponent(Input)
