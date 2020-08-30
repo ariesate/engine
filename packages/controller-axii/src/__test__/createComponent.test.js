@@ -59,9 +59,9 @@ describe('create component', () => {
 
     const props = {
       listeners: ({root}) => {
-        root.elements.child.onClick = () => {
+        root.elements.child.onClick(() => {
           callbackCalled = true
-        }
+        })
       }
     }
 
@@ -232,6 +232,5 @@ describe('Feature based', () => {
       </container>
     )
 
-    console.log()
   })
 })
