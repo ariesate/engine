@@ -163,6 +163,7 @@ export function createFragment(fragmentName) {
   fragmentSetterAsFragment.elements = createElementsContainer()
   fragmentSetterAsFragment.argv = {}
 
+  // modifications
   fragmentSetterAsFragment.$$modifications = []
   Object.defineProperty(fragmentSetterAsFragment, 'modify', {
     get() {
@@ -173,6 +174,20 @@ export function createFragment(fragmentName) {
   Object.defineProperty(fragmentSetterAsFragment, 'getModifications', {
     get() {
       return () => fragmentSetterAsFragment.$$modifications
+    },
+  })
+
+  // preparations
+  fragmentSetterAsFragment.$$preparations = []
+  Object.defineProperty(fragmentSetterAsFragment, 'prepare', {
+    get() {
+      return (prepareFn) => fragmentSetterAsFragment.$$preparations.push(prepareFn)
+    },
+  })
+
+  Object.defineProperty(fragmentSetterAsFragment, 'getPreparations', {
+    get() {
+      return () => fragmentSetterAsFragment.$$preparations
     },
   })
 

@@ -194,6 +194,21 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
     // 2. 在当前作用域下的参数合集，包括 上层的参数、当前 fragment 上定义的参数。这就是当前 fragment 下所有能用到的变量。
     const commonArgv = {...upperArgv, ...fragment.localVars}
 
+    // 在渲染子 component 之前，我们可以先有个 prepare 函数，这对要提前进行一些变量计算非常有用。
+    featureFunctionCollectors.forEach(featureFunctionCollector => {
+      const preparations = featureFunctionCollector[fragment.name].getPreparations()
+      if (preparations) {
+        preparations.forEach((prepare) => {
+          const dynamicVars = prepare(commonArgv)
+          if (dynamicVars) {
+            // 不允许动态覆盖参数，容易出问题，职能用修改 vnode 结果的方式来改。
+            invariant(Object.keys(dynamicVars).every(key => !(key in commonArgv)), `do not overwrite var in prepare function ${Object.keys(dynamicVars)}`)
+            Object.assign(commonArgv, dynamicVars)
+          }
+        })
+      }
+    })
+
     // 2. 开始递归从自己 render 的结果里寻找还有没有 fragment，如果有进行 render.
     // CAUTION 虽然是先 render 完自己，但是后续操作（例如 mutation）是先处理完子几点再处理自己。
     walkVnodes(renderResultToWalk, (walkChildren, originVnode, vnodes) => {
