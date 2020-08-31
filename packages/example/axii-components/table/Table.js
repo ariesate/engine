@@ -98,15 +98,17 @@ export function Table( { data, pagination, columns }, context, fragments) {
       <tbody>
         {fragments.rows()(() => {
           return data.map((row) => (
-            <tr data={row}>
-              {fragments.cells({row})(() => {
-                const cells = []
-                walkLeaf(columns, (column) => {
-                  cells.push(fragments.cell({ column })(() => <td inline inline-display="table-cell"  inline-border-width-1px data-column={column}>{row[column.dataIndex]}</td>))
-                })
-                return cells
-              })}
-            </tr>
+            fragments.row({ row })(() => (
+              <tr data={row}>
+                {fragments.cells({row})(() => {
+                  const cells = []
+                  walkLeaf(columns, (column) => {
+                    cells.push(fragments.cell({ column })(() => <td inline inline-display="table-cell"  inline-border-width-1px data-column={column}>{row[column.dataIndex]}</td>))
+                  })
+                  return cells
+                })}
+              </tr>
+            ))
           ))
         })}
       </tbody>
@@ -132,6 +134,7 @@ export const tdStyle = {
 Table.Style = (fragments) => {
   fragments.headCell.elements.th.style(thStyle)
   fragments.cell.elements.td.style(tdStyle)
+
 }
 
 Table.propTypes = {
@@ -140,7 +143,7 @@ Table.propTypes = {
 }
 
 // 应该写成这个形式
-export default createComponent(Table, [StickyLayout, Selectable])
+export default createComponent(Table, [StickyLayout, Selectable, Expandable])
 // export default createComponent(Table, [Selectable, Expandable])
 
 

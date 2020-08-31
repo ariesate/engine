@@ -12,6 +12,7 @@ import {
 } from './utils'
 import { isComponentVnode } from '../createAxiiController';
 import { normalizeLeaf } from '../../../engine/createElement';
+import { Fragment } from '../index';
 
 function filterActiveFeatures(features, props) {
   return features.filter(Feature => {
@@ -209,18 +210,6 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
       }
     })
 
-    // 2. 开始递归从自己 render 的结果里寻找还有没有 fragment，如果有进行 render.
-    // CAUTION 虽然是先 render 完自己，但是后续操作（例如 mutation）是先处理完子几点再处理自己。
-    walkVnodes(renderResultToWalk, (walkChildren, originVnode, vnodes) => {
-      if (originVnode instanceof FragmentDynamic) {
-        vnodes[vnodes.indexOf(originVnode)] = renderFragments(originVnode, props, context, featureFunctionCollectors, commonArgv, useNamedChildrenSlot)
-      } else if ((originVnode instanceof VNode) && originVnode.children){
-        // 这是个没必要的验证，先放在这里为了防止出问题不知道怎么回事。
-        invariant(Array.isArray(originVnode.children), 'something wrong, children is not a Array')
-        walkChildren(originVnode.children)
-      }
-    })
-
     // 3. 开始执行每个 feature 中的 mutations。
     featureFunctionCollectors.forEach(featureFunctionCollector => {
       const modifications = featureFunctionCollector[fragment.name].getModifications()
@@ -236,16 +225,23 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
       }
     })
 
-    // 4. 收集 style 和 开始绑定事件
+    // 4. 递归处理每一个节点，收集 style 和 开始绑定事件。如果碰到了子 fragment，就递归 render.
     // TODO 这里可以改善一下性能，先取出所有有定义的 elements，再在遍历中去匹配，而不是每个节点都试探去取一次。
-    walkVnodes(renderResultToWalk, (walkChildren, originVnode) => {
-      if (!originVnode) return
-      if (!originVnode instanceof VNode) return
-      // TODO component vnode 应该也要处理
-      if (isComponentVnode(originVnode)) return
-      if (typeof originVnode.type !== 'string') return
+    walkVnodes(renderResultToWalk, (walkChildren, originVnode, vnodes) => {
+      if (!originVnode || isComponentVnode(originVnode)) return
+      // 如果是 fragment，就递归渲染
+      if (originVnode instanceof FragmentDynamic) {
+        vnodes[vnodes.indexOf(originVnode)] = renderFragments(originVnode, props, context, featureFunctionCollectors, commonArgv, useNamedChildrenSlot)
+        return
+      }
+      // 如果是数组或者 Fragment，也继续递归
+      if (originVnode.type === Array || originVnode.type === Fragment) {
+        return walkChildren(originVnode.children)
+      }
 
-      // 普通节点
+      // 剩下的只处理普通的节点了，null/字符串 都不处理了。
+      if (!originVnode instanceof VNode || typeof originVnode.type !== 'string') return
+
       const originStyle = originVnode.attributes.style || {}
       const isOriginStyleRef = isRef(originStyle)
       const matchedStyles = []

@@ -46,7 +46,6 @@ export default function FeatureSelectable(fragments) {
 }
 
 FeatureSelectable.Style = (fragments) => {
-  // TODO
   fragments.heads.elements.selectTh.style(thStyle)
   fragments.cells.elements.selectTd.style({
     ...tdStyle,

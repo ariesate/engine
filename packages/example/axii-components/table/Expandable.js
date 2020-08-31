@@ -6,9 +6,9 @@ import {
   Fragment,
   cloneElement,
   vnodeComputed,
-  flatChildren
+  flattenChildren
 } from 'axii';
-import { Table } from './Table'
+import { Table, tdStyle, thStyle } from './Table'
 
 export default function FeatureExpandable(fragments) {
   const toggleExpandAll = () => {
@@ -24,26 +24,32 @@ export default function FeatureExpandable(fragments) {
   }
 
   // TODO 这里 block-width 是和 stickyLayout 的约定，要删掉
-  fragments.heads.modify(({ dataSource, expandedRowRender, expandedRowKeys }, result) => {
-    result[0].children.unshift(<th block-width={60} rowSpan={result.length}><expand onChange={() => toggleExpandAll(expandedRowKeys)} /></th>)
+  fragments.heads.modify((result, { expandedRowKeys }) => {
+    result[0].children.unshift(<expandTh use="th" block-width={60} rowSpan={result.length}><expand onChange={() => toggleExpandAll(expandedRowKeys)} /></expandTh>)
   })
 
-  fragments.rows.modify(({ dataSource, expandedRowRender, expandedRowKeys }, result) => {
-    result.forEach((tr, i) => {
-      const rowData = tr.props.data
-      // CAUTION 注意这里对 children 的 spread，不要随意打包，要小心地维护数据结构。
-      result[i] = <>
-        {tr}
-        {vnodeComputed(() => expandedRowKeys.has(rowData.key) ?
-          <tr><td colSpan={flatChildren(tr.children).length + 1}>{expandedRowRender(rowData)}</td></tr> :
-          null)}
-      </>
-    })
+  // TODO 这里的这个 flattenChildren 是怎么读出来的呢？必须确保自己在所有可能插入列的 feature 之后再执行？
+  fragments.row.modify((resultTr, { row: rowData, expandedRowRender, expandedRowKeys }) => {
+    return <>
+      {resultTr}
+      {
+        fragments.expandedRow()(() => {
+          return expandedRowKeys.has(rowData.key) ?
+            <tr>
+              <expandedTd use="td" inline inline-display="table-cell" inline-border-width-1px
+                          colSpan={flattenChildren(resultTr.children).length}>
+                {expandedRowRender(rowData)}
+              </expandedTd>
+            </tr> :
+            null
+        })
+      }
+    </>
   })
 
   // TODO 这里 block-width 是和 stickyLayout 的约定，要删掉
-  fragments.cells.modify(({ dataSource, expandedRowRender, expandedRowKeys }, result, { row: rowData }) => {
-    result.unshift(<td block-width={60}><div onClick={() => toggleExpandOne(expandedRowKeys, rowData.key)}>+</div></td>,)
+  fragments.cells.modify((result, { expandedRowKeys, row: rowData }) => {
+    result.unshift(<expandTd inline inline-display="table-cell"  inline-border-width-1px use="td" block-width={60}><div onClick={() => toggleExpandOne(expandedRowKeys, rowData.key)}>+</div></expandTd>,)
   })
 
 }
@@ -55,4 +61,17 @@ FeatureExpandable.propTypes = {
   expandedRowKeys: propTypes.array,
 }
 
+FeatureExpandable.Style = (fragments) => {
+  fragments.heads.elements.expandTh.style(thStyle)
+  fragments.cells.elements.expandTd.style({
+    ...tdStyle,
+    textAlign: 'center',
+    verticalAlign: 'middle'
+  })
+  fragments.expandedRow.elements.expandedTd.style({
+    ...tdStyle,
+    overflowX : 'auto',
+  })
+
+}
 
