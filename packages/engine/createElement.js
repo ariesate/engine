@@ -85,9 +85,16 @@ export default function createElement(type, attributes, ...rawChildren) {
   // TODO 之后全改成 props
   node.props = node.attributes
 
-  // 用于支持 data-* 自定义属性
-  node.dataset = node.attributes.dataset
-  delete node.attributes.dataset
+  if (typeof type === 'string') {
+    // 用于支持 data-* 自定义属性
+    node.dataset = node.attributes.dataset
+    delete node.attributes.dataset
+
+    // 用于支撑给 node 取别名，但使用 html 自己支撑的元素做 tag
+    node.use = node.attributes.use
+    delete node.attributes.use
+  }
+
 
   if (node.vnodeRef) node.vnodeRef(node)
 

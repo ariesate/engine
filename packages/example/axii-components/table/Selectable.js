@@ -33,7 +33,7 @@ export default function FeatureSelectable(fragments) {
     const allSelected = refComputed(() => {
       return selectedRowKeys.size === data.length
     })
-    result[0].children.unshift(<th inline inline-display="table-cell" inline-border-width-1px block-width={60} rowSpan={result.length}><input type="checkbox" onClick={() => toggleAll(selectedRowKeys, data)} checked={allSelected}/></th>)
+    result[0].children.unshift(<selectTh use="th" inline inline-display="table-cell" inline-border-width-1px block-width={60} rowSpan={result.length}><input type="checkbox" onClick={() => toggleAll(selectedRowKeys, data)} checked={allSelected}/></selectTh>)
   })
 
 
@@ -41,13 +41,18 @@ export default function FeatureSelectable(fragments) {
     const selected = refComputed(() => {
       return selectedRowKeys.has(rowData.key)
     })
-    result.unshift(<td inline inline-display="table-cell"  inline-border-width-1px block-width={60}><input type="checkbox" onClick={() => toggleOne(selectedRowKeys, rowData.key)} checked={selected}/></td>)
+    result.unshift(<selectTd use="td" inline inline-display="table-cell"  inline-border-width-1px block-width={60}><input type="checkbox" onClick={() => toggleOne(selectedRowKeys, rowData.key)} checked={selected}/></selectTd>)
   })
 }
 
 FeatureSelectable.Style = (fragments) => {
-  fragments.heads.elements.th.style(thStyle)
-  fragments.cells.elements.td.style(tdStyle)
+  // TODO
+  fragments.heads.elements.selectTh.style(thStyle)
+  fragments.cells.elements.selectTd.style({
+    ...tdStyle,
+    textAlign: 'center',
+    verticalAlign: 'middle'
+  })
 }
 
 // 默认等于 match。

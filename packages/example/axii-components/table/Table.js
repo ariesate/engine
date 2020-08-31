@@ -140,7 +140,7 @@ Table.propTypes = {
 }
 
 // 应该写成这个形式
-export default createComponent(Table, [StickyLayout])
+export default createComponent(Table, [StickyLayout, Selectable])
 // export default createComponent(Table, [Selectable, Expandable])
 
 

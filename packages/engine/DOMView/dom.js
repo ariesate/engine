@@ -93,9 +93,10 @@ function setData(dataset, element) {
 
 export function createElement(node, invoke) {
   if (node.type === String) return document.createTextNode(node.value)
+  // CAUTION 创建 element 的时候优选选择使用 node.use，这是为了支持自己命名的元素。
   const element = node.isSVG
-    ? document.createElementNS('http://www.w3.org/2000/svg', node.type)
-    : document.createElement(node.type)
+    ? document.createElementNS('http://www.w3.org/2000/svg', node.use || node.type)
+    : document.createElement(node.use || node.type)
 
   if (node.attributes) {
     setAttributes(node.attributes, element, node.isSVG, invoke)
