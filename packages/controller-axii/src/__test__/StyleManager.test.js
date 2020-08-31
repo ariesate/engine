@@ -24,8 +24,8 @@ describe("style manager", () => {
     styleManager.digest(styleFn, scopeId)
 
     render(
-      <root data={{scopeId}}>
-        <child data={{scopeId}}/>
+      <root dataset={{scopeId}}>
+        <child dataset={{scopeId}}/>
       </root>,
       document.body
     )

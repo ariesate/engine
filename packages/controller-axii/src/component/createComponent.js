@@ -11,6 +11,7 @@ import {
   FragmentDynamic,
 } from './utils'
 import { isComponentVnode } from '../createAxiiController';
+import { normalizeLeaf } from '../../../engine/createElement';
 
 function filterActiveFeatures(features, props) {
   return features.filter(Feature => {
@@ -95,70 +96,64 @@ export const ROOT_FRAGMENT_NAME = 'root'
  * 2. 创建合并后的 Component，Component.propType 是各个 feature 声明的合并。
  * 3. component 在 render 中动态执行 feature 的改动。
  *
+ * 创建出来的 Component 与外界约定的 props：
+ * listeners: () => {} transparent listener，可以以 匹配的方式监听任意元素的事件
+ * overwrite: [Feature]，完全开发 Feature 的能力，可以动态加入。
+ * CAUTION 其实 listeners 也可以用 overwrite 实现，只不过我们认为这是会常用的，所以放出来了。未来可能样式修改也会常见，也要放出来。
+ *
+ * CAUTION 关于组件里面又有 createComponent 要穿透传递的问题：
+ * 目前可以在 overwrite 上面写 feature，feature 中使用 modify 来修改 component 的 attribute。
+ * 如果要修改的 component 也是 createComponent 创建出来的，那么就可以继续传递 overwrite prop 来深层修改。
  */
 export default function createComponent(Base, featureDefs=[]) {
-  // featureFunctionCollectors 是用来为每个 Feature 生产 fragmentsContainer 的,
-  // fragmentsContainer 用来收集 相应 Feature 对 Fragment 的改动
-  const featureFunctionCollectors = createFeatureFunctionCollectors()
+
   // 把 base 也伪装陈给一个 Feature， 参与收集
-  const baseAsFeature = function() {}
-  baseAsFeature.match = () => true
-  baseAsFeature.Style = Base.Style
-  baseAsFeature.methods = Base.methods
-  baseAsFeature.propTypes = Base.propTypes
+  const BaseAsFeature = function() {}
+  BaseAsFeature.match = () => true
+  BaseAsFeature.Style = Base.Style
+  BaseAsFeature.methods = Base.methods
+  BaseAsFeature.propTypes = Base.propTypes
 
   // 把 Feature 的 Style 也当成一个 Feature, 这样在 Style 上面也可以定义 methods/propTypes
-  const FeaturesWithBase = [baseAsFeature].concat(featureDefs).reduce((last, Feature) => last.concat(
+  const FeaturesWithBase = [BaseAsFeature].concat(featureDefs).reduce((last, Feature) => last.concat(
     Feature,
     Feature.Style || []
   ), [])
-  /**
-   * 开始通过 注入的参数 `fragments` 收集 feature 中的改动
-   * 1. 执行 Feature，通过通过 fragments.xxx.mutations = 收集 mutation
-   * 2. 执行 Style，通过 fragments.xxx.elements[elementName].style = {} 收集 style
-   * 4. 执行 Style，通过 fragments.xxx.elements[elementName].onXXX = function() {} 收集回调事件
-   *
-   */
 
-  FeaturesWithBase.forEach(Feature => {
-    const featureFunctionCollector = featureFunctionCollectors.derive(Feature)
-    // 进行 mutations/style/listener 收集。
-    Feature(featureFunctionCollector)
-  })
-
-
-  function Component(props, context) {
+  function Component({ children, listeners, overwrite = [], ...restProps }, context) {
     // 1. 先统一处理一下 props, 其中 children 要考虑 slot 的情况。
-    const processedProps = { ...props }
-    processedProps.children = props.children ? (Base.useNamedChildrenSlot ? createNamedChildrenSlotProxy(props.children[0]) : props.children) : undefined
+    const processedProps = { ...restProps }
+    processedProps.children = children ? (Base.useNamedChildrenSlot ? createNamedChildrenSlotProxy(children[0]) : children) : undefined
 
-    // 2. 开始渲染 Base，注意，这里还没有 render 其中的 fragments。在后面 renderFragments 中 render。
-    // 虽然把 base 也当做一个 fragment。但 render base 参数不同，base render 时要直接用到 props，没有必要强行统一。
-    const baseFeatureFunctionCollector = featureFunctionCollectors.derive(Base)
-    // 最后一个 true 参数表示不需要生成 computed
-    const rootFragment = baseFeatureFunctionCollector[ROOT_FRAGMENT_NAME]({}, true)(() => {
-      return Base(processedProps, context, baseFeatureFunctionCollector) //注意，base 的参数是和 Feature 的参数不同
+    // featureFunctionCollectors 是用来为每个 Feature 生产 fragmentsContainer 的,
+    // fragmentsContainer 用来收集 相应 Feature 对 Fragment 的改动
+    const featureFunctionCollectors = createFeatureFunctionCollectors()
+    // 2. 开始执行所有 active 的 feature，可以用 Feature 函数的作用域为 feature 自身创建一些临时数据。
+    // 注意，如果有 transparent listeners, 把 它也当成一个 feature.
+    const activeFeatures = filterActiveFeatures(FeaturesWithBase, restProps).concat(listeners || [], overwrite)
+    activeFeatures.forEach(Feature => {
+      const featureFunctionCollector = featureFunctionCollectors.derive(Feature)
+      // 进行 mutations/style/listener 收集。
+      // 注意我们的 BaseAsFeature 是伪造的，不会发生任何收集。
+      Feature(featureFunctionCollector)
     })
 
-    // 2. 把 prop 中的 transparent listener 也当成一个 feature.
-    if (props.listeners) {
-      const listenerFeatureFunctionCollector = featureFunctionCollectors.derive(props.listeners)
-      props.listeners(listenerFeatureFunctionCollector)
-    }
+    // 3. 开始创建 root fragment，本质上是把 Base 执行一下。这里还是用 BaseAsFeature 上的 FeatureFunctionCollector 去创建里面的 fragments.
+    const baseFeatureFunctionCollector = featureFunctionCollectors.derive(BaseAsFeature)
+    const rootFragment = baseFeatureFunctionCollector[ROOT_FRAGMENT_NAME]({})(() => {
+      return Base(processedProps, context, baseFeatureFunctionCollector)
+    })
 
-    // 3. 不一定每个 feature 都要激活，一般会要根据是否传入了标志性的 props 来看，所以这里过滤一下。
-    // 注意最后 concat 了一下 base 和 listeners， 是为了在下一步获取他们的 collector。
-    const activeFeatures = filterActiveFeatures(FeaturesWithBase, props).concat(Base, props.listeners || [])
-
-    // 4. 相应的，得到激活的 feature 的 fragmentsProxy
+    // 4. 只要激活的 feature 的 FeatureFunctionCollector，减少后面遍历的过程
     const activeFeatureFunctionCollectors = featureFunctionCollectors.filter((Feature) => {
       return activeFeatures.includes(Feature)
     })
 
-    return renderFragments(rootFragment, processedProps, context, activeFeatureFunctionCollectors, props, Base.useNamedChildrenSlot)
+    // 5. 开始递归渲染 fragment 了。
+    return renderFragments(rootFragment, processedProps, context, activeFeatureFunctionCollectors, restProps, Base.useNamedChildrenSlot)
   }
 
-  // 5. TODO 作为 Feature，会需要去修改、抑制 Base 或者其他 Feature 的默认 callback 行为吗？
+  // 6. TODO 作为 Feature，会需要去修改、抑制 Base 或者其他 Feature 的默认 callback 行为吗？
   // 我们目前没有处理，如果有需求，目前 Feature 声明 propTypes 时会覆盖前面，自己也可以做。
   Component.propTypes = Object.assign({},
     ...FeaturesWithBase.map(f => f.propTypes || {}),
@@ -178,7 +173,7 @@ export const GLOBAL_NAME = 'global'
  *
  * fragment 的刷新时机：
  * 目前的 fragment 是由用户调用 dynamic 函数创建出来，除非用户在参数中指定不用刷新，否则会直接使用 vnodeComputed 来创建。
- * 因此刷新时机就是在 render 中依赖的对象的刷新时机。TODO Style 中新建的 reactive 变化会引起当前的变化？computed 的变化？理论上不应该，新建的都不应该引起当前变化！
+ * 因此刷新时机就是在 render 中依赖的对象的刷新时机。
  *
  */
 function renderFragments(fragment, props, context, featureFunctionCollectors, upperArgv, useNamedChildrenSlot) {
@@ -191,7 +186,6 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
    *
    * fragment 里面的参数是从 upperArgv 里面读的。
    */
-  // TODO fragment 重新 render 的时候，要回收 index 上次注册的 vnode.
   function renderProcess() {
     // 1. render
     let renderResult = fragment.render()
@@ -232,55 +226,62 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
     walkVnodes(renderResultToWalk, (walkChildren, originVnode) => {
       if (!originVnode) return
       if (!originVnode instanceof VNode) return
+      // TODO component vnode 应该也要处理
       if (isComponentVnode(originVnode)) return
-        // 因为 String 等对象可能没有 attributes
-      if (originVnode.attributes) {
+      if (typeof originVnode.type !== 'string') return
 
-        const originStyle = originVnode.attributes.style || {}
-        const isOriginStyleRef = isRef(originStyle)
-        const matchedStyles = []
-        const listenersByEventName = {}
+      // 普通节点
+      const originStyle = originVnode.attributes.style || {}
+      const isOriginStyleRef = isRef(originStyle)
+      const matchedStyles = []
+      const listenersByEventName = {}
 
-        featureFunctionCollectors.forEach(collector => {
-          // 收集样式
-          matchedStyles.push(
-            ...collector[GLOBAL_NAME].elements[originVnode.type].getStyle(),
-            ...collector[fragment.name].elements[originVnode.type].getStyle()
-          )
+      featureFunctionCollectors.forEach(collector => {
+        // 收集样式
+        matchedStyles.push(
+          ...collector[GLOBAL_NAME].elements[originVnode.type].getStyle(),
+          ...collector[fragment.name].elements[originVnode.type].getStyle()
+        )
 
-          // 收集 listeners
-          Object.entries(collector[fragment.name].elements[originVnode.type].getListeners()).forEach(([eventName, listeners ]) => {
-            if (!listenersByEventName[eventName]) listenersByEventName[eventName] = []
-            listenersByEventName[eventName].push(...listeners)
-          })
+        // 收集 listeners
+        Object.entries(collector[fragment.name].elements[originVnode.type].getListeners()).forEach(([eventName, listeners ]) => {
+          if (!listenersByEventName[eventName]) listenersByEventName[eventName] = []
+          listenersByEventName[eventName].push(...listeners)
         })
+      })
 
-        // 挂载 样式
-        // TODO 未来考虑将"静态的"样式生成 css rule 来防止元素上 style 爆炸。
-        if (matchedStyles.length) {
-          let shouldStyleBeReactive = isOriginStyleRef || matchedStyles.some(s => typeof s === 'function')
-          const getNextStyle = () => {
-            const partialStyle = Object.assign({}, ...matchedStyles.map(style => {
-              return typeof style === 'function' ? style(commonArgv) : style
-            }))
-            return Object.assign({}, isOriginStyleRef ? originStyle.value : originStyle, partialStyle)
+      // 挂载 样式
+      // TODO 未来考虑将"静态的"样式生成 css rule 来防止元素上 style 爆炸。
+      if (matchedStyles.length) {
+        let shouldStyleBeReactive = isOriginStyleRef || matchedStyles.some(s => typeof s === 'function')
+        const getNextStyle = () => {
+          const partialStyle = Object.assign({}, ...matchedStyles.map(style => {
+            return typeof style === 'function' ? style(commonArgv) : style
+          }))
+          return Object.assign({}, isOriginStyleRef ? originStyle.value : originStyle, partialStyle)
+        }
+        originVnode.attributes.style = shouldStyleBeReactive ? vnodeComputed(getNextStyle) : getNextStyle()
+      }
+
+      // 挂载监听事件
+      if (Object.keys(listenersByEventName).length ){
+        Object.entries(listenersByEventName).forEach(([eventName, listeners]) => {
+          const originListener =  originVnode.attributes[eventName]
+          originVnode.attributes[eventName] = (...argv) => {
+            if (originListener) originListener(...argv)
+            listeners.forEach(listener => {
+              // 注意补足当前作用域下所有可用的 variable 作为参数。
+              listener(...argv, commonArgv)
+            })
           }
-          originVnode.attributes.style = shouldStyleBeReactive ? vnodeComputed(getNextStyle) : getNextStyle()
-        }
+        })
+      }
 
-        // 挂载监听事件
-        if (Object.keys(listenersByEventName).length ){
-          Object.entries(listenersByEventName).forEach(([eventName, listeners]) => {
-            const originListener =  originVnode.attributes[eventName]
-            originVnode.attributes[eventName] = (...argv) => {
-              if (originListener) originListener(...argv)
-              listeners.forEach(listener => {
-                // 注意补足当前作用域下所有可用的 variable 作为参数。
-                listener(...argv, commonArgv)
-              })
-            }
-          })
-        }
+      // 5. 开始执行 replace slot。replaceSlot 内部必须保证不要再穿透 vnodeComputed。
+      // CAUTION slot children 并没有区分 fragments.
+      if(useNamedChildrenSlot && originVnode.attributes.slot && props.children[originVnode.type]) {
+        const slotChild = props.children[originVnode.type]
+        originVnode.children = [normalizeLeaf((typeof slotChild === 'function') ? slotChild(commonArgv) : slotChild)]
       }
 
       if (originVnode.children) {
@@ -288,11 +289,6 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
         walkChildren(originVnode.children)
       }
     })
-
-    // 5. 开始执行 replace slot。replaceSlot 内部必须保证不要再穿透 vnodeComputed。
-    if (renderResult) {
-      replaceSlot([renderResult], props.children, commonArgv) // 这里的 children 已经是处理过 slot 的了
-    }
 
     return renderResult
   }

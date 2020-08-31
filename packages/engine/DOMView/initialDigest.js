@@ -113,7 +113,7 @@ export function handleInitialVnode(vnode, cnode, view, parentPatch, parentPath, 
     }
   }
 
-  throw new Error('unknown vnode detected')
+  throw new Error(`unknown vnode detected: ${vnode && vnode.type}`)
 }
 
 function handleInitialVnodeChildren(vnodes, cnode, view, patch, parentPath, parentNode) {

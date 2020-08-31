@@ -78,6 +78,7 @@ describe('create component', () => {
       return <container><child slot/></container>
     }
 
+    Base.useNamedChildrenSlot = true
 
     const BaseComponent = createComponent(Base)
     const root = document.createElement('div')
@@ -164,6 +165,8 @@ describe('Feature based', () => {
       </container>
     }
 
+   Base.useNamedChildrenSlot = true
+
     const BaseComponent = createComponent(Base)
     const root = document.createElement('div')
     const items = [1,2,3]
@@ -174,6 +177,7 @@ describe('Feature based', () => {
         }
       }}
     </BaseComponent>, root)
+
 
     expect(root.children[0]).partialMatch(<container>
         <list>
@@ -231,6 +235,46 @@ describe('Feature based', () => {
         </list>
       </container>
     )
+  })
 
+  test('use overwrite to add runtime feature', () => {
+    function Base({items }, context, fragments) {
+      return <container>
+        {fragments.list()(() => {
+          return <list>
+            {items.map(item => {
+              return fragments.item({item})(() => {
+                return <item>{item}</item>
+              })
+            })}
+          </list>
+        })}
+      </container>
+    }
+
+    function Feature1(fragments) {
+      fragments.item.modify((renderResult, {item}) => {
+        renderResult.children.push(<inner>{item + 1}</inner>)
+      })
+    }
+
+    const BaseComponent = createComponent(Base)
+    const root = document.createElement('div')
+    const items = [1, 2]
+    render(<BaseComponent items={items} overwrite={[Feature1]}/>, root)
+
+    expect(root.children[0]).partialMatch(<container>
+        <list>
+          <item>
+            1
+            <inner>2</inner>
+          </item>
+          <item>
+            2
+            <inner>3</inner>
+          </item>
+        </list>
+      </container>
+    )
   })
 })
