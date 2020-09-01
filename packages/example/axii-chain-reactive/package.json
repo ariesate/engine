@@ -9,6 +9,7 @@
     "@babel/plugin-proposal-export-default-from": "^7.10.4",
     "@babel/plugin-transform-react-jsx": "^7.8.0",
     "@babel/preset-env": "^7.8.0",
+    "@rollup/plugin-commonjs": "^15.0.0",
     "@vue/compiler-sfc": "^3.0.0-rc.1",
     "babel-loader": "^8.0.6",
     "css-loader": "^3.4.2",
@@ -29,5 +30,8 @@
     "snowpack": "snowpack dev"
   },
   "author": "sskyy",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "esbuild": "^0.6.28"
+  }
 }

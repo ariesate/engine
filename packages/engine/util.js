@@ -180,8 +180,32 @@ export function values(obj) {
   return keys(obj).map(k => obj[k])
 }
 
-export function shallowEqual(a, b) {
-  return different(a, b).length === 0
+export function shallowEqual(objA, objB) {
+  if (objA === objB) {
+    return true;
+  }
+
+  if (!objA || !objB) {
+    return false;
+  }
+
+  const aKeys = Object.keys(objA);
+  const bKeys = Object.keys(objB);
+  const len = aKeys.length;
+
+  if (bKeys.length !== len) {
+    return false;
+  }
+
+  for (let i = 0; i < len; i++) {
+    const key = aKeys[i];
+
+    if (objA[key] !== objB[key] || !Object.prototype.hasOwnProperty.call(objB, key)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 export function partial(fn, ...argv) {
@@ -362,3 +386,4 @@ export function invariant(condition, format, a, b, c, d, e, f) {
     throw error
   }
 }
+

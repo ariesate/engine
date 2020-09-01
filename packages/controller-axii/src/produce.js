@@ -1,6 +1,6 @@
 import { createDraft, finishDraft as internalFinishDraft, setUseProxies } from 'immer'
 export { createDraft } from 'immer'
-import { applyPatch as internalApplyPatch } from 'fast-json-patch'
+import { applyPatch as internalApplyPatch } from 'fast-json-patch/index.mjs'
 
 setUseProxies(true)
 

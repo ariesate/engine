@@ -1,14 +1,3 @@
-const path = require('path')
-const fs = require('fs')
-const { internalResolver } = require('vite/dist/node/resolver')
-
-const PACKAGE_ROOT_PATH = path.resolve(__dirname, '../../')
-
-const alias = {
-  'axii':'/controller-axii/src',
-  '@ariesate/are': '/engine'
-}
-
 function getAliasedPath(id) {
   const findKey = Object.keys(alias).find((key) => {
     return id.slice(0, key.length ) === key
@@ -57,7 +46,7 @@ const resolver = {
         // 已经是文件名字了？
         file = /\.js?$/.test(requestPath) ? requestPath : `${requestPath}.js`
       }
-      // console.log(222222, `request file ${requestPath} to ${file}`)
+      if (/cloneDeep/.test(file)) console.log(222222, `request file ${requestPath} to ${file}`)
       return file
     }
 
@@ -67,18 +56,8 @@ const resolver = {
       const relativePath = file.slice(PACKAGE_ROOT_PATH.length)
       // const request = `${findKey}${file.slice(findPath.length)}`.replace(/\/index\.js$/, '')
       // const request = `/${findKey}${file.slice(findPath.length)}`.replace(/\/index\.js$/, '')
-      // if (/cloneDeep/.test(file)) console.log(44444, relativePath)
+      if (/cloneDeep/.test(file)) console.log(44444, relativePath)
       return relativePath
     }
   }
-}
-
-
-module.exports = {
-  jsx: {
-    factory: 'createElement',
-    fragment: 'Fragment'
-  },
-  plugins: [require('@rollup/plugin-commonjs')],
-  resolvers: [resolver]
 }

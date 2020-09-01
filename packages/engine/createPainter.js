@@ -17,7 +17,6 @@
  * even if it is not in the same place after re-render.
  */
 
-import deepEqual from 'fast-deep-equal'
 import {
   isComponent,
   walkRawVnodes,
@@ -29,7 +28,7 @@ import {
   walkVnodes,
   isComponentVnode as defaultIsComponentVnode,
 } from './common'
-import { each, indexBy, ensureArray, createUniqueIdGenerator } from './util'
+import { each, indexBy, ensureArray, createUniqueIdGenerator, shallowEqual } from './util'
 import {
   PATCH_ACTION_INSERT,
   PATCH_ACTION_MOVE_FROM,
@@ -120,7 +119,7 @@ function diffNodeDetail(lastVnode, vnode) {
   }
 
   // TODO Improve performance. Maybe only style rules changed.
-  if (!deepEqual(lastVnode.attributes, vnode.attributes)) {
+  if (!shallowEqual(lastVnode.attributes, vnode.attributes)) {
     return {
       attributes: vnode.attributes,
     }

@@ -1,1 +1,1 @@
-module.exports = function checkPropTypes() {}
+export default function checkPropTypes() {}
