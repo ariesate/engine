@@ -34,14 +34,6 @@ function filterActiveFeatures(features, props) {
  * Slot & Partial Rewrite 是满足对样式控制的需求。
  * 这些都是运行时的动态控制。如果还不能满足，那么用户还可以把自己的需求写成业务 feature，通过 fragments 来劫持渲染过程。
  *
- **
- * CAUTION 关于 base 中动态变化要触发 feature 跟着变的问题。
- * 理论上 base 的任何变化上层的 feature 都应该重新进行匹配计算。因为这个匹配是动态的，不是建立静态关系。
- * feature 中的部分变化。是否有必要优化算法能根据动态变化的范围，来决定是否要重新匹配 feature ？。
- * 目前测试动态创建 10000 次 proxy 并读取属性耗时 3.24 毫秒。因此单个组件中重新计算匹配性能问题可以忽略。
- *
- * feature 的修改行为可以用 watch 来包装，如果完全没有触碰到 reactive data。那么确实可以不用再执行。
- *
  */
 
 /**
@@ -66,28 +58,24 @@ function filterActiveFeatures(features, props) {
 
 /**
  * Slot 用法：在具名元素上标记 slot 即可。
- * <Com rewrite = {
- *   (fragments) => ({
- *     fragments.root.element1.element2 = () => {}
- *   })
- * }
- * />
  */
 
 /**
  * Partial Rewrite 用法：
- * 在元素上传入 rewrite 对象即可，以 selector 作为路劲即可，以 fragments name 作为起止，例如：
+ * 在元素上传入 overwrite 对象即可，就像一个 Feature 一样可以使用 modify.
  */
 
 /**
- * delegator 用法:
- * 当要用到第三方组件的时候，应该用 delegator 的方式，这样就能在运行时动态去替换掉局部了
- * base.delegator = {
- *   pagination: Pagination
- * }
+ * CAUTION 关于 feature 之间隐式依赖的问题
+ * 例：Table 的 Expandable feature 需要在所有其他 feature 处理完 tr 之后，再在自己的 expand td 的 colspan 上写上正确的数字。
+ * 1. 如何确保自己是最后处理的？如果还有动态添加的 feature 的话，可能还要保证自己是在动态 feature 之后，这对系统能力要求就更高了。
+ * 2. 如果还有其他 feature 也要所有都完成以后的信息呢？
+ * 这个问题从 AOP 的角度来思考应该是无解的，只能通过 live query 等来减轻。详见文档 drawbacksOfAOP。
  *
+ * TODO 提供对 fragment 的 liveQuery 功能，正好 fragments 创建的就是一个 vnodeComputed。
+ * 应该允许 Feature 拿到这个 vnodeComputed 引用，再在上面创建 vnodeComputed，实现 liveQuery。
+ * 例如 Table 的 expandable 应该能拿到整个 head fragment，这样无论是什么情况，当其中的列变化时，expandable 都能收到。
  */
-
 export const ROOT_FRAGMENT_NAME = 'root'
 
 /**
