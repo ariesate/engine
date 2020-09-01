@@ -28,12 +28,15 @@ export default function FeatureExpandable(fragments) {
     result[0].children.unshift(<expandTh use="th" block-width={60} rowSpan={result.length}><expand onChange={() => toggleExpandAll(expandedRowKeys)} /></expandTh>)
   })
 
-  // TODO 这里的这个 flattenChildren 是怎么读出来的呢？必须确保自己在所有可能插入列的 feature 之后再执行？
+
   fragments.row.modify((resultTr, { row: rowData, expandedRowRender, expandedRowKeys }) => {
+
     return <>
       {resultTr}
       {
         fragments.expandedRow()(() => {
+          // TODO 这里的这个 flattenChildren 是怎么读出来的呢？必须确保自己在所有可能插入列的 feature 之后再执行？
+          // 在 row 那一层的时候 resultTr 还没有解析完，但是到这里的时候就已经解析完了。 但这里没有解决 expandable 只能放 features 最后的问题。
           return expandedRowKeys.has(rowData.key) ?
             <tr>
               <expandedTd use="td" inline inline-display="table-cell" inline-border-width-1px

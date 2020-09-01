@@ -50,7 +50,6 @@ export default function FeatureStickyLayout(fragments) {
 
 
   fragments.cell.modify((result, { offsets, column }) => {
-    console.log(column.dataIndex)
     if (!column.fixed) return
     result.props['block-position-sticky'] = true
     result.props[`block-${column.fixed}`] = offsets[column.fixed].get(column)
