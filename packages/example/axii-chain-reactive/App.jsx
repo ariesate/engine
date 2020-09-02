@@ -1,5 +1,5 @@
 /* @jsx createElement */
-import { createElement, render, objectComputed, reactive, ref, arrayComputed, vnodeComputed, propTypes, derive, refComputed, Fragment } from 'axii'
+import { createElement, render, objectComputed, reactive, ref, arrayComputed, vnodeComputed, propTypes,  refComputed, Fragment } from 'axii'
 import { makeLinkMatrix, isLineNotConflict, insertIntoOrderedArray, indexBy, getRandomLinks, getRandomViews, randomAddView, randomAddLink} from './util'
 /**
  * 1. 当个组件的 vnode 更新和 data

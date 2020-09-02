@@ -16,7 +16,6 @@
  * It allow user to appoint which child cnode should be reused,
  * even if it is not in the same place after re-render.
  */
-import deepEqual from 'fast-deep-equal'
 import {
   isComponent,
   walkRawVnodes,

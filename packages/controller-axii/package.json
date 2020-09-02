@@ -6,6 +6,7 @@
   "author": "ariesate@outlook.com",
   "license": "MIT",
   "dependencies": {
+    "@jsmini/clone": "^0.4.2",
     "fast-json-patch": "^3.0.0-1",
     "immer": "^5.2.1"
   },

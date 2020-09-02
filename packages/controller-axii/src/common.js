@@ -1,6 +1,5 @@
 import VNode from '@ariesate/are/VNode'
-import cloneDeep from 'lodash/cloneDeep.js'
-import { each, values, invariant } from './util'
+import { values, invariant } from './util'
 
 export function createVnodePath(vnode, parentPath = [], index) {
   return parentPath.concat((vnode && vnode.key) ? vnode.key : `index@${index}`)
@@ -59,17 +58,6 @@ function replaceVnode(ret, xpath, next) {
   // 因为 next 也是数组，因此必须展开
   const replaceIndex = indexPath[indexPath.length - 1]
   pointer.children = pointer.children.slice(0, replaceIndex).concat(next).concat(pointer.children.slice(replaceIndex + 1))
-}
-
-export function ctreeToVtree(ctree) {
-  if (ctree.ret === undefined) return
-
-  const clonedRet = cloneDeep(ctree.ret)
-  each(ctree.next, (cnode, xpath) => {
-    replaceVnode(clonedRet, xpath, ctreeToVtree(cnode))
-  })
-
-  return clonedRet
 }
 
 export function noop() {}
