@@ -1,7 +1,7 @@
 const path = require('path')
 const fs = require('fs')
 
-const PACKAGE_ROOT_PATH = path.resolve(__dirname, '../../')
+const PACKAGE_ROOT_PATH = path.resolve(__dirname, '../')
 
 const alias = {
   'axii':'/controller-axii/src',
@@ -14,6 +14,7 @@ function getAliasedPath(id) {
   })
 
   if (findKey) {
+    // 替换成
     return `${alias[findKey]}${id.slice(findKey.length)}`
   }
 }
@@ -58,7 +59,7 @@ const resolver = {
   },
   fileToRequest(file) {
     if (file.slice(0, __dirname.length ) !== __dirname && file.slice(0, PACKAGE_ROOT_PATH.length ) === PACKAGE_ROOT_PATH) {
-      return file.slice(PACKAGE_ROOT_PATH.length)
+      return  file.slice(PACKAGE_ROOT_PATH.length)
     }
   }
 }

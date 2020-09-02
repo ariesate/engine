@@ -1,6 +1,5 @@
 import { createElement, render, reactive, ref } from 'axii'
-import Tabs from './tabs/Tabs.js'
-import 'normalize.css'
+import Tabs from '../src/tabs/Tabs.jsx'
 
 render(<Tabs>
     <Tabs.TabPane title="Tab 1" key="1" tabKey="1">

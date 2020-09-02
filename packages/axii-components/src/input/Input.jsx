@@ -82,6 +82,7 @@ Input.Style = (fragments) => {
 
   rootElements.container.style(({ focused }) => ({
     borderStyle: 'solid',
+    borderWidth: 1,
     borderRadius: scen().radius(),
     borderColor: focused.value ?
       scen().interactable().active().color() :
@@ -94,13 +95,15 @@ Input.Style = (fragments) => {
   rootElements.input.style(() => ({
     color: scen().color(),
     lineHeight: `${scen().lineHeight()}px`,
+    outline: 0
   }))
 
   const commonPrefixStyle = {
     color: scen().color(),
     backgroundColor: scen().fieldColor(),
     borderStyle: 'solid',
-    borderColor: scen().separateColor()
+    borderColor: scen().separateColor(),
+    borderWidth: 0,
   }
 
   fragments.prefix.elements.prefix.style(commonPrefixStyle)
@@ -109,6 +112,7 @@ Input.Style = (fragments) => {
   const commonAfterStyle = {
     color: scen().color(),
     borderStyle: 'solid',
+    borderWidth: 0,
     borderColor: scen().separateColor()
   }
   fragments.before.elements.before.style(commonAfterStyle)

@@ -1,10 +1,7 @@
 /** @jsx createElement */
 /** @jsxFrag Fragment */
 import {
-  propTypes,
   createElement,
-  Fragment,
-  ref,
 } from 'axii';
 import * as icons from '@ant-design/icons-svg'
 import { renderIconDefinitionToSVGElement } from '@ant-design/icons-svg/es/helpers';

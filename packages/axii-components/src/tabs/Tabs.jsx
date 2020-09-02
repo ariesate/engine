@@ -7,7 +7,6 @@ import {
   vnodeComputed,
   createComponent,
   refComputed,
-  derive,
   ref,
   createRef
 } from 'axii'

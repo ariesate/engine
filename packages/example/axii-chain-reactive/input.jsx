@@ -1,5 +1,5 @@
 import { createElement, render, reactive, ref } from 'axii'
-import Input from './input/Input.js'
+import Input from './input/Input.jsx'
 import 'normalize.css'
 
 const refPrefix = ref('prefix')

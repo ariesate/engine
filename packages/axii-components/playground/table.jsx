@@ -1,5 +1,5 @@
 import { createElement, render, reactive } from 'axii'
-import Table from './table/Table.js'
+import Table from '../src/table/Table.jsx'
 
 const columns = [
   {
