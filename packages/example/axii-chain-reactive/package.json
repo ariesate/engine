@@ -30,8 +30,5 @@
     "snowpack": "snowpack dev"
   },
   "author": "sskyy",
-  "license": "MIT",
-  "dependencies": {
-    "esbuild": "^0.6.28"
-  }
+  "license": "MIT"
 }

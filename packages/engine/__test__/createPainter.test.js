@@ -68,11 +68,13 @@ describe('painter paint', () => {
       </div>
     ))
 
-    const subCnode = painter.createCnode(<Sub />, ctree)
-    // 不删的话 toMatchObject 会循环递归
-    delete subCnode.parent
     expect(Object.values(ctree.next).length).toBe(1)
-    expect(Object.values(ctree.next)[0]).toMatchObject(subCnode)
+    expect(Object.values(ctree.next)[0]).toMatchObject({
+      level: 1,
+      type: {
+        render: Sub.render
+      }
+    })
 
   })
 })
