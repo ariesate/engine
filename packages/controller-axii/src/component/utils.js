@@ -20,26 +20,6 @@ import vnodeComputed from '../vnodeComputed'
  *
  */
 
-/**
- * TODO 动态节点的写法
- * Base.fragments = {
- *   Head(props, argv, fragments) {
- *    可以使用其他的 Fragments，可以递归
- *    return ...
- *   }
- * }
- *
- * fragments 可以被 Feature 劫持，用名字就行
- * mutate('Head', (result, argv) => {})
- */
-
-/**
- * methods 用法:
- * Base.methods = {
- *   methodName: function(props, ...argv) {}
- * }
- * function 第一个参数是自动注入的 props。TODO 还要增加 derivedState？？state。
- */
 
 /**
  * Style 用法:

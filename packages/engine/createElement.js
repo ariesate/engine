@@ -108,6 +108,7 @@ export function cloneElement(vnode, newAttributes, ...children) {
       ...vnode.attributes,
       key: vnode.key,
       ref: vnode.ref,
+      use: vnode.use,
       transferKey: vnode.transferKey,
       ...newAttributes,
     },

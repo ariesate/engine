@@ -23,13 +23,17 @@ export default function FeatureExpandable(fragments) {
     }
   }
 
+  fragments.rows.modify((result, { columnCount })=> {
+    columnCount.value += 1
+  })
+
   // TODO 这里 block-width 是和 stickyLayout 的约定，要删掉
   fragments.heads.modify((result, { expandedRowKeys }) => {
     result[0].children.unshift(<expandTh use="th" block-width={60} rowSpan={result.length}><expand onChange={() => toggleExpandAll(expandedRowKeys)} /></expandTh>)
   })
 
 
-  fragments.row.modify((resultTr, { row: rowData, expandedRowRender, expandedRowKeys }) => {
+  fragments.row.modify((resultTr, { row: rowData, expandedRowRender, expandedRowKeys, columnCount }) => {
 
     return <>
       {resultTr}
@@ -40,7 +44,7 @@ export default function FeatureExpandable(fragments) {
           return expandedRowKeys.has(rowData.key) ?
             <tr>
               <expandedTd use="td" inline inline-display="table-cell" inline-border-width-1px
-                          colSpan={flattenChildren(resultTr.children).length}>
+                          colSpan={columnCount}>
                 {expandedRowRender(rowData)}
               </expandedTd>
             </tr> :

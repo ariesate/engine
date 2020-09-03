@@ -4,7 +4,8 @@ import {
   createElement,
   propTypes,
   reactive,
-  createComponent
+  createComponent,
+  ref
 } from 'axii'
 import Expandable from './Expandable'
 import Selectable from './Selectable'
@@ -66,11 +67,17 @@ function readByLevel(nodes, level, handle) {
   })
 }
 
+function countExpandedColumns(columns) {
+  return readByLevel(columns, 0, () => {}).reduce((a, b) => a+b, 0)
+}
+
 export function Table( { data, pagination, columns }, context, fragments) {
+  const columnCount = ref(countExpandedColumns(columns))
+
   return (
     <table inline block-display-table table-border-spacing-0 table-border-collapse-collapse>
       <thead>
-          {fragments.heads()(() => {
+          {fragments.heads({ columnCount })(() => {
 
             let maxLevel = 0
 
@@ -96,7 +103,7 @@ export function Table( { data, pagination, columns }, context, fragments) {
           })}
       </thead>
       <tbody>
-        {fragments.rows()(() => {
+        {fragments.rows({ columnCount })(() => {
           return data.map((row) => (
             fragments.row({ row })(() => (
               <tr data={row}>
@@ -144,6 +151,5 @@ Table.propTypes = {
 
 // 应该写成这个形式
 export default createComponent(Table, [StickyLayout, Selectable, Expandable])
-// export default createComponent(Table, [Selectable, Expandable])
 
 

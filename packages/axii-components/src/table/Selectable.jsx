@@ -28,8 +28,13 @@ export default function FeatureSelectable(fragments) {
     }
   }
 
+  // 这是和 Base 的约定，用来间接实现 live query，后面的 expandable feature 需要用
+  fragments.rows.modify((result, { columnCount })=> {
+    columnCount.value += 1
+  })
+
   // TODO 这里 block-width 是和 stickyLayout 的约定，要删掉
-  fragments.heads.modify((result, { data, selectedRowKeys }) => {
+  fragments.heads.modify((result, { data, selectedRowKeys, columnCount }) => {
     const allSelected = refComputed(() => {
       return selectedRowKeys.size === data.length
     })

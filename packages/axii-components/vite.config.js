@@ -70,5 +70,8 @@ module.exports = {
     factory: 'createElement',
     fragment: 'Fragment'
   },
-  resolvers: [resolver]
+  resolvers: [resolver],
+  define: {
+    __DEV__: true
+  }
 }
