@@ -1,11 +1,11 @@
 import { createElement, render, reactive, ref } from 'axii'
 import queryString from 'querystringify';
-import 'normalize.css'
+import '../src/style/global.less'
 
 const { component } = queryString.parse(location.search)
 
 function Empty({ name }) {
-  return <div>还没有 {name}，等你来造。</div>
+  return <div block block-height="100%" flex-display flex-align-items-center flex-justify-content-center>还没有 {name}，努点力吧。</div>
 }
 
 const renderEmptyContent = (name) => {

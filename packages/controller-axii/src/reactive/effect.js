@@ -159,6 +159,7 @@ export function destroyComputed(computed) {
 function applyComputation() {
   const { computation } = computationStack[computationStack.length - 1]
   const isToken = computation.computed instanceof ComputedToken
+  // TODO 似乎没有必要，由外部 traverse 就好了，而且还没有考虑深度的情况。
   function watchAnyMutation(source) {
     track(toRaw(source), TrackOpTypes.ANY, ANY_KEY)
   }

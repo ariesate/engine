@@ -71,6 +71,9 @@ module.exports = {
     fragment: 'Fragment'
   },
   resolvers: [resolver],
+  cssPreprocessOptions: {
+    less: { javascriptEnabled: true }
+  },
   define: {
     __DEV__: true
   }

@@ -95,8 +95,8 @@ const LayoutRules = {
     ...createFlexProperty('shrink'),
     ...createFlexProperty('wrap'),
     ...createSimpleKeyToValue('order'),
-    ...createSimpleKeyToValue('justify-contents'),
-    ...createSimpleKeyToValue('align-contents'),
+    ...createSimpleKeyToValue('justify-content'),
+    ...createSimpleKeyToValue('align-content'),
     ...createSimpleKeyToValue('align-items'),
     ...createSimpleKeyToValue('align-self'),
   }

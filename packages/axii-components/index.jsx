@@ -5,23 +5,35 @@
 import { createElement, render, reactive, ref } from 'axii'
 import { vnodeComputed } from '../controller-axii/src';
 import queryString from 'querystringify';
+import './src/style/global.less'
 
 const { component } = queryString.parse(location.search)
 
 
-
+// TODO 优先级标记
+/**
+ * 0: form/form-items
+ * 1: table/tree/calendar/modal/message
+ * 2: menu/breadcrumb/steps/popover/tooltip/timeline
+ * 3: button/tag/spin/progress
+ *
+ * 必须/总数 : 21/35
+ * 已完成 : 3/21
+ */
 const availablePlayground = {
   Form: [
+    // 'form', 写到 common hooks 里
     'input',
-    'checkbox',
-    'switch',
-    'radio',
+    'checkbox', // 美化
     'select',
+    'radio',
     'timePicker',
     'datePicker',
     'upload',
+    // 以上是必须要常用的 7
     'cascader',
-    'autoComplete'
+    'autoComplete',
+    'switch'
   ],
   Data: [
     'table',
@@ -30,24 +42,27 @@ const availablePlayground = {
     'collapse',
     'calendar',
     'popover',
-    'tag',
-    'timeline',
+    // 以上是常用必须的 6
     'tooltip',
+    'timeline',
+    'tag',
     'avatar',
     'badge'
   ],
   Dialog: [
-    'alert',
-    'message',
     'modal',
+    'message',
     'spin',
+    // 以上是常用必须的 3
+    'alert',
     'notification',
-    'progress',
+    'progress'
   ],
   Navigation: [
     'menu',
     'dropdown',
     'breadcrumb',
+    // 以上是常用必须的 3
     'steps',
     'pagination',
     'affix'

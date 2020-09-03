@@ -1,6 +1,6 @@
+/** @jsx createElement */
 import { createElement, render, reactive, ref } from 'axii'
 import Input from '../src/input/Input.jsx'
-
 
 const refPrefix = ref('prefix')
 

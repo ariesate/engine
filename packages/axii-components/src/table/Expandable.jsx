@@ -32,6 +32,14 @@ export default function FeatureExpandable(fragments) {
     result[0].children.unshift(<expandTh use="th" block-width={60} rowSpan={result.length}><expand onChange={() => toggleExpandAll(expandedRowKeys)} /></expandTh>)
   })
 
+  // TODO 这里 block-width 是和 stickyLayout 的约定，要删掉
+  fragments.cells.modify((result, { expandedRowKeys, row: rowData }) => {
+    result.unshift(<expandTd inline inline-display="table-cell"  inline-border-width-1px use="td" block-width={60}>
+      <div onClick={() => toggleExpandOne(expandedRowKeys, rowData.key)}>
+        {expandedRowKeys.has(rowData.key) ? '-' : '+'}
+      </div>
+    </expandTd>,)
+  })
 
   fragments.row.modify((resultTr, { row: rowData, expandedRowRender, expandedRowKeys, columnCount }) => {
 
@@ -52,11 +60,6 @@ export default function FeatureExpandable(fragments) {
         })
       }
     </>
-  })
-
-  // TODO 这里 block-width 是和 stickyLayout 的约定，要删掉
-  fragments.cells.modify((result, { expandedRowKeys, row: rowData }) => {
-    result.unshift(<expandTd inline inline-display="table-cell"  inline-border-width-1px use="td" block-width={60}><div onClick={() => toggleExpandOne(expandedRowKeys, rowData.key)}>+</div></expandTd>,)
   })
 
 }
