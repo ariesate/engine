@@ -70,6 +70,9 @@ const availablePlayground = {
   Misc: [
     'button',
     'icon',
+  ],
+  Utilities: [
+    'useForm'
   ]
 }
 

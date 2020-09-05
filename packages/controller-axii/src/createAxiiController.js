@@ -260,6 +260,16 @@ function replaceReactiveWithVirtualCnode(renderResult, cnode) {
   })
 }
 
+function isSmartProp(prop) {
+  return typeof prop === 'function' && prop.isSmart
+}
+
+export function createSmartProp(callback) {
+  invariant(typeof callback=== 'function', 'smart prop must have a function callback')
+  callback.isSmart = true
+  return callback
+}
+
 function createInjectedProps(cnode) {
   const { props, localProps } = cnode
   const { propTypes: thisPropTypes } = cnode.type
@@ -273,11 +283,15 @@ function createInjectedProps(cnode) {
   })
 
   const mergedProps = { ...props, ...localProps }
-  // 开始对其中的 mutation 回调 prop 进行注入。
-  const callbackProps = mapValues(thisPropTypes || {}, (propType, propName) => {
+  // 对两种类型props 特殊处理：
+  // 1. 随 smartProp 进行回调处理
+  // 2. 开始对其中的 mutation 回调 prop 进行注入。
+  const transformedProps = mapValues(thisPropTypes || {}, (propType, propName) => {
+    const prop = mergedProps[propName]
+    if (isSmartProp(prop)) return prop(propType, propName)
 
-    if (!propType.is(propTypes.callback)) return mergedProps[propName]
-
+    // 针对 callback 类型进行处理
+    if (!propType.is(propTypes.callback)) return prop
     return (event, ...restArgv) => {
       // CAUTION 参数判断非常重要，用户既有可能把这个函数直接传给 onClick 作为回调，也可能在其他函数中手动调用。
       // 当直接传给事件回调时，由于事件回调会补足 event，而我们不需要，因此在这里判断一下。
@@ -295,7 +309,7 @@ function createInjectedProps(cnode) {
       // 因为我们的组件既是受控的又是非受控的，理论上用户只需要知道组件默认会怎么改 props 就够了，即 draftProps，
       // 常见的我们在 input onChange 中去取 event.target.value 实际上也就是去取 nextProps，如果能拿到，就不需要 event。
       // 补足参数永远放在最后，这样开发者心智负担更小。
-      const extraArgv = [draftProps, props, activeEvent.getCurrentEvent()]
+      const extraArgv = [draftProps, mergedProps, activeEvent.getCurrentEvent()]
       defaultMutateFn(...runtimeArgv, ...extraArgv)
       // 显式的返回 false 就是不要应用原本的修改。
       // CAUTION 注意这里的补全参数设计，补全的第一参数是事件，第二参数是现在的 prop 和 nextProps
@@ -313,7 +327,7 @@ function createInjectedProps(cnode) {
 
   })
 
-  return {...mergedProps, ...callbackProps}
+  return Object.assign(mergedProps, transformedProps)
 }
 
 /**

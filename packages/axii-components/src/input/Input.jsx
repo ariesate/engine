@@ -64,6 +64,9 @@ Input.useNamedChildrenSlot = true
 
 Input.propTypes = {
   value: propTypes.string.default(() => ref('')),
+  // onChange 这个函数会由系统自动补足三个参数： draftProps, props, event
+  // 所以当我们直接把这个参数传到事件上时，不用冗余去写成 (e) => onChange(e.target.value)
+  // 外部也同样推荐这种模式。
   onChange: propTypes.callback.default(() => ({ value }, props, e) => {
     value.value = e.target.value
   })
@@ -80,17 +83,19 @@ Input.Style = (fragments) => {
     onChangeFocus(false)
   })
 
-  rootElements.container.style(({ focused }) => ({
-    borderStyle: 'solid',
-    borderWidth: 1,
-    borderRadius: scen().radius(),
-    borderColor: focused.value ?
+  rootElements.container.style(({ focused }) => {
+    return {
+      borderStyle: 'solid',
+        borderWidth: 1,
+      borderRadius: scen().radius(),
+      borderColor: focused.value ?
       scen().interactable().active().color() :
       scen().separateColor(),
-    boxShadow: focused.value ?
+      boxShadow: focused.value ?
       `0 0 0 ${scen().outlineWidth()}px ${scen().interactable().active().shadowColor()}` :
       undefined
-  }))
+    }
+  })
 
   rootElements.input.style(() => ({
     color: scen().color(),

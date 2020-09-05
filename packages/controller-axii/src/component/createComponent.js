@@ -112,7 +112,7 @@ export default function createComponent(Base, featureDefs=[]) {
   function Component({ children, listeners, overwrite = [], ...restProps }, context) {
     // 1. 先统一处理一下 props, 其中 children 要考虑 slot 的情况。
     const processedProps = { ...restProps }
-    processedProps.children = children ? (Base.useNamedChildrenSlot ? createNamedChildrenSlotProxy(children[0]) : children) : undefined
+    processedProps.children = children ? (Base.useNamedChildrenSlot ? createNamedChildrenSlotProxy(children[0] || {}) : children) : undefined
 
     // featureFunctionCollectors 是用来为每个 Feature 生产 fragmentsContainer 的,
     // fragmentsContainer 用来收集 相应 Feature 对 Fragment 的改动
