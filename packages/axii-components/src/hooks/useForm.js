@@ -110,13 +110,13 @@ export const VALIDATION_STATUS_ERROR = 'error'
 // resolved 和 initial 都是 none，这里没区分是认为用户没有这个需要
 export const VALIDATION_STATUS_NONE = 'none'
 
-function validationPlugin({ scheme }) {
+function validationPlugin({ scheme }, values) {
   if (!scheme) return {}
 
-  const tryToValidate = (changedFieldName, { value: nextValue }, { value }) => {
+  const tryToValidate = (changedFieldName, { value: nextValue }, { value }, callFromManual) => {
     // CAUTION 这里修改了一下格式，因为验证函数没有必要知晓 ref 的格式
     const nextRawValue = isRef(value) ? nextValue.value : nextValue
-    const result = scheme(changedFieldName, nextRawValue, tryToRaw(value, true))
+    const result = scheme(changedFieldName, nextRawValue, tryToRaw(value, true), callFromManual)
     if (!result) return
 
     debounceComputed(() => {
@@ -198,6 +198,12 @@ function validationPlugin({ scheme }) {
       }),
       validate() {
         // TODO 手动执行
+        debounceComputed(() => {
+          Object.entries(values).forEach(([valueName, value]) => {
+            tryToValidate(valueName, { value }, { value }, true)
+          })
+        })
+
       },
       resetValidation() {
         debounceComputed(() => {

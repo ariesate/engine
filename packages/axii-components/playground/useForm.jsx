@@ -19,7 +19,7 @@ function App() {
   const form = useForm({
     getInitialValues(){
       return {
-        age: '23'
+        age: '26'
       }
     },
     scheme,
@@ -59,6 +59,7 @@ function App() {
         }} disabled={form.isSubmitting}>
           重置
         </button>
+        <button onClick={form.validate} disabled={form.isSubmitting}>校验</button>
       </div>
     </div>
   )
