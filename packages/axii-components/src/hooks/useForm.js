@@ -13,7 +13,9 @@ import {
   tryToRaw,
   invariant,
   debounceComputed,
-  shallowEqual
+  shallowEqual,
+  replace,
+  isRef
 } from 'axii';
 import { chain, hasConflict } from '../util';
 /**
@@ -40,56 +42,48 @@ import { chain, hasConflict } from '../util';
  *
  * 想要直接获取值:
  * fields.name.value
- *
- *
  */
 
 
-function dirtyCheckPlugin({ getInitialValues = () => ({}), isEqual = {} }) {
+/**********************
+ * dirtyCheckPlugin
+ **********************/
+function dirtyCheckPlugin({ getInitialValues = () => ({}), isEqual = {} }, values) {
   const initialValues = getInitialValues()
-  const touchedByFieldName = reactive({})
 
-  const onChange = (fieldName, draftProps) => {
-    const initialValue = initialValues[fieldName]
-    const isEqualFn = isEqual[fieldName] || ((rawValue, rawNextValue) => {
-      // rawValue 是通过 tryToRaw 出来的，即使是 ref 也是 { value: xxx }，所以不太可能不是 object
-      invariant((typeof rawValue === 'object') && (typeof rawNextValue === 'object'), `find non-object value: ${rawValue}, ${rawNextValue}`)
-      return shallowEqual(rawValue, rawNextValue)
-    })
-    // initialValue 也可能出现用户自己定义的 ref，见上面描述的情况。另外即使 initialValue 没有默认值，
-    // smartValue 也可能根据 propType 创建正确的引用，或者创建一个 ref()
-    touchedByFieldName[fieldName] = !isEqualFn(tryToRaw(initialValue), draftProps.value)
+  const equalFn = (fieldName, value, nextValue) => {
+    // 初始情况，说明 smartProp 回调还没有挂载好，这里可能触发两次，一次是 values 挂在了，一次是 initialValues 挂载了
+    if (value === undefined || nextValue === undefined) return true
+    // 如果用户有自己的对比函数，就用用户的，因为可能有复杂对象。
+    if (isEqual[fieldName]) return isEqual(value, nextValue)
+    // 以下是默认的 compare
+    if (typeof value !== 'object' || typeof nextValue !== 'object') return value === nextValue
+    return shallowEqual(value, nextValue)
   }
 
   return {
-    state: {
-      touchedByFieldName
-    },
     smartValue: (fieldName, propType) => {
       if (fieldName in initialValues) return
-      const propTypeDefaultValue = propType.defaultValue
-      initialValues[fieldName] = propTypeDefaultValue === undefined ? ref() : propTypeDefaultValue
+      initialValues[fieldName] = tryToRaw(propType.defaultValue, true)
     },
     createField: (fieldName) => {
-      if (!(fieldName in touchedByFieldName)) touchedByFieldName[fieldName] = false
       return {
-        props: {
-          onChange: (...argv) => onChange(fieldName, ...argv),
-        },
-        // 这里 delegate 给出去的就是一个 ref 了
-        touched: delegateLeaf(touchedByFieldName)[fieldName]
+        changed: refComputed(() => {
+          return !equalFn(fieldName, initialValues[fieldName], values[fieldName])
+        })
       }
     },
     output: {
-      isTouched: refComputed(() => {
-        return Object.values(touchedByFieldName).some(touched => touched)
+      isChanged: refComputed(() => {
+        return Object.entries(initialValues).some(([valueName, initialValue])=> !equalFn(valueName, initialValue, values[valueName]))
       })
     }
   }
 }
 
-/**
- * TODO validate 需要支持的：
+/**********************
+ * validationPlugin
+ *
  * 1. 单个校验。
  * 2. 联合校验
  * 3. 异步校验。
@@ -110,21 +104,19 @@ function dirtyCheckPlugin({ getInitialValues = () => ({}), isEqual = {} }) {
  *
  * 验证结果格式:
  * { passed: [bool], errors: [用户定义 error 对象] }。
- */
+ ***********************/
 export const VALIDATION_STATUS_PENDING = 'pending'
 export const VALIDATION_STATUS_ERROR = 'error'
 // resolved 和 initial 都是 none，这里没区分是认为用户没有这个需要
 export const VALIDATION_STATUS_NONE = 'none'
 
-
-
-// TODO 支持 yup？
-// TODO 支持自定的简单 kv 格式？
 function validationPlugin({ scheme }) {
   if (!scheme) return {}
 
-  const tryToValidate = (changedFieldName, draftProps, props) => {
-    const result = scheme(changedFieldName, draftProps, props)
+  const tryToValidate = (changedFieldName, { value: nextValue }, { value }) => {
+    // CAUTION 这里修改了一下格式，因为验证函数没有必要知晓 ref 的格式
+    const nextRawValue = isRef(value) ? nextValue.value : nextValue
+    const result = scheme(changedFieldName, nextRawValue, tryToRaw(value, true))
     if (!result) return
 
     debounceComputed(() => {
@@ -137,16 +129,15 @@ function validationPlugin({ scheme }) {
             debounceComputed(() => {
               validationStatusByRuleName[ruleName].value = VALIDATION_STATUS_NONE
               validationResultByRuleName[ruleName].value = passed
-              errorsByRuleName[ruleName].splice(0, errorsByRuleName[ruleName].length, (passed ? [] : errors))
+              errorsByRuleName[ruleName].splice(0, errorsByRuleName[ruleName].length, ...(passed ? [] : errors))
             })
           }).catch(() => {
             validationStatusByRuleName[ruleName].value = VALIDATION_STATUS_ERROR
           })
         } else {
           invariant(result.passed ? true : (result.errors && result.errors.length), `failed rule ${ruleName} must have errors in result.` )
-          console.log(ruleName, result)
           validationResultByRuleName[ruleName].value = result.passed
-          errorsByRuleName[ruleName].splice(0, errorsByRuleName[ruleName].length, (result.passed ? [] : result.errors))
+          errorsByRuleName[ruleName].splice(0, errorsByRuleName[ruleName].length, ...(result.passed ? [] : result.errors))
         }
       })
     })
@@ -204,10 +195,102 @@ function validationPlugin({ scheme }) {
         return Object.values(errorsByRuleName).some(({ passed }) => {
           return passed === false
         })
-      })
+      }),
+      validate() {
+        // TODO 手动执行
+      },
+      resetValidation() {
+        debounceComputed(() => {
+          Object.keys(validationResultByRuleName).forEach(key => {
+            validationResultByRuleName[key].value = undefined
+          })
+
+          Object.keys(validationStatusByRuleName).forEach(key => {
+            validationStatusByRuleName[key].value = undefined
+          })
+
+          Object.keys(errorsByRuleName).forEach(key => {
+            errorsByRuleName[key].splice(0)
+          })
+        })
+      }
     }
   }
 }
+
+export function simpleScheme(keyToRules) {
+  return function scheme(fieldName, nextValue, value) {
+    const rules = keyToRules[fieldName]
+    if (rules) {
+      // rules 支持两种格式
+      let result
+      // 1. 一个函数，需要返回 { passed, errors }
+      if (typeof rules === 'function') {
+        result = rules(nextValue, value)
+      } else if (typeof rules === 'object') {
+        // 2. map 形式 [ruleName] : [ruleFn]
+        // ruleFn 有错误则返回 error, 没有不用返回
+        const errors = []
+        Object.entries(rules).forEach(([ruleName, ruleFn]) => {
+          const error = ruleFn(fieldName, nextValue, value)
+          if (error) errors.push(error)
+        })
+
+        result = {
+          passed: errors.length === 0,
+          errors
+        }
+      }
+
+      return {
+        [fieldName] : result
+      }
+    } else {
+      console.warn(`${fieldName} have not validation rules`)
+    }
+  }
+}
+
+// 基本的 rule
+simpleScheme.required = (asEmpty = [undefined, '']) => {
+  // 默认只检测 undefined 和 空字符串，用户可以自定义
+  return (fieldName, nextValue) => {
+    let error
+    asEmpty.some((isEmpty) => {
+      if (typeof isEmpty === 'function') {
+        const result = isEmpty(nextValue)
+        if (result) {
+          error = result
+          return true
+        }
+      } else {
+        if (nextValue === isEmpty) {
+          error = `${fieldName} cannot be ${JSON.stringify(isEmpty)}`
+          return true
+        }
+      }
+    })
+
+    return error
+  }
+}
+
+simpleScheme.range = (from, to, excludeFrom, excludeTo) => {
+  return (fieldName, nextValue) => {
+    invariant(!isNaN(nextValue), `${fieldName} is not a number, cannot use range rule to validate.`)
+    if (from !== undefined && (excludeFrom ? (nextValue <= from) : (nextValue < from))) {
+      return `${fieldName} cannot be smaller than ${from}`
+    }
+    if (to !== undefined && (excludeTo ? (nextValue >= to) : (nextValue > to))) {
+      return `${fieldName} cannot be larger than ${to}`
+    }
+  }
+}
+
+/**********************
+ * submitPlugin
+ **********************/
+
 export const SUBMIT_STATUS_NONE = 'none'
 export const SUBMIT_STATUS_PENDING = 'pending'
 export const SUBMIT_STATUS_ERROR = 'error'
@@ -234,6 +317,31 @@ function submitPlugin({ submit }, values) {
   }
 }
 
+/**********************
+ * resetPlugin
+ **********************/
+function resetPlugin({ getInitialValues = () => ({})} , values, setValues) {
+  const initialValues = getInitialValues()
+  const smartValuePropTypes = {}
+  return {
+    smartValue(fieldName, propType) {
+      if (!(fieldName in initialValues)) {
+        smartValuePropTypes[fieldName] = propType
+      }
+    },
+    output: {
+      reset() {
+        const nextValues = getInitialValues()
+        Object.entries(smartValuePropTypes).forEach(([fieldName, propType]) => {
+          // nextValues[fieldName] = tryToRaw(propType.defaultValue, true)
+          nextValues[fieldName] =propType.defaultValue
+        })
+
+        setValues(nextValues)
+      }
+    }
+  }
+}
 
 /**
  * 这里有个关键问题，即我们需要把 value 的引用放在 useForm 里，通过 field.name.props 传给组件。
@@ -241,7 +349,7 @@ function submitPlugin({ submit }, values) {
  * 这个需求本质上，是有一些 util 需要代理用户做一个数据操作的事情，要负责创造数据引用，同时把数据引用交换给用户。用户在操作数据时时知道类型的，但 util 不知道也不需要知道。
  * 这种情况只有在"引用强感知"的场景里才有，例如 AXII，像 react 就没有，因为每次变化都是重新从 render 中创建新引用，再传给组件。
  *
- * 针对这个问题的接法是，由框架提供一个 Magic 类型，实际里面包装了一个回调函数，当组件收到这个 props 时，会把自己的类型传给回调，回调再生成真实的引用。
+ * 针对这个问题的接法是，由框架提供一个 smartProp 机制，实际里面包装了一个回调函数，当组件收到这个 props 时，会把自己的类型传给回调，回调再生成真实的引用。
  * 回调是在 util 中的，因此回调就可以保存引用了。组件 prop 也能拿到正确的类型。
  */
 function createNamedFieldProxy(fieldName, values, pluginInstances) {
@@ -265,20 +373,22 @@ function createNamedFieldProxy(fieldName, values, pluginInstances) {
   })
 
   const smartValueProp = createSmartProp((propType) => {
+    const hasValue = fieldName in values
+    // 因为 plugin 里面也可能读取 values，可能导致多余的重复计算，所以这里 debounce 一下。
+    debounceComputed(() => {
+      if (!hasValue) {
+        // propType.defaultValue 会创造新引用，不用 clone.
+        // 注意 values 已经整体是 reactive 了，继续赋值 reactive 会自动 tryToRaw。
+        values[fieldName] = propType.defaultValue
+      }
+      // plugin 的 smartValue 触发一定要放在最后，因为它可能引起 plugin 内部的部分 computed 重新计算。
+      // 只有这时候，values 上的引用才都已经是 reactive 了。
+      // CAUTION 这里认为不会出现当 smartValue 当钩子用的情况，所以只在真正要 smartValue 的时候才调用 plugin。
+      if (!hasValue) pluginSmartValue.forEach(smartValue => smartValue(fieldName, propType))
+    })
 
-
-    if (!( fieldName in values)) {
-      // propType.defaultValue 会创造新引用，不用 clone.
-      values[fieldName] = propType.defaultValue
-      pluginSmartValue.forEach(smartValue => smartValue(fieldName, propType))
-    }
-    // CAUTION 这里生成了 reactive
-    if (isReactiveLike(values[fieldName])) return values[fieldName]
-
-    // TODO 这里可能还有更复杂的判断，比如即使是 object，组件内部仍然当成 ref 来用
-    // 再比如碰到复杂的对象像，用户可能使用 Immutable 的形式，也当成 ref 来用。
-    // 目前，由于上面使用 isReactiveLike 来判断，如果真有这种复杂情况，那么用户在 getInitialValues 自己用 ref 标记一下就行。
-    return typeof values[fieldName] === 'object' ? reactive(values[fieldName]) : ref(values[fieldName])
+    // 如果 field 是非对象类型，delegateLeaf 就会生成 ref 形式的 reactive，保障格式一致。
+    return delegateLeaf(values)[fieldName]
   })
 
 
@@ -309,14 +419,36 @@ function createNamedFieldProxy(fieldName, values, pluginInstances) {
   })
 }
 
-
+/****************
+ * createUseForm
+ ****************/
 function createUseForm(...plugins) {
-
   return function useForm(props) {
     const {getInitialValues = () => ({})} = props
-    const values = getInitialValues()
+    // CAUTION 因为 createField 的时候有的 computed 已经用到了 values，但此时 values 可能还没有正确的引用。
+    // 引用是在 smartProp 里面创建的。为了让这些 computed 能正确触发，因此直接将整个 value reactive 化。
+    const values = reactive(getInitialValues())
+    const setValues = (nextValues) => {
+      // CAUTION 这里没有直接 replace 整个 values，是因为这里的 setValues 实际上是 patchValues，只对用户声明的进行修改。
+      debounceComputed(() => {
+        Object.entries(nextValues).forEach(([valueName, nextValue]) => {
 
-    const pluginInstances = plugins.map(plugin => plugin(props, values))
+          invariant(valueName in values, `${valueName} not exist. Keys: ${Object.keys(values).join(',')}`)
+          // CAUTION 这里不要用 replace，因为 values 整体是 reactive，直接去下面的节点可能只是一个简单值，不是 reactive。
+          // 当前这种写法无论 values[valueName] 是什么类型都能支持。并且不会影响传给组件的引用。
+          // 因为，如果是简单值，那么传给组件的是 delegateLeaf 产生的 refLike 对象，其中持有的根引用是 values 本身，不会变。
+          // 如果是对象，那么传给组件的是 reactive 对象。直接使用赋值会使引用丢失，所以使用 replace
+          if (!(typeof values[valueName] === 'object')) {
+            values[valueName] = nextValue
+          } else {
+            replace(values[valueName], nextValue)
+          }
+
+        })
+      })
+    }
+
+    const pluginInstances = plugins.map(plugin => plugin(props, values, setValues))
 
     const fields = new Proxy({}, {
       get: (target, fieldName) => {
@@ -330,19 +462,19 @@ function createUseForm(...plugins) {
 
     const output = {
       fields,
-      // TODO reset/set
-      reset(fields) {
-  
-      },
+      setValues,
     }
 
     pluginInstances.forEach(instance => {
-      Object.assign(output, instance.output || {})
+      if (!instance.output) return
+      const toAssign = typeof instance.output === 'function' ?
+        instance.output(output):
+        instance.output
+      Object.assign(output, toAssign)
     })
 
     return output
   }
-
 }
 
-export default createUseForm(dirtyCheckPlugin, validationPlugin, submitPlugin)
+export default createUseForm(resetPlugin, dirtyCheckPlugin, validationPlugin, submitPlugin)

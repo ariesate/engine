@@ -301,9 +301,10 @@ function createInjectedProps(cnode) {
       const userMutateFn = props[propName]
       // 注意这里，defaultMutateFn 可以拿到 props 的引用，这样我们就不用在调用的时候去往第一个参数去传了。
       const defaultMutateFn = propType.createDefaultValue(props)
-
       const valueProps = filter(mergedProps, isReactiveLike)
-      const draftProps = createDraft(mapValues(valueProps, tryToRaw))
+      // CAUTION 这里的 Immer draft 是支持 moment 等类型的，要更新 moment 的话，用户自己 new 一个新的并整体赋值。
+      // 注意这里 tryToRaw 有第二个参数 unwrap，所以不要省略着写。
+      const draftProps = createDraft(mapValues(valueProps, prop => tryToRaw(prop)))
 
       // 我们为开发者补足三个参数，这里和 react 不一样，我们把 event 放在了最后，这是我们按照实践中的权重判断的。
       // 因为我们的组件既是受控的又是非受控的，理论上用户只需要知道组件默认会怎么改 props 就够了，即 draftProps，

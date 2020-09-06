@@ -32,6 +32,7 @@ export function isSymbol(value) {
 }
 
 export function hasChanged(value, oldValue) {
+  // ? 后面这一段是什么
   return value !== oldValue && (value === value || oldValue === oldValue)
 }
 

@@ -2,6 +2,7 @@ import { reactive, toRaw, isRef } from './reactive'
 import { TrackOpTypes, TriggerOpTypes } from './operations'
 import { track, trigger, ITERATE_KEY, debounceComputed } from './effect'
 import { isObject, hasOwn, isSymbol, hasChanged } from './util'
+import { tryToRaw } from '../util';
 
 const builtInSymbols = new Set(
   Object.getOwnPropertyNames(Symbol)
@@ -51,7 +52,7 @@ function createGetter(isReadonly = false, shallow = false) {
 
 const set = /*#__PURE__*/ createSetter()
 
-function createSetter(isReadonly = false, shallow = false) {
+function createSetter(isReadonly = false) {
   return function set(
     target,
     key,
@@ -60,27 +61,20 @@ function createSetter(isReadonly = false, shallow = false) {
   ) {
 
     const oldValue = target[key]
-    if (!shallow) {
-      value = toRaw(value)
-      if (isRef(oldValue) && !isRef(value)) {
-        oldValue.value = value
-        return true
-      }
-    } else {
-      // in shallow mode, objects are set as-is regardless of reactive or not
-    }
-
+    // CAUTION 不允许 reactive 下嵌套 reactive/ref，所以全部都 tryToRaw，并且针对 ref 要展开。
+    // CAUTION 内部的 toRaw 只处理 reactive, tryToRaw 才同时处理了 ref。
+    const rawValue = tryToRaw(value, true)
     const hadKey = hasOwn(target, key)
-    const result = Reflect.set(target, key, value, receiver)
+    const result = Reflect.set(target, key, rawValue, receiver)
     // don't trigger if target is something up in the prototype chain of original
     if (target === toRaw(receiver)) {
       /* istanbul ignore else */
-      const extraInfo = { oldValue, newValue: value }
+      const extraInfo = { oldValue, newValue: rawValue }
       if (!hadKey) {
         trigger(target, TriggerOpTypes.ADD, key, extraInfo)
       } else {
         // 在这里不处理性能优化，又要有操作都通知外面。用参数告诉外面变化了没有
-        trigger(target, TriggerOpTypes.SET, key, !hasChanged(oldValue, value))
+        trigger(target, TriggerOpTypes.SET, key, !hasChanged(oldValue, rawValue))
       }
     }
     return result

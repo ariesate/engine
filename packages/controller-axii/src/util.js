@@ -421,6 +421,6 @@ export function getFromMap(collection, key, createIfUndefined) {
   return result
 }
 
-export function tryToRaw(obj) {
-  return isReactiveLike(obj) ? toRaw(obj) : obj
+export function tryToRaw(obj, unwrap) {
+  return isReactiveLike(obj) ? toRaw(obj, unwrap) : obj
 }

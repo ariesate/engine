@@ -1,24 +1,27 @@
 /** @jsx createElement */
 import { createElement, render, reactive, ref } from 'axii'
 import Input from '../src/input/Input.jsx'
-import useForm from '../src/hooks/useForm.js'
+import useForm, { simpleScheme } from '../src/hooks/useForm.js'
 import { refComputed } from '../../controller-axii/src/reactive';
 
 function App() {
 
-  const scheme = (fieldName, draftProps) => {
-    if (fieldName === 'age') {
-      const passed = draftProps.value.value < 2
-      return {
-        age: {
-          passed,
-          errors: passed ? [] : ['cannot set age']
-        }
-      }
+  const scheme = simpleScheme({
+    name: {
+      required: simpleScheme.required()
+    },
+    age: {
+      required: simpleScheme.required(),
+      range: simpleScheme.range(1, 24)
     }
-  }
+  })
 
   const form = useForm({
+    getInitialValues(){
+      return {
+        age: '23'
+      }
+    },
     scheme,
     submit: (values) => {
       console.log(values)
@@ -33,17 +36,29 @@ function App() {
       <div>
         <span>姓名</span>
         <Input {...form.fields.name.props()}/>
-        <span>{refComputed(() =>  form.fields.name.touched.value? '*' :'' )}</span>
+        <span>{refComputed(() =>  form.fields.name.changed.value? '*' :'' )}</span>
+        <span>{refComputed(() =>  {
+          return form.fields.name.isValid.value === false ? form.fields.name.errors[0] : ''
+        })
+        }</span>
       </div>
       <div>
         <span>年龄</span>
         <Input {...form.fields.age.props()}/>
-        <span>{refComputed(() =>  form.fields.age.touched.value ? '*' :'' )}</span>
-        <span>{refComputed(() =>  form.fields.age.isValid.value ? '' : form.fields.age.errors[0])}</span>
+        <span>{refComputed(() =>  form.fields.age.changed.value ? '*' :'' )}</span>
+        <span>{refComputed(() =>  {
+            return form.fields.age.isValid.value === false ? form.fields.age.errors[0] : ''
+          })
+        }</span>
       </div>
       <div>
-        <button onClick={form.submit} disabled={form.isSubmitting}>提交</button>
-        {refComputed(() => `submitting: ${form.isSubmitting.value}`)}
+        <button onClick={form.submit} disabled={form.isSubmitting}>{refComputed(() => form.isSubmitting.value ? '提交中': '提交')}</button>
+        <button onClick={() => {
+          form.reset()
+          form.resetValidation()
+        }} disabled={form.isSubmitting}>
+          重置
+        </button>
       </div>
     </div>
   )

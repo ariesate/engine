@@ -2,12 +2,16 @@
  * 返回一个可以把 leaf 变成类似于 ref 的 proxy。
  * 把 get/set/delete 都 delegate 到 parent 上。
  */
+import { isReactiveLike } from './index';
 
 
 export default function delegateLeaf(parent) {
   return new Proxy(parent, {
     // 每次 get 都创建新的 Proxy 没有关系，反正只是 delegate 到 parent 上
     get(target, key) {
+      if (isReactiveLike(parent[key])) return parent[key]
+
+      // 生一个 refLike 对象
       return {
         _isRef: true,
         _isLeafRef: true,

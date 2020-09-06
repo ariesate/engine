@@ -22,9 +22,10 @@ export function getDisplayValue(draft) {
 }
 
 export function draft(computed) {
-  const isComputedRef = isRef(computed)
+  const isRefComputed = isRef(computed)
   // 用当前的值重新建立一个 reactive/ref 保持同步即可。如果是 computed 直接用 computation 执行一遍就可以了。
-  const draftValue = isComputedRef ? ref(computed.value) : reactive(deepClone(toRaw(computed)))
+  // TODO 如果是复杂的 reactive 对象里面有非 plain object 怎么办？
+  const draftValue = isRefComputed ? ref(computed.value) : reactive(deepClone(toRaw(computed)))
 
   // 什么时候 destroy watchToken? 不需要手动销毁，因为外部的 computed 会被手动销毁，这时候会连带销毁依赖的 watchToken。
   watch((watchAnyMutation) => watchAnyMutation(computed), (isUnchanged) => {
@@ -37,7 +38,7 @@ export function draft(computed) {
   // 设置个初始值
   mutationTimeTable.set(draftValue, Date.now())
 
-  const computeMethod = isComputedRef ? refComputed : (Array.isArray(computed) ? arrayComputed : objectComputed)
+  const computeMethod = isRefComputed ? refComputed : (Array.isArray(computed) ? arrayComputed : objectComputed)
 
   const displayValue = computeMethod((watchAnyMutation) => {
     watchAnyMutation(draftValue)
@@ -47,7 +48,7 @@ export function draft(computed) {
     const target = (draftMutationTime > computedMutationTime) ? draftValue : computed
 
     // CAUTION 这里为了性能并没有用 cloneDeep，而是直接包装了一下，因为是 computed，也不会被外部修改。
-    return isComputedRef ? target.value : toRaw(target)
+    return isRefComputed ? target.value : toRaw(target)
   })
 
   draftDisplayValue.set(draftValue, displayValue)
