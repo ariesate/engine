@@ -126,6 +126,7 @@ const valueRules = {
      */
     const matrix = [
       [undefined, undefined, undefined, 'transparent'],
+      [undefined, INDEX.active.active, undefined, colors.white()],
       [INDEX.inverted, undefined, undefined, colors[color]()],
       [INDEX.inverted, INDEX.active.inactive, undefined, colors.gray()],
       [INDEX.inverted, INDEX.active.active, undefined, colors[color]()],

@@ -28,13 +28,16 @@ export function Calendar({ value, current, onSelect, onSelectNextMonth, onSelect
     <dates use="table">
       <dayIndexesCotainer use="thead">
         <dayIndexes use="tr">
-          <dayIndex use="th">一</dayIndex>
-          <dayIndex use="th">二</dayIndex>
-          <dayIndex use="th">三</dayIndex>
-          <dayIndex use="th">四</dayIndex>
-          <dayIndex use="th">五</dayIndex>
-          <dayIndex use="th">六</dayIndex>
-          <dayIndex use="th">日</dayIndex>
+          {['一', '二', '三', '四', '五', '六', '日'].map(index => (
+            <dayIndex
+              use="th"
+              inline
+              inline-display-table-cell
+              inline-padding-10px
+            >
+              {index}
+            </dayIndex>
+          ))}
         </dayIndexes>
       </dayIndexesCotainer>
       <days use="tbody">
@@ -90,7 +93,13 @@ export function Calendar({ value, current, onSelect, onSelectNextMonth, onSelect
           return datesGroupByWeek.map(week => (
             <week use='tr'>{
               week.map(dayData => fragments.day(dayData)(() => (
-                <day use='td' onClick={() => onChange(dayData)}>
+                <day
+                  use='td'
+                  onClick={() => onChange(dayData)}
+                  inline
+                  inline-display-table-cell
+                  inline-padding-10px
+                >
                   {dayData.date}
                 </day>
               )))
@@ -122,7 +131,7 @@ Calendar.propTypes = {
 
 Calendar.Style = (fragments) => {
   fragments.root.elements.container.style({
-    background: '#fff'
+    background: scen().active().bgColor()
   })
 
   fragments.header.elements.month.style({
@@ -143,9 +152,10 @@ Calendar.Style = (fragments) => {
     return {
       background: equal?
         scen().inverted().active().bgColor() :
-        scen().bgColor(),
+        scen().active().bgColor(),
       color: equal ? scen().interactable().active().inverted().color() : 'auto',
-      cursor: 'pointer'
+      cursor: 'pointer',
+      textAlign: 'center'
     }
   })
 }
