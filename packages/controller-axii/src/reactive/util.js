@@ -102,3 +102,7 @@ export function filterOut(list, itemsToFilter) {
   }
   return filteredItems
 }
+
+export function isPlainObject(value) {
+  return (typeof value === 'object') && (Object.getPrototypeOf(value) === null || Object === value.constructor)
+}

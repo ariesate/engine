@@ -1,4 +1,5 @@
-import { createComputed } from './reactive';
+import { createComputed,  } from './reactive';
+import { TYPE } from './reactive/effect';
 
 export function watchOnce(computation, callback) {
   let result
@@ -11,7 +12,7 @@ export function watchOnce(computation, callback) {
       // 变化以后执行 callback。如果 callback 里面没有依赖，那么久不会再执行了。
       callback()
     }
-  })
+  }, TYPE.TOKEN)
   return [result, token]
 }
 
@@ -26,6 +27,6 @@ export default function watch(computation, callback) {
       computation(watchAnyMutation)
       callback()
     }
-  })
+  }, TYPE.TOKEN)
   return [result, token]
 }

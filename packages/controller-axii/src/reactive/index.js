@@ -54,8 +54,6 @@ export { reactive, ref, isRef, isReactive } from './reactive'
 export { default as delegateLeaf } from './delegateLeaf'
 export {
   refComputed,
-  objectComputed,
-  arrayComputed,
   createComputed,
   destroyComputed,
   startScope,
@@ -67,6 +65,13 @@ export {
   debounceComputed,
   getComputation,
 } from './effect'
+
+import { createComputed } from './effect'
+// LEGACY
+export const arrayComputed = createComputed
+// LEGACY
+export const objectComputed = createComputed
+export const computed = createComputed
 
 export function isReactiveLike(obj) {
   return isReactive(obj) || isRef(obj)

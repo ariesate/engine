@@ -1,4 +1,4 @@
-import { createIdGenerator, insertIntoOrderedArray, filterOut } from './util';
+import { createIdGenerator, insertIntoOrderedArray, filterOut, isPlainObject } from './util';
 import { invariant } from '../util';
 import { isRef, reactive, ref, toRaw } from './reactive';
 import { TrackOpTypes, TriggerOpTypes } from './operations'
@@ -57,8 +57,7 @@ function getFromMap(collection, key, createIfUndefined) {
  ****************************************/
 export const TYPE = {
   REF: Symbol('ref'),
-  ARRAY: Symbol('array'),
-  OBJECT: Symbol('object')
+  TOKEN: Symbol('token')
 }
 
 export function isComputed(obj) {
@@ -69,14 +68,6 @@ export function isComputed(obj) {
 
 export function refComputed(computation) {
   return createComputed(computation, TYPE.REF)
-}
-
-export function arrayComputed(computation) {
-  return createComputed(computation, TYPE.ARRAY)
-}
-
-export function objectComputed(computation) {
-  return createComputed(computation, TYPE.OBJECT)
 }
 
 class ComputedToken {}
@@ -92,11 +83,7 @@ class ComputedToken {}
 export function createComputed(computation, type) {
   invariant(typeof computation === 'function', 'computation must be a function')
 
-  const computed = type ? (type === TYPE.REF ? ref(undefined) : reactive( type === TYPE.OBJECT ? {} : [])) : (new ComputedToken())
-  const payload = getFromMap(reactiveToPayloads, toRaw(computed), createPayload)
-  payload.computation = computation
-
-  computation.computed = computed
+  computation.computed = type ? (type === TYPE.REF ? ref(undefined) : new ComputedToken()) : undefined
   computation.indeps = new Set()
   computation.levelChildren = new Set()
   computation.level = 0
@@ -106,8 +93,13 @@ export function createComputed(computation, type) {
 
   // 执行 compute 的时候会 track 依赖。
   compute(computation)
-  applyCollectComputed(computed)
-  return computed
+
+  // 如果是第一次 compute 里面会判断 computation 没有 computed，那么会根据 computation 类型自动建立 ref 或者 reactive
+  const payload = getFromMap(reactiveToPayloads, toRaw(computation.computed), createPayload)
+  payload.computation = computation
+
+  applyCollectComputed(computation.computed)
+  return computation.computed
 }
 
 function applyCollectComputed(computed) {
@@ -165,8 +157,12 @@ function applyComputation() {
   }
 
   const nextValue = computation(watchAnyMutation)
-  // 未来可能提供能力让 computed token 可以销毁自己。所以这里的 isToken 变量要在前面定义，否则到这里的时候 computation 已经被清理得差不多了
-  if(!isToken) {
+
+  // 第一创建的时候，如果用户没有指定类型，那么就要让框架来根据类型自动创建
+  if (computation.computed === undefined) {
+    computation.computed = (Array.isArray(nextValue) || isPlainObject(nextValue)) ? reactive(nextValue) : ref(nextValue)
+  } else if(!isToken) {
+    // 未来可能提供能力让 computed token 可以销毁自己。所以这里的 isToken 变量要在前面定义，否则到这里的时候 computation 已经被清理得差不多了
     replace(computation.computed, nextValue)
   }
 }
