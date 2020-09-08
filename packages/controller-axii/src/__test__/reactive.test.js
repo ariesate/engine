@@ -1,4 +1,4 @@
-const { ref, reactive, refComputed, objectComputed, arrayComputed } = require('../reactive/index.js')
+const { ref, reactive, refComputed, computed } = require('../reactive/index.js')
 
 describe('basic reactive', () => {
 
@@ -16,43 +16,43 @@ describe('basic reactive', () => {
     expect(computed.value).toBe(3)
   })
 
-  test('ref & objectComputed', () => {
+  test('ref & computed', () => {
     const base = ref(1)
     const base2 = ref(1)
 
-    const computed = objectComputed(() => {
+    const computedValue = computed(() => {
       return {
         addRes : base.value + base2.value,
         minusRes: base.value - base2.value
       }
     })
 
-    expect(computed.addRes).toBe(2)
-    expect(computed.minusRes).toBe(0)
+    expect(computedValue.addRes).toBe(2)
+    expect(computedValue.minusRes).toBe(0)
 
     base.value += 1
     base2.value += 2
 
-    expect(computed.addRes).toBe(5)
-    expect(computed.minusRes).toBe(-1)
+    expect(computedValue.addRes).toBe(5)
+    expect(computedValue.minusRes).toBe(-1)
   })
 
-  test('ref & arrayComputed', () => {
+  test('ref & array computed', () => {
     const base = ref(1)
     const base2 = ref(1)
 
-    const computed = arrayComputed(() => {
+    const computedValue = computed(() => {
       return [base.value + base2.value, base.value - base2.value]
     })
 
-    expect(computed[0]).toBe(2)
-    expect(computed[1]).toBe(0)
+    expect(computedValue[0]).toBe(2)
+    expect(computedValue[1]).toBe(0)
 
     base.value += 1
     base2.value += 2
 
-    expect(computed[0]).toBe(5)
-    expect(computed[1]).toBe(-1)
+    expect(computedValue[0]).toBe(5)
+    expect(computedValue[1]).toBe(-1)
   })
 
   test('object reactive & refComputed', () => {
@@ -61,31 +61,31 @@ describe('basic reactive', () => {
       secondName: 'doe'
     })
 
-    const computed = refComputed(() => {
+    const computedValue = refComputed(() => {
       return `${base.firstName}-${base.secondName}`
     })
 
-    expect(computed.value).toBe('john-doe')
+    expect(computedValue.value).toBe('john-doe')
 
     base.firstName = 'jim'
 
-    expect(computed.value).toBe('jim-doe')
+    expect(computedValue.value).toBe('jim-doe')
   })
 
   test('array reactive & refComputed', () => {
     const base = reactive([1, 2,3,4])
 
-    const computed = refComputed(() => {
+    const computedValue = refComputed(() => {
       return base.reduce((last, current) => last + current)
     })
 
-    expect(computed.value).toBe(10)
+    expect(computedValue.value).toBe(10)
 
     base.push(5)
-    expect(computed.value).toBe(15)
+    expect(computedValue.value).toBe(15)
 
     base[0] = 5
-    expect(computed.value).toBe(19)
+    expect(computedValue.value).toBe(19)
   })
 
   test('dynamic reactive object prop', () => {
@@ -94,14 +94,14 @@ describe('basic reactive', () => {
       secondName: 'doe'
     })
 
-    const computed = refComputed(() => {
+    const computedValue = refComputed(() => {
       return base.nickname || `${base.firstName}-${base.secondName}`
     })
 
-    expect(computed.value).toBe('john-doe')
+    expect(computedValue.value).toBe('john-doe')
 
     base.nickname = 'jojo'
-    expect(computed.value).toBe('jojo')
+    expect(computedValue.value).toBe('jojo')
   })
 
   test('nested reactive object', () => {
@@ -116,70 +116,70 @@ describe('basic reactive', () => {
       }
     })
 
-    const computed = refComputed(() => {
+    const computedValue = refComputed(() => {
       return `${base.admin.firstName}-${base.admin.secondName}&${base.member.firstName}-${base.member.secondName}`
     })
 
-    expect(computed.value).toBe('john-doe&tom-du')
+    expect(computedValue.value).toBe('john-doe&tom-du')
 
     base.admin.secondName = 'jojo'
     base.member.secondName = 'mi'
-    expect(computed.value).toBe('john-jojo&tom-mi')
+    expect(computedValue.value).toBe('john-jojo&tom-mi')
   })
 
   test('chain computed', () => {
     const first = ref('tim')
-    const computed = refComputed(() => {
+    const computedValue = refComputed(() => {
       return `${first.value}-no`
     })
-    const computed2 = refComputed(() => {
-      return `${computed.value}-yes`
+    const computedValue2 = refComputed(() => {
+      return `${computedValue.value}-yes`
     })
 
-    expect(computed2.value).toBe('tim-no-yes')
+    expect(computedValue2.value).toBe('tim-no-yes')
 
     first.value = 'tom'
-    expect(computed2.value).toBe('tom-no-yes')
+    expect(computedValue2.value).toBe('tom-no-yes')
   })
 
   test('multiple dep', () => {
     const base1 = ref('john')
     const base2 = ref('wayne')
-    const computed = refComputed(() => {
+    const computedValue = refComputed(() => {
       return `${base1.value}-${base2.value}`
     })
 
-    expect(computed.value).toBe('john-wayne')
+    expect(computedValue.value).toBe('john-wayne')
 
     base1.value = 'tom'
-    expect(computed.value).toBe('tom-wayne')
+    expect(computedValue.value).toBe('tom-wayne')
 
     base2.value = 'cat'
-    expect(computed.value).toBe('tom-cat')
+    expect(computedValue.value).toBe('tom-cat')
   })
 
   test('conditional dep', () => {
     const base1 = ref('john')
     const base2 = ref('wayne')
-    const computed = refComputed(() => {
+    const computedValue = refComputed(() => {
       if (base1.value !== 'tom') return `yes`
       return `${base2.value}-no`
     })
 
-    expect(computed.value).toBe('yes')
+    expect(computedValue.value).toBe('yes')
 
     base1.value = 'tom'
-    expect(computed.value).toBe('wayne-no')
+    expect(computedValue.value).toBe('wayne-no')
 
     base2.value = 'jom'
-    expect(computed.value).toBe('jom-no')
+    expect(computedValue.value).toBe('jom-no')
   })
 
   test('computed inside computed should be destroyed', () => {
     const base1 = ref(1)
     const base2 = ref(1)
     let innerRun = 0
-    const computed1 = refComputed(( ) => {
+    const computedValue1 = refComputed(( ) => {
       return {
         num : base1.value+1,
         inner: refComputed(() => {

@@ -67,10 +67,6 @@ export {
 } from './effect'
 
 import { createComputed } from './effect'
-// LEGACY
-export const arrayComputed = createComputed
-// LEGACY
-export const objectComputed = createComputed
 export const computed = createComputed
 
 export function isReactiveLike(obj) {

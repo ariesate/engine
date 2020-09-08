@@ -1,9 +1,9 @@
-import {render, reactive, ref, refComputed, objectComputed, arrayComputed, subscribe, createElement, derive, propTypes } from 'axii'
+import {render, reactive, ref, refComputed,  computed, subscribe, createElement, derive, propTypes } from 'axii'
 import { draft } from '../../controller-axii/src/draft';
 
 function FullName({ fullName, onChange }) {
   const { firstName, secondName } = derive(() => {
-    const splitArr =  arrayComputed(() => /-/.test(fullName.value) ? fullName.value.split('-') : [fullName.value, ''])
+    const splitArr =  computed(() => /-/.test(fullName.value) ? fullName.value.split('-') : [fullName.value, ''])
     return {
       firstName: refComputed(() => {
         return splitArr[0]

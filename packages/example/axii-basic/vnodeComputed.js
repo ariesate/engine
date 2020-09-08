@@ -4,8 +4,6 @@ import {
   reactive,
   ref,
   refComputed,
-  objectComputed,
-  arrayComputed,
   vnodeComputed,
   createElement,
   derive,

@@ -1,4 +1,4 @@
-const { ref, reactive, refComputed, objectComputed, arrayComputed, debounceComputed } = require('../reactive/index.js')
+const { ref, refComputed, debounceComputed } = require('../reactive/index.js')
 const batchOperation = require('../batchOperation').default
 
 describe('performance test', () => {

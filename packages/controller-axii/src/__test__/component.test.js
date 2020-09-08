@@ -1,5 +1,5 @@
 const { propTypes, render, createElement } = require('../index')
-const { ref, reactive, refComputed, objectComputed, arrayComputed, delegateLeaf } = require('../reactive/index.js')
+const { ref } = require('../reactive/index.js')
 import $ from 'jquery'
 
 describe('component', () => {

@@ -2,7 +2,7 @@
 /** @jsxFrag Fragment */
 import { createElement, Fragment, vnodeComputed } from '../index';
 import createFlatChildrenProxy from '../createFlatChildrenProxy';
-const { ref, reactive, refComputed, objectComputed, arrayComputed } = require('../reactive/index.js')
+const { reactive } = require('../reactive/index.js')
 
 describe('children proxy', () => {
 

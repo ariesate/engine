@@ -1,4 +1,4 @@
-import {render, reactive, ref, refComputed, objectComputed, arrayComputed, subscribe, createElement, derive, propTypes, watch } from 'axii'
+import {render, reactive, ref, refComputed, createElement, derive, propTypes, watch } from 'axii'
 import { draft } from '../../controller-axii/src/draft';
 
 function App() {

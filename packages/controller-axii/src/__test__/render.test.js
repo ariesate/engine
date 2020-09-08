@@ -2,7 +2,7 @@
 import { vnodeComputed, createElement, Fragment } from '../index';
 import $ from 'jquery'
 
-const { ref, reactive, refComputed, objectComputed, arrayComputed, delegateLeaf } = require('../reactive/index.js')
+const { ref, reactive, refComputed, delegateLeaf } = require('../reactive/index.js')
 const { render } = require('../index.js')
 
 describe('basic render', () => {

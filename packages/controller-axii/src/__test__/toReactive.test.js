@@ -1,4 +1,4 @@
-const { ref, reactive, refComputed, objectComputed, arrayComputed } = require('../reactive/index.js')
+const { ref } = require('../reactive/index.js')
 const toReactive = require('../toReactive').default
 
 describe('toReactive test', () => {

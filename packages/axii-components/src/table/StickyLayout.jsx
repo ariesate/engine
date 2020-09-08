@@ -4,14 +4,14 @@ import {
   propTypes,
   createElement,
   ref,
-  reactive
+  reactive,
+  computed
 } from 'axii'
-import { objectComputed } from '../../../controller-axii/src/reactive';
 
 export default function FeatureStickyLayout(fragments) {
 
   fragments.root.prepare(({ columns }) => {
-    const offsets = objectComputed(() => {
+    const offsets = computed(() => {
       let leftOffset = 0
       let rightOffset = 0
 

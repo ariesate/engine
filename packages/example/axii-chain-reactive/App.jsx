@@ -1,5 +1,5 @@
 /* @jsx createElement */
-import { createElement, render, objectComputed, reactive, ref, arrayComputed, vnodeComputed, propTypes,  refComputed, Fragment } from 'axii'
+import { createElement, render, computed, reactive, ref, computed, vnodeComputed, propTypes,  refComputed, Fragment } from 'axii'
 import { makeLinkMatrix, isLineNotConflict, insertIntoOrderedArray, indexBy, getRandomLinks, getRandomViews, randomAddView, randomAddLink} from './util'
 /**
  * 1. 当个组件的 vnode 更新和 data
@@ -112,7 +112,7 @@ export function App() {
 
 
   // 1. 建立一个位置矩阵、之后拖拽的时候也能用。渲染逻辑也比较容易
-  const viewMatrix = arrayComputed(() => {
+  const viewMatrix = computed(() => {
     const matrix = []
     let maxColLength = 0
     views.forEach((view) => {
@@ -136,11 +136,11 @@ export function App() {
   })
 
   // 2. 算 link 的位置
-  const viewsById = objectComputed(() => {
+  const viewsById = computed(() => {
     console.log("re index", views)
     return indexBy('id', views)
   })
-  const linkPositionCache = objectComputed(() => {
+  const linkPositionCache = computed(() => {
     const cacheByLinkId = {}
     links.forEach(link => {
       const sourceView = viewsById[link.source]
@@ -164,12 +164,12 @@ export function App() {
   })
 
   // matrix 是用 列作为第一层索引，用行作为第二层索引的。
-  const linksSourceMatrix = arrayComputed(() => makeLinkMatrix(links, linkPositionCache, true))
-  const linksTargetMatrix = arrayComputed(() => makeLinkMatrix(links, linkPositionCache, false))
+  const linksSourceMatrix = computed(() => makeLinkMatrix(links, linkPositionCache, true))
+  const linksTargetMatrix = computed(() => makeLinkMatrix(links, linkPositionCache, false))
   // 开始分配轨道，实际上就是建立 computed payload 的过程。
 
   // 1. 为每一行的每个 link 分配起始点，要整行统一看
-  const rowTrackIndexById = objectComputed(function rowTrackIndexByIdComputation() {
+  const rowTrackIndexById = computed(function rowTrackIndexByIdComputation() {
     const result = {}
     for(let rowIndex = 0; rowIndex < viewMatrix.length; rowIndex ++) {
       // 收集这一行所有的 links
@@ -191,7 +191,7 @@ export function App() {
   })
 
   // 2. 每一列，为每个link 分配起始处的拐点，要整列看
-  const colTrackIndexById = objectComputed(() => {
+  const colTrackIndexById = computed(() => {
     const result = {}
     linksSourceMatrix.forEach((linksGroupByRow, colIndex) => {
       if (!linksGroupByRow) return
@@ -257,7 +257,7 @@ export function App() {
   })
 
   // 3. 第三个拐点，也要整行来看。
-  const targetRowTrackIndexById = objectComputed(() => {
+  const targetRowTrackIndexById = computed(() => {
     const result = {}
     for(let rowIndex = 0; rowIndex < viewMatrix.length; rowIndex ++) {
       // 收集这一行所有的 links
@@ -279,7 +279,7 @@ export function App() {
   })
 
   //4. 高亮，建立一个依赖表
-  const sourceByTargetId = objectComputed(() => {
+  const sourceByTargetId = computed(() => {
     const result = {}
     // 要建立全的，否则可能出现一个 target 一开始没有 source， 就拿到个 undefined 情况
     views.forEach(({ id }) => {
@@ -302,10 +302,10 @@ export function App() {
       <div style={{ position: 'relative', marginTop: 20}}>
         {vnodeComputed(function Links() {
           return links.map((link) => {
-            const positions = objectComputed(() => linkPositionCache[link.id])
-            const rowTrackIndex = arrayComputed(() => rowTrackIndexById[link.id])
-            const colTrackIndex = arrayComputed(() => colTrackIndexById[link.id])
-            const targetRowTrackIndex = arrayComputed(() => targetRowTrackIndexById[link.id])
+            const positions = computed(() => linkPositionCache[link.id])
+            const rowTrackIndex = computed(() => rowTrackIndexById[link.id])
+            const colTrackIndex = computed(() => colTrackIndexById[link.id])
+            const targetRowTrackIndex = computed(() => targetRowTrackIndexById[link.id])
             return <Link
               key={link.id}
               {...link}
@@ -326,7 +326,7 @@ export function App() {
 
               return row.map((view, colIndex) => {
                 if (!view) return null
-                const sources = arrayComputed(() => sourceByTargetId[view.id])
+                const sources = computed(() => sourceByTargetId[view.id])
                 // 如果 sources 不变，那么 View 其实是不需要深度对比的！！！！
                 return <View key={view.id} view={view} rowIndex={rowIndex} colIndex={colIndex} sources={sources} width={width} height={height} gap={gap}/>
               })

@@ -1,4 +1,3 @@
-const { ref, reactive, refComputed, objectComputed, arrayComputed } = require('../reactive/index.js')
 const serviceReactive = require('../serviceReactive').default
 
 describe('serviceReactive test', () => {

@@ -3,8 +3,6 @@ import {
   reactive,
   ref,
   refComputed,
-  objectComputed,
-  arrayComputed,
   createElement,
   derive,
   propTypes,
