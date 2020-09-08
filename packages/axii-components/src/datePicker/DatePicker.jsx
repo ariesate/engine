@@ -30,7 +30,7 @@ export function DatePicker({ focused, onFocus, onBlur, value, onChange, format, 
     nextTick(()=> calendarRef.current.focus())
   }
 
-  const getCalendarPosition = ({ top, left, width, height }) => {
+  const getContainerRect = ({ top, left, width, height }) => {
     return {
       top: height + top,
       left,
@@ -48,7 +48,7 @@ export function DatePicker({ focused, onFocus, onBlur, value, onChange, format, 
     >
       <calendar use={Calendar} value={value} onChange={onChange}/>
     </calendarContainer>, {
-    getPosition: getCalendarPosition
+      getContainerRect,
   })
 
   return <>

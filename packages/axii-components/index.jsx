@@ -17,17 +17,17 @@ const { component } = queryString.parse(location.search)
  * 2: menu/breadcrumb/steps/popover/tooltip/timeline
  * 3: button/tag/spin/progress
  *
- * 必须/总数 : 21/35
- * 已完成 : 3/21
+ * 必须/总数 : 19/33
+ * 已完成 : 8/19
  */
 const availablePlayground = {
   Form: [
     // 'form', 写到 common hooks 里
-    'input',
-    'checkbox', // 美化
+    'input', // x
+    'checkbox', // x 美化
     'timePicker',
-    'datePicker',
-    'select',
+    'datePicker', // x
+    'select', // 1. search 2. multiple 3.
     'upload',
     'radio',
     // 以上是必须要常用的 7
@@ -36,10 +36,10 @@ const availablePlayground = {
     'switch'
   ],
   Data: [
-    'table',
-    'tabs',
+    'table', // x
+    'tabs', // x
     'tree',
-    'calendar',
+    'calendar', // x
     'popover',
     // 以上是常用必须的 6
     'collapse',
@@ -50,8 +50,8 @@ const availablePlayground = {
     'badge'
   ],
   Dialog: [
-    'modal',
-    'message',
+    // 'modal', 直接使用 useLayer 即可
+    'message', // 如何是用 api 动态创建？？？
     'spin',
     // 以上是常用必须的 3
     'alert',
@@ -69,10 +69,11 @@ const availablePlayground = {
   ],
   Misc: [
     'button',
-    'icon',
+    'icon', // x
   ],
   Utilities: [
-    'useForm',
+    'useForm', // x
+    'useLayer', // x
     'useRequest',
     // 以上是常用必须的
     'useHistory',

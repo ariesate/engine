@@ -20,12 +20,13 @@ import {
 
 // TODO renderOnVisible 决定是否是 visible 才挂载。是否需要？
 // TODO 监听所有 scroll 跟随滚动。
-export default function useLayer(nodeInPortal, { getPosition, level, renderOnVisible, syncMove } = {}) {
+export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), level, renderOnVisible, syncMove } = {}) {
 
   const sourceRef = ref()
 
   // 因为我们提供给 nodeInPortal 的是 source.getBoundingClientRect 的位置，这个是相对于 page 的。所以这里用 fixed 定位。
   const style = refComputed(() => {
+
     const rect = sourceRef.value ? sourceRef.value.getBoundingClientRect() : {
       top: 0,
       left: 0,
@@ -36,7 +37,12 @@ export default function useLayer(nodeInPortal, { getPosition, level, renderOnVis
     return {
       position: 'fixed',
       overflow: 'visible',
-      ...getPosition(rect, sourceRef.value)
+      display: 'block',
+      left: 0,
+      top: 0,
+      width: 0,
+      height: 0,
+      ...getContainerRect(rect, sourceRef.value)
     }
   })
 
@@ -44,7 +50,7 @@ export default function useLayer(nodeInPortal, { getPosition, level, renderOnVis
   const portalRoot = document.createElement('div')
   document.body.appendChild(portalRoot)
 
-  const node = createPortal(<portal block style={style}>
+  const node = createPortal(<portal style={style}>
     {nodeInPortal}
   </portal>, portalRoot)
 

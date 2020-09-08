@@ -1,8 +1,7 @@
 /** @jsx createElement */
-import { createElement, render, reactive, ref } from 'axii'
+import { createElement, render, reactive, refComputed } from 'axii'
 import Input from '../src/input/Input.jsx'
 import useForm, { simpleScheme } from '../src/hooks/useForm.js'
-import { refComputed } from '../../controller-axii/src/reactive';
 
 function App() {
 
