@@ -1,5 +1,5 @@
 /* @jsx createElement */
-import { createElement, render, computed, reactive, ref, computed, vnodeComputed, propTypes,  refComputed, Fragment } from 'axii'
+import { createElement, computed, reactive, ref,  refComputed } from 'axii'
 import { makeLinkMatrix, isLineNotConflict, insertIntoOrderedArray, indexBy, getRandomLinks, getRandomViews, randomAddView, randomAddLink} from './util'
 /**
  * 1. 当个组件的 vnode 更新和 data
@@ -300,7 +300,7 @@ export function App() {
         <button onClick={() => randomAddLink(links, views)}>添加链接</button>
       </div>
       <div style={{ position: 'relative', marginTop: 20}}>
-        {vnodeComputed(function Links() {
+        {function Links() {
           return links.map((link) => {
             const positions = computed(() => linkPositionCache[link.id])
             const rowTrackIndex = computed(() => rowTrackIndexById[link.id])
@@ -318,11 +318,11 @@ export function App() {
               targetRowTrackIndex={targetRowTrackIndex}
             />
           })
-        })}
+        }}
 
-        {vnodeComputed(function createViews() {
+        {function createViews() {
           return viewMatrix.map((row, rowIndex) => {
-            return vnodeComputed(function createView(){
+            return function createView(){
 
               return row.map((view, colIndex) => {
                 if (!view) return null
@@ -330,13 +330,11 @@ export function App() {
                 // 如果 sources 不变，那么 View 其实是不需要深度对比的！！！！
                 return <View key={view.id} view={view} rowIndex={rowIndex} colIndex={colIndex} sources={sources} width={width} height={height} gap={gap}/>
               })
-            })
+            }
           })
-        })}
+        }}
       </div>
     </div>
   )
 }
 
-// 有个编辑态，还有 draft 状态。之前是怎么想的？？？？
-// TODO 如果 vnodeComputed 没有包裹住当前的组件！！！，就会出现巨奇怪的 bug！！！，往上渗透了！！！！

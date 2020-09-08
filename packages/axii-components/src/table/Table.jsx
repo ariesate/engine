@@ -95,7 +95,7 @@ export function Table( { data, pagination, columns }, context, fragments) {
                 colRowProps.rowSpan = maxLevel - level + 1
               }
               result[level].children.push(fragments.headCell({column, level, childrenCount})(() => (
-                <th inline inline-display="table-cell" inline-border-width-1px  {...colRowProps} data-column={column}>{column.title}</th>
+                <th inline inline-display="table-cell" inline-border-width-1px  {...colRowProps}>{column.title}</th>
               )))
             })
 
@@ -110,7 +110,7 @@ export function Table( { data, pagination, columns }, context, fragments) {
                 {fragments.cells({row})(() => {
                   const cells = []
                   walkLeaf(columns, (column) => {
-                    cells.push(fragments.cell({ column })(() => <td inline inline-display="table-cell"  inline-border-width-1px data-column={column}>{row[column.dataIndex]}</td>))
+                    cells.push(fragments.cell({ column })(() => <td inline inline-display="table-cell"  inline-border-width-1px >{row[column.dataIndex]}</td>))
                   })
                   return cells
                 })}
