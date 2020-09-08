@@ -1,6 +1,5 @@
 export default function createPortal(vnode, rootEl) {
   vnode.portalRoot = rootEl
-  console.log(vnode)
   return vnode
 
 

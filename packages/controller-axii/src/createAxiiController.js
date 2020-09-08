@@ -507,7 +507,6 @@ export default function createAxiiController() {
         })
       },
       receiveRef: (ref, vnode) => {
-        console.log(111, vnode.name, ref)
         if (typeof vnode.ref === 'function') {
           vnode.ref(ref)
         } else {

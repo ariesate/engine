@@ -157,7 +157,6 @@ export default function createComponent(Base, featureDefs=[]) {
         // CAUTION 这里和 ref 的实现有点耦合，直接打在了 vnode 上。
         // TODO 这里还有很多其他复杂情况，比如组件直接就放回了 vnodeComputed。
         result.ref = ref
-        console.log(result)
       }
     }
 

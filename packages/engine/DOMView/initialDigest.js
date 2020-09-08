@@ -52,7 +52,6 @@ function attachCnodeQuickRefs(cnode, vnode, element) {
 }
 
 function handleInitialNaiveVnode(vnode, cnode, view, patch, currentPath, parentNode) {
-  if (vnode.name === 'portal') console.log(vnode.name, vnode, parentNode)
   const element = view.createElement(vnode, cnode)
   parentNode.appendChild(element)
   // Save it for update
