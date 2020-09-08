@@ -49,6 +49,7 @@ import { withCurrentWorkingCnode, activeEvent } from './renderContext'
 import LayoutManager from './LayoutManager'
 import { isComputed, getComputation, collectComputed, afterDigestion } from './reactive/effect';
 import { applyPatch, createDraft, finishDraft } from './produce';
+import { vnodeComputed } from './index';
 
 const layoutManager = new LayoutManager()
 
@@ -101,12 +102,15 @@ function getTypeCache(cnode, currentPath) {
   return currentCache
 }
 
-function createVirtualCnodeForComputedVnodeOrText(reactiveVnode, cnode, currentPath) {
+// CAUTION 为了写得更加便捷，我们允许用户直接写个 function 节点，自动转成 vnodeComputed。
+// 这也让我们直接放弃了 render props
+function createVirtualCnodeForComputedVnodeOrText(originVnode, cnode, currentPath) {
   /**
    * 建立一个多级索引，用来找到创建的 virtual type，这样就能利用引擎的 diff 避免掉重复的渲染。
    * 第一层是 cnode，第二层是 path string，节点是 { type, vnode }
    * type 始终使用一个，vnode 会动态变化，type 渲染时根据 path 去动态取最新的 vnode。
    */
+  const reactiveVnode = isRef(originVnode) ? originVnode : vnodeComputed(originVnode)
   const currentCache = getTypeCache(cnode, currentPath)
   currentCache.vnode = reactiveVnode
   let { type } = currentCache
@@ -252,7 +256,7 @@ function replaceReactiveWithVirtualCnode(renderResult, cnode) {
       // 替换为 virtual cnode 之后也要停止 walk，让 virtual cnode render 的时候再处理里面的。
       if (hasRefProps(vnode)) {
         return [true, createVirtualCnodeForReactiveProps(vnode, cnode, currentPath), true]
-      } else if (isRef(vnode)) {
+      } else if (isRef(vnode) || typeof vnode === 'function') {
         return [true, createVirtualCnodeForComputedVnodeOrText(vnode, cnode, currentPath), true]
       }
 

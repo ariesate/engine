@@ -108,7 +108,7 @@ export function Calendar({ value, current, onSelect, onSelectNextMonth, onSelect
         })}
       </days>
     </dates>
-    <div>{refComputed(() => value.value.format('YYYY-MM-DD'))}</div>
+    <div>{() => value.value.format('YYYY-MM-DD')}</div>
   </container>
 
 }

@@ -64,11 +64,11 @@ describe('basic render', () => {
 
     function App() {
       rendered += 1
-      return <div>{ vnodeComputed(() => {
+      return <div>{() => {
         return list.map((num, index) => {
           return <span key={num}>{num}</span>
         })
-      })}</div>
+      }}</div>
     }
 
     const root = document.createElement('div')
@@ -173,14 +173,14 @@ describe('complex vnodeComputed', () => {
     function App() {
       rendered +=1
       return <div>
-        {vnodeComputed(() => {
+        {() => {
           computedCalled += 1
           return (
             <>
               {base.value === 1 ? <span>1</span> : <div>2</div>}
             </>
           )
-        })}
+        }}
       </div>
     }
 
@@ -218,14 +218,14 @@ describe('complex vnodeComputed', () => {
     function App() {
       rendered +=1
       return <div>
-        {vnodeComputed(() => {
+        {() => {
           return (
             <div>
               <Child />
               {base.value === 1? <span>1</span> : <div>2</div>}
             </div>
           )
-        })}
+        }}
       </div>
     }
 
@@ -263,13 +263,13 @@ describe('complex vnodeComputed', () => {
     function App() {
       rendered +=1
       return <div>
-        {vnodeComputed(() => {
+        {() => {
           const innerComputed = refComputed(() => {
             innerComputedCalled += 1
             return base.value + 1
           })
           return <span>{innerComputed}</span>
-        })}
+        }}
       </div>
     }
 
@@ -311,7 +311,7 @@ describe('complex vnodeComputed', () => {
 
     function App() {
       return <div>
-        {vnodeComputed(() => {
+        {() => {
           computedCalled += 1
           if (base1.value > 10) return null
 
@@ -321,7 +321,7 @@ describe('complex vnodeComputed', () => {
             }
           })
           return <div style={style} />
-        })}
+        }}
       </div>
     }
 

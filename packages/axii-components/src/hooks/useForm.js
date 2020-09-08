@@ -9,7 +9,6 @@ import {
   vnodeComputed,
   createSmartProp,
   delegateLeaf,
-  isReactiveLike, objectComputed,
   tryToRaw,
   invariant,
   debounceComputed,
