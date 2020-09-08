@@ -67,7 +67,8 @@ export default function createScheduler(painter, view, supervisor) {
             })
           }, true) // the second argument will consume the tree
           trackingTree.unlock()
-
+          // CAUTION 一定要放在这里才调用，这个时候才稳定。
+          view.didMount()
         })
       }
     } catch(e) {
@@ -100,6 +101,9 @@ export default function createScheduler(painter, view, supervisor) {
           view.initialDigest(cnode)
         })
       })
+
+      // CAUTION 一定要放在这里才调用，这个时候子元素之类才都有了，才算稳定。
+      view.didMount()
 
     })
 

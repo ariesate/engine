@@ -36,7 +36,6 @@ function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, parent
     }
   }
   // CAUTION 理论上剩下的都是 ComponentVnode 了，不需要进一步对比它的 children。
-
 }
 
 function handleRemovePatchNode(p, parentPath, toDestroy, view) {

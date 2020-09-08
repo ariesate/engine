@@ -43,15 +43,15 @@ export default function createDOMView({ invoke, receiveRef, hijackDigestElement 
     },
     isComponentVnode,
     digestObjectLike,
+    getRoot: () => rootDomElement,
+  }
+
+  return {
     didMount: () => {
       // Mount 完了以后才真正的通知外部的 Observer
       refToVnode.forEach((vnode, ref) => receiveRef(ref, vnode))
       refToVnode.clear()
     },
-    getRoot: () => rootDomElement,
-  }
-
-  return {
     initialDigest: cnode => initialDigest(cnode, view),
     updateDigest: cnode => updateDigest(cnode, view),
   }

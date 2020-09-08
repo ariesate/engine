@@ -34,16 +34,21 @@ export function normalizeChildren(rawChildren) {
 
 
 /**
- * @param type {Null|Array|String|Number|VNode}
+ * @param name {Null|Array|String|Number|VNode}
  * @param attributes
  * @param rawChildren
  * @returns {VNode}
  */
-export default function createElement(type, attributes, ...rawChildren) {
+export default function createElement(name, attributes, ...rawChildren) {
 
   const node = new VNode()
 
-  Object.assign(node, { type, attributes: attributes || {} })
+  node.attributes = attributes || {}
+  // CAUTION 如果有 use，那么用 use。这样在写 vnode 的时候看起来像自定义组件。符合用户心智。
+  node.type = node.attributes.use || name
+  if (typeof name === 'string') {
+    node.name = name
+  }
 
   if (node.attributes.ref !== undefined) {
     node.ref = node.attributes.ref
@@ -85,16 +90,13 @@ export default function createElement(type, attributes, ...rawChildren) {
   // TODO 之后全改成 props
   node.props = node.attributes
 
-  if (typeof type === 'string') {
+  if (typeof node.type === 'string') {
     // 用于支持 data-* 自定义属性
     node.dataset = node.attributes.dataset
     delete node.attributes.dataset
-
-    // 用于支撑给 node 取别名，但使用 html 自己支撑的元素做 tag
-    node.use = node.attributes.use
-    delete node.attributes.use
   }
 
+  // CAUTION 外部的 createPortal 在 vnode 上标记了 portalRoot 属性。这里不需要处理
 
   if (node.vnodeRef) node.vnodeRef(node)
 
@@ -102,18 +104,23 @@ export default function createElement(type, attributes, ...rawChildren) {
 }
 
 export function cloneElement(vnode, newAttributes, ...children) {
-  return createElement(
+  const node = createElement(
     vnode.type,
     {
       ...vnode.attributes,
-      key: vnode.key,
-      ref: vnode.ref,
-      use: vnode.use,
-      transferKey: vnode.transferKey,
+
       ...newAttributes,
     },
     ...(children.length ? children : vnode.children),
   )
+  Object.assign(node, {
+    key: vnode.key,
+    ref: vnode.ref,
+    name: vnode.name,
+    portalRoot: vnode.portalRoot,
+    transferKey: vnode.transferKey,
+  })
+  return node
 }
 
 export function flattenChildren(children) {

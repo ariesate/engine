@@ -52,6 +52,7 @@ function attachCnodeQuickRefs(cnode, vnode, element) {
 }
 
 function handleInitialNaiveVnode(vnode, cnode, view, patch, currentPath, parentNode) {
+  if (vnode.name === 'portal') console.log(vnode.name, vnode, parentNode)
   const element = view.createElement(vnode, cnode)
   parentNode.appendChild(element)
   // Save it for update
@@ -91,14 +92,15 @@ export function handleInitialVnode(vnode, cnode, view, parentPatch, parentPath, 
     /* eslint-enable no-use-before-define */
   }
 
+  // vnode/component vnode 可以使用 createPortal 渲染到别的节点下
   // 2) normal node
   if (vnode instanceof VNode && !view.isComponentVnode(vnode)) {
-    return handleInitialNaiveVnode(vnode, cnode, view, patch, currentPath, parentNode)
+    return handleInitialNaiveVnode(vnode, cnode, view, patch, currentPath, vnode.portalRoot || parentNode)
   }
   // 3) component node
   if (view.isComponentVnode(vnode)) {
     /* eslint-disable no-use-before-define */
-    return handleInitialComponentNode(vnode, cnode, view, patch, currentPath, parentNode)
+    return handleInitialComponentNode(vnode, cnode, view, patch, currentPath, vnode.portalRoot || parentNode)
     /* eslint-enable no-use-before-define */
   }
 
@@ -170,6 +172,5 @@ export default function initialDigest(cnode, view) {
   // delete cnode.view.placeholder
   cnode.view.parentNode = parentNode
   cnode.isDigested = true
-  view.didMount()
 }
 

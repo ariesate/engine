@@ -296,7 +296,7 @@ function createInjectedProps(cnode) {
       // CAUTION 参数判断非常重要，用户既有可能把这个函数直接传给 onClick 作为回调，也可能在其他函数中手动调用。
       // 当直接传给事件回调时，由于事件回调会补足 event，而我们不需要，因此在这里判断一下。
       // 注意，我们认为用户不可能自己把 event 当第一参数传入，没有这样的需求场景。
-      const runtimeArgv = (event === activeEvent.getCurrentEvent() && restArgv.length === 0) ? [] : [event, ...restArgv]
+      const runtimeArgv = ((event === activeEvent.getCurrentEvent() && restArgv.length === 0) || event === undefined) ? [] : [event, ...restArgv]
 
       const userMutateFn = props[propName]
       // 注意这里，defaultMutateFn 可以拿到 props 的引用，这样我们就不用在调用的时候去往第一个参数去传了。
@@ -507,6 +507,7 @@ export default function createAxiiController() {
         })
       },
       receiveRef: (ref, vnode) => {
+        console.log(111, vnode.name, ref)
         if (typeof vnode.ref === 'function') {
           vnode.ref(ref)
         } else {

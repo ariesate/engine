@@ -1,5 +1,10 @@
 import { invariant } from './util';
 
+/**
+ * 所有 axii 中要利用浏览器js"单线程"来共享的上下文都放在这里。
+ * 这些对象应该在用完了就要清理干净。
+ */
+
 let currentWorkingCnode = null
 let currentWorkingCnodeData = undefined
 export function withCurrentWorkingCnode(cnode, fn) {
@@ -40,3 +45,4 @@ export const activeEvent = (function() {
     getCurrentEvent,
   }
 })()
+

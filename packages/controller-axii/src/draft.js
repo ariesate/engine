@@ -27,6 +27,7 @@ export function draft(computed) {
   // TODO 如果是复杂的 reactive 对象里面有非 plain object 怎么办？
   const draftValue = isRefComputed ? ref(computed.value) : reactive(deepClone(toRaw(computed)))
 
+  // TODO 深度 watch 的问题
   // 什么时候 destroy watchToken? 不需要手动销毁，因为外部的 computed 会被手动销毁，这时候会连带销毁依赖的 watchToken。
   watch((watchAnyMutation) => watchAnyMutation(computed), (isUnchanged) => {
     !isUnchanged && mutationTimeTable.set(computed, Date.now())
@@ -54,5 +55,10 @@ export function draft(computed) {
   draftDisplayValue.set(draftValue, displayValue)
 
   return draftValue
+}
+
+// TODO handle moment 等复杂类型
+draft.handle = function handleClass(Type, cloneType) {
+
 }
 

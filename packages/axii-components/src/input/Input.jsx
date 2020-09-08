@@ -75,12 +75,12 @@ Input.propTypes = {
 Input.Style = (fragments) => {
   const rootElements = fragments.root.elements
 
-  rootElements.input.onFocus((e, { onChangeFocus }) => {
-    onChangeFocus(true)
+  rootElements.input.onFocus((e, { onFocus }) => {
+    onFocus()
   })
 
-  rootElements.input.onBlur((e, { onChangeFocus }) => {
-    onChangeFocus(false)
+  rootElements.input.onBlur((e, { onBlur }) => {
+    onBlur()
   })
 
   rootElements.container.style(({ focused }) => {
@@ -126,7 +126,8 @@ Input.Style = (fragments) => {
 
 Input.Style.propTypes = {
   focused: propTypes.bool.default(() => ref(false)),
-  onChangeFocus: propTypes.callback.default(() => (nextFocused, { focused }) => focused.value = nextFocused)
+  onFocus: propTypes.callback.default(() => ({ focused }) => focused.value = true),
+  onBlur: propTypes.callback.default(() => ({ focused }) => focused.value = false)
 }
 
 export default createComponent(Input)

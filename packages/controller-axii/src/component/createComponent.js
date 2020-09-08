@@ -109,9 +109,10 @@ export default function createComponent(Base, featureDefs=[]) {
     Feature.Style || []
   ), [])
 
-  function Component({ children, listeners, overwrite = [], ...restProps }, context) {
+  function Component({ children, listeners, overwrite = [], ref, ...restProps }, context) {
     // 1. 先统一处理一下 props, 其中 children 要考虑 slot 的情况。
     const processedProps = { ...restProps }
+    if (Base.forwardRef) processedProps.ref = ref
     processedProps.children = children ? (Base.useNamedChildrenSlot ? createNamedChildrenSlotProxy(children[0] || {}) : children) : undefined
 
     // featureFunctionCollectors 是用来为每个 Feature 生产 fragmentsContainer 的,
@@ -132,6 +133,8 @@ export default function createComponent(Base, featureDefs=[]) {
     const rootFragment = baseFeatureFunctionCollector[ROOT_FRAGMENT_NAME]({})(() => {
       return Base(processedProps, context, baseFeatureFunctionCollector)
     })
+    // CAUTION root 默认是不 active 的，如果用户从顶层就要 reactive 的话，自己创建一个新 fragment。
+    rootFragment.nonReactive = true
 
     // 4. 只要激活的 feature 的 FeatureFunctionCollector，减少后面遍历的过程
     const activeFeatureFunctionCollectors = featureFunctionCollectors.filter((Feature) => {
@@ -139,7 +142,26 @@ export default function createComponent(Base, featureDefs=[]) {
     })
 
     // 5. 开始递归渲染 fragment 了。
-    return renderFragments(rootFragment, processedProps, context, activeFeatureFunctionCollectors, restProps, Base.useNamedChildrenSlot)
+    const result = renderFragments(rootFragment, processedProps, context, activeFeatureFunctionCollectors, restProps, Base.useNamedChildrenSlot)
+
+    // 6. 自动 forward ref， 如果有 forwarRef 说明组件自己处理。
+
+    if (ref && !Base.forwardRef) {
+      if (result.type === Fragment) {
+        invariant(typeof ref === 'function', 'component root is a Fragment, you can only use function ref' )
+        result.children.forEach((child) => {
+          // TODO 还有 fragment 怎么办？暂时没有考虑。
+          child.ref = ref
+        })
+      } else {
+        // CAUTION 这里和 ref 的实现有点耦合，直接打在了 vnode 上。
+        // TODO 这里还有很多其他复杂情况，比如组件直接就放回了 vnodeComputed。
+        result.ref = ref
+        console.log(result)
+      }
+    }
+
+    return result
   }
 
   // 6. TODO 作为 Feature，会需要去修改、抑制 Base 或者其他 Feature 的默认 callback 行为吗？
@@ -147,6 +169,8 @@ export default function createComponent(Base, featureDefs=[]) {
   Component.propTypes = Object.assign({},
     ...FeaturesWithBase.map(f => f.propTypes || {}),
   )
+
+  Component.forwardRef = true
 
   return Component
 }
@@ -228,6 +252,7 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
       }
 
       // 剩下的只处理普通的节点了，null/字符串 都不处理了。
+      // CAUTION 以下的处理都是用 node.name 来匹配的了。type 是真实使用的 dom/Component 类型，name 是 tagName。
       if (!originVnode instanceof VNode || typeof originVnode.type !== 'string') return
 
       const originStyle = originVnode.attributes.style || {}
@@ -238,12 +263,12 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
       featureFunctionCollectors.forEach(collector => {
         // 收集样式
         matchedStyles.push(
-          ...collector[GLOBAL_NAME].elements[originVnode.type].getStyle(),
-          ...collector[fragment.name].elements[originVnode.type].getStyle()
+          ...collector[GLOBAL_NAME].elements[originVnode.name].getStyle(),
+          ...collector[fragment.name].elements[originVnode.name].getStyle()
         )
 
         // 收集 listeners
-        Object.entries(collector[fragment.name].elements[originVnode.type].getListeners()).forEach(([eventName, listeners ]) => {
+        Object.entries(collector[fragment.name].elements[originVnode.name].getListeners()).forEach(([eventName, listeners ]) => {
           if (!listenersByEventName[eventName]) listenersByEventName[eventName] = []
           listenersByEventName[eventName].push(...listeners)
         })
@@ -278,8 +303,8 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
 
       // 5. 开始执行 replace slot。replaceSlot 内部必须保证不要再穿透 vnodeComputed。
       // CAUTION slot children 并没有区分 fragments.
-      if(useNamedChildrenSlot && originVnode.attributes.slot && props.children[originVnode.type]) {
-        const slotChild = props.children[originVnode.type]
+      if(useNamedChildrenSlot && originVnode.attributes.slot && props.children[originVnode.name]) {
+        const slotChild = props.children[originVnode.name]
         originVnode.children = [normalizeLeaf((typeof slotChild === 'function') ? slotChild(commonArgv) : slotChild)]
       }
 
@@ -288,6 +313,7 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
         walkChildren(originVnode.children)
       }
     })
+    // 递归处理结束
 
     return renderResult
   }

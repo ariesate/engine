@@ -25,11 +25,11 @@ const availablePlayground = {
     // 'form', 写到 common hooks 里
     'input',
     'checkbox', // 美化
-    'select',
-    'radio',
     'timePicker',
     'datePicker',
+    'select',
     'upload',
+    'radio',
     // 以上是必须要常用的 7
     'cascader',
     'autoComplete',
@@ -39,10 +39,10 @@ const availablePlayground = {
     'table',
     'tabs',
     'tree',
-    'collapse',
     'calendar',
     'popover',
     // 以上是常用必须的 6
+    'collapse',
     'tooltip',
     'timeline',
     'tag',
@@ -72,7 +72,11 @@ const availablePlayground = {
     'icon',
   ],
   Utilities: [
-    'useForm'
+    'useForm',
+    'useRequest',
+    // 以上是常用必须的
+    'useHistory',
+    'useLocation'
   ]
 }
 

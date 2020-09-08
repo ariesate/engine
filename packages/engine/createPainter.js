@@ -27,7 +27,14 @@ import {
   walkVnodes,
   isComponentVnode as defaultIsComponentVnode,
 } from './common'
-import { each, indexBy, ensureArray, createUniqueIdGenerator, shallowEqual } from './util'
+import {
+  each,
+  indexBy,
+  ensureArray,
+  createUniqueIdGenerator,
+  shallowEqual,
+  invariant
+} from './util'
 import {
   PATCH_ACTION_INSERT,
   PATCH_ACTION_MOVE_FROM,
@@ -159,6 +166,7 @@ function handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain
         // Because current vnode is a new vnode,
         // so its child vnode patch action will have "remain" type only if it has a transferKey
         if (childVnode.transferKey !== undefined && cnode.next[nextIndex] !== undefined) {
+          invariant(childVnode.portalRoot === undefined, `portal vnode ${childVnode.name} cannot use transferKey`)
           toRemain[nextIndex] = cnode.next[nextIndex]
           if (childVnode.transferKey !== undefined) {
             childVnode.action = { type: PATCH_ACTION_MOVE_FROM }
@@ -471,6 +479,7 @@ export default function createPainter(renderer, isComponentVnode = defaultIsComp
     })
 
     cnode.props.children = vnode.children
+    if (vnode.type.forwardRef) cnode.props.ref = vnode.ref
     return cnode
   }
 
