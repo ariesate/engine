@@ -87,7 +87,7 @@ const INDEX = {
 
 const valueRules = {
   // 颜色类，受交互状态、反色等规则影响。
-  color({ interactable, stress, invert, active, interact }, offset = 0, color=PRIMARY_COLOR) {
+  color({ interactable, stress, inverted, active, interact }, offset = 0, color=PRIMARY_COLOR) {
     /**
      * 判断维度：
      * 1. 先判断 interactable。如果否，判断 stress.
@@ -103,19 +103,19 @@ const valueRules = {
     const matrix = [
       [undefined, undefined, undefined, undefined, undefined, colors.black(offset)],
       [undefined, INDEX.stressed, undefined, undefined, undefined, colors.black(1 + offset)],
-      [INDEX.interactable, undefined, INDEX.inverted, undefined, undefined, colors.white()], // 反色
+      [INDEX.interactable, undefined, INDEX.inverted, INDEX.active.active, undefined, colors.white()], // 反色
       [INDEX.interactable, undefined, undefined, undefined, undefined, colors.black(offset)], // 正色正常状态
       [INDEX.interactable, undefined, undefined, INDEX.active.active, undefined, colors[color](offset)], // 正色常亮状态
       [INDEX.interactable, undefined, undefined, INDEX.active.inactive, undefined, colors.gray()], // 正色 disable 状态
       [INDEX.interactable, undefined, undefined, INDEX.active.active, INDEX.interact, colors[color](-1 + offset)], // 正色 interacting 状态
     ]
 
-    return matrixMatch([interactable, stress, invert, active, interact], matrix)
+    return matrixMatch([interactable, stress, inverted, active, interact], matrix)
   },
   shadowColor(props, offset = 0, color = PRIMARY_COLOR) {
     return valueRules.color(props, offset - 4, color)
   },
-  bgColor({invert, active, interact}, offset, color=PRIMARY_COLOR) {
+  bgColor({inverted, active, interact}, offset, color=PRIMARY_COLOR) {
     /**
      * 判断维度: 正常情况下都是 transparent(undefined)
      * 1. 判断 invert
@@ -127,12 +127,13 @@ const valueRules = {
     const matrix = [
       [undefined, undefined, undefined, 'transparent'],
       [INDEX.inverted, undefined, undefined, colors[color]()],
-      [INDEX.inverted, INDEX.disabled, undefined, colors.gray()],
+      [INDEX.inverted, INDEX.active.inactive, undefined, colors.gray()],
+      [INDEX.inverted, INDEX.active.active, undefined, colors[color]()],
       [INDEX.inverted, undefined, INDEX.interact, colors[color](-1)],
-      [INDEX.inverted, INDEX.active, INDEX.interact, colors[color](-1)],
+      [INDEX.inverted, INDEX.active.active, INDEX.interact, colors[color](-1)],
     ]
 
-    return matrixMatch([invert, active, interact], matrix)
+    return matrixMatch([inverted, active, interact], matrix)
   },
   fieldColor() {
     return colors.gray(-2)

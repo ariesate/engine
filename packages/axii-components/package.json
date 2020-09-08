@@ -6,6 +6,7 @@
   "dependencies": {
     "@ant-design/colors": "^4.0.5",
     "@ant-design/icons-svg": "^4.1.0",
+    "moment": "^2.27.0",
     "normalize.css": "^8.0.1",
     "querystringify": "^2.2.0"
   },

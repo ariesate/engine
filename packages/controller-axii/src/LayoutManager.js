@@ -33,6 +33,9 @@ function createWithDirection(name, handler = createSimpleKeyToValue) {
 }
 
 const InlineRules = {
+  __base: () => ({
+     display: 'inline-block'
+  }),
   display(type) {
     return { display: type }
   },
@@ -65,11 +68,18 @@ const InlineRules = {
 const BaseDefaultRules = {
   block: {
     ...InlineRules,
+    __base: () => ({
+      display: 'block'
+    }),
     ...createWithRange('width'),
     ...createWithRange('height'),
   },
   inline: InlineRules,
-  text: {}
+  text: {
+    __base: () => ({
+      display: 'inline'
+    }),
+  }
 }
 
 const createFlexProperty = (name) => createWithoutPrefixKeyToValue('flex', name)
@@ -161,9 +171,10 @@ export default class LayoutManager {
     Object.entries(attributes).forEach(([key, shouldApply]) => {
       const keys = key.split('-')
       // 有名字的组件会有个 block=true 这样的，过滤掉。
-      if (keys.length < 2) return
 
-      const [fn, argv] = matchRule(this.flatRules, keys)
+      const keysToMatch = keys.length < 2 ? [keys[0], '__base'] : keys
+
+      const [fn, argv] = matchRule(this.flatRules, keysToMatch)
       if (fn) {
         hasStyle = true
         // 例如 block-display-none={false} 这种情况说明要取消掉这个 style。argv !== 0 说明已经在前面读到 'none' 这个参数。
@@ -183,6 +194,8 @@ export default class LayoutManager {
         }
         Object.assign(style, partialStyle)
       }
+
+
     })
 
     return hasStyle ? style : undefined

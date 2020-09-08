@@ -45,14 +45,21 @@ export function createRange(values, baseIndex) {
   }
 }
 
+// 这里有个 fallback，如果没有完全 match，那么就选 match 最多的哪一个
 export function matrixMatch(conditionValues, matrix) {
-  const matchedRule = matrix.find((thisConditionValues) => {
-    return conditionValues.every((conditionValue, i) => {
-      return thisConditionValues[i] === conditionValue
+  let match
+  matrix.forEach(thisConditionValues => {
+    let exactMatch = 0
+    const passed = conditionValues.every((conditionValue, i) => {
+      if (thisConditionValues[i] === conditionValue) exactMatch += 1
+      return conditionValue === undefined || thisConditionValues[i] === conditionValue
     })
-  })
-  // 必须有默认值。
 
-  invariant(matchedRule, 'rule not exist')
-  return matchedRule[matchedRule.length - 1]
+    if (passed && (!match || match.exactMatch < exactMatch)) {
+      match = { exactMatch, result: thisConditionValues[thisConditionValues.length -1] }
+    }
+  })
+
+  invariant(match, `rule not exist, condition: ${conditionValues}`)
+  return match.result
 }

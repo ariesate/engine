@@ -278,7 +278,9 @@ function createInjectedProps(cnode) {
     if (!(propName in props)) {
       // 这里和 propTypes 有约定，每次读 defaultValue 时都会用定义的 createDefaultValue 创造新的对象，
       // 所以不用担心引用的问题。
-      localProps[propName] = propType.defaultValue
+      if (propType.createDefaultValue) {
+        localProps[propName] = propType.createDefaultValue({...props, ...localProps})
+      }
     }
   })
 
