@@ -27,7 +27,7 @@ const availablePlayground = {
     'checkbox', // x 美化
     'timePicker',
     'datePicker', // x
-    'select', // 1. search 2. multiple 3.
+    'select', // x
     'upload',
     'radio',
     // 以上是必须要常用的 7

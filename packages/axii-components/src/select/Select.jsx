@@ -16,7 +16,6 @@ import scen from "../pattern";
 
 export function Select({value, options, onChange, renderOption, renderValue, onFocus, onBlur, focused}, context, fragments) {
   const optionListRef = useRef()
-  const selectInputRef = ref()
 
   const onInputFocus = () => {
     // CAUTION 这里 onFocus() 的写法，不传参很重要，这样 callback 系统补齐的默认参数顺序才正确
@@ -33,10 +32,6 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
   }
 
   const {source, node: optionListNode} = useLayer((sourceRef) => {
-    const widht = refComputed(() => {
-      console.log(sourceRef.value , sourceRef.value && sourceRef.value.offsetWidth)
-      return `${sourceRef.value ? sourceRef.value.offsetWidth : 0}px`
-    })
 
     return (
       <optionList
@@ -44,7 +39,7 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
         inline-display-none={refComputed(() => !focused.value)}
         inline-min-width={refComputed(() => `${sourceRef.value ? sourceRef.value.offsetWidth : 0}px`)}
         tabindex={-1}
-        // onFocusOut={() => onBlur()}
+        onFocusOut={() => onBlur()}
         style={{background: "#fff", zIndex: 99}}
         ref={optionListRef}
       >

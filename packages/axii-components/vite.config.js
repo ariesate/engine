@@ -1,5 +1,6 @@
 const path = require('path')
 const fs = require('fs')
+const setDisplayNamePlugin = require('./plugins/setDisplayName')
 
 const PACKAGE_ROOT_PATH = path.resolve(__dirname, '../')
 
@@ -70,6 +71,7 @@ module.exports = {
     factory: 'createElement',
     fragment: 'Fragment'
   },
+  plugins: [setDisplayNamePlugin],
   resolvers: [resolver],
   cssPreprocessOptions: {
     less: { javascriptEnabled: true }

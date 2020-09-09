@@ -17,6 +17,7 @@
     "@babel/plugin-transform-react-jsx": "^7.10.4",
     "@babel/preset-env": "^7.11.5",
     "babel-loader": "^8.1.0",
+    "babel-plugin-set-display-name": "^1.1.2",
     "css-loader": "^4.3.0",
     "fast-json-patch": "^3.0.0-1",
     "less": "^3.12.2",
