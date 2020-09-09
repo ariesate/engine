@@ -124,7 +124,6 @@ function diffNodeDetail(lastVnode, vnode) {
     }
   }
 
-  // TODO Improve performance. Maybe only style rules changed.
   if (!shallowEqual(lastVnode.attributes, vnode.attributes)) {
     return {
       attributes: vnode.attributes,
@@ -231,17 +230,17 @@ function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, currentPat
  * If consumer need to compare props, should do it self with toRemain prop in result.
  * See Controller Axii for example.
  */
-function createPatch(lastVnodes, vnodes, parentPath, cnode, nextTransferKeyedVnodes, isComponentVnode, createCnode) {
+function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeyedVnodes, isComponentVnode, createCnode) {
   const toRemain = {}
   const toInitialize = {}
   const patch = []
   const lastVnodesLen = lastVnodes.length
-  const vnodesLen = vnodes.length
+  const vnodesLen = nextVnodes.length
   let lastVnodesIndex = 0
   let vnodesIndex = 0
   const lastVnodeKeys = lastVnodes.map(v => v.key)
   const lastVnodesIndexedByKey = indexBy(lastVnodes, 'key')
-  const vnodeKeys = vnodes.map(v => v.key)
+  const vnodeKeys = nextVnodes.map(v => v.key)
 
   let counter = 0
 
@@ -251,7 +250,7 @@ function createPatch(lastVnodes, vnodes, parentPath, cnode, nextTransferKeyedVno
     if (counter === DEV_MAX_LOOP) { throw new Error(`patch loop over ${DEV_MAX_LOOP} times.`) }
 
     const lastVnode = lastVnodes[lastVnodesIndex]
-    const vnode = vnodes[vnodesIndex]
+    const vnode = nextVnodes[vnodesIndex]
     if (vnode === undefined) throw new Error('cannot use undefined as vnode, use null instead.')
     // Handle transferKey first. Only component vnode may have transferKey.
     if (lastVnode !== undefined &&
@@ -378,7 +377,7 @@ function createPatch(lastVnodes, vnodes, parentPath, cnode, nextTransferKeyedVno
 /**
  * The entry point of diffing the last patch and the new return value.
  */
-function diff(lastVnodesOrPatch, vnodes, parentPath, cnode, nextTransferKeyedVnodes, isComponentVnode, createCnode) {
+function diff(lastVnodesOrPatch, nextVnodes, parentPath, cnode, nextTransferKeyedVnodes, isComponentVnode, createCnode) {
   const lastNext = { ...cnode.next }
   const toInitialize = {}
   const toRemain = {}
@@ -386,7 +385,7 @@ function diff(lastVnodesOrPatch, vnodes, parentPath, cnode, nextTransferKeyedVno
   const toUpdate = {}
   const lastVnodes = lastVnodesOrPatch.filter(lastVnode => lastVnode.action === undefined || lastVnode.action.type !== PATCH_ACTION_MOVE_FROM)
 
-  const result = createPatch(lastVnodes, vnodes, parentPath, cnode, nextTransferKeyedVnodes, isComponentVnode, createCnode)
+  const result = createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeyedVnodes, isComponentVnode, createCnode)
   Object.assign(toInitialize, result.toInitialize)
   Object.assign(toRemain, result.toRemain)
   each(toRemain, (_, key) => {
