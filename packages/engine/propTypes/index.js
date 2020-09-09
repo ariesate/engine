@@ -266,7 +266,7 @@ export default {
   object,
   array,
   bool,
-  func,
+  function: func,
   symbol,
   node,
   element,

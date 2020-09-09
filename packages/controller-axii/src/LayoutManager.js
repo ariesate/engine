@@ -62,7 +62,8 @@ const InlineRules = {
   ...createSimpleKeyToValue('top'),
   ...createSimpleKeyToValue('bottom'),
   ...createSimpleKeyToValue('white-space'),
-
+  ...createWithRange('width'),
+  ...createWithRange('height'),
 }
 
 const BaseDefaultRules = {
@@ -71,8 +72,6 @@ const BaseDefaultRules = {
     __base: () => ({
       display: 'block'
     }),
-    ...createWithRange('width'),
-    ...createWithRange('height'),
   },
   inline: InlineRules,
   text: {

@@ -200,7 +200,8 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
    */
   function renderProcess() {
     // 1. render
-    let renderResult = fragment.render()
+    // CAUTION 可以支持直接把 vnode 作为 render。
+    let renderResult = (typeof fragment.render === 'function') ? fragment.render() : fragment.render
     let renderResultToWalk = Array.isArray(renderResult) ? renderResult : [renderResult]
 
     // 2. 在当前作用域下的参数合集，包括 上层的参数、当前 fragment 上定义的参数。这就是当前 fragment 下所有能用到的变量。

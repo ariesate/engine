@@ -314,7 +314,7 @@ function createInjectedProps(cnode) {
       let propsChanges = []
       let shouldStopApply
       produce(
-        mapValues(valueProps, prop => tryToRaw(prop)), draftProps => {
+        mapValues(mergedProps, prop => isReactiveLike(prop) ? tryToRaw(prop) : prop), draftProps => {
           // 我们为开发者补足三个参数，这里和 react 不一样，我们把 event 放在了最后，这是我们按照实践中的权重判断的。
           // 因为我们的组件既是受控的又是非受控的，理论上用户只需要知道组件默认会怎么改 props 就够了，即 draftProps，
           // 常见的我们在 input onChange 中去取 event.target.value 实际上也就是去取 nextProps，如果能拿到，就不需要 event。

@@ -51,7 +51,7 @@ export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), 
   document.body.appendChild(portalRoot)
 
   const node = createPortal(<portal style={style}>
-    {nodeInPortal}
+    {typeof nodeInPortal === 'function' ? nodeInPortal(sourceRef) : nodeInPortal}
   </portal>, portalRoot)
 
   const source = (ref) => {

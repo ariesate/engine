@@ -1,7 +1,4 @@
 import {
-  useContext,
-  refComputed,
-  createPortal,
   createElement,
   ref,
   createComponent,
@@ -153,7 +150,7 @@ Calendar.Style = (fragments) => {
       background: equal?
         scen().inverted().active().bgColor() :
         scen().active().bgColor(),
-      color: equal ? scen().interactable().active().inverted().color() : 'auto',
+      color: equal ? scen().interactable().active().inverted().color() : scen().color(),
       cursor: 'pointer',
       textAlign: 'center'
     }
