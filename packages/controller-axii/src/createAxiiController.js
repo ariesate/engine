@@ -48,7 +48,7 @@ import watch from './watch'
 import { withCurrentWorkingCnode, activeEvent } from './renderContext'
 import LayoutManager from './LayoutManager'
 import { isComputed, getComputation, collectComputed, afterDigestion } from './reactive/effect';
-import { applyPatch, createDraft, finishDraft } from './produce';
+import { applyPatches, createDraft, produce, finishDraft } from './produce';
 import { vnodeComputed } from './index';
 
 const layoutManager = new LayoutManager()
@@ -310,25 +310,31 @@ function createInjectedProps(cnode) {
       const valueProps = filter(mergedProps, isReactiveLike)
       // CAUTION 这里的 Immer draft 是支持 moment 等类型的，要更新 moment 的话，用户自己 new 一个新的并整体赋值。
       // 注意这里 tryToRaw 有第二个参数 unwrap，所以不要省略着写。
-      const draftProps = createDraft(mapValues(valueProps, prop => tryToRaw(prop)))
 
-      // 我们为开发者补足三个参数，这里和 react 不一样，我们把 event 放在了最后，这是我们按照实践中的权重判断的。
-      // 因为我们的组件既是受控的又是非受控的，理论上用户只需要知道组件默认会怎么改 props 就够了，即 draftProps，
-      // 常见的我们在 input onChange 中去取 event.target.value 实际上也就是去取 nextProps，如果能拿到，就不需要 event。
-      // 补足参数永远放在最后，这样开发者心智负担更小。
-      const extraArgv = [draftProps, mergedProps, activeEvent.getCurrentEvent()]
-      defaultMutateFn(...runtimeArgv, ...extraArgv)
-      // 显式的返回 false 就是不要应用原本的修改。
-      // CAUTION 注意这里的补全参数设计，补全的第一参数是事件，第二参数是现在的 prop 和 nextProps
-      const shouldStopApply = userMutateFn ?
-        userMutateFn(...runtimeArgv, ...extraArgv) === false :
-        false
+      let propsChanges = []
+      let shouldStopApply
+      produce(
+        mapValues(valueProps, prop => tryToRaw(prop)), draftProps => {
+          // 我们为开发者补足三个参数，这里和 react 不一样，我们把 event 放在了最后，这是我们按照实践中的权重判断的。
+          // 因为我们的组件既是受控的又是非受控的，理论上用户只需要知道组件默认会怎么改 props 就够了，即 draftProps，
+          // 常见的我们在 input onChange 中去取 event.target.value 实际上也就是去取 nextProps，如果能拿到，就不需要 event。
+          // 补足参数永远放在最后，这样开发者心智负担更小。
+          const extraArgv = [draftProps, mergedProps, activeEvent.getCurrentEvent()]
+          defaultMutateFn(...runtimeArgv, ...extraArgv)
+          // 显式的返回 false 就是不要应用原本的修改。
+          // CAUTION 注意这里的补全参数设计，补全的第一参数是事件，第二参数是现在的 prop 和 nextProps
+          shouldStopApply = userMutateFn ?
+              userMutateFn(...runtimeArgv, ...extraArgv) === false :
+              false
+
+        },
+(patches) => propsChanges.push(...patches)
+      )
 
       if (shouldStopApply) {
         activeEvent.preventCurrentEventDefault()
       } else {
-        const propsChanges = finishDraft(draftProps)[1]
-        applyPatch(valueProps, propsChanges)
+        applyPatches(valueProps, propsChanges)
       }
     }
 
