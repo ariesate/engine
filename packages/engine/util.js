@@ -30,7 +30,9 @@ export function compose(fns) {
   return fns.reduce((a, b) => (...args) => a(b(...args)))
 }
 
-export function warning(message) {
+export function warn(condition, message) {
+  if (condition) return
+
   /* eslint-disable no-console */
   if (typeof console !== 'undefined' && typeof console.error === 'function') {
     console.error(message)
@@ -365,25 +367,25 @@ export function invariant(condition, format, a, b, c, d, e, f) {
     throw new Error('invariant requires an error message argument')
   }
 
-  if (!condition) {
-    debugger
-    let error
-    if (format === undefined) {
-      error = new Error(
-        'Minified exception occurred; use the non-minified dev environment '
-        + 'for the full error message and additional helpful warnings.',
-      )
-    } else {
-      const args = [a, b, c, d, e, f]
-      let argIndex = 0
-      error = new Error(
-        format.replace(/%s/g, () => { return args[argIndex++] }),
-      )
-      error.name = 'Check'
-    }
+  if (condition) return
 
-    error.framesToPop = 1 // we don't care about invariant's own frame
-    throw error
+  debugger
+  let error
+  if (format === undefined) {
+    error = new Error(
+      'Minified exception occurred; use the non-minified dev environment '
+      + 'for the full error message and additional helpful warnings.',
+    )
+  } else {
+    const args = [a, b, c, d, e, f]
+    let argIndex = 0
+    error = new Error(
+      format.replace(/%s/g, () => { return args[argIndex++] }),
+    )
+    error.name = 'Check'
   }
+
+  error.framesToPop = 1 // we don't care about invariant's own frame
+  throw error
 }
 

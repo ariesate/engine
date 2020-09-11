@@ -71,9 +71,8 @@ function countExpandedColumns(columns) {
   return readByLevel(columns, 0, () => {}).reduce((a, b) => a+b, 0)
 }
 
-export function Table( { data, pagination, columns }, context, fragments) {
+export function Table( { data, pagination, columns }, fragments) {
   const columnCount = ref(countExpandedColumns(columns))
-
   return (
     <table inline block-display-table table-border-spacing-0 table-border-collapse-collapse>
       <thead>

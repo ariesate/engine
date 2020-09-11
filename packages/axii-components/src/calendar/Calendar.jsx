@@ -8,7 +8,7 @@ import scen from '../pattern'
 
 import moment from 'moment';
 
-export function Calendar({ value, current, onSelect, onSelectNextMonth, onSelectLastMonth, onChange }, context, fragments) {
+export function Calendar({ value, current, onSelect, onSelectNextMonth, onSelectLastMonth, onChange }, fragments) {
 
   return <container inline>
 

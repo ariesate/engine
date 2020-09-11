@@ -51,13 +51,13 @@ describe('basic test', () => {
   const ctree = controller.getCtree()
   test('dom ref', () => {
     const worldNode = findCnode(ctree, cnode => cnode.props.bind === 'world')
-    expect(worldNode.view.getRefs().spy).toBe(document.getElementById('spy'))
+    expect(worldNode.view.getElements().spy).toBe(document.getElementById('spy'))
   })
 
   test('component ref', () => {
     const worldNode = findCnode(ctree, cnode => cnode.props.bind === 'app')
-    expect(worldNode.view.getRefs().world.length).toBe(1)
-    expect(worldNode.view.getRefs().world[0]).toBe(document.getElementById('world'))
+    expect(worldNode.view.getElements().world.length).toBe(1)
+    expect(worldNode.view.getElements().world[0]).toBe(document.getElementById('world'))
   })
 })
 

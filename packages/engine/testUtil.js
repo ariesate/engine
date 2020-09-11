@@ -53,12 +53,12 @@ export function partialMatch(inputDomNodes, inputVnode) {
       const domClassNames = Array.from(currentDomNode.classList.values())
       if (!classNames.every(name => domClassNames.includes(name))) throw new Error(`classNames not match ${classNames.join(' ')} | ${domClassNames.join(' ')}}`)
 
-      if (vnode.props?.style) {
+      if (vnode.attributes?.style) {
         const {getComputedStyle} = currentDomNode.ownerDocument.defaultView
-        const expected = getStyleDeclaration(currentDomNode.ownerDocument, vnode.props.style)
+        const expected = getStyleDeclaration(currentDomNode.ownerDocument, vnode.attributes.style)
         const received = getComputedStyle(currentDomNode)
         if (!isSubset(expected, received)) {
-          throw new Error(`style not match: ${JSON.stringify(vnode.props.style)} | ${JSON.stringify(received)}`)
+          throw new Error(`style not match: ${JSON.stringify(vnode.attributes.style)} | ${JSON.stringify(received)}`)
         }
       }
 

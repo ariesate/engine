@@ -17,7 +17,7 @@ import scen from '../pattern'
  * 或者有个规划位置的作为 base。
  */
 
-export function Input({value, onChange, children}, context, fragments) {
+export function Input({value, onChange, children}, fragments) {
 	const prefixLikeProps = {
 		'flex-display-inline': true,
 		'flex-align-items-center': true,

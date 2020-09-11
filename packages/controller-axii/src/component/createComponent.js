@@ -1,18 +1,15 @@
-import VNode from '@ariesate/are/VNode'
 import { invariant, mapValues } from '../util'
-import { isRef } from '../reactive'
+import { isRef, refComputed } from '../reactive'
 import vnodeComputed from '../vnodeComputed'
 import {
   createDefaultMatch,
   createFeatureFunctionCollectors,
   createNamedChildrenSlotProxy,
-  replaceSlot,
   walkVnodes,
   FragmentDynamic,
 } from './utils'
-import { isComponentVnode } from '../createAxiiController';
-import { normalizeLeaf } from '../../../engine/createElement';
-import { Fragment } from '../index';
+import { isComponentVnode } from '../controller';
+import { Fragment, normalizeLeaf, VNode } from '../index';
 
 function filterActiveFeatures(features, props) {
   return features.filter(Feature => {
@@ -104,14 +101,22 @@ export default function createComponent(Base, featureDefs=[]) {
   BaseAsFeature.propTypes = Base.propTypes
 
   // 把 Feature 的 Style 也当成一个 Feature, 这样在 Style 上面也可以定义 methods/propTypes
-  const FeaturesWithBase = [BaseAsFeature].concat(featureDefs).reduce((last, Feature) => last.concat(
-    Feature,
-    Feature.Style || []
-  ), [])
+  const FeaturesWithBase = [BaseAsFeature].concat(featureDefs).reduce((last, Feature) => {
+    last.push(Feature)
+    if (Feature.Style) {
+      Feature.Style.displayName = `${Feature.name}Style`
+      last.push(Feature.Style)
+    }
+    return last
+  }, [])
 
-  function Component({ children, listeners, overwrite = [], ref, ...restProps }, context) {
+
+  function Component({ children, listeners, overwrite = [], ref, ...restProps }, upperRef) {
+    // 如果用户自己声明了 Base.forwardRef，就会收到第二参数，自己能处理 ref，否则系统自动将 ref 挂载到第一层级。
+    const selfHandleRef = Base.forwardRef ? upperRef : undefined
     // 1. 先统一处理一下 props, 其中 children 要考虑 slot 的情况。
     const processedProps = { ...restProps }
+    // TODO 目前的处理方式要改一下
     if (Base.forwardRef) processedProps.ref = ref
     processedProps.children = children ? (Base.useNamedChildrenSlot ? createNamedChildrenSlotProxy(children[0] || {}) : children) : undefined
 
@@ -131,7 +136,7 @@ export default function createComponent(Base, featureDefs=[]) {
     // 3. 开始创建 root fragment，本质上是把 Base 执行一下。这里还是用 BaseAsFeature 上的 FeatureFunctionCollector 去创建里面的 fragments.
     const baseFeatureFunctionCollector = featureFunctionCollectors.derive(BaseAsFeature)
     const rootFragment = baseFeatureFunctionCollector[ROOT_FRAGMENT_NAME]({})(() => {
-      return Base(processedProps, context, baseFeatureFunctionCollector)
+      return Base(processedProps, baseFeatureFunctionCollector, selfHandleRef)
     })
     // CAUTION root 默认是不 active 的，如果用户从顶层就要 reactive 的话，自己创建一个新 fragment。
     rootFragment.nonReactive = true
@@ -142,10 +147,9 @@ export default function createComponent(Base, featureDefs=[]) {
     })
 
     // 5. 开始递归渲染 fragment 了。
-    const result = renderFragments(rootFragment, processedProps, context, activeFeatureFunctionCollectors, restProps, Base.useNamedChildrenSlot)
+    const result = renderFragments(rootFragment, processedProps, selfHandleRef, activeFeatureFunctionCollectors, restProps, Base.useNamedChildrenSlot)
 
-    // 6. 自动 forward ref， 如果有 forwarRef 说明组件自己处理。
-
+    // 6. 自动 forward ref， 如果有 forwardRef 说明组件自己处理。
     if (ref && !Base.forwardRef) {
       if (result.type === Fragment) {
         invariant(typeof ref === 'function', 'component root is a Fragment, you can only use function ref' )
@@ -169,6 +173,7 @@ export default function createComponent(Base, featureDefs=[]) {
     ...FeaturesWithBase.map(f => f.propTypes || {}),
   )
 
+  // CAUTION createComponent 创造的节点默认接受 ref，并且关联到第一个节点。
   Component.forwardRef = true
 
   return Component
@@ -188,7 +193,7 @@ export const GLOBAL_NAME = 'global'
  * 因此刷新时机就是在 render 中依赖的对象的刷新时机。
  *
  */
-function renderFragments(fragment, props, context, featureFunctionCollectors, upperArgv, useNamedChildrenSlot) {
+function renderFragments(fragment, props, selfHandleRef, featureFunctionCollectors, upperArgv, useNamedChildrenSlot) {
   /**
    * 整个流程是后续遍历。做四件事。
    * 0。 渲染当前节点
@@ -242,8 +247,9 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
     walkVnodes(renderResultToWalk, (walkChildren, originVnode, vnodes) => {
       if (!originVnode || isComponentVnode(originVnode)) return
       // 如果是 fragment，就递归渲染
+      // TODO 应该支持 function/vnodeComputed 的节点，当做匿名的 fragment。
       if (originVnode instanceof FragmentDynamic) {
-        vnodes[vnodes.indexOf(originVnode)] = renderFragments(originVnode, props, context, featureFunctionCollectors, commonArgv, useNamedChildrenSlot)
+        vnodes[vnodes.indexOf(originVnode)] = renderFragments(originVnode, props, selfHandleRef, featureFunctionCollectors, commonArgv, useNamedChildrenSlot)
         return
       }
       // 如果是数组或者 Fragment，也继续递归
@@ -279,12 +285,15 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
       if (matchedStyles.length) {
         let shouldStyleBeReactive = isOriginStyleRef || matchedStyles.some(s => typeof s === 'function')
         const getNextStyle = () => {
+
           const partialStyle = Object.assign({}, ...matchedStyles.map(style => {
             return typeof style === 'function' ? style(commonArgv) : style
           }))
+
           return Object.assign({}, isOriginStyleRef ? originStyle.value : originStyle, partialStyle)
         }
-        originVnode.attributes.style = shouldStyleBeReactive ? vnodeComputed(getNextStyle) : getNextStyle()
+
+        originVnode.attributes.style = shouldStyleBeReactive ? refComputed(getNextStyle) : getNextStyle()
       }
 
       // 挂载监听事件
@@ -321,3 +330,4 @@ function renderFragments(fragment, props, context, featureFunctionCollectors, up
   // 当为了解约性能并且明确 fragment 不会变化的时候可以标记为 nonReactive。
   return fragment.nonReactive ? renderProcess() : vnodeComputed(renderProcess)
 }
+

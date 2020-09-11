@@ -11,7 +11,6 @@ import { makeLinkMatrix, isLineNotConflict, insertIntoOrderedArray, indexBy, get
 
 const View = ({ view, rowIndex, colIndex, width, height, gap, sources}) => {
 
-  console.log("render", view.id)
   const shouldHighlight = refComputed(() => {
     return sources.some((source) => {
       return source.selected
@@ -137,7 +136,6 @@ export function App() {
 
   // 2. 算 link 的位置
   const viewsById = computed(() => {
-    console.log("re index", views)
     return indexBy('id', views)
   })
   const linkPositionCache = computed(() => {

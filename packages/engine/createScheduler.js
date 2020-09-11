@@ -23,7 +23,7 @@ import {
   UNIT_PAINT,
   UNIT_REPAINT,
   UNIT_INITIAL_DIGEST,
-  UNIT_UPDATE_DIGEST,
+  UNIT_UPDATE_DIGEST, UNIT_PARTIAL_UPDATE_DIGEST,
 } from './constant'
 import createTrackingTree from './createTrackingTree'
 import { invariant } from './util';
@@ -34,7 +34,8 @@ export default function createScheduler(painter, view, supervisor) {
   let ctree
   // trackingTree 的目的是解决 "先 collect 了父节点，后 collect了子节点，但父节点执行后，其实要 destroy 子节点"。
   // 还有可能 先 collect 了子节点，后 collect 了父节点，父节点在执行后又更新了子节点，子节点先更新的话就浪费资源了。
-  const trackingTree = createTrackingTree()
+  const cnodeTrackingTree = createTrackingTree()
+  const vnodeTrackingMap = new Map()
   let currentSession = null
 
   function startUpdateSession(potentialChangeTriggerFn) {
@@ -45,28 +46,47 @@ export default function createScheduler(painter, view, supervisor) {
     try {
       potentialChangeTriggerFn && potentialChangeTriggerFn()
       // Collect finished
-      if (!trackingTree.isEmpty()) {
+      if (!cnodeTrackingTree.isEmpty() || vnodeTrackingMap.size !== 0) {
         supervisor.session(SESSION_UPDATE, () => {
 
-          trackingTree.walk((cnode) => {
+          cnodeTrackingTree.walk((cnode) => {
             const unit = cnode.isPainted ? UNIT_REPAINT : UNIT_PAINT
             supervisor.unit(SESSION_UPDATE, unit , cnode, () => {
               const paintMethod = cnode.isPainted ? painter.repaint : painter.paint
               const { toPaint = {}, toRepaint = {}, toDispose = {} } = supervisor.filterNext(paintMethod(cnode), cnode)
-              each(toPaint, toPaintCnode => trackingTree.track(toPaintCnode))
-              each(toRepaint, toRepaintCnode => trackingTree.track(toRepaintCnode))
-              each(toDispose, toDisposeCnode => trackingTree.dispose(toDisposeCnode, true))
+              each(toPaint, toPaintCnode => cnodeTrackingTree.track(toPaintCnode))
+              each(toRepaint, toRepaintCnode => {
+                cnodeTrackingTree.track(toRepaintCnode)
+                vnodeTrackingMap.delete(toRepaintCnode)
+              })
+              each(toDispose, toDisposeCnode => {
+                cnodeTrackingTree.dispose(toDisposeCnode, true)
+                vnodeTrackingMap.delete(toDisposeCnode)
+              })
             })
           })
-          trackingTree.lock()
-          trackingTree.walk((cnode) => {
+          cnodeTrackingTree.lock()
+          // 开始 cnode digest。cnodeTrackingTree.walk 第二参数会让自动删掉已经处理的节点。
+          cnodeTrackingTree.walk((cnode) => {
             const unit = cnode.isDigested ? UNIT_UPDATE_DIGEST : UNIT_INITIAL_DIGEST
             supervisor.unit(SESSION_UPDATE, unit, cnode, () => {
               const digestMethod = cnode.isDigested ? view.updateDigest : view.initialDigest
               digestMethod(cnode)
             })
           }, true) // the second argument will consume the tree
-          trackingTree.unlock()
+          cnodeTrackingTree.unlock()
+
+          // 开始处理局部 vnode 的更新
+          vnodeTrackingMap.forEach((changedPatchNodes, cnode) => {
+            changedPatchNodes.forEach(changedPatchNode => {
+              supervisor.unit(SESSION_UPDATE, UNIT_PARTIAL_UPDATE_DIGEST, cnode, () => {
+                // 第一参数表示根据什么去更新，可能会被外面劫持。所以最后还补了一个参数，外部可以动第一个，但不要动最后一个。
+                view.updateElement(changedPatchNode, cnode, changedPatchNode)
+              })
+            })
+            vnodeTrackingMap.delete(cnode)
+          })
+
           // CAUTION 一定要放在这里才调用，这个时候才稳定。
           view.didMount()
         })
@@ -104,7 +124,6 @@ export default function createScheduler(painter, view, supervisor) {
 
       // CAUTION 一定要放在这里才调用，这个时候子元素之类才都有了，才算稳定。
       view.didMount()
-
     })
 
     currentSession = null
@@ -115,7 +134,18 @@ export default function createScheduler(painter, view, supervisor) {
     startInitialSession,
     startUpdateSession,
     collectChangedCnodes: cnodes => {
-      cnodes.forEach(trackingTree.track)
+      cnodes.forEach(cnode => cnodeTrackingTree.track(cnode))
+      if (!currentSession) {
+        startUpdateSession()
+      }
+    },
+    collectChangePatchNode: (vnodesIndexedByCnode) => {
+      // CAUTION 这里不要去动原来的对象
+      vnodesIndexedByCnode.forEach((vnodes, cnode) => {
+        let trackedVnodes = vnodeTrackingMap.get(cnode)
+        if (!trackedVnodes) vnodeTrackingMap.set(cnode, (trackedVnodes = new Set()))
+        vnodes.forEach(vnode => trackedVnodes.add(vnode))
+      })
       if (!currentSession) {
         startUpdateSession()
       }

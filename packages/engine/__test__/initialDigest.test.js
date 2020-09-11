@@ -41,7 +41,7 @@ describe('initialDigest', () => {
     painter.paint(ctree)
     view.initialDigest(ctree)
 
-    const refs = ctree.view.getViewRefs()
+    const refs = ctree.view.getRootElements()
     expect(refs[0].outerHTML).toBe('<div>app</div>')
   })
 })

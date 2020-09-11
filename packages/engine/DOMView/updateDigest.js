@@ -24,9 +24,10 @@ function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, parent
     p.children = handlePatchVnodeChildren(p.children, parentNode, prevSiblingNode, createVnodePath(p, parentPath), cnode, view)
     /* eslint-enable no-use-before-define */
   } else if (typeof p.type === 'string' || p.type === String) {
-    if (p.patch !== undefined) {
-      view.updateElement(p, p.element, cnode)
-      delete p.patch
+    if (p.diff !== undefined) {
+      // 第一参数表示根据什么去更新，可能会被外面劫持。所以最后还补了一个参数，外部可以动第一个，但不要动最后一个。
+      view.updateElement(p, cnode, p)
+      delete p.diff
     }
 
     if (typeof p.type === 'string' && p.children !== undefined) {

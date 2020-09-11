@@ -5,8 +5,7 @@ export function initialize() {
         const origin = next(cnode)
         return cnode.isDigested ?
           Object.assign(origin, {
-            refs: cnode.view.getRefs(),
-            viewRefs: cnode.view.getViewRefs(),
+            getElements: cnode.view.getElements(),
           }) :
           origin
       }

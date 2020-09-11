@@ -49,7 +49,7 @@ describe('array', () => {
     painter.paint(ctree)
     view.initialDigest(ctree)
 
-    const refs = ctree.view.getViewRefs()
+    const refs = ctree.view.getRootElements()
     expect(refs[0].outerHTML).toBe('<div><span>span0</span><div>div1</div></div>')
 
     painter.repaint(ctree)

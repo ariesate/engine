@@ -17,7 +17,6 @@
  * even if it is not in the same place after re-render.
  */
 import {
-  isComponent,
   walkRawVnodes,
   makeVnodeTransferKey,
   vnodePathToString,
@@ -33,7 +32,8 @@ import {
   ensureArray,
   createUniqueIdGenerator,
   shallowEqual,
-  invariant
+  invariant,
+  warn
 } from './util'
 import {
   PATCH_ACTION_INSERT,
@@ -43,8 +43,30 @@ import {
   PATCH_ACTION_TO_MOVE,
   DEV_MAX_LOOP,
 } from './constant'
-import { normalizeChildren } from './createElement'
+import { defaultNormalizeLeaf } from './createElement'
 import VNode from './VNode';
+
+/**
+ * Diff the detail of two vnode.
+ */
+function defaultDiffNodeDetail(lastVnode, vnode) {
+  if (lastVnode.type === String && lastVnode.value !== vnode.value) {
+    return {
+      value: vnode.value,
+    }
+  }
+
+  if (!shallowEqual(lastVnode.attributes, vnode.attributes)) {
+    return {
+      attributes: vnode.attributes,
+    }
+  }
+}
+
+
+function DefaultComponentNode() {
+
+}
 
 
 export function updateCnodeByVnode(cnode, vnode) {
@@ -61,9 +83,9 @@ export function updateCnodeByVnode(cnode, vnode) {
  *   2. Calculated child cnodes, returned as `next`.
  *   3. Vnodes with transfer key.
  */
-function prepareRetForAttach(rawRet, cnode, isComponentVnode, createCnode) {
+function prepareRetForAttach(rawRet, cnode, { isComponentVnode, createCnode, normalizeLeaf}) {
   // user may render single component or null, we should normalize it.
-  const ret = normalizeChildren(ensureArray(rawRet))
+  const ret = ensureArray(rawRet).map(rawVnode => normalizeLeaf(rawVnode))
   const next = {}
   const transferKeyedVnodes = {}
   walkRawVnodes(ret, (vnode, path, parentVnodePath = []) => {
@@ -96,11 +118,12 @@ function prepareRetForAttach(rawRet, cnode, isComponentVnode, createCnode) {
  * @param renderer The collection of render method invoker, passed in by controller,
  * expected to return the render result which is a array of vnode.
  * Controller may inject extra arguments into render.
+ * @param utils
  * @returns {{ toInitialize: Object }} The child cnodes to initialize.
  */
-function paint(cnode, renderer, isComponentVnode, createCnode) {
+function paint(cnode, renderer, utils) {
   const specificRenderer = cnode.parent === undefined ? renderer.rootRender : renderer.initialRender
-  const { next, ret, transferKeyedVnodes } = prepareRetForAttach(specificRenderer(cnode, cnode.parent), cnode, isComponentVnode, createCnode)
+  const { next, ret, transferKeyedVnodes } = prepareRetForAttach(specificRenderer(cnode, cnode.parent), cnode, utils)
 
   cnode.ret = ret
   cnode.next = next
@@ -114,22 +137,6 @@ function paint(cnode, renderer, isComponentVnode, createCnode) {
  * Diff Algorithm Functions Begins
  ****************************** */
 
-/**
- * Diff the detail of two vnode.
- */
-function diffNodeDetail(lastVnode, vnode) {
-  if (lastVnode.type === String && lastVnode.value !== vnode.value) {
-    return {
-      value: vnode.value,
-    }
-  }
-
-  if (!shallowEqual(lastVnode.attributes, vnode.attributes)) {
-    return {
-      attributes: vnode.attributes,
-    }
-  }
-}
 
 /**
  * Patch(PatchNode) is a vnode style object, with a additional key `action`.
@@ -152,7 +159,7 @@ function createPatchNode(lastVnode = {}, vnode, actionType) {
  * Handle new vnode. A new vnode is a vnode with key(transferKey) that do not exist in last render result.
  * This method was used to create patchNode for new vnode, and recursively find cnode in its descendants.
  */
-function handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain, cnode, isComponentVnode, createCnode) {
+function handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain, cnode, { isComponentVnode, createCnode }) {
   patch.push(createPatchNode({}, vnode, PATCH_ACTION_INSERT))
   if (isComponentVnode(vnode)) {
     const nextIndex = vnode.transferKey === undefined ? vnodePathToString(currentPath) : vnode.transferKey
@@ -194,7 +201,8 @@ function handleToMovePatchNode(lastVnode, patch) {
 /**
  * If a vnode remains the same position, we use this method to (recursively) handle its children.
  */
-function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, currentPath, cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes, isComponentVnode, createCnode) {
+function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, currentPath, cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes, utils) {
+  const {isComponentVnode, createCnode, diffNodeDetail} = utils
   const patchNode = createPatchNode(lastVnode, vnode, actionType)
 
   if (isComponentVnode(vnode)) {
@@ -203,10 +211,10 @@ function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, currentPat
     // update Props
     updateCnodeByVnode(cnode.next[path], vnode)
   } else {
-    patchNode.patch = diffNodeDetail(lastVnode, vnode)
+    patchNode.diff = diffNodeDetail(lastVnode, vnode)
     if (vnode.children !== undefined) {
       /* eslint-disable no-use-before-define */
-      const childDiffResult = diff(lastVnode.children, vnode.children, currentPath, cnode, nextTransferKeyedVnodes, isComponentVnode, createCnode)
+      const childDiffResult = diff(lastVnode.children, vnode.children, currentPath, cnode, nextTransferKeyedVnodes, utils)
       /* eslint-enable no-use-before-define */
       Object.assign(toInitialize, childDiffResult.toInitialize)
       Object.assign(toRemain, childDiffResult.toRemain)
@@ -230,7 +238,8 @@ function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, currentPat
  * If consumer need to compare props, should do it self with toRemain prop in result.
  * See Controller Axii for example.
  */
-function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeyedVnodes, isComponentVnode, createCnode) {
+function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeyedVnodes, utils) {
+  const { isComponentVnode, createCnode } = utils
   const toRemain = {}
   const toInitialize = {}
   const patch = []
@@ -265,7 +274,7 @@ function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeye
       }
       // If it still exist and current vnode have the same type, we mark it as "remain".
       if (vnode !== undefined && vnode.type === lastVnode.type && vnode.transferKey === lastVnode.transferKey) {
-        handleRemainLikePatchNode(lastVnode, vnode, PATCH_ACTION_REMAIN, [getVnodeNextIndex(vnode)], cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes, isComponentVnode, createCnode)
+        handleRemainLikePatchNode(lastVnode, vnode, PATCH_ACTION_REMAIN, [getVnodeNextIndex(vnode)], cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes, utils)
         lastVnodesIndex += 1
         vnodesIndex += 1
         continue
@@ -283,10 +292,10 @@ function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeye
     ) {
       if (cnode.next[vnode.transferKey] === undefined) {
         // If it is new vnode
-        handleInsertPatchNode(vnode, [getVnodeNextIndex(vnode)], patch, toInitialize, toRemain, cnode, isComponentVnode, createCnode)
+        handleInsertPatchNode(vnode, [getVnodeNextIndex(vnode)], patch, toInitialize, toRemain, cnode, utils)
       } else {
         // If it is not new, it must be transferred from somewhere. Mark it as `moveFrom`
-        handleRemainLikePatchNode(cnode.transferKeyedVnodes[vnode.transferKey], vnode, PATCH_ACTION_MOVE_FROM, [getVnodeNextIndex(vnode)], cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes, isComponentVnode, createCnode)
+        handleRemainLikePatchNode(cnode.transferKeyedVnodes[vnode.transferKey], vnode, PATCH_ACTION_MOVE_FROM, [getVnodeNextIndex(vnode)], cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes, utils)
       }
 
       // jump the condition of `lastVnode === vnode`, because we dealt with it before
@@ -310,9 +319,9 @@ function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeye
     if (!(lastVnodesIndex < lastVnodesLen)) {
       const correspondingLastVnode = lastVnodesIndexedByKey[vnode.key]
       if (correspondingLastVnode !== undefined && correspondingLastVnode.type === vnode.type) {
-        handleRemainLikePatchNode(correspondingLastVnode, vnode, PATCH_ACTION_MOVE_FROM, currentPath, cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes, isComponentVnode, createCnode)
+        handleRemainLikePatchNode(correspondingLastVnode, vnode, PATCH_ACTION_MOVE_FROM, currentPath, cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes, utils)
       } else {
-        handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain, cnode, isComponentVnode, createCnode)
+        handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain, cnode, utils)
       }
 
       vnodesIndex += 1
@@ -343,7 +352,7 @@ function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeye
 
     // If current vnode is new.
     if (!lastVnodeKeys.includes(vnode.key)) {
-      handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain, cnode, isComponentVnode, createCnode)
+      handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain, cnode, utils)
       vnodesIndex += 1
       continue
     }
@@ -353,10 +362,10 @@ function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeye
       // 1) different type, then we remove the old, insert the new.
       if (vnode.type !== lastVnode.type) {
         handleRemovePatchNode(lastVnode, patch)
-        handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain, cnode, isComponentVnode, createCnode)
+        handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain, cnode, utils)
         // 2) same type
       } else {
-        handleRemainLikePatchNode(lastVnode, vnode, PATCH_ACTION_REMAIN, currentPath, cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes, isComponentVnode, createCnode)
+        handleRemainLikePatchNode(lastVnode, vnode, PATCH_ACTION_REMAIN, currentPath, cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes, utils)
       }
       lastVnodesIndex += 1
       vnodesIndex += 1
@@ -377,7 +386,7 @@ function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeye
 /**
  * The entry point of diffing the last patch and the new return value.
  */
-function diff(lastVnodesOrPatch, nextVnodes, parentPath, cnode, nextTransferKeyedVnodes, isComponentVnode, createCnode) {
+function diff(lastVnodesOrPatch, nextVnodes, parentPath, cnode, nextTransferKeyedVnodes, utils) {
   const lastNext = { ...cnode.next }
   const toInitialize = {}
   const toRemain = {}
@@ -385,7 +394,7 @@ function diff(lastVnodesOrPatch, nextVnodes, parentPath, cnode, nextTransferKeye
   const toUpdate = {}
   const lastVnodes = lastVnodesOrPatch.filter(lastVnode => lastVnode.action === undefined || lastVnode.action.type !== PATCH_ACTION_MOVE_FROM)
 
-  const result = createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeyedVnodes, isComponentVnode, createCnode)
+  const result = createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeyedVnodes, utils)
   Object.assign(toInitialize, result.toInitialize)
   Object.assign(toRemain, result.toRemain)
   each(toRemain, (_, key) => {
@@ -404,23 +413,25 @@ function diff(lastVnodesOrPatch, nextVnodes, parentPath, cnode, nextTransferKeye
 /**
  * The entry point of updating a rendered cnode.
  */
-function repaint(cnode, renderer, isComponentVnode, createCnode) {
+function repaint(cnode, renderer, utils) {
   const render = renderer.updateRender
   const lastPatch = cnode.patch || cnode.ret
   const renderResult = render(cnode, cnode.parent)
   // return false to suspense update
   if (renderResult === false) return {}
 
-
-  const { transferKeyedVnodes, ret } = prepareRetForAttach(renderResult, cnode, isComponentVnode, createCnode)
-  const diffResult = diff(lastPatch, ret, [], cnode, transferKeyedVnodes, isComponentVnode, createCnode)
+  const { transferKeyedVnodes, ret } = prepareRetForAttach(renderResult, cnode, utils)
+  // TODO 难道可以从局部来？？？？？
+  const diffResult = diff(lastPatch, ret, [], cnode, transferKeyedVnodes, utils)
   cnode.ret = ret
 
   cnode.patch = diffResult.patch
-  // CAUTION, 这里不能用从 nextForAttach，因为上面没有 patch 等新信息，必须从 diffResult 取。
+
   cnode.next = { ...diffResult.toInitialize, ...diffResult.toRemain }
+  // TODO 为什么要记录 transferKeyedVnodes？
   cnode.transferKeyedVnodes = transferKeyedVnodes
 
+  // TODO 为什么要记录？
   // `toDestroyPatch` indicate which cnode no more exist.
   cnode.toDestroyPatch = diffResult.toDestroyPatch
   return diffResult
@@ -431,11 +442,11 @@ function repaint(cnode, renderer, isComponentVnode, createCnode) {
  ***************************** */
 
 /**
- * ===使用说明
+ * 使用说明
  * 1. 创建 painter。需要传入一个 renderer({ rootRender: function, initialRender: function})。rootRender
  * 用来渲染根组件，剩下的用 initialRender。传入 isComponentVnode 可以判断是否是 component 组件。
  *
- * # paint:
+ * paint:
  * 首次对 cnode(component node) 进行渲染。注意只对当前的 cnode 节点执行 render。
  * 执行完之后，会在 cnode 上存上:
  * {
@@ -444,7 +455,7 @@ function repaint(cnode, renderer, isComponentVnode, createCnode) {
  *   transferKeyedVnodes: transfer vnode 的标记。
  * }
  *
- * # repaint:
+ * repaint:
  * 第二次进行渲染，根据 render 出来的值跟上一次 cnode.ret 上的值来进行 diff，会返回 diff 结果：
  * {
  *  toInitialize: 要新建的子组件，
@@ -461,18 +472,23 @@ function repaint(cnode, renderer, isComponentVnode, createCnode) {
  *   children[修改]: 根据 vnode.children 修改 cnode.children
  * }
  *
+ *
  */
-export default function createPainter(renderer, isComponentVnode = defaultIsComponentVnode, ComponentNode) {
+export default function createPainter(renderer, isComponentVnode = defaultIsComponentVnode, ComponentNode = DefaultComponentNode, diffNodeDetail = defaultDiffNodeDetail, normalizeLeaf = defaultNormalizeLeaf) {
 
   const generateCnodeId = createUniqueIdGenerator('com')
 
   function createCnode(vnode, parent) {
-    const cnode = ComponentNode ? new ComponentNode() : {}
+    const cnode = new ComponentNode()
+
+    warn(!(vnode.ref  && !vnode.type.forwardRef), `${vnode.type.displayName || vnode.type.name } do not accept ref, but you passed ref prop to it.`)
     Object.assign(cnode, {
       type: vnode.type,
+      displayName: vnode.type.displayName || vnode.type.name,
       props: vnode.attributes || {},
       level: parent ? parent.level + 1 : 0,
-      ref: vnode.ref,
+      // 对 cnode 也可以打 ref。跟 react 一样，这里记录一下，会作为 render 第二参数传入。
+      ref: ComponentNode.forwardRef ? vnode.ref :vnode.ref,
       parent,
       id: generateCnodeId()
     })
@@ -482,18 +498,24 @@ export default function createPainter(renderer, isComponentVnode = defaultIsComp
     return cnode
   }
 
+  const utils = {
+    isComponentVnode,
+    createCnode,
+    diffNodeDetail,
+    normalizeLeaf
+  }
 
   return {
     paint: (cnode) => {
       if (cnode.isPainted) throw new Error(`cnode already painted ${cnode.type.displayName}`)
-      return paint(cnode, renderer, isComponentVnode, createCnode)
+      return paint(cnode, renderer, utils)
     },
     repaint: (cnode) => {
       if (!cnode.isPainted) throw new Error(`cnode is not painted ${cnode.type.displayName}`)
-      return repaint(cnode, renderer, isComponentVnode, createCnode)
+      return repaint(cnode, renderer, utils)
     },
     handle: (cnode) => {
-      return cnode.ret === undefined ? paint(cnode, renderer, isComponentVnode, createCnode) : repaint(cnode, renderer, isComponentVnode, createCnode)
+      return cnode.ret === undefined ? paint(cnode, renderer, utils) : repaint(cnode, renderer, utils)
     },
     createCnode,
   }

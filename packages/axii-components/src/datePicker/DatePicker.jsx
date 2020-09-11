@@ -15,11 +15,6 @@ import Calendar from '../calendar/Calendar.jsx'
 import useLayer from '../hooks/useLayer.jsx'
 import moment from 'moment';
 
-/**
- *
- * TODO 怎么解决 timeout？是否要增加一个事件回调的 after 标记？等事件执行完后由系统调用？这个需求的本质是什么？
- */
-
 export function DatePicker({focused, onFocus, onBlur, value, onChange, format,}) {
   const calendarRef = useRef()
 

@@ -1,10 +1,8 @@
-import { normalizeLeaf } from '@ariesate/are/createElement'
-import VNode from '@ariesate/are/VNode'
+import { normalizeLeaf, VNode } from '../index'
 import createFlatChildrenProxy from '../createFlatChildrenProxy'
-import { isComponentVnode } from '../createAxiiController'
-import { invariant, mapValues } from '../util'
+import { isComponentVnode } from '../controller'
+import { invariant } from '../util'
 import { isRef } from '../reactive'
-import vnodeComputed from '../vnodeComputed'
 
 /**
  * Base & Feature 用法：
@@ -174,7 +172,7 @@ export function createFragment(fragmentName) {
   return fragmentSetterAsFragment
 }
 
-function createFeatureFunctionCollector() {
+function createFeatureFunctionCollector(name) {
   const container = {
     $$fragments: {},
     $$argv: new WeakMap()
@@ -184,12 +182,16 @@ function createFeatureFunctionCollector() {
     forEach(target, fn) {
       Object.entries(target.$$fragments).forEach(fn)
     },
+  }
 
+  const attributes = {
+    name
   }
 
   return new Proxy(container, {
     get(target, key) {
       if (instruments[key]) return (...argv) => instruments[key](target, ...argv)
+      if (key in attributes) return attributes[key]
 
       if (!target.$$fragments[key]) target.$$fragments[key] = createFragment(key)
       return target.$$fragments[key]
@@ -203,7 +205,7 @@ export function createFeatureFunctionCollectors() {
   return {
     derive(key) {
       let featureFunctionCollector = keyToFeatureFunctionCollector.get(key)
-      if (!featureFunctionCollector) keyToFeatureFunctionCollector.set(key, (featureFunctionCollector = createFeatureFunctionCollector()))
+      if (!featureFunctionCollector) keyToFeatureFunctionCollector.set(key, (featureFunctionCollector = createFeatureFunctionCollector(key.displayName || key.name)))
       return featureFunctionCollector
     },
     filter(fn) {

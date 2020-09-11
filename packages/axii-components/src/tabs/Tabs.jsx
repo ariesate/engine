@@ -17,7 +17,7 @@ import scen from '../pattern'
  * TODO
  * tab 左右移动的代码怎么写，需要判断渲染后的宽度
  */
-function Tabs({ children, activeKey, onChangeActiveKey }, context, fragments) {
+function Tabs({ children, activeKey, onChangeActiveKey }, fragments) {
   const visibleKey = refComputed(() => {
     if (activeKey.value && children.some((child) => child.props.tabKey === activeKey.value)) {
       return activeKey.value

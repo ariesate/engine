@@ -307,6 +307,10 @@ export function invoke(obj, fn, args) {
   return obj[fn] !== undefined ? obj[fn](...args) : undefined
 }
 
+export function before(fn, beforeFn) {
+  return (...args) => beforeFn(fn, ...args)
+}
+
 export function after(fn, afterFn) {
   return (...args) => concat([fn, afterFn])(...args)[0]
 }

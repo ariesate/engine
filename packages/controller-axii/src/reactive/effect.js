@@ -701,3 +701,7 @@ export function collectComputed(operation, includeInner = false) {
 
   return frame.computed
 }
+
+export function isCollectingComputed() {
+  return computedCollectFrame.length !== 0
+}

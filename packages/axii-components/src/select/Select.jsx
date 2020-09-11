@@ -14,7 +14,7 @@ import {nextTick} from "../util";
 import Input from "../input/Input";
 import scen from "../pattern";
 
-export function Select({value, options, onChange, renderOption, renderValue, onFocus, onBlur, focused}, context, fragments) {
+export function Select({value, options, onChange, renderOption, renderValue, onFocus, onBlur, focused}, fragments) {
   const optionListRef = useRef()
 
   const onInputFocus = () => {

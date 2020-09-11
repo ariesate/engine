@@ -15,19 +15,15 @@
  * 又通过 receive 来控制它们的 api。看起来有点奇怪，但只要把 controller 想成一个为了
  * 开发者方便而设计胶水层概念就可以了。
  */
-// import createScheduler from '../../engine/createScheduler'
-// import createPainter from '../../engine/createPainter'
-// import createDOMView from '../../engine/DOMView/createDOMView'
-// import createVnodeElement, { cloneElement as cloneVnodeElement } from '../../engine/createElement'
 import createScheduler from '@ariesate/are/createScheduler'
 import createPainter from '@ariesate/are/createPainter'
 import createDOMView from '@ariesate/are/DOMView/createDOMView'
-import createAxiiController from './createAxiiController'
+import createAxiiController from './controller'
 
 export { default as createPortal } from '@ariesate/are/createPortal'
-export { default as createElement,  cloneElement, normalizeLeaf, normalizeChildren } from '@ariesate/are/createElement'
 export { default as Fragment } from '@ariesate/are/Fragment'
 export { default as VNode } from '@ariesate/are/VNode'
+export { default as createElement,  cloneElement, normalizeLeaf, shallowCloneElement } from './createElement'
 export { default as vnodeComputed } from './vnodeComputed'
 export * from './reactive'
 export { default as propTypes } from './propTypes'
@@ -38,7 +34,8 @@ export { default as useRef } from './useRef'
 export { default as watch } from './watch'
 export { StyleEnum, StyleRule } from './StyleManager'
 export { default as createFlatChildrenProxy } from './createFlatChildrenProxy'
-export { isComponentVnode, createSmartProp } from './createAxiiController'
+export { isComponentVnode } from './controller'
+export { createSmartProp } from './controller/ComponentNode'
 export { invariant, tryToRaw, shallowEqual } from './util'
 export { default as createComponent} from './component/createComponent'
 export { flattenChildren } from './component/utils'
@@ -48,10 +45,16 @@ export { default as useContext } from './useContext'
 export function render(vnode, domElement, ...controllerArgv) {
   const controller = createAxiiController(...controllerArgv)
 
-  const view = createDOMView(controller.observer, domElement, controller.isComponentVnode, controller.digestObjectLike)
-  const painter = createPainter(controller.renderer, controller.isComponentVnode, controller.ComponentNode)
+  const view = createDOMView(controller.viewInterfaces, domElement, controller.interceptViewActions)
+  const painter = createPainter(
+    controller.painterInterfaces.renderer,
+    controller.painterInterfaces.isComponentVnode,
+    controller.painterInterfaces.ComponentNode,
+    controller.painterInterfaces.diffNodeDetail,
+    controller.painterInterfaces.normalizeLeaf,
+  )
 
-  const scheduler = createScheduler(painter, view, controller.supervisor)
+  const scheduler = createScheduler(painter, view, controller.schedulerInterfaces)
 
   // 这里这么写只是因为我们的 controller 里同时可以控制 repaint
   controller.receiveScheduler(scheduler)

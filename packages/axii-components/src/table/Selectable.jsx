@@ -51,7 +51,11 @@ export default function FeatureSelectable(fragments) {
 }
 
 FeatureSelectable.Style = (fragments) => {
-  fragments.heads.elements.selectTh.style(thStyle)
+  fragments.heads.elements.selectTh.style({
+    ...thStyle,
+    textAlign: 'center',
+    verticalAlign: 'middle'
+  })
   fragments.cells.elements.selectTd.style({
     ...tdStyle,
     textAlign: 'center',

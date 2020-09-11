@@ -71,6 +71,9 @@ const availablePlayground = {
     'button',
     'icon', // x
   ],
+  Layout: [
+    'grid'
+  ],
   Utilities: [
     'useForm', // x
     'useLayer', // x

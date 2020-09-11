@@ -16,7 +16,7 @@ import scen from '../pattern'
  * 或者有个规划位置的作为 base。
  */
 
-export function Checkbox({ value, disabled, onChange, children }, context, fragments ) {
+export function Checkbox({ value, disabled, onChange, children }) {
   return (
     <container use="label" inline flex-display-inline flex-align-items-center>
       <input type="checkbox" value="" disabled={disabled} checked={value} onChange={onChange} />

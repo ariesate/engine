@@ -1,7 +1,25 @@
-export { default as createElement } from '@ariesate/are/createElement'
-import { getCurrentWorkingCnode } from './renderContext'
+import VNode from '@ariesate/are/VNode'
+import vnodeComputed from "./vnodeComputed"
+import { createCreateElement, defaultNormalizeLeaf } from '@ariesate/are/createElement'
 
-export default function createElement() {
-  // TODO ownerId
-  // TODO hijackCreateElement
+const methods = createCreateElement((rawChild) => {
+	const vnode = defaultNormalizeLeaf(rawChild)
+
+	if (vnode instanceof VNode) return vnode
+
+	if (typeof rawChild === 'function') return vnodeComputed(rawChild)
+	return rawChild
+})
+
+export default function createElement(...argv) {
+	const vnode = methods.createElement(...argv)
+	// TODO 这是为了让 createComponent 中的 Feature 仍然能够按照 props 的方式去操作。
+	// 理论上应该是对 render result 生成 proxy 处理，这里是快速实现，之后修改。
+	if (vnode.attributes) {
+		vnode.props = vnode.attributes
+	}
+	return vnode
 }
+export const cloneElement = methods.cloneElement
+export const normalizeLeaf = methods.normalizeLeaf
+export const shallowCloneElement = methods.shallowCloneElement

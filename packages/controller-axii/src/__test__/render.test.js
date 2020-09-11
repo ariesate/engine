@@ -320,7 +320,7 @@ describe('complex vnodeComputed', () => {
               color: base2.value === 1 ? 'red' : 'blue'
             }
           })
-          return <div style={style} />
+          return <span style={style} />
         }}
       </div>
     }
@@ -328,20 +328,20 @@ describe('complex vnodeComputed', () => {
     const root = document.createElement('div')
     render(<App />, root)
 
-    expect(root.children[0]).partialMatch(<div><div style={{color: 'red'}}/></div>)
+    expect(root.children[0]).partialMatch(<div><span style={{color: 'red'}}/></div>)
     expect(computedCalled).toBe(1)
     // 第一次外层不变化时，内层应该响应
     base2.value = 2
-    expect(root.children[0]).partialMatch(<div><div style={{color: 'blue'}}/></div>)
+    expect(root.children[0]).partialMatch(<div><span style={{color: 'blue'}}/></div>)
     expect(computedCalled).toBe(1)
-
+    // 引起外层变化
     base1.value = 2
-    expect(root.children[0]).partialMatch(<div><div style={{color: 'blue'}}/></div>)
+    expect(root.children[0]).partialMatch(<div><span style={{color: 'blue'}}/></div>)
     expect(computedCalled).toBe(2)
 
     // 外层变化后，内层也还是应该能响应变化
     base2.value = 1
-    expect(root.children[0]).partialMatch(<div><div style={{color: 'red'}}/></div>)
+    expect(root.children[0]).partialMatch(<div><span style={{color: 'red'}}/></div>)
     expect(computedCalled).toBe(2)
 
     // 即使外层变成一次null
@@ -351,11 +351,11 @@ describe('complex vnodeComputed', () => {
 
     // 又变回来
     base1.value = 3
-    expect(root.children[0]).partialMatch(<div><div style={{color: 'red'}}/></div>)
+    expect(root.children[0]).partialMatch(<div><span style={{color: 'red'}}/></div>)
     expect(computedCalled).toBe(4)
 
     base2.value = 2
-    expect(root.children[0]).partialMatch(<div><div style={{color: 'blue'}}/></div>)
+    expect(root.children[0]).partialMatch(<div><span style={{color: 'blue'}}/></div>)
     expect(computedCalled).toBe(4)
   })
 

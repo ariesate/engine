@@ -100,7 +100,7 @@ describe('create component', () => {
 
 describe('Feature based', () => {
   test('render fragments right and pass right local vars to style/listener', () => {
-    function Base({items }, context, fragments) {
+    function Base({items }, fragments) {
       return <container>
         {fragments.list()(() => {
           return <list>
@@ -151,7 +151,7 @@ describe('Feature based', () => {
   })
 
   test('render fragments right and pass right local vars to slot children', () => {
-    function Base({items }, context, fragments) {
+    function Base({items }, fragments) {
       return <container>
         {fragments.list()(() => {
           return <list>
@@ -197,7 +197,7 @@ describe('Feature based', () => {
 
 
   test('use mutations', () => {
-    function Base({items }, context, fragments) {
+    function Base({items }, fragments) {
       return <container>
         {fragments.list()(() => {
           return <list>
@@ -238,7 +238,7 @@ describe('Feature based', () => {
   })
 
   test('use overwrite to add runtime feature', () => {
-    function Base({items }, context, fragments) {
+    function Base({items }, fragments) {
       return <container>
         {fragments.list()(() => {
           return <list>

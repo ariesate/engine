@@ -26,7 +26,6 @@ const resolver = {
     const path = getAliasedPath(id)
 
     if (path) {
-      console.log(path)
       return path
     }
   },
