@@ -52,7 +52,7 @@ function createGetter(isReadonly = false, shallow = false) {
 
 const set = /*#__PURE__*/ createSetter()
 
-function createSetter(isReadonly = false) {
+function createSetter() {
   return function set(
     target,
     key,
@@ -60,12 +60,19 @@ function createSetter(isReadonly = false) {
     receiver
   ) {
 
+    // debugger
     const oldValue = target[key]
     // CAUTION 不允许 reactive 下嵌套 reactive/ref，所以全部都 tryToRaw，并且针对 ref 要展开。
     // CAUTION 内部的 toRaw 只处理 reactive, tryToRaw 才同时处理了 ref。
     const rawValue = tryToRaw(value, true)
     const hadKey = hasOwn(target, key)
-    const result = Reflect.set(target, key, rawValue, receiver)
+    let result = true
+    try {
+      Reflect.set(target, key, rawValue, receiver)
+    } catch(e) {
+      console.error(e)
+      result = false
+    }
     // don't trigger if target is something up in the prototype chain of original
     if (target === toRaw(receiver)) {
       /* istanbul ignore else */

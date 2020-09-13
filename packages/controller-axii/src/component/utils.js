@@ -3,6 +3,8 @@ import createFlatChildrenProxy from '../createFlatChildrenProxy'
 import { isComponentVnode } from '../controller'
 import { invariant } from '../util'
 import { isRef } from '../reactive'
+import { createFragmentActionReceiver } from './fragment'
+
 
 /**
  * Base & Feature 用法：
@@ -130,50 +132,14 @@ export function createElementsContainer() {
   })
 }
 
-export function createFragment(fragmentName) {
-  function fragmentSetterAsFragment(localVars, nonReactive) {
-    return (fragFn) => {
-      return new FragmentDynamic(fragmentName, fragFn, localVars, nonReactive)
-    }
-  }
 
-  // 收集 fragment 作用域下对 element 的 style 定义，对 element 的事件监听
-  fragmentSetterAsFragment.elements = createElementsContainer()
-  fragmentSetterAsFragment.argv = {}
-
-  // modifications
-  fragmentSetterAsFragment.$$modifications = []
-  Object.defineProperty(fragmentSetterAsFragment, 'modify', {
-    get() {
-      return (modifyFn) => fragmentSetterAsFragment.$$modifications.push(modifyFn)
-    },
-  })
-
-  Object.defineProperty(fragmentSetterAsFragment, 'getModifications', {
-    get() {
-      return () => fragmentSetterAsFragment.$$modifications
-    },
-  })
-
-  // preparations
-  fragmentSetterAsFragment.$$preparations = []
-  Object.defineProperty(fragmentSetterAsFragment, 'prepare', {
-    get() {
-      return (prepareFn) => fragmentSetterAsFragment.$$preparations.push(prepareFn)
-    },
-  })
-
-  Object.defineProperty(fragmentSetterAsFragment, 'getPreparations', {
-    get() {
-      return () => fragmentSetterAsFragment.$$preparations
-    },
-  })
-
-  return fragmentSetterAsFragment
-}
-
-function createFeatureFunctionCollector(name) {
-  const container = {
+/**
+ * actionCollector 存着当前 feature 对所有 fragments 的 action。
+ * 真正去收集的是 fragmentLevelCollector。
+ * 这个对象通常传到 feature 中变量名叫做 fragments。使用时就是: fragments.root.modify(xxx)
+ */
+function createActionCollector(name, container, globalConfigs) {
+  const collector = {
     $$fragments: {},
     $$argv: new WeakMap()
   }
@@ -188,34 +154,30 @@ function createFeatureFunctionCollector(name) {
     name
   }
 
-  return new Proxy(container, {
+  return new Proxy(collector, {
     get(target, key) {
       if (instruments[key]) return (...argv) => instruments[key](target, ...argv)
       if (key in attributes) return attributes[key]
+      // anonymous 作为保留的名字，是用来给框架处理 function/vnodeComputed 节点的。
+      const fragmentName = key === 'anonymous'? '$$' : key
 
-      if (!target.$$fragments[key]) target.$$fragments[key] = createFragment(key)
-      return target.$$fragments[key]
+      if (!target.$$fragments[fragmentName]) target.$$fragments[fragmentName] = createFragmentActionReceiver(fragmentName, collector, globalConfigs)
+      return target.$$fragments[fragmentName]
     }
   })
 }
 
 
-export function createFeatureFunctionCollectors() {
-  const keyToFeatureFunctionCollector = new Map()
+export function createActionCollectorContainer(globalConfigs) {
+  const container = new Map()
   return {
     derive(key) {
-      let featureFunctionCollector = keyToFeatureFunctionCollector.get(key)
-      if (!featureFunctionCollector) keyToFeatureFunctionCollector.set(key, (featureFunctionCollector = createFeatureFunctionCollector(key.displayName || key.name)))
+      let featureFunctionCollector = container.get(key)
+      if (!featureFunctionCollector) container.set(key, (featureFunctionCollector = createActionCollector(key.displayName || key.name, container, globalConfigs)))
       return featureFunctionCollector
     },
-    filter(fn) {
-      const filteredContainers = []
-      keyToFeatureFunctionCollector.forEach((container, key) => {
-        if (fn(key)) {
-          filteredContainers.push(container)
-        }
-      })
-      return filteredContainers
+    forEach(handle) {
+      return container.forEach(handle)
     }
   }
 }

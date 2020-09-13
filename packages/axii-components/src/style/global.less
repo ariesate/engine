@@ -117,6 +117,7 @@ input::-ms-reveal {
 *::before,
 *::after {
     box-sizing: border-box; // 1
+    border-width: 0; // 修正设置了任意方向 border 时，浏览器会默认为其他边加上 3px 的问题
 }
 
 html {

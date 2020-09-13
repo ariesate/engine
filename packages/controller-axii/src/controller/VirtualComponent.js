@@ -52,7 +52,7 @@ export function createVirtualCnodeForComputedVnodeOrText(reactiveVnode, cnode, c
 		Component.isVirtual = true
 		// 标记一下，因为内部结构可能变化，这个变化是无法判断的，所以永远要 rerender。
 		Component.shouldComponentUpdate = () => true
-		Component.displayName = `ReactiveVnodeComponent`
+		Component.displayName = reactiveVnode.displayName || `VnodeComputed`
 
 		currentCache.Component = Component
 	}

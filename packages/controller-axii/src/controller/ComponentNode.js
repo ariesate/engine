@@ -149,29 +149,36 @@ function createInjectedProps(cnode) {
 			const defaultMutateFn = propType.createDefaultValue(props)
 			const valueProps = filter(mergedProps, isReactiveLike)
 			// CAUTION 这里的 Immer draft 是支持 moment 等类型的，要更新 moment 的话，用户自己 new 一个新的并整体赋值。
-			let propsChanges = []
+			let draftChanges = []
 			let shouldStopApply
+			// CAUTION，把 runtime argv 也 draft 一下，这样就可以实现通过第一参数传递 reactive 对象，同时也能 return false 阻止了。
+			const extraArgv = [mergedProps, activeEvent.getCurrentEvent()]
+			// CAUTION 这里 map 和 mapValues 回调都不要简写，因为 tryToRaw 有第二参数，简写会传递第二参数
+			const argvToDraft = runtimeArgv.map(argv => tryToRaw(argv)).concat(mapValues(mergedProps, prop => tryToRaw(prop)))
 			produce(
-				mapValues(mergedProps, prop => isReactiveLike(prop) ? tryToRaw(prop) : prop), draftProps => {
+				argvToDraft, draftArgv => {
 					// 我们为开发者补足三个参数，这里和 react 不一样，我们把 event 放在了最后，这是我们按照实践中的权重判断的。
 					// 因为我们的组件既是受控的又是非受控的，理论上用户只需要知道组件默认会怎么改 props 就够了，即 draftProps，
 					// 常见的我们在 input onChange 中去取 event.target.value 实际上也就是去取 nextProps，如果能拿到，就不需要 event。
 					// 补足参数永远放在最后，这样开发者心智负担更小。
-					const extraArgv = [draftProps, mergedProps, activeEvent.getCurrentEvent()]
-					defaultMutateFn(...runtimeArgv, ...extraArgv)
+					const allArgv = [...draftArgv, ...extraArgv]
+					defaultMutateFn(...allArgv)
 					// 显式的返回 false 就是不要应用原本的修改。
 					// CAUTION 注意这里的补全参数设计，补全的第一参数是事件，第二参数是现在的 prop 和 nextProps
 					shouldStopApply = userMutateFn ?
-						userMutateFn(...runtimeArgv, ...extraArgv) === false :
+						userMutateFn(...allArgv) === false :
 						false
 
 				},
-				(patches) => propsChanges.push(...patches)
+				(patches) => draftChanges.push(...patches)
 			)
+
+
 			if (shouldStopApply) {
 				activeEvent.preventCurrentEventDefault()
 			} else {
-				applyPatches(valueProps, propsChanges)
+
+				applyPatches([...runtimeArgv, valueProps], draftChanges)
 			}
 		}
 

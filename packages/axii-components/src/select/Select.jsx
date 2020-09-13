@@ -39,7 +39,7 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
         inline-display-none={refComputed(() => !focused.value)}
         inline-min-width={refComputed(() => `${sourceRef.value ? sourceRef.value.offsetWidth : 0}px`)}
         tabindex={-1}
-        onFocusOut={() => onBlur()}
+        // onFocusOut={() => onBlur()}
         style={{background: "#fff", zIndex: 99}}
         ref={optionListRef}
       >

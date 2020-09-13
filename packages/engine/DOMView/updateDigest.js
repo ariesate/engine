@@ -40,15 +40,24 @@ function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, parent
 }
 
 function handleRemovePatchNode(p, parentPath, toDestroy, view) {
-  const elements = resolveFirstLayerElements([p], parentPath, toDestroy)
-  elements.forEach((ele) => {
-    ele.parentNode.removeChild(ele)
-  })
-
   if (view.isComponentVnode(p)) {
+    // 如果是组件删除 利用 placeHolder 一次性删干净了
     // remove placeholder
-    const nextCnode = toDestroy.next[getVnodeNextIndex(p, parentPath)]
-    nextCnode.view.placeholder.parentNode.removeChild(nextCnode.view.placeholder)
+    const toDestroyCnode = toDestroy.next[getVnodeNextIndex(p, parentPath)]
+
+    const parentNode = toDestroyCnode.view.startPlaceholder.parentNode
+    let toDelete = toDestroyCnode.view.startPlaceholder
+    while(toDelete !== toDestroyCnode.view.endPlaceholder) {
+      toDelete = toDelete.nextSibling
+      parentNode.removeChild(toDelete.previousSibling)
+    }
+    parentNode.removeChild(toDestroyCnode.view.endPlaceholder)
+  } else {
+
+    const elements = resolveFirstLayerElements([p], parentPath, toDestroy)
+    elements.forEach((ele) => {
+      ele.parentNode.removeChild(ele)
+    })
   }
 }
 
@@ -157,8 +166,7 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
 // updateDigest only handle one cnode and its new child cnodes.
 export default function updateDigest(cnode, view) {
   if (cnode.view.parentNode === undefined) throw new Error(`cnode has not been initial digested ${cnode.type.displayName}`)
-  // TODO placeholder 的问题
-  cnode.patch = handlePatchVnodeChildren(cnode.patch, cnode.view.parentNode, cnode.view.placeholder, [], cnode, view)
+  cnode.patch = handlePatchVnodeChildren(cnode.patch, cnode.view.parentNode, cnode.view.startPlaceholder, [], cnode, view)
   // CAUTION toDestroyPatch should be reset after update digest.
   cnode.toDestroyPatch = {}
 }

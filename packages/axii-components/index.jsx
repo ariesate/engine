@@ -33,7 +33,8 @@ const availablePlayground = {
     // 以上是必须要常用的 7
     'cascader',
     'autoComplete',
-    'switch'
+    'switch',
+    'richText', // 试用 quill
   ],
   Data: [
     'table', // x
@@ -78,6 +79,7 @@ const availablePlayground = {
     'useForm', // x
     'useLayer', // x
     'useRequest',
+    'useRouter',
     // 以上是常用必须的
     'useHistory',
     'useLocation'

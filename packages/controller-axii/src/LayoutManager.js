@@ -4,7 +4,13 @@ import { invariant } from './util';
 
 function createSimpleKeyToValue(key) {
   return {
-    [key]: v => ({[key] : v})
+    [key]: (...argv) => {
+      // CAUTION 只有当 argv > 1 时才可能是字符串，例如 "space","between"。
+      // 否则的话要保持原貌，不要用 join，因为针对数字系统会自动补全 px。如果用了join 就会变成字符串，系统就不能自动补全。
+      return {
+        [key] : argv.length > 1 ? argv.join('-') : argv[0]
+      }
+    }
   }
 }
 
@@ -36,8 +42,8 @@ const InlineRules = {
   __base: () => ({
      display: 'inline-block'
   }),
-  display(type) {
-    return { display: type }
+  display(...argv) {
+    return { display:  argv.join('-')}
   },
   visible(type) {
     // display: none; visible:hidden
@@ -51,7 +57,7 @@ const InlineRules = {
   ...createWithDirection('margin'),
   ...createWithDirection('padding'),
   // CAUTION 注意，要配合 css reset 将所有默认值设置为 0。border width 默认是 3px，会导致只设置一个方向的时候，其他也跟着以 3px 显示出来了。
-  ...createWithDirection('border', (key) => ({ [key]: v => ({[`${key}-width`]: v }) })),
+  ...createWithDirection('border', (key) => createSimpleKeyToValue(`${key}-width`)),
   ...createSimpleKeyToValue('white-space'),
   ...createSimpleKeyToValue('line-height'),
   ...createSimpleKeyToValue('font-size'),
@@ -116,7 +122,7 @@ function matchRule(flatRules, inputKeys) {
   const argv = []
   while(!flatRules[keys.join('-')] && keys.length) {
     const currentArgv = keys.pop()
-    argv.push(currentArgv)
+    argv.unshift(currentArgv)
   }
   return [flatRules[keys.join('-')], argv]
 }
@@ -145,7 +151,6 @@ export default class LayoutManager {
 
     this.baseRuleTypes = Object.keys(baseRules)
     this.flatRules = flatten(Object.assign({}, baseRules, layoutRules))
-    // console.log(Object.keys(this.flatRules))
     // this.layoutRules = layoutRules
   }
   match(vnode) {
@@ -178,7 +183,8 @@ export default class LayoutManager {
         hasStyle = true
         // 例如 block-display-none={false} 这种情况说明要取消掉这个 style。argv !== 0 说明已经在前面读到 'none' 这个参数。
         // 改成 undefined 说明要删除这些属性
-        const partialStyle = fn(...argv, shouldApply)
+        const styleArgv = typeof shouldApply === 'boolean' ? argv : argv.concat(shouldApply)
+        const partialStyle = fn(...styleArgv)
         if (shouldApply === false && argv.length !== 0) {
           Object.keys(partialStyle).forEach(k => {
             // CAUTION  注意这里一定要有这个判断，因为可能多个规则操作统一个属性，例如

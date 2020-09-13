@@ -1,5 +1,22 @@
 export const IS_NON_DIMENSIONAL = /acit|ex(?:s|g|n|p|$)|rph|ows|mnc|ntw|ine[ch]|zoo|^ord/i
-export const IS_ATTR_NUMBER = /flex-grow|flex-shrink/i
+
+function withCamelCase(last, current) {
+	return last.concat(current,
+		/-/.test(current) ?
+			current.replace(/(.+)-([a-z])(.+)/, (match, first, letter, rest) => {
+				return `${first}${letter.toUpperCase()}${rest}`
+			}) :
+			[]
+	)
+}
+
+export const IS_ATTR_NUMBER = new RegExp([
+	'flex',
+	'flex-grow',
+	'flex-shrink',
+	'line-height',
+	'z-index'
+	].reduce(withCamelCase, []).join('|'), 'i')
 
 export const PATCH_ACTION_REMAIN = 'patch.remain'
 export const PATCH_ACTION_REMOVE = 'patch.remove'

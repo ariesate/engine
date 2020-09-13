@@ -17,14 +17,17 @@ import VNode from '../VNode';
  * Attach element reference to cnode.
  */
 function prepareCnodeForView(cnode, vnode, parentNode, viewUtil) {
-  const placeholder = viewUtil.createPlaceholder(`cnode placeholder ${vnode.key}`)
-  parentNode.appendChild(placeholder)
+  const startPlaceholder = viewUtil.createPlaceholder(`<${vnode.key}>`)
+  const endPlaceholder = viewUtil.createPlaceholder(`</${vnode.key}>`)
+  parentNode.appendChild(startPlaceholder)
+  parentNode.appendChild(endPlaceholder)
   if (parentNode._childCnodes === undefined) parentNode._childCnodes = []
   parentNode._childCnodes.push(cnode)
   cnode.view = {
     // 对应的 vnode
     vnode,
-    placeholder,
+    startPlaceholder,
+    endPlaceholder,
     // 这是用来获取 cnode 自己的第一层 elements。
     getRootElements() {
       return resolveFirstLayerElements(cnode.patch, [], cnode)
@@ -141,15 +144,15 @@ export default function initialDigest(cnode, viewUtil) {
   // 根节点，要提前 prepare 一下。非根节点后面 handle 的时候会 prepare。
   // 对于组件里面再嵌套的组件，我们也只是 prepare 一下，不继续递归，渲染。
   if (cnode.parent === undefined) prepareCnodeForView(cnode, createVnode(cnode.type), viewUtil.getRoot(), viewUtil)
-  if (cnode.view.placeholder === undefined) throw new Error(`cnode is not prepared for initial digest ${cnode.type.displayName}`)
+  if (cnode.view.startPlaceholder === undefined) throw new Error(`cnode is not prepared for initial digest ${cnode.type.displayName}`)
   cnode.patch = []
   const fragment = viewUtil.createFragment()
   handleInitialVnodeChildren(cnode.ret, cnode, viewUtil, cnode.patch, [], fragment)
-  const parentNode = cnode.view.placeholder.parentNode
-  parentNode.insertBefore(fragment, cnode.view.placeholder.nextSibling)
-  // 还是留着 placeholder。直到 remove 的时候
-  // parentNode.removeChild(cnode.view.placeholder)
-  // delete cnode.viewUtil.placeholder
+  const parentNode = cnode.view.startPlaceholder.parentNode
+  parentNode.insertBefore(fragment, cnode.view.startPlaceholder.nextSibling)
+  // 还是留着 startPlaceholder。直到 remove 的时候
+  // parentNode.removeChild(cnode.view.startPlaceholder)
+  // delete cnode.viewUtil.startPlaceholder
   cnode.view.parentNode = parentNode
   cnode.isDigested = true
 }

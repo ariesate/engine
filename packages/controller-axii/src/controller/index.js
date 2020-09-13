@@ -112,6 +112,7 @@ function isPropsEqual({ children, ...props }, { children: lastChildren, ...lastP
 
 
 function attachRef(element, patch, ref) {
+
 	if (typeof ref === 'function') {
 		ref(element, patch)
 	} else {

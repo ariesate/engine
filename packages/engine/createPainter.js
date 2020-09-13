@@ -421,7 +421,6 @@ function repaint(cnode, renderer, utils) {
   if (renderResult === false) return {}
 
   const { transferKeyedVnodes, ret } = prepareRetForAttach(renderResult, cnode, utils)
-  // TODO 难道可以从局部来？？？？？
   const diffResult = diff(lastPatch, ret, [], cnode, transferKeyedVnodes, utils)
   cnode.ret = ret
 

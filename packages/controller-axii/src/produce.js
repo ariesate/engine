@@ -1,10 +1,12 @@
-import { setUseProxies, enablePatches, enableMapSet } from 'immer'
+import { setUseProxies, enablePatches, enableMapSet, setAutoFreeze } from 'immer'
 import { applyPatch as internalApplyPatch } from 'fast-json-patch'
 export { createDraft, produce, finishDraft } from 'immer'
 
 enableMapSet()
 enablePatches()
 setUseProxies(true)
+// CAUTION Immer 会 auto freeze ，导致出现问题
+setAutoFreeze(false)
 
 function normalizePath(path) {
   return '/' + path.join('/')

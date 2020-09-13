@@ -2,14 +2,25 @@ import VNode from '@ariesate/are/VNode'
 import vnodeComputed from "./vnodeComputed"
 import { createCreateElement, defaultNormalizeLeaf } from '@ariesate/are/createElement'
 
+
+let shouldReplaceFunction = true
+
 const methods = createCreateElement((rawChild) => {
 	const vnode = defaultNormalizeLeaf(rawChild)
 
 	if (vnode instanceof VNode) return vnode
+	if (shouldReplaceFunction && typeof rawChild === 'function') return vnodeComputed(rawChild)
 
-	if (typeof rawChild === 'function') return vnodeComputed(rawChild)
 	return rawChild
 })
+
+export function stopReplaceFunction() {
+	const lastConfig = shouldReplaceFunction
+	shouldReplaceFunction = false
+	return () => {
+		shouldReplaceFunction = lastConfig
+	}
+}
 
 export default function createElement(...argv) {
 	const vnode = methods.createElement(...argv)

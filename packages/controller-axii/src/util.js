@@ -428,3 +428,24 @@ export function getFromMap(collection, key, createIfUndefined) {
 export function tryToRaw(obj, unwrap) {
   return isReactiveLike(obj) ? toRaw(obj, unwrap) : obj
 }
+
+export function createFrameContainer() {
+  const frames = []
+  return {
+    push(vars) {
+      frames.push(vars)
+    },
+    pop() {
+      frames.pop()
+    },
+    latest() {
+      return frames[frames.length]
+    },
+    all() {
+      return frames
+    },
+    copy() {
+      return frames.slice(0)
+    }
+  }
+}

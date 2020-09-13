@@ -53,7 +53,7 @@ export function Input({value, onChange, children}, fragments) {
           inline-padding={`${scen().spacing(-1)}px ${scen().spacing()}px `}
           value={value}
           onInput={onChange}
-        ></input>
+        />
         {afterVnode}
       </middle>
       {suffixVnode}
