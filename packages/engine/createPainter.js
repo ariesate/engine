@@ -258,9 +258,11 @@ function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeye
     counter += 1
     if (counter === DEV_MAX_LOOP) { throw new Error(`patch loop over ${DEV_MAX_LOOP} times.`) }
 
+    invariant(!((vnodesIndex in nextVnodes) && nextVnodes[vnodesIndex] === undefined), 'use null instead of undefined to represent empty node')
+
     const lastVnode = lastVnodes[lastVnodesIndex]
     const vnode = nextVnodes[vnodesIndex]
-    if (vnode === undefined) throw new Error('cannot use undefined as vnode, use null instead.')
+
     // Handle transferKey first. Only component vnode may have transferKey.
     if (lastVnode !== undefined &&
       isComponentVnode(lastVnode) &&

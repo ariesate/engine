@@ -8,17 +8,17 @@ import scen from '../pattern'
 
 import moment from 'moment';
 
-export function Calendar({ value, current, onSelect, onSelectNextMonth, onSelectLastMonth, onChange }, fragments) {
+export function Calendar({ value, current, onSelect, onSelectNextMonth, onSelectLastMonth, onSelectLastYear, onSelectNextYear, onChange }, fragments) {
 
   return <container inline>
 
       {fragments.header()(() => (
         <header inline flex-display>
-          <lastYear>{'<<'}</lastYear>
-          <lastMonth onClick={onSelectLastMonth}>{'<'}</lastMonth>
-          <month inline flex-grow-1>{current.value.month() + 1} 月</month>
-          <nextMonth onClick={onSelectNextMonth}>{'>'}</nextMonth>
-          <nextYear>{'>>'}</nextYear>
+          <lastYear onClick={onSelectLastYear}>{'<<'}</lastYear>
+          <lastMonth onClick={onSelectLastMonth} inline inline-margin-left-10px>{'<'}</lastMonth>
+          <month inline flex-grow-1>{current.value.year()}年 {current.value.month() + 1}月</month>
+          <nextMonth onClick={onSelectNextMonth} inline inline-margin-right-10px>{'>'}</nextMonth>
+          <nextYear onClick={onSelectNextYear}>{'>>'}</nextYear>
         </header>
       ))}
 
@@ -89,23 +89,26 @@ export function Calendar({ value, current, onSelect, onSelectNextMonth, onSelect
 
           return datesGroupByWeek.map(week => (
             <week use='tr'>{
-              week.map(dayData => fragments.day(dayData)(() => (
-                <day
-                  use='td'
-                  onClick={() => onChange(dayData)}
-                  inline
-                  inline-display-table-cell
-                  inline-padding-10px
-                >
-                  {dayData.date}
-                </day>
-              )))
+              week.map(dayData => fragments.day(dayData)(() => {
+                if (!dayData.date) debugger
+                return (
+                  <day
+                    use='td'
+                    onClick={() => onChange(dayData)}
+                    inline
+                    inline-display-table-cell
+                    inline-padding-10px
+                  >
+                    {dayData.date}
+                  </day>
+                )
+              }))
             }</week>
           ))
         })}
       </days>
     </dates>
-    <div>{() => value.value.format('YYYY-MM-DD')}</div>
+    <div>selected: {() => value.value.format('YYYY-MM-DD')}</div>
   </container>
 
 }
@@ -114,12 +117,16 @@ Calendar.propTypes = {
   value: propTypes.object.default(() => ref(moment())),
   current: propTypes.object.default(({ value }) => ref(moment(value))),
   onSelectNextMonth: propTypes.callback.default(() => ({ current }) => {
-    const thisMouth = current.value.month()
-    current.value = moment(current.value).month( (thisMouth + 1) % 12 )
+    current.value = moment(current.value).add(1, 'month')
   }),
   onSelectLastMonth: propTypes.callback.default(() => ({ current }) => {
-    const thisMouth = current.value.month()
-    current.value = moment(current.value).month( (thisMouth + 11) % 12 )
+    current.value = moment(current.value).subtract(1, 'month')
+  }),
+  onSelectLastYear: propTypes.callback.default(() => ({ current }) => {
+    current.value = moment(current.value).subtract(1, 'year')
+  }),
+  onSelectNextYear: propTypes.callback.default(() => ({ current }) => {
+    current.value = moment(current.value).add(1, 'year')
   }),
   onChange: propTypes.callback.default(() => ({year, month, date}, { value }) => {
     value.value = moment().year(year).month(month).date(date)
@@ -135,13 +142,16 @@ Calendar.Style = (fragments) => {
     textAlign: 'center'
   })
 
-  fragments.header.elements.lastMonth.style({
-    cursor: 'pointer'
-  })
+  const commonHandleStyle = {
+    cursor: 'pointer',
+    userSelect: 'none',
+    color: scen().color(-3),
+  }
 
-  fragments.header.elements.nextMonth.style({
-    cursor: 'pointer'
-  })
+  fragments.header.elements.lastMonth.style(commonHandleStyle)
+  fragments.header.elements.nextMonth.style(commonHandleStyle)
+  fragments.header.elements.lastYear.style(commonHandleStyle)
+  fragments.header.elements.nextYear.style(commonHandleStyle)
 
   fragments.day.elements.day.style(({ value, year, month, date}) => {
 

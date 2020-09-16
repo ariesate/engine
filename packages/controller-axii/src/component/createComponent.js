@@ -182,6 +182,8 @@ export default function createComponent(Base, featureDefs=[]) {
   // CAUTION createComponent 创造的节点默认接受 ref，并且关联到第一个节点。
   Component.forwardRef = true
 
+	// 7. TODO 穿透处理 layout props 的问题。应该任何一个节点协商 acceptLayout 就都能变成 inline/block。这里又有 inline-flex 和 flex 的问题。
+
   return Component
 }
 

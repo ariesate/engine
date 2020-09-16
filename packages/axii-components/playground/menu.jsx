@@ -5,22 +5,31 @@ import Menu from '../src/menu/Menu.jsx'
 const data = reactive([
   {
     title: 'title1',
+    key: 'title1',
     children: [
       {
         title: 'sub1',
+        key: 'sub1',
         children : [{
           title: 'sub1 of sub1'
         }]
       }
     ]
-  // }, {
-  //   title: 'title2',
-  //   children: [{
-  //     title: 'sub1 of title2'
-  //   }]
+  }, {
+    title: 'title2',
+    key: 'title2',
+    children: [{
+      title: 'sub1 of title2',
+      key: 'sub1 of title2'
+    }]
+  }, {
+    title: 'title3',
+    key: 'title3',
   }
 ])
 
+const activeKey = ref('sub1')
 
 
-render(<Menu data={data}/>, document.getElementById('root'))
+
+render(<Menu data={data} activeKey={activeKey}/>, document.getElementById('root'))

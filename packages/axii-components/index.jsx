@@ -5,6 +5,7 @@
 import { createElement, render, reactive, ref } from 'axii'
 import { vnodeComputed } from '../controller-axii/src';
 import queryString from 'querystringify';
+import Menu from './src/menu/Menu'
 import './src/style/global.less'
 
 const { component } = queryString.parse(location.search)
@@ -95,27 +96,25 @@ function Choose() {
   }
 
   return (
-    <div style={{height: "100%"}} block block-display-flex>
+    <div block block-display-flex block-height="100%" block-padding-top-10px>
       <div block block-width-200px>
         <h1>Components</h1>
-        {Object.entries(availablePlayground).map(([category, items]) =>
+        {() => Object.entries(availablePlayground).map(([category, items]) =>
           <div>
             <h2>{category}</h2>
-            {items.map(name =>
-              <div onClick={() => onChange(name)}>{name}</div>
-            )}
+            <Menu data={items.map(name => ({ title: name, key: name}))} activeKey={current} onSetActive={(item) => onChange(item.key)}/>
           </div>
         )}
       </div>
       <div block flex-grow-1>
-        {vnodeComputed(() => {
+        {() => {
           if(!current.value) return <div>点击选择一个组件</div>
           return <iframe height="100%" width="100%" src={`/playground/playground.html?component=${current.value}`}/>
-        })}
+        }}
       </div>
     </div>
   )
 }
-
+console.log("rerender")
 
 render(<Choose />, document.getElementById('root'))

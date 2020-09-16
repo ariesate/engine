@@ -10,9 +10,19 @@ let currentWorkingCnodeData = undefined
 export function withCurrentWorkingCnode(cnode, fn) {
   invariant(currentWorkingCnode === null, 'last working unit is not done')
   currentWorkingCnode = cnode
-  const result = fn()
-  currentWorkingCnode = null
-  currentWorkingCnodeData = undefined
+  let error
+  let result
+  try {
+    result = fn()
+  } catch(e) {
+    error = e
+  } finally {
+    currentWorkingCnode = null
+    currentWorkingCnodeData = undefined
+  }
+
+  if (error) throw error
+
   return result
 }
 

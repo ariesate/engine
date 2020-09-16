@@ -16,8 +16,6 @@ import {
  * 理想的方案应该还是 portal，然后监听所有 scroll 事件，用于重新计算 pop 位置，可能新能有问题，但是确是完整方案。
  *
  */
-
-
 // TODO renderOnVisible 决定是否是 visible 才挂载。是否需要？
 // TODO 监听所有 scroll 跟随滚动。
 export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), level, renderOnVisible, syncMove } = {}) {
