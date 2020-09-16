@@ -18,7 +18,15 @@ import {
  */
 // TODO renderOnVisible 决定是否是 visible 才挂载。是否需要？
 // TODO 监听所有 scroll 跟随滚动。
-export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), level, renderOnVisible, syncMove } = {}) {
+
+function defaultCreateContainer() {
+  const portalRoot = document.createElement('div')
+  document.body.appendChild(portalRoot)
+  return portalRoot
+}
+
+
+export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), createContainer = defaultCreateContainer, level, renderOnVisible, syncMove } = {}) {
 
   const sourceRef = ref()
 
@@ -45,8 +53,7 @@ export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), 
   })
 
   // TODO 变成规划的 root，要根据当前 useLayer 是从哪里发出的来决定放在哪个 div 里。
-  const portalRoot = document.createElement('div')
-  document.body.appendChild(portalRoot)
+  const portalRoot = createContainer()
 
   const node = createPortal(<portal style={style}>
     {typeof nodeInPortal === 'function' ? nodeInPortal(sourceRef) : nodeInPortal}

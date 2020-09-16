@@ -3,13 +3,12 @@
  * 理论上用 playground.jsx 会更好。
  */
 import { createElement, render, reactive, ref } from 'axii'
-import { vnodeComputed } from '../controller-axii/src';
 import queryString from 'querystringify';
 import Menu from './src/menu/Menu'
+import useLocation from "./src/hooks/useLocation";
 import './src/style/global.less'
 
-const { component } = queryString.parse(location.search)
-
+const location = useLocation()
 
 // TODO 优先级标记
 /**
@@ -88,16 +87,16 @@ const availablePlayground = {
 }
 
 function Choose() {
-  const current = ref(component)
+  const current = ref(location.query.component)
 
   const onChange = (next) => {
     current.value = next
-    location.search = queryString.stringify({ component: next })
+    location.patchQuery({ component: next })
   }
 
   return (
     <div block block-display-flex block-height="100%" block-padding-top-10px>
-      <div block block-width-200px>
+      <div block block-width-200px block-height="100%" block-overflow-y-auto>
         <h1>Components</h1>
         {() => Object.entries(availablePlayground).map(([category, items]) =>
           <div>
@@ -115,6 +114,5 @@ function Choose() {
     </div>
   )
 }
-console.log("rerender")
 
 render(<Choose />, document.getElementById('root'))

@@ -48,7 +48,7 @@ import * as antColors from '@ant-design/colors';
  * CONSTANTS
  **************/
 const colorNames = ['red', 'volcano', 'gold', 'yellow', 'lime', 'green', 'cyan', 'blue', 'geekblue', 'purple', 'magenta', 'grey']
-const colors = {}
+export const colors = {}
 colorNames.forEach(name => {
   colors[name] = createRange(antColors[name], 5)
 })
