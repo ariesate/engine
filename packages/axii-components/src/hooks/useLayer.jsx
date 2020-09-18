@@ -4,7 +4,9 @@ import {
   createPortal,
   createElement,
   ref,
+  reactive,
 } from 'axii'
+import { nextTick } from "../util";
 
 /**
  * z-index 的问题有两个:
@@ -26,14 +28,14 @@ function defaultCreateContainer() {
 }
 
 
-export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), createContainer = defaultCreateContainer, level, renderOnVisible, syncMove } = {}) {
+export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), createContainer = defaultCreateContainer, level, renderOnVisible, syncMove, sourceRef : inputSourceRef } = {}) {
 
-  const sourceRef = ref()
+  const sourceRef = inputSourceRef || reactive({})
 
   // 因为我们提供给 nodeInPortal 的是 source.getBoundingClientRect 的位置，这个是相对于 page 的。所以这里用 fixed 定位。
   const style = refComputed(() => {
 
-    const rect = sourceRef.value ? sourceRef.value.getBoundingClientRect() : {
+    const rect = sourceRef.current ? sourceRef.current.getBoundingClientRect() : {
       top: 0,
       left: 0,
       width: 0,
@@ -46,25 +48,27 @@ export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), 
       display: 'block',
       left: 0,
       top: 0,
-      width: 0,
-      height: 0,
-      ...getContainerRect(rect, sourceRef.value)
+      ...getContainerRect(rect, sourceRef.current)
     }
   })
 
   // TODO 变成规划的 root，要根据当前 useLayer 是从哪里发出的来决定放在哪个 div 里。
   const portalRoot = createContainer()
 
+  // TODO 怎么回收 portal???
   const node = createPortal(<portal style={style}>
     {typeof nodeInPortal === 'function' ? nodeInPortal(sourceRef) : nodeInPortal}
   </portal>, portalRoot)
 
-  const source = (ref) => {
-    sourceRef.value = ref
-  }
+  // TODO 这里有很大问题， node 必须在 button 前面渲染。不然 button 收到 ref 时会触发 node style 变化。
+
 
   return {
-    source,
+    source: inputSourceRef ? undefined : (ref) => {
+      nextTick(() => {
+        sourceRef.current = ref
+      })
+    },
     node,
   }
 }

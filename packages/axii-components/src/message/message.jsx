@@ -1,8 +1,8 @@
 /** @jsx createElement */
 /** @jsxFrag Fragment */
-import { render, ref, refComputed, createElement, Fragment } from 'axii'
+import { render, ref, reactive, refComputed, createElement, Fragment } from 'axii'
+import layerStyle  from '../style/layer'
 import scen, { colors } from "../pattern";
-import Icon from '../icon/Icon'
 
 function defaultCreateContainer() {
 	const portalRoot = document.createElement('div')
@@ -15,19 +15,23 @@ function defaultGetPosition() {
 }
 
 function defaultGetStyle() {
-	return {
-		background: '#fff',
-		borderRadius: 2,
-		boxShadow: '0 3px 6px -4px rgba(0,0,0,.12), 0 6px 16px 0 rgba(0,0,0,.08), 0 9px 28px 8px rgba(0,0,0,.05)'
-	}
+	return layerStyle
 }
 
 function defaultGetLayoutStyle() {
 	return {
 		display: 'inline-flex',
 		justifyContent: 'center',
-		alignItems: 'center'
+		alignItems: 'center',
+		marginTop: 20
 	}
+}
+
+function defaultCreateCommonMessage(text, color, type) {
+	return <>
+		<indicator inline flex-align-self-stretch inline-width-4px  style={{background: color}}/>
+		<span inline inline-padding-left-10px inline-padding-right-10px>{text}</span>
+	</>
 }
 
 export function createMessage(
@@ -36,25 +40,35 @@ export function createMessage(
 		getPosition = defaultGetPosition,
 		getStyle = defaultGetStyle,
 		getLayoutStyle = defaultGetLayoutStyle,
-		duration = 2000
+		duration = 2000,
+		createCommonMessage = defaultCreateCommonMessage
 	} = {}) {
 
 	const container = createContainer()
-	const content = ref('')
-	const visible = ref(false)
+	// CAUTION 不要用 reactive，因为这里的语义不适用，而且 content 可能会有 vnode 节点。会出现问题。
+	const contents = ref([])
+	// const visible = refComputed(() => contents.length !== 0)
+	const visible = ref(true)
 
 	const containerStyle = refComputed(() => {
 		return {
-			display: visible.value ? 'flex' : 'none',
+			display: visible.value ? 'block' : 'none',
 			position: 'fixed',
-			justifyContent: 'center',
 			top: 0,
 			left: 0,
 			width: '100%',
-			overflow: 'visible',
+			// 因为这个 container 是完整的横条，所以要穿透事件，不要挡住了下面的元素。
+			pointerEvents: 'none',
 			zIndex: 999,
 		}
 	})
+
+	const messageContainerStyle = {
+		display: 'flex',
+		width: '100%',
+		pointerEvents: 'none',
+		justifyContent: 'center',
+	}
 
 	const style = refComputed(() => {
 		const positionStyle = getPosition(container.getBoundingClientRect())
@@ -69,42 +83,33 @@ export function createMessage(
 	})
 
 	const show = (v) => {
-		content.value = v
-		visible.value = true
-		//TODO 也要设计一下
+		contents.value = contents.value.concat(v)
+
+		//TODO 也要设计一下, 这是对系统能力的使用
 		setTimeout(() => {
-			visible.value = false
+			contents.value = contents.value.filter(c => c!==v )
 		}, duration)
 	}
 
 	function Message() {
 		return <container style={containerStyle}>
-			<msg style={style}>
-				{content}
-			</msg>
+			{() => contents.value.map(content => (
+				<messageContainer style={messageContainerStyle}>
+					<message style={style}>
+						{content}
+					</message>
+				</messageContainer>
+			))}
 		</container>
 	}
 
 	render(<Message />, container)
 
-	// TODO icon 太土了！！！！再考虑吧
 	return {
-		success: (text) => show(<contentValue>
-			<icon use={Icon} type="CheckCircle" color={colors.green(0)}/>
-			<span inline inline-padding-left-10px>{text}</span>
-			</contentValue>),
-		warning: (text) => show(<>
-			<icon use={Icon} type="ExclamationCircle" color={colors.gold()}/>
-			<span inline inline-padding-left-10px>{text}</span>
-		</>),
-		error: (text) => show(<>
-			<icon use={Icon} type="CloseCircle" color={colors.red()}/>
-			<span inline inline-padding-left-10px>{text}</span>
-		</>),
-		info: (text) => show(<>
-			<icon use={Icon} type="InfoCircle" color={colors.blue()}/>
-			<span inline inline-padding-left-10px>{text}</span>
-		</>),
+		success: (text) => show(defaultCreateCommonMessage(text, colors.green())),
+		warning: (text) => show(defaultCreateCommonMessage(text, colors.gold())),
+		error: (text) => show(defaultCreateCommonMessage(text, colors.red())),
+		info: (text) => show(defaultCreateCommonMessage(text, colors.blue())),
 		show
 	}
 

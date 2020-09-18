@@ -13,6 +13,7 @@ import useLayer from "../hooks/useLayer";
 import {nextTick} from "../util";
 import Input from "../input/Input";
 import scen from "../pattern";
+import layerStyle from '../style/layer'
 
 export function Select({value, options, onChange, renderOption, renderValue, onFocus, onBlur, focused}, fragments) {
   const optionListRef = useRef()
@@ -39,11 +40,11 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
         inline-display-none={refComputed(() => !focused.value)}
         inline-min-width={refComputed(() => `${sourceRef.value ? sourceRef.value.offsetWidth : 0}px`)}
         tabindex={-1}
-        // onFocusOut={() => onBlur()}
+        onFocusOut={() => onBlur()}
         style={{background: "#fff", zIndex: 99}}
         ref={optionListRef}
       >
-        {fragments.optionList()(() => options.map(option => fragments.optionItem({ option })(
+        {() => options.map(option => fragments.optionItem({ option })(
           <optionItem
             block
             block-font-size={scen().fontSize()}
@@ -55,7 +56,7 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
           >
             {renderOption(option)}
           </optionItem>
-        )))}
+        ))}
       </optionList>)
   }, {
       getContainerRect,
@@ -112,6 +113,8 @@ Select.Style = (fragments) => {
       cursor: 'pointer',
     }
   })
+
+  fragments.root.elements.optionList.style(layerStyle)
 }
 
 

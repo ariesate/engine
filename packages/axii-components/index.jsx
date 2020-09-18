@@ -17,21 +17,21 @@ const location = useLocation()
  * 2: menu/breadcrumb/steps/popover/tooltip/timeline
  * 3: button/tag/spin/progress
  *
- * 必须/总数 : 19/33
- * 已完成 : 8/19
+ * 必须/总数 : 21/33
+ * 已完成 : 13/20
  */
 const availablePlayground = {
   Form: [
     // 'form', 写到 common hooks 里
     'input', // x
     'checkbox', // x 美化
-    'timePicker',
     'datePicker', // x
     'select', // x
-    'upload',
-    'radio',
-    // 以上是必须要常用的 7
     'cascader',
+    'upload',
+    'timePicker',
+    // 以上是必须要常用的 7
+    'radio',
     'autoComplete',
     'switch',
     'richText', // 试用 quill
@@ -41,7 +41,6 @@ const availablePlayground = {
     'tabs', // x
     'tree',
     'calendar', // x
-    'popover',
     // 以上是常用必须的 6
     'collapse',
     'tooltip',
@@ -52,7 +51,7 @@ const availablePlayground = {
   ],
   Dialog: [
     // 'modal', 直接使用 useLayer 即可
-    'message', // 如何是用 api 动态创建？？？
+    'message', // x
     'spin',
     // 以上是常用必须的 3
     'alert',
@@ -60,12 +59,11 @@ const availablePlayground = {
     'progress'
   ],
   Navigation: [
-    'menu',
-    'dropdown',
-    'breadcrumb',
-    // 以上是常用必须的 3
-    'steps',
+    'menu', // x
     'pagination',
+      // 以上是常用必须的 3
+    'breadcrumb',
+    'steps',
     'affix'
   ],
   Misc: [
@@ -73,16 +71,17 @@ const availablePlayground = {
     'icon', // x
   ],
   Layout: [
-    'grid'
+    'grid' // row/col 实现
   ],
   Utilities: [
     'useForm', // x
     'useLayer', // x
-    'useRequest',
-    'useRouter',
+    'usePopover', // x,
+    'useRequest', // 整合 axios，还可以整合 useListRequest
+    'useRouter', // 整合 router ？？？
     // 以上是常用必须的
-    'useHistory',
-    'useLocation'
+    'useHistory',  // 整合 history
+    'useLocation' // x
   ]
 }
 

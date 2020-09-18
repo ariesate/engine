@@ -366,7 +366,7 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
 
   // 当为了解约性能并且明确 fragment 不会变化的时候可以标记为 nonReactive。
   if (fragment.render) {
-    renderProcess.displayName = fragment.render.displayName || fragment.render.name || fragment.name
+    renderProcess.displayName = `fragment-${fragment.render.displayName || fragment.render.name || fragment.name}`
   }
 
   return fragment.nonReactive ? renderProcess() : vnodeComputed(renderProcess)

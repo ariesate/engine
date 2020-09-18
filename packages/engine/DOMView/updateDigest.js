@@ -48,6 +48,7 @@ function handleRemovePatchNode(p, parentPath, toDestroy, view) {
     const parentNode = toDestroyCnode.view.startPlaceholder.parentNode
     let toDelete = toDestroyCnode.view.startPlaceholder
     while(toDelete !== toDestroyCnode.view.endPlaceholder) {
+      // 先往后移一位，再删当前的。因为如果先删了，nextSibling 就不对了。
       toDelete = toDelete.nextSibling
       parentNode.removeChild(toDelete.previousSibling)
     }
@@ -124,6 +125,7 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
       handleRemovePatchNode(p, parentPath, { next: cnode.toDestroyPatch }, view)
     } else if (p.action.type === PATCH_ACTION_REMAIN) {
       // CAUTION 注意 p.patch 可以是 undefined，表示没有任何变化
+      // 一旦碰到 remain 的节点，就先把要 insert 的全部插入进去。为什么有个 currentLastStableSiblingNode 判断？？？
       // Handle "toInsert" type first.
       // Trying to insert all new element between two remained elements, So we need to find last remained element first.
       if (toInsert.childNodes.length !== 0) {
@@ -131,7 +133,6 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
         currentLastStableSiblingNode = toInsertBefore || toInsert.childNodes[toInsert.childNodes.length - 1]
         parentNode.insertBefore(toInsert, toInsertBefore)
         // toInsert is empty now
-        // toInsert = view.createFragment()
       }
 
       // Only "p.type === Array" condition needs previousSibling

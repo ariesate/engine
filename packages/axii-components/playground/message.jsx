@@ -5,6 +5,7 @@ import message from '../src/message/message.jsx'
 function App() {
   setTimeout(() => {
     message.success('asdfasdfsadf')
+    message.error('asdfasdfsadf')
   }, 100)
 
   return <div>

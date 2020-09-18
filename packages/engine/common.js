@@ -64,16 +64,6 @@ export function vnodePathToString(path) {
 
 export function noop() {}
 
-export function cloneVnode(vnode) {
-  const result = { ...vnode }
-  if (vnode.children !== undefined) {
-    result.children = []
-  }
-
-  return result
-}
-
-
 export function isComponentVnode(a) {
   return isComponent(a.type)
 }
@@ -129,10 +119,7 @@ export function createResolveElement(first) {
       if (!nextCnode) {
         throw new Error(`unknown vnode type ${nextIndex}`)
       }
-      const nextVnodes = nextCnode.patch || nextCnode.ret
-      if (nextVnodes.length > 0) {
-        result = resolveFirstOrLastElement(nextVnodes[nextVnodes.length - 1], [], nextCnode, isComponentVnode)
-      }
+      return first ? nextCnode.view.startPlaceholder : nextCnode.view.endPlaceholder
     }
     // type: null 的情况
     return result

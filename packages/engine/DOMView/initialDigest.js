@@ -1,13 +1,12 @@
 import {
   createVnodePath,
   vnodePathToString,
-  cloneVnode,
   resolveFirstLayerElements,
 } from '../common'
 import {
   PATCH_ACTION_MOVE_FROM,
 } from '../constant'
-import createVnode from '../createElement'
+import createVnode, { shallowCloneElement as shallowCloneVnode} from '../createElement'
 import { handleMoveFromPatchNode } from './updateDigest'
 import { mapValues, isObject } from '../util'
 import Fragment from '../Fragment'
@@ -53,7 +52,7 @@ function handleInitialNaiveVnode(vnode, cnode, viewUtil, patch, currentPath, par
 }
 
 export function handleInitialVnode(vnode, cnode, viewUtil, parentPatch, parentPath, parentNode, index) {
-  const patch = cloneVnode(vnode)
+  const patch = shallowCloneVnode(vnode)
   parentPatch[index] = patch
 
   const currentPath = createVnodePath(vnode, parentPath)

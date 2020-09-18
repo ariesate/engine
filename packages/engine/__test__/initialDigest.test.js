@@ -45,3 +45,6 @@ describe('initialDigest', () => {
     expect(refs[0].outerHTML).toBe('<div>app</div>')
   })
 })
+
+// TODO 补全更细致的包括 placeholder 的特使用力
+// 数组/fragment

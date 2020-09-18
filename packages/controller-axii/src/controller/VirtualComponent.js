@@ -60,16 +60,20 @@ export function createVirtualCnodeForComputedVnodeOrText(reactiveVnode, cnode, c
 	return createElement(Component)
 }
 
+const reservedAttrNames = ['key', 'ref']
+
 /**
  * 这个函数是在 render 时被调用的，所以直接在里面创建 watch 没有关系，在组件销毁或者更新时，上一次的 watch 会被自动销毁。
  */
 export function watchReactiveAttributesVnode(vnode, reportChangedPatchNode) {
 	let patchNode
 
-	const reactiveAttributes = Object.values(vnode.attributes).filter(attr => isReactiveLike(attr))
+	const reactiveAttributes = Object.entries(vnode.attributes).filter(([attrName, attr]) => {
+		return isReactiveLike(attr) && !reservedAttrNames.includes(attrName)
+	})
 	if (reactiveAttributes.length) {
-		watch(() => reactiveAttributes.forEach(attr => traverse(attr)), () => {
-			invariant(patchNode, 'vnode have not been attached, something wrong')
+		watch(() => reactiveAttributes.forEach(([attrName, attr]) => traverse(attr)), () => {
+			invariant(patchNode, `vnode have not been attached. watching: ${reactiveAttributes.map(([name]) => name).join(',')}`)
 			reportChangedPatchNode(patchNode)
 		})
 	}

@@ -58,3 +58,5 @@ describe('array', () => {
     expect(refs[0].outerHTML).toBe('<div><span>span1</span><div>div1</div></div>')
   })
 })
+
+// TODO fragment/array 的测试补全，包括placeholder
