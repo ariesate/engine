@@ -132,6 +132,9 @@ export function composeRef(origin, next) {
  * createAxiiController
  *
  ***************************************/
+
+
+
 export default function createAxiiController() {
 	let scheduler = null
 	let ctree = null
@@ -171,49 +174,49 @@ export default function createAxiiController() {
 		}
 	}
 
+
+
+	const commonInitialRender = (cnode) => {
+		/**
+		 * 给 cnode 增加基本的能力:
+		 * 1. reportChangedCnode: 报告自己的内部的变化，这个其实是 VirtualComponent 用的，正常的组件时不会自己变化的。
+		 * 2. reportChangePatchNode: 报告自己的局部变化，这是两种类型的组件都可能用到。
+		 */
+
+		cnode.reportChange = reportChangedCnode
+		cnode.reportChangedPatchNode = reportChangedPatchNode
+		let result
+		result = cnode.render()
+
+		if (!cnode.type.isVirtual) {
+			// 2. 普通组件
+			const [layoutProps, originLayoutProps] =layoutManager.processLayoutProps(cnode.props)
+
+			if (layoutProps) {
+				if(isComponentVnode(result)) {
+					result.attributes = Object.assign({}, result.attributes, originLayoutProps)
+				} else {
+					result.attributes = Object.assign({}, result.attributes, layoutProps)
+				}
+			}
+
+		}
+
+		/**
+		 * 不管是哪一种，最后都要继续替换。如果有 vnodeComputed 嵌套的情况，每次处理的时候只替换一层。
+		 * 下一层的处理等到当前这层变成了 virtualCnode，render 之后又回到这里继续处理。
+		 */
+		return result
+	}
+
 	return {
 		/****************
 		 * painter interfaces
 		 ****************/
 		painterInterfaces: {
 			renderer: {
-				rootRender(cnode) {
-					// cnode.上的 ref 会作为第二参数传入。跟 react 一样。
-					return cnode.type.render(cnode.props, cnode.ref)
-				},
-
-				initialRender(cnode) {
-					/**
-					 * 给 cnode 增加基本的能力:
-					 * 1. reportChangedCnode: 报告自己的内部的变化，这个其实是 VirtualComponent 用的，正常的组件时不会自己变化的。
-					 * 2. reportChangePatchNode: 报告自己的局部变化，这是两种类型的组件都可能用到。
- 					 */
-
-					cnode.reportChange = reportChangedCnode
-					cnode.reportChangedPatchNode = reportChangedPatchNode
-					let result
-					result = cnode.render()
-
-					if (!cnode.type.isVirtual) {
-						// 2. 普通组件
-						const [layoutProps, originLayoutProps] =layoutManager.processLayoutProps(cnode.props)
-
-						if (layoutProps) {
-							if(isComponentVnode(result)) {
-								result.attributes = Object.assign({}, result.attributes, originLayoutProps)
-							} else {
-								result.attributes = Object.assign({}, result.attributes, layoutProps)
-							}
-						}
-
-					}
-
-					/**
-					 * 不管是哪一种，最后都要继续替换。如果有 vnodeComputed 嵌套的情况，每次处理的时候只替换一层。
-					 * 下一层的处理等到当前这层变成了 virtualCnode，render 之后又回到这里继续处理。
-					 */
-					return result
-				},
+				rootRender:commonInitialRender,
+				initialRender: commonInitialRender,
 				updateRender(cnode) {
 					/**
 					 * 会进行 updateRender 组件只有两种情况:

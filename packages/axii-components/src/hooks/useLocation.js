@@ -44,39 +44,54 @@ function callTypeTransformers(query, transformers, isToString = false) {
 }
 
 export default function useLocation(
-	typeTransformers,
+	typeTransformers = {},
 	history = defaultHistory,
 	parse = defaultParseSearch,
 	stringify = defaultStringifySearch
 ) {
 
-	const query = reactive(callTypeTransformers(parse(window.location.search), typeTransformers))
+	const reactiveValues = reactive({
+		pathname: history.location.pathname,
+		search: history.location.search,
+		query: callTypeTransformers(parse(history.location.search), typeTransformers)
+	})
 
 	return {
-		pathname: window.location.pathname,
-		search: window.location.search,
+		get pathname() {
+			return reactiveValues.pathname
+		},
+		get search() {
+			return reactiveValues.search
+		},
 		get query() {
-			return query
+			return reactiveValues.query
 		},
 		set query(next) {
 			history.push({
-				pathname: window.location.pathname,
+				pathname: history.location.pathname,
 				query: callTypeTransformers(next, typeTransformers, true),
 			});
 
-			debounceComputed(() => replace(query, next))
-
+			debounceComputed(() => replace(reactiveValues.query, next))
 		},
 		patchQuery(partial = {}) {
-
 			history.push({
-				pathname: window.location.pathname,
+				pathname: history.location.pathname,
 				search: stringify({
-					...parse(window.location.search), // 原来的
+					...parse(history.location.search), // 原来的
 					...callTypeTransformers(partial, typeTransformers, true), // 可以用 undefined 来清除
 				}),
 			});
-			debounceComputed(() => Object.assign(query, partial))
+			debounceComputed(() => Object.assign(reactiveValues.query, partial))
+		},
+		goto(url) {
+			history.push(url)
+			debounceComputed(() => {
+				reactiveValues.pathname = history.location.pathname
+				reactiveValues.search = history.location.search
+				// 重新 parse 一遍
+				reactiveValues.query = callTypeTransformers(parse(history.location.search), typeTransformers)
+			})
 		},
 	};
 }

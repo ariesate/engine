@@ -18,7 +18,7 @@ const location = useLocation()
  * 3: button/tag/spin/progress
  *
  * 必须/总数 : 21/33
- * 已完成 : 13/20
+ * 已完成 : 14/19
  */
 const availablePlayground = {
   Form: [
@@ -27,10 +27,10 @@ const availablePlayground = {
     'checkbox', // x 美化
     'datePicker', // x
     'select', // x
-    'cascader',
-    'upload',
-    'timePicker',
+    'cascader', // x
+    'upload', // 3
     // 以上是必须要常用的 7
+    'timePicker',
     'radio',
     'autoComplete',
     'switch',
@@ -39,8 +39,8 @@ const availablePlayground = {
   Data: [
     'table', // x
     'tabs', // x
-    'tree',
     'calendar', // x
+    'tree',  // 5
     // 以上是常用必须的 6
     'collapse',
     'tooltip',
@@ -60,25 +60,25 @@ const availablePlayground = {
   ],
   Navigation: [
     'menu', // x
-    'pagination',
+    'pagination', // 2
       // 以上是常用必须的 3
     'breadcrumb',
     'steps',
     'affix'
   ],
   Misc: [
-    'button',
+    'button', // 6
     'icon', // x
   ],
   Layout: [
-    'grid' // row/col 实现
+    'grid' // 7  row/col 实现
   ],
   Utilities: [
     'useForm', // x
     'useLayer', // x
     'usePopover', // x,
-    'useRequest', // 整合 axios，还可以整合 useListRequest
-    'useRouter', // 整合 router ？？？
+    'useRouter', // 1
+    'useRequest', // 4
     // 以上是常用必须的
     'useHistory',  // 整合 history
     'useLocation' // x

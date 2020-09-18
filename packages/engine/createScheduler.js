@@ -103,9 +103,8 @@ export default function createScheduler(painter, view, supervisor) {
     supervisor.session(SESSION_INITIAL, () => {
 
       ctree = painter.createCnode({
-        type: {
-          displayName: 'ARE_ROOT',
-          render: () => vnode,
+        type: function ROOT(){
+          return vnode
         },
       })
 

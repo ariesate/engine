@@ -106,3 +106,15 @@ export function filterOut(list, itemsToFilter) {
 export function isPlainObject(value) {
   return (typeof value === 'object') && (Object.getPrototypeOf(value) === null || Object === value.constructor)
 }
+
+export function isNaiveValue(value) {
+  return typeof value === 'string' || typeof value === 'boolean' || typeof value === 'number' || value === null || value === undefined
+}
+
+export function typeEqual(a, b) {
+  return Object.prototype.toString.call(a) === Object.prototype.toString.call(b)
+}
+
+export function isCollectionLike(a) {
+  return Array.isArray(a) || isPlainObject(a) || (a instanceof Map) || (a instanceof Set)
+}

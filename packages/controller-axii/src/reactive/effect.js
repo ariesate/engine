@@ -1,4 +1,12 @@
-import { createIdGenerator, insertIntoOrderedArray, filterOut, isPlainObject } from './util';
+import {
+  createIdGenerator,
+  insertIntoOrderedArray,
+  filterOut,
+  isPlainObject,
+  isNaiveValue,
+  typeEqual,
+  isCollectionLike
+} from './util';
 import { invariant } from '../util';
 import { isRef, reactive, ref, toRaw } from './reactive';
 import { TrackOpTypes, TriggerOpTypes } from './operations'
@@ -79,8 +87,9 @@ class ComputedToken {}
  *
  * TODO computed 要限制只能用 computation 修改，不能用户修改。
  *
+ * 第三参数表示如果是复杂 computed 对象，是否不进行深度 patch，默认是进行。
  */
-export function createComputed(computation, type) {
+export function createComputed(computation, type, shallow) {
   invariant(typeof computation === 'function', 'computation must be a function')
 
   computation.computed = type ? (type === TYPE.REF ? ref(undefined) : new ComputedToken()) : undefined
@@ -88,6 +97,7 @@ export function createComputed(computation, type) {
   computation.levelChildren = new Set()
   computation.level = 0
   computation.type = type
+  computation.deep = shallow
   // 用来标记 scope 的，后面可以用 scopeId skip 掉计算过程。
   computation.scopeId = activeScopeId
 
@@ -163,7 +173,11 @@ function applyComputation() {
     computation.computed = (Array.isArray(nextValue) || isPlainObject(nextValue)) ? reactive(nextValue) : ref(nextValue)
   } else if(!isToken) {
     // 未来可能提供能力让 computed token 可以销毁自己。所以这里的 isToken 变量要在前面定义，否则到这里的时候 computation 已经被清理得差不多了
-    replace(computation.computed, nextValue)
+    if (computation.type === TYPE.REF || computation.shallow) {
+      replace(computation.computed, nextValue)
+    } else {
+      deepPatch(computation.computed, nextValue)
+    }
   }
 }
 
@@ -587,6 +601,59 @@ export function replace(source, nextSourceValue) {
     const keysToDelete = Object.keys(source).filter(k => !nextKeys.includes(k))
     keysToDelete.forEach(k => delete source[k])
     Object.assign(source, nextSourceValue)
+  }
+}
+
+function replaceObjectLikeValue(source, nextKey, nextValue) {
+  const isMap = source instanceof Map
+
+  if (typeEqual(nextValue, source[nextKey]) && isCollectionLike(nextValue)  ) {
+    deepPatch(isMap ? source.get(nextKey) : source[nextKey], nextValue)
+  } else {
+    if (isMap) {
+      source.set(nextKey, nextValue)
+    } else {
+      source[nextKey] = nextValue
+    }
+  }
+}
+
+export function deepPatch(source, nextSourceValue) {
+  invariant(typeEqual(source, nextSourceValue), 'computed should always return same tyep')
+
+  if (isRef(source)) {
+    source.value = nextSourceValue
+  } else if (Array.isArray(source)){
+    // 先删掉多的
+    source.splice(nextSourceValue.length)
+    nextSourceValue.forEach((nextValue, index) => {
+      replaceObjectLikeValue(source, index, nextValue)
+    })
+  } else if (isPlainObject(nextSourceValue)){
+    const nextKeys = Object.keys(nextSourceValue)
+    const keysToDelete = Object.keys(source).filter(k => !nextKeys.includes(k))
+    // 先删掉多余的
+    keysToDelete.forEach(k => delete source[k])
+    nextKeys.forEach(nextKey => {
+      const nextValue = nextSourceValue[nextKey]
+      replaceObjectLikeValue(source, nextKey, nextValue)
+    })
+  } else if (source instanceof Map) {
+    // TODO 这里其实也没法，因为 key 可能是对象，引用会变。
+    const nextKeys = Array.from(nextSourceValue.keys())
+    const keysToDelete = Array.from(source.keys()).filter(k => !nextKeys.includes(k))
+    // 先删掉多余的
+    keysToDelete.forEach(k => source.delete(k))
+    nextKeys.forEach(nextKey => {
+      const nextValue = nextSourceValue.get(nextKey)
+      replaceObjectLikeValue(source, nextKey, nextValue)
+    })
+  } else if (source instanceof Set) {
+    // TODO 这里没法深度
+    source.clear()
+    nextSourceValue.forEach(n => source.add(n))
+  } else {
+    invariant(false, 'unknown computed value')
   }
 }
 

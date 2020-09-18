@@ -67,7 +67,7 @@ export {
 } from './effect'
 
 import { createComputed } from './effect'
-export const computed = createComputed
+export const computed = (computation, shallow) => createComputed(computation, undefined, shallow)
 
 export function isReactiveLike(obj) {
   return isReactive(obj) || isRef(obj)

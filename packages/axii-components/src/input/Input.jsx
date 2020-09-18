@@ -21,7 +21,7 @@ export function Input({value, onChange, children}, fragments) {
 	const prefixLikeProps = {
 		'flex-display-inline': true,
 		'flex-align-items-center': true,
-		'inline-padding': `0 ${scen().spacing()}px `
+		'inline-padding': `0 ${scen().spacing()}px`
 	}
 
 	const prefixVnode = fragments.prefix()(() => {
