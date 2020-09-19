@@ -17,7 +17,7 @@ const location = useLocation()
  * 3: button/tag/spin/progress
  *
  * 必须/总数 : 21/33
- * 已完成 : 17/21
+ * 已完成 : 18/21
  */
 const availablePlayground = {
   Form: [
@@ -40,7 +40,7 @@ const availablePlayground = {
     'tabs', // x
     'calendar', // x
     'tree',  // 5
-    // 以上是常用必须的 6
+    // 以上是常用必须的
     'collapse',
     'tooltip',
     'timeline',
@@ -51,7 +51,7 @@ const availablePlayground = {
   Dialog: [
     // 'modal', 直接使用 useLayer 即可
     'message', // x
-    // 以上是常用必须的 3
+    // 以上是常用必须的
     'spin',
     'alert',
     'notification',
@@ -60,13 +60,13 @@ const availablePlayground = {
   Navigation: [
     'menu', // x
     'pagination', // 2
-      // 以上是常用必须的 3
+      // 以上是常用必须的
     'breadcrumb',
     'steps',
     'affix'
   ],
   Misc: [
-    'button', // 6
+    'button', // x
     'icon', // x
   ],
   Layout: [

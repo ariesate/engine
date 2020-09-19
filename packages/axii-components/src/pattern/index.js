@@ -84,6 +84,9 @@ const INDEX = {
   }
 }
 
+// 正色是黑色
+// 主色是蓝色
+// 反色不管什么情况都是白色
 
 const valueRules = {
   // 颜色类，受交互状态、反色等规则影响。
@@ -101,13 +104,13 @@ const valueRules = {
      *
      */
     const matrix = [
-      [undefined, undefined, undefined, undefined, undefined, colors.black(offset)],
-      [undefined, INDEX.stressed, undefined, undefined, undefined, colors.black(1 + offset)],
-      [INDEX.interactable, undefined, INDEX.inverted, INDEX.active.active, undefined, colors.white()], // 反色
-      [INDEX.interactable, undefined, undefined, undefined, undefined, colors.black(offset)], // 正色正常状态
-      [INDEX.interactable, undefined, undefined, INDEX.active.active, undefined, colors[color](offset)], // 正色常亮状态
-      [INDEX.interactable, undefined, undefined, INDEX.active.inactive, undefined, colors.gray()], // 正色 disable 状态
-      [INDEX.interactable, undefined, undefined, INDEX.active.active, INDEX.interact, colors[color](-1 + offset)], // 正色 interacting 状态
+      [undefined, undefined, undefined, undefined, undefined, colors.black(offset)],  // 正常情况下是褐色
+      [undefined, INDEX.stressed, undefined, undefined, undefined, colors.black(1 + offset)], // 强调的时候黑色变深
+      [INDEX.interactable, undefined, INDEX.inverted, undefined, undefined, colors.white()], // 反色
+      [INDEX.interactable, undefined, undefined, undefined, undefined, colors.black(offset)], // 可交互时，默认颜色是正色
+      [INDEX.interactable, undefined, undefined, INDEX.active.active, undefined, colors[color](offset)], // 可交互并且激活时，显示的是主色。
+      [INDEX.interactable, undefined, undefined, INDEX.active.inactive, undefined, colors.gray()], // 可交互，但未激活是灰色
+      [INDEX.interactable, undefined, undefined, INDEX.active.active, INDEX.interact, colors[color](-1 + offset)], // 可交互，激活，正在交互时，主色变浅一点。
     ]
 
     return matrixMatch([interactable, stress, inverted, active, interact], matrix)
@@ -124,11 +127,12 @@ const valueRules = {
      *     1.2.1 常亮 primary | 正常 primary | disabled 灰色。常亮和正常下还要判断 interacting
      *     1.2.1.1 interacting 是 变亮一点。否，正常
      */
+    console.log(color)
     const matrix = [
       [undefined, undefined, undefined, 'transparent'],
       [undefined, INDEX.active.active, undefined, colors.white()],
       [INDEX.inverted, undefined, undefined, colors[color]()],
-      [INDEX.inverted, INDEX.active.inactive, undefined, colors.gray()],
+      [INDEX.inverted, INDEX.active.inactive, undefined, colors[color](-3)],
       [INDEX.inverted, INDEX.active.active, undefined, colors[color]()],
       [INDEX.inverted, undefined, INDEX.interact, colors[color](-1)],
       [INDEX.inverted, INDEX.active.active, INDEX.interact, colors[color](-1)],

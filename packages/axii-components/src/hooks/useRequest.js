@@ -62,7 +62,6 @@ export function createUseRequest(instance, { createReactiveData = () => ({}), pr
 					processError(values, error)
 				})
 			}).finally(() => {
-				console.log("loading false")
 				loading.value = false
 			})
 		}

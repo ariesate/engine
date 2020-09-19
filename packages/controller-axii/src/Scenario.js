@@ -10,8 +10,8 @@ export default class Scenario {
   constructor(index, values) {
     // 获取指的函数
     Object.keys(values).forEach((name) => {
-      this[name] = (offset) => {
-        return values[name](this.rules, offset)
+      this[name] = (...argv) => {
+        return values[name](this.rules, ...argv)
       }
     })
 
@@ -48,15 +48,15 @@ export function createRange(values, baseIndex) {
 // 这里有个 fallback，如果没有完全 match，那么就选 match 最多的哪一个
 export function matrixMatch(conditionValues, matrix) {
   let match
-  matrix.forEach(thisConditionValues => {
+  matrix.forEach(conditionValuesInMatrix => {
     let exactMatch = 0
     const passed = conditionValues.every((conditionValue, i) => {
-      if (thisConditionValues[i] === conditionValue) exactMatch += 1
-      return conditionValue === undefined || thisConditionValues[i] === conditionValue
+      if (conditionValuesInMatrix[i] === conditionValue) exactMatch += 1
+      return conditionValuesInMatrix[i] === undefined || conditionValuesInMatrix[i] === conditionValue
     })
 
     if (passed && (!match || match.exactMatch < exactMatch)) {
-      match = { exactMatch, result: thisConditionValues[thisConditionValues.length -1] }
+      match = { exactMatch, result: conditionValuesInMatrix[conditionValuesInMatrix.length -1] }
     }
   })
 

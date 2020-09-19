@@ -118,6 +118,8 @@ function createInjectedProps(cnode) {
 	const { props, localProps } = cnode
 	const { propTypes: thisPropTypes } = cnode.type
 
+	const fixedProps = {}
+
 	Object.entries(thisPropTypes || {}).forEach(([propName, propType]) => {
 		if (!(propName in props)) {
 			// 这里和 propTypes 有约定，每次读 defaultValue 时都会用定义的 createDefaultValue 创造新的对象，
@@ -125,19 +127,27 @@ function createInjectedProps(cnode) {
 			if (propType.createDefaultValue) {
 				localProps[propName] = propType.createDefaultValue({...props, ...localProps})
 			}
+		} else if (!isReactiveLike(props[propName])) {
+			// 对值对象中的简单类型，"数字、文字、bool"，还要包装成 ref 的形式。
+			// 对传入固定值(非 reactive 值)，比如 bool/number 等的 prop 进行包装，兼容 reactive 格式。
+			// 后面 patch 的时候会判断，对于非 reactive 的值，都当做是固定值，不进行 patch
+			fixedProps[propName] = isNaivePropType(propType) ? { value: props[propName] } : props[propName]
 		}
 	})
 
-	const mergedProps = { ...props, ...localProps }
+
+	const mergedProps = { ...props, ...localProps, ...fixedProps }
+
 	// 对两种类型props 特殊处理：
-	// 1. 随 smartProp 进行回调处理
-	// 2. 开始对其中的 mutation 回调 prop 进行注入。
+	// 2. 随 smartProp 进行回调处理
+	// 3. 开始对其中的 mutation 回调 prop 进行注入。
 	const transformedProps = mapValues(thisPropTypes || {}, (propType, propName) => {
 		const prop = mergedProps[propName]
+		if (!propType) return prop
 		if (isSmartProp(prop)) return prop(propType, propName)
 
 		// 下面只针对 callback 类型进行处理
-		if (!propType || !propType.is(propTypes.callback)) return prop
+		if (!propType.is(propTypes.callback)) return prop
 		return (event, ...restArgv) => {
 			// CAUTION 参数判断非常重要，用户既有可能把这个函数直接传给 onClick 作为回调，也可能在其他函数中手动调用。
 			// 当直接传给事件回调时，由于事件回调会补足 event，而我们不需要，因此在这里判断一下。
@@ -177,8 +187,10 @@ function createInjectedProps(cnode) {
 			if (shouldStopApply) {
 				activeEvent.preventCurrentEventDefault()
 			} else {
-
-				applyPatches([...runtimeArgv, valueProps], draftChanges)
+				// 还要过滤掉 valueProps 里面的 fixed 的。应该在 applyPatches 里面判断，只要不是 reactive 的值，就是固定的，就不应该修改。
+				const values = [...runtimeArgv, valueProps]
+				const changesExcludeFixedValues = filterFixedValueChanges(draftChanges, values)
+				applyPatches(values, changesExcludeFixedValues)
 			}
 		}
 
@@ -202,4 +214,26 @@ export function createSmartProp(callback) {
 
 export function isSmartProp(prop) {
 	return typeof prop === 'function' && prop.isSmart
+}
+
+
+function isNaivePropType(propType) {
+	return propType.is(propTypes.string)
+		|| propType.is(propTypes.bool)
+		|| propType.is(propTypes.number)
+}
+
+function filterFixedValueChanges(changes, values) {
+	// values 的最后一位是 draftProps,
+	const propsIndex = values.length - 1
+	const props = values[propsIndex]
+	return changes.filter(({ path }) =>{
+		// 去掉最前面的 '/'
+		const pathArr = path.slice(1).splice('/')
+		if (pathArr[0] === propsIndex.toString()) {
+			return isReactiveLike(props[pathArr[1]])
+		} else {
+			return isReactiveLike(values[pathArr[0]])
+		}
+	})
 }
