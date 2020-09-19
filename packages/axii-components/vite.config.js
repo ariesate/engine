@@ -75,6 +75,9 @@ module.exports = {
   cssPreprocessOptions: {
     less: { javascriptEnabled: true }
   },
+	optimizeDeps: {
+  	include: ['axios']
+	},
   define: {
     __DEV__: true
   }

@@ -105,7 +105,7 @@ export function Table( { data, pagination, columns }, fragments) {
         {fragments.rows({ columnCount })(() => {
           return data.map((row) => (
             fragments.row({ row })(() => (
-              <tr data={row}>
+              <tr>
                 {fragments.cells({row})(() => {
                   const cells = []
                   walkLeaf(columns, (column) => {

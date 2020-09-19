@@ -13,7 +13,7 @@ export function defaultNormalizeLeaf(rawChild) {
     // Array 要把 raw 传过去。arrayComputed 要用。TODO 怎么更优雅一定
     child = { type: Array, children: rawChild.map(defaultNormalizeLeaf), raw:rawChild }
     // child = { type: Array, children: normalizeChildren(rawChild)}
-  } else if (typeof rawChild === 'number' || typeof rawChild === 'string') {
+  } else if (typeof rawChild === 'number' || typeof rawChild === 'string' || typeof rawChild === 'boolean') {
     child = { type: String, value: rawChild.toString() }
   }
 

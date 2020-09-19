@@ -72,7 +72,7 @@ export default function FeatureExpandable(fragments) {
 
 // 默认等于 match。
 FeatureExpandable.propTypes = {
-  expandedRowRender: propTypes.func,
+  expandedRowRender: propTypes.function,
   expandedRowKeys: propTypes.array,
 }
 

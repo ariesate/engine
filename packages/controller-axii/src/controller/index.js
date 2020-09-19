@@ -192,6 +192,7 @@ export default function createAxiiController() {
 			// 2. 普通组件
 			const [layoutProps, originLayoutProps] =layoutManager.processLayoutProps(cnode.props)
 
+			// 把 cnode 上面的 layout props 穿透到渲染出来后的第一层上。如果第一层还是组件，那么还要穿透。
 			if (layoutProps) {
 				if(isComponentVnode(result)) {
 					result.attributes = Object.assign({}, result.attributes, originLayoutProps)

@@ -3,7 +3,6 @@
  * 理论上用 playground.jsx 会更好。
  */
 import { createElement, render, reactive, ref } from 'axii'
-import queryString from 'querystringify';
 import Menu from './src/menu/Menu'
 import useLocation from "./src/hooks/useLocation";
 import './src/style/global.less'
@@ -18,7 +17,7 @@ const location = useLocation()
  * 3: button/tag/spin/progress
  *
  * 必须/总数 : 21/33
- * 已完成 : 14/19
+ * 已完成 : 17/21
  */
 const availablePlayground = {
   Form: [
@@ -52,8 +51,8 @@ const availablePlayground = {
   Dialog: [
     // 'modal', 直接使用 useLayer 即可
     'message', // x
-    'spin',
     // 以上是常用必须的 3
+    'spin',
     'alert',
     'notification',
     'progress'
@@ -77,11 +76,12 @@ const availablePlayground = {
     'useForm', // x
     'useLayer', // x
     'usePopover', // x,
-    'useRouter', // 1
-    'useRequest', // 4
+    'useRouter', // x,
+    'useRequest', // x
+    'useLocation', // x
     // 以上是常用必须的
     'useHistory',  // 整合 history
-    'useLocation' // x
+
   ]
 }
 

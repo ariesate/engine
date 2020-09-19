@@ -3,19 +3,6 @@ import { createElement, computed, Fragment } from 'axii'
 import { match, pathToRegexp } from "path-to-regexp";
 import useLocation from "./useLocation";
 
-// TODO 只要叶子节点
-function flattenRoutes(routes, parent) {
-	const childrenRoutes = []
-	const result = []
-
-	routes.forEach(({ path, routes: childRoutes, component}) => {
-		result.push({ path, component })
-		if (routes) childrenRoutes.push(...routes)
-	})
-
-	return result.concat(childrenRoutes.length ? flattenRoutes(childrenRoutes) : [])
-}
-
 
 /**
  * routes：
@@ -26,13 +13,6 @@ function flattenRoutes(routes, parent) {
  *   redirect: ''
  * }]
  *
- * 基本实现原理：
- * 1. 递归匹配 route。递归建立节点。
- * 2. 每一层的节点应该都只监听自己这一层的 path 变化，如果变化了，就更新切换组件。
- * 应该有个 path 数组，用来进行递归渲染。
- *
- *
- *
  */
 export default function useRouter(routes, NotFound, location = useLocation()) {
 
@@ -41,7 +21,6 @@ export default function useRouter(routes, NotFound, location = useLocation()) {
 	// 3. 开始递归建立 component。传入一个 level。
 	// 4. 每段都只去读自己 level 的 component 和 params。
 	// 5. "需要一个 startUpdateSession ？？？，否则如果乳腺多层都变化的话，会怎样？？？" 内部的 vnodeComputed 会被上层销毁。
-	//
 	const matches = computed(() => {
 		const result = []
 

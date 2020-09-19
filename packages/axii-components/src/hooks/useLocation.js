@@ -44,7 +44,7 @@ function callTypeTransformers(query, transformers, isToString = false) {
 }
 
 export default function useLocation(
-	typeTransformers = {},
+	typeTransformers,
 	history = defaultHistory,
 	parse = defaultParseSearch,
 	stringify = defaultStringifySearch
@@ -82,6 +82,11 @@ export default function useLocation(
 					...callTypeTransformers(partial, typeTransformers, true), // 可以用 undefined 来清除
 				}),
 			});
+			console.log(111111, callTypeTransformers(partial, typeTransformers, true))
+			console.log(stringify({
+				...parse(history.location.search), // 原来的
+				...callTypeTransformers(partial, typeTransformers, true), // 可以用 undefined 来清除
+			}))
 			debounceComputed(() => Object.assign(reactiveValues.query, partial))
 		},
 		goto(url) {
