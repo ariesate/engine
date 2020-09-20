@@ -32,7 +32,6 @@ export function DatePicker({focused, onFocus, onBlur, value, onChange, format,})
     }
   }
 
-  // TODO 样式
   const {source, node: calendar} = useLayer(
     <calendarContainer
       inline

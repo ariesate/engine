@@ -12,7 +12,6 @@ export default function useFocus(onFocus, onBlur) {
   function createSourceProxy() {
     return new Proxy({}, {
       set(target, name, nextRef) {
-        // TODO 要不要检测 ref 有父子关系？因为我们用的 focusIn 事件，会冒泡，父子会执行多次。
         invariant(name === 'current', `cannot set ${name} on ref`)
 
         if (target.current) {

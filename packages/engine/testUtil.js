@@ -31,8 +31,6 @@ function isSubset(styles, computedStyle) {
   )
 }
 
-
-
 export function partialMatch(inputDomNodes, inputVnode) {
   const isArray = Array.isArray(inputVnode)
   const vnodes = isArray ? inputVnode : [inputVnode]

@@ -60,7 +60,6 @@ Menu.propTypes = {
 	activeKey: propTypes.string.default(() => ref())
 }
 
-// TODO 样式
 Menu.Style = (fragments) => {
 
 	fragments.item.elements.expand.style({

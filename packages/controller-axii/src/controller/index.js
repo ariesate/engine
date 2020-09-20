@@ -276,6 +276,12 @@ export default function createAxiiController() {
 		viewInterfaces: {
 			// 调用 listener。
 			invoke: (fn, e) => {
+				// CAUTION removeChild 会触发 onBlur 事件，这不是我们想要的情况。
+				if (!document.body.contains(e.target)) {
+					console.warn('element is remove, should not call callbacks', e)
+					return false
+				}
+
 				scheduler.startUpdateSession(() => {
 					activeEvent.withEvent(e, () => {
 						fn(e)

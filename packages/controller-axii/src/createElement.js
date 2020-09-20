@@ -24,7 +24,7 @@ export function stopReplaceFunction() {
 
 export default function createElement(...argv) {
 	const vnode = methods.createElement(...argv)
-	// TODO 这是为了让 createComponent 中的 Feature 仍然能够按照 props 的方式去操作。
+	// CAUTION 这是为了让 createComponent 中的 Feature 仍然能够按照 props 的方式去操作。
 	// 理论上应该是对 render result 生成 proxy 处理，这里是快速实现，之后修改。
 	if (vnode.attributes) {
 		vnode.props = vnode.attributes

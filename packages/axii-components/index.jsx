@@ -9,7 +9,6 @@ import './src/style/global.less'
 
 const location = useLocation()
 
-// TODO 优先级标记
 /**
  * 0: form/form-items
  * 1: table/tree/calendar/modal/message

@@ -3,7 +3,7 @@ const { ref } = require('../reactive/index.js')
 import $ from 'jquery'
 
 describe('component', () => {
-  test('listener of propType callback', () => {
+  test('listener of callback propType ', () => {
     function App({ name, onChange }) {
       return <div onClick={onChange}>{name}</div>
     }
@@ -25,7 +25,7 @@ describe('component', () => {
     expect(root.children[0]).toHaveTextContent('john1')
   })
 
-  test('with user listener', () => {
+  test('user listener should work', () => {
     function App({ name, onChange }) {
       return <div onClick={onChange}>{name}</div>
     }
@@ -52,7 +52,7 @@ describe('component', () => {
     expect(root.children[0]).toHaveTextContent('john12')
   })
 
-  test('user listener preventDefault', () => {
+  test('user listener can preventDefault', () => {
     function App({ name, onChange }) {
       return <div onClick={onChange}>{name}</div>
     }
@@ -78,7 +78,7 @@ describe('component', () => {
     expect(root.children[0]).toHaveTextContent('john')
   })
 
-  test('user props', () => {
+  test('pass reactive props to component', () => {
     function App({ name, onChange }) {
       return <div onClick={onChange}>{name}</div>
     }
@@ -109,4 +109,30 @@ describe('component', () => {
 
   })
 
+  test('pass non-reactive props to component', () => {
+
+    function App({ name, onChange }) {
+      return <div onClick={onChange}>{name}</div>
+    }
+
+    App.propTypes = {
+      name: propTypes.string.default(() => ref('john')),
+      onChange: propTypes.callback.default(() => ({ name }) => {
+        name.value = `${name.value}1`
+      })
+    }
+
+    const root = document.createElement('div')
+    const userName = 'tom'
+
+    render(<App name={userName}/>, root)
+
+    // 默认值
+    expect(root.children[0]).toHaveTextContent('tom')
+
+    $(root.children[0]).click()
+    expect(root.children[0]).toHaveTextContent('tom')
+  })
+
 })
+

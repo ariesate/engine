@@ -7,7 +7,7 @@ import * as antColors from '@ant-design/colors';
  * values: 具体的常量值
  *
  * base: 从各个 values 中选出的基准值。包括
- * color TODO 有各种场景？线的场景，font 正反色的场景，怎么算？？？
+ * color
  *
  * font: {
  *   family,

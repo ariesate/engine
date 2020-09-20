@@ -53,7 +53,7 @@ function findMatch(options, pathname, ancestors) {
 
 		const matchResult = pathToRegexp(pathToMatch, paramsKeys).exec(pathnameWithSlash)
 		if (matchResult) {
-			// TODO 处理 params
+
 			const [url, ...matchedParamValues] = matchResult
 			// 最后一个是我们添加的 (.*)
 			const rest = matchedParamValues.pop()
@@ -79,7 +79,7 @@ function findMatch(options, pathname, ancestors) {
 	}
 }
 
-// TODO 这种情况如何更快调试？？ 需要知道为什么自己渲染了！！！！
+
 function renderMatchedComponent(matches, currentIndex, NotFound) {
 
 	// if (currentIndex === 0) debugger

@@ -80,8 +80,18 @@ export function toRaw(observed) {
  * ref
  **************************/
 
-export function isRef(r){
-  return r ? r._isRef === true : false
+export function isRef(r, strict){
+  if (!r) return false
+  return strict ? r._isRef === true : (r._isRef === true || r._isRefLike === true)
+}
+
+// 用于伪造 refLike 的数据，可以通过 isRef 的校验
+// 框架里面需要保持数据格式一致，例如组件既可以接受 ref，也可以接受固定值，所以有这个需求。
+export function refLike(value) {
+  return {
+    _isRefLike: true,
+    value
+  }
 }
 
 export function ref(raw) {

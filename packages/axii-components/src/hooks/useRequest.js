@@ -29,7 +29,6 @@ export function createUseRequest(instance, { createReactiveData = () => ({}), pr
 			error.value = null
 			status.value = undefined
 
-			// TODO 怎么合并 runtime argv
 			instance(Object.assign({}, config, argv), {
 				cancelToken: source.token
 			}).then(response => {

@@ -147,11 +147,13 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
   })
 
   /**
-   * TODO 当前没处理完的 toInsert, 说明一直没有没有 remain 节点。
-   *  这时候插到 currentLastStableSibling 的后面。
-   *  如果也没有，既不能插到最后面: 后面可能还有 数组
-   *  也不能插到最前面: 前面有。
-   *  只要是当前组件返回的是个数组就会出现找不到头尾的情况。
+   * 如果当前没处理完的 toInsert, 说明一直没有碰到 remain 节点。
+   * 这时候有几种情况：
+   * 1. 如果是组建的顶层节点，那么 currentLastStableSiblingNode 就是自己的 startPlaceholder
+   * 2. 如果是某层级下的第一个节点，前面没有兄弟节点，那么没有 currentLastStableSiblingNode，parentNode.childNodes[0]，也没有，
+   * 调用 insertBefore 会将其自动插入到该层级中。
+   * 3. 如果是某层架下，非第一个节点。那么前面的节点在处理的时候会一致更新 currentLastStableSiblingNode 为处理过的最后一个。插在后面就好了。
+   * 以上情况就完备了。
    */
   if (toInsert.childNodes.length !== 0) {
     parentNode.insertBefore(toInsert, currentLastStableSiblingNode ? currentLastStableSiblingNode.nextSibling : parentNode.childNodes[0])

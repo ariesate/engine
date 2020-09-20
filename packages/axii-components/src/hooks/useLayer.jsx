@@ -60,11 +60,13 @@ export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), 
     {typeof nodeInPortal === 'function' ? nodeInPortal(sourceRef) : nodeInPortal}
   </portal>, portalRoot)
 
-  // TODO 这里有很大问题， node 必须在 button 前面渲染。不然 button 收到 ref 时会触发 node style 变化。
+
 
 
   return {
     source: inputSourceRef ? undefined : (ref) => {
+      // TODO 为什么要 nextick。因为立即 sourceRef 是 reactive，一但挂载，马上就会出发 style 重新计算。
+      // 而此时是处于 digestCallback 里，不允许触发。
       nextTick(() => {
         sourceRef.current = ref
       })

@@ -1,4 +1,4 @@
-import {destroyComputed, isReactiveLike} from "../reactive";
+import {destroyComputed, isReactiveLike, refLike} from "../reactive";
 import { isComputed, getComputation, collectComputed, afterDigestion } from '../reactive/effect';
 import {filter, invariant, mapValues, tryToRaw} from "../util";
 import propTypes from "../propTypes";
@@ -131,7 +131,7 @@ function createInjectedProps(cnode) {
 			// 对值对象中的简单类型，"数字、文字、bool"，还要包装成 ref 的形式。
 			// 对传入固定值(非 reactive 值)，比如 bool/number 等的 prop 进行包装，兼容 reactive 格式。
 			// 后面 patch 的时候会判断，对于非 reactive 的值，都当做是固定值，不进行 patch
-			fixedProps[propName] = isNaivePropType(propType) ? { value: props[propName] } : props[propName]
+			fixedProps[propName] = isNaivePropType(propType) ? refLike(props[propName]) : props[propName]
 		}
 	})
 
@@ -189,7 +189,9 @@ function createInjectedProps(cnode) {
 			} else {
 				// 还要过滤掉 valueProps 里面的 fixed 的。应该在 applyPatches 里面判断，只要不是 reactive 的值，就是固定的，就不应该修改。
 				const values = [...runtimeArgv, valueProps]
+				debugger
 				const changesExcludeFixedValues = filterFixedValueChanges(draftChanges, values)
+
 				applyPatches(values, changesExcludeFixedValues)
 			}
 		}
@@ -229,11 +231,10 @@ function filterFixedValueChanges(changes, values) {
 	const props = values[propsIndex]
 	return changes.filter(({ path }) =>{
 		// 去掉最前面的 '/'
-		const pathArr = path.slice(1).splice('/')
-		if (pathArr[0] === propsIndex.toString()) {
-			return isReactiveLike(props[pathArr[1]])
+		if (path[0] === propsIndex) {
+			return isReactiveLike(props[path[1]])
 		} else {
-			return isReactiveLike(values[pathArr[0]])
+			return isReactiveLike(values[path[0]])
 		}
 	})
 }
