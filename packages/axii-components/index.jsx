@@ -16,7 +16,7 @@ const location = useLocation()
  * 3: button/tag/spin/progress
  *
  * 必须/总数 : 21/33
- * 已完成 : 18/21
+ * 已完成 : 19/21
  */
 const availablePlayground = {
   Form: [
@@ -58,7 +58,7 @@ const availablePlayground = {
   ],
   Navigation: [
     'menu', // x
-    'pagination', // 2
+    'pagination', // x
       // 以上是常用必须的
     'breadcrumb',
     'steps',
