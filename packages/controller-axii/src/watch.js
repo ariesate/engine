@@ -4,7 +4,7 @@ import { TYPE } from './reactive/effect';
 export function watchOnce(computation, callback) {
   let result
   let isFirstRun = true
-  const token = createComputed((watchAnyMutation) => {
+  const token = createComputed((lastValue, watchAnyMutation) => {
     if (isFirstRun) {
       result = computation(watchAnyMutation)
       isFirstRun = false
@@ -19,7 +19,7 @@ export function watchOnce(computation, callback) {
 export default function watch(computation, callback) {
   let result
   let isFirstRun = true
-  const token = createComputed((watchAnyMutation) => {
+  const token = createComputed((lastValue, watchAnyMutation) => {
     if (isFirstRun) {
       result = computation(watchAnyMutation)
       isFirstRun = false

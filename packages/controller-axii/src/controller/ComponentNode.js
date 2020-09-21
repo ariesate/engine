@@ -189,7 +189,6 @@ function createInjectedProps(cnode) {
 			} else {
 				// 还要过滤掉 valueProps 里面的 fixed 的。应该在 applyPatches 里面判断，只要不是 reactive 的值，就是固定的，就不应该修改。
 				const values = [...runtimeArgv, valueProps]
-				debugger
 				const changesExcludeFixedValues = filterFixedValueChanges(draftChanges, values)
 
 				applyPatches(values, changesExcludeFixedValues)

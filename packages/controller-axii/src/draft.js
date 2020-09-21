@@ -40,7 +40,7 @@ export function draft(computedTarget) {
 
   const computeMethod = isRefComputed ? refComputed : computed
 
-  const displayValue = computeMethod((watchAnyMutation) => {
+  const displayValue = computeMethod((lastValue, watchAnyMutation) => {
     watchAnyMutation(draftValue)
     watchAnyMutation(computedTarget)
     const draftMutationTime = mutationTimeTable.get(draftValue)

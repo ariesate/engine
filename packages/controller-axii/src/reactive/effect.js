@@ -7,7 +7,7 @@ import {
   typeEqual,
   isCollectionLike
 } from './util';
-import { invariant } from '../util';
+import {invariant, tryToRaw} from '../util';
 import { isRef, reactive, ref, toRaw } from './reactive';
 import { TrackOpTypes, TriggerOpTypes } from './operations'
 import { isReactiveLike } from './index';
@@ -166,7 +166,7 @@ function applyComputation() {
     track(toRaw(source), TrackOpTypes.ANY, ANY_KEY)
   }
 
-  const nextValue = computation(watchAnyMutation)
+  const nextValue = computation(tryToRaw(computation.computed), watchAnyMutation)
 
   // 第一创建的时候，如果用户没有指定类型，那么就要让框架来根据类型自动创建
   if (computation.computed === undefined) {
@@ -174,6 +174,7 @@ function applyComputation() {
   } else if(!isToken) {
     // 未来可能提供能力让 computed token 可以销毁自己。所以这里的 isToken 变量要在前面定义，否则到这里的时候 computation 已经被清理得差不多了
     if (computation.type === TYPE.REF || computation.shallow) {
+      // TODO 支持自定义的 patch???
       replace(computation.computed, nextValue)
     } else {
       deepPatch(computation.computed, nextValue)

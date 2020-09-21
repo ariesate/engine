@@ -16,10 +16,7 @@ function transName(type, theme) {
 
 export default function Icon({ type, size=14, unit='px', color='#000', theme='outlined' }) {
   const iconDef = icons[transName(type, theme)]
-  console.log( renderIconDefinitionToSVGElement(
-    icons.AccountBookFilled,
-    { extraSVGAttrs: { width: '1em', height: '1em', fill: 'currentColor' } }
-  ))
+
   return createAXIIElement({
     ...iconDef.icon,
     attrs: {

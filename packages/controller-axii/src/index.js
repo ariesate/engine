@@ -44,7 +44,7 @@ export { default as useContext } from './useContext'
 export { default as batchOperation } from './batchOperation'
 
 export function render(vnode, domElement, ...controllerArgv) {
-  const controller = createAxiiController(...controllerArgv)
+  const controller = createAxiiController(domElement, ...controllerArgv)
 
   const view = createDOMView(controller.viewInterfaces, domElement, controller.interceptViewActions)
   const painter = createPainter(
