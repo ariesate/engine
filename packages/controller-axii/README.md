@@ -69,26 +69,3 @@ computed((memo) => {
 
 3. 如果把列表的新增，和创建 computed 的过程都手动维持，那么可能出现数据不一致的情况。需要一个更好的性能优化方案。保持数据的一致性优先。
 
-# AXII 的官网设计
-
- - 完全无样式的简介
- - 好看的字体
- - 非常简短的教程和效果直接放在首页。
-   - 数据如何放在视图上，如何自动关联(直接操作数据即可)
-     - ref 和 各种 computed ？
-     - 动态的结构？
-   - 组件的获得数据引用后直接修改的实现？上层可以阻止的实现。（这里就要将组件和和上层逻辑的区别了）？？？
-   - 组件系统要单独讲？
-     - 组件的 layout system 分离？
-       - layout manager
-       - scenario
-     - feature based 体系？
-     - listener 自动实现 controlled 和 uncontrolled
-   - 数据的高级应用 
-     - draft
-     - toReactive
-     - do not use watch/ make everything reactive
-     - use with rxjs
-     - 性能提升
-       - batchOperation
-       - debounceComputed

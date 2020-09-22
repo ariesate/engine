@@ -87,10 +87,14 @@ const availablePlayground = {
 function Choose() {
   const current = ref(location.query.component)
 
+  window.getCurrent = () => current
+
   const onChange = (next) => {
     current.value = next
     location.patchQuery({ component: next })
   }
+
+
 
   return (
     <div block block-display-flex block-height="100%" block-padding-top-10px>

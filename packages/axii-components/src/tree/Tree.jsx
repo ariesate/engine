@@ -25,7 +25,7 @@ import scen from '../pattern'
  */
 const TreeFeature = (fragments) => {
 	fragments.item.modify((result, { item, level, data, onSelect}) => {
-		result.children[0].children.unshift(<checkbox use={Checkbox} onChange={({ value }) => onSelect(value.value)}/>)
+		result.children[0].children.splice(1, 0, <checkbox use={Checkbox} onChange={({ value }) => onSelect(value.value)}/>)
 	})
 }
 

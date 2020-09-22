@@ -1,0 +1,8 @@
+{
+  "name":"Axii devtools",
+  "version":"0.0.1",
+  "manifest_version": 2,
+  "description":"Axii devtools",
+  "permissions":[],
+  "devtools_page": "devtools.html"
+}
