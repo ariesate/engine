@@ -39,6 +39,49 @@ chrome.inspectedWindow.eval('inspect(xxx)')
 
 ## TODO
 
+- 设计用于查看的数据结构。还要考虑 default 创建的数据。
+
+1. 当前数据的名字(倒是不重要，因为已经找到了)
+2. 所有依赖的数据的名字
+ - 如果是上层通过 const xxx = computed() 定义的，那么就会有名字。axii::reactive::getComputation.name 可拿到
+ - 如果是上层通过 propTypes 定义的，那么没有名字。可以想办法赋予名字，在 create 的时候。done，通过 axii::reactive::getDisplayName 可拿到
+ - 如果是上层局部通过 const xxx = ref()/reactive 定义的，那么也没有名字。TODO 需要 plugin。
+
+
+3. 依赖的数据是谁创建的。定位到创建之处。怎么传递过来的是否要显示？？？
+ - 如果是 const xxx = computed 或者 propTypes 创建的，只要拿到 computation 即可定位。done。通过 axii::reactive::getComputation 可拿到
+ - 如果是 ref。现在没有办法定位，需要主动收集。done. 通过 axii::renderContext::reactiveToOwnerScope 可拿到。
+  
+4. 是"谁"改变触发的当前重新计算。
+ - 可以记录触发改变的事件，但没什么意义，当前调试的时候基本已经知道。done
+ - 可以在当前 loop 下，记录 indep 哪些改变，树状的源头就是改变的。TODO 
+  某个嵌套对象下的部分发生了变化怎么算呢？？？这种情况只有源头可能出现，source。
+  其他 computed 的情况，肯定是走一遍 source。只不过可能有的字段没有变化。
+  怎么收集这个信息？？？现在没有这个信息其实也能用了。
+
+
+
+===============
+
+1. 没有断点的时候, axii 其实没有显示的必要。如何判断自己处于断点中？？？
+似乎没有 api 判断。那么让用户我们注入的 $debug(computed) 来上报。
+找到 debug 的事件是最好的！！！！只有在 debug 的时候， axii 才有显示的必要
+
+
+1. 注入的 $debug 能调用 debug 吗？如果能的话就不用麻烦的通信了可以做到
+2. $debug:
+  1. 上报当前的 computed.
+  2. 找到 computed 的 computation 和所有的 indep。
+  3. 设置 debug。这里 indep 会变啊。必须每次 computation 计算完之后都同步消息一下。
+  
+ 
+TODO 
+1. 规划从 page -> content script -> background script -> panel script 的机制。
+2. 规划分 tab 的数据结构
+3. 规划从 page -> panel script 的时机。 
+
+ 
+
 - axii 需要有个 global_hook。
 - devtools 打开的时候，设置这个 hook，用于让 axii 上报自己的计算状态。
 - axii 在每次 computed 计算的时候都上报自己正在计算的事件。（数据结构可以自己主动获取。）

@@ -1,8 +1,7 @@
-import {destroyComputed, isReactiveLike, refLike} from "../reactive";
-import { isComputed, getComputation, collectComputed, afterDigestion } from '../reactive/effect';
+import {destroyComputed, isReactiveLike, refLike, collectReactive, setDisplayName, getComputation} from "../reactive";
 import {filter, invariant, mapValues, tryToRaw} from "../util";
 import propTypes from "../propTypes";
-import {activeEvent} from "../renderContext";
+import {activeEvent, reactiveToOwnerScope} from "../renderContext";
 import {applyPatches, produce} from "../produce";
 import { replaceVnodeComputedAndWatchReactive } from './VirtualComponent'
 import watch from "../watch";
@@ -24,12 +23,17 @@ export default class ComponentNode {
 		this.computed = []
 	}
 	// 组件 render 的过程中产生的所有 computed 都要收集起来！computed 是需要手动销毁的。
-	collectComputed(operation) {
+	collectReactive(operation, scope) {
 		let result
-		const innerComputedArr = collectComputed(() => {
+		const [sources, innerComputedArr] = collectReactive(() => {
 			result = operation()
 		})
+		// 收集 computed, 之后组件更新要主动销毁
 		this.computed.push(...innerComputedArr)
+		// 收集 source, 主要是用来给 devtools 用的
+		// 有可能没 scope，例如 render 中创建的 watch 也用了收集，但不会创建用户需要的 ref，所以会不传第二参数。
+		if (scope) sources.forEach(source => reactiveToOwnerScope.set(source, scope))
+
 		return result
 	}
 	// AXII lifeCycle: 在 supervisor 中发现是 toInitialize 的节点时调用
@@ -57,7 +61,7 @@ export default class ComponentNode {
 		 * 3. 对 reactive props 进行的 watch。
 		 */
 		this.clearComputed()
-		return this.collectComputed(() => {
+		return this.collectReactive(() => {
 			/**
 			 * 1. 在这个过程中会 watch reactive props，当发生变化时，就出触发局部更新。
 			 * 2. 把新产生的 vnodeComputed 替换成 Virtual Component。注意
@@ -69,7 +73,7 @@ export default class ComponentNode {
 				(patchNode) => this.reportChangedPatchNode(patchNode, this),
 				this
 				)
-		})
+		}, this.type)
 	}
 	virtualCnodeRender() {
 		/**
@@ -94,7 +98,7 @@ export default class ComponentNode {
 
 			// 这个 watch 是我们创造的，所以要收集和销毁
 			this.clearComputed()
-			this.collectComputed(() => {
+			this.collectReactive(() => {
 				watch(() => vnodeComputedRef.value, () => this.reportChange(this))
 			})
 		} else {
@@ -103,13 +107,13 @@ export default class ComponentNode {
 			// 这个时候不用做任何处理。
 		}
 		// 不管 vnodeComputedRef 引用有没有变，vnodeComputedRef.value 肯定变化了，这里是最新的，也要进行 reactiveProps watch 和 vnodeComputed 的替换。
-		return this.collectComputed(() => {
+		return this.collectReactive(() => {
 			return replaceVnodeComputedAndWatchReactive(
 				vnodeComputedRef.value,
 				(patchNode) => this.reportChangedPatchNode(patchNode, this),
 				this
 			)
-		})
+		}, getComputation(vnodeComputedRef))
 
 	}
 }
@@ -126,12 +130,14 @@ function createInjectedProps(cnode) {
 			// 所以不用担心引用的问题。
 			if (propType.createDefaultValue) {
 				localProps[propName] = propType.createDefaultValue({...props, ...localProps})
+				if (isReactiveLike(localProps[propName])) setDisplayName(localProps[propName])
 			}
 		} else if (!isReactiveLike(props[propName])) {
 			// 对值对象中的简单类型，"数字、文字、bool"，还要包装成 ref 的形式。
 			// 对传入固定值(非 reactive 值)，比如 bool/number 等的 prop 进行包装，兼容 reactive 格式。
 			// 后面 patch 的时候会判断，对于非 reactive 的值，都当做是固定值，不进行 patch
 			fixedProps[propName] = isNaivePropType(propType) ? refLike(props[propName]) : props[propName]
+			if (isReactiveLike(fixedProps[propName])) setDisplayName(fixedProps[propName])
 		}
 	})
 

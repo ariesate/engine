@@ -46,7 +46,7 @@
  * 变量 $ 开头，就自动 reactive
  * < $ > 存在，其中就自动 reactive。
  */
-import { isReactive, isRef, toRaw as internalToRaw } from './reactive'
+import {collectSource, isReactive, isRef, toRaw as internalToRaw} from './reactive'
 
 import { invariant } from '../util';
 import { isRef as internalIsRef } from './reactive'
@@ -64,11 +64,18 @@ export {
   spreadUnchangedInScope,
   debounceComputed,
   getComputation,
+  collectComputed,
+  cachedComputations,
+  observeComputation,
+  getIndepTree,
 } from './effect'
 
-import { createComputed } from './effect'
+import {collectComputed, createComputed} from './effect'
 export const computed = (computation, shallow) => createComputed(computation, undefined, shallow)
 
+/*************
+ * helpers
+ *************/
 export function isReactiveLike(obj) {
   return isReactive(obj) || isRef(obj)
 }
@@ -77,5 +84,27 @@ export function toRaw(obj, unwrap) {
   if (isReactive(obj)) return internalToRaw(obj)
   if (isRef(obj)) return unwrap ? obj.value : { value: obj.value }
   invariant(false, 'obj is not reactiveLike')
+}
+
+
+const displayNameOfReactive = new WeakMap()
+export function getDisplayName(obj) {
+  const index = isReactive(obj) ? toRaw(obj) : obj
+  return displayNameOfReactive.get(index)
+  // TODO 如果没有，并且是 reactive，就用 computation.name。
+}
+
+export function setDisplayName(obj, name) {
+  const index = isReactive(obj) ? toRaw(obj) : obj
+  return displayNameOfReactive.set(index, name)
+}
+
+export function collectReactive(operation, includeInner) {
+  let computed = []
+  const sources = collectSource(() => {
+    computed = collectComputed(operation, includeInner)
+  })
+
+  return [sources, computed]
 }
 

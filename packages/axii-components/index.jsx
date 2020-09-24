@@ -2,7 +2,7 @@
  * CAUTION vite 现在不支持直接加载非名为 index 的 jsx 文件。所以只能先占用这个名字。
  * 理论上用 playground.jsx 会更好。
  */
-import { createElement, render, reactive, ref } from 'axii'
+import { createElement, render, reactive, ref, refComputed } from 'axii'
 import Menu from './src/menu/Menu'
 import useLocation from "./src/hooks/useLocation";
 import './src/style/global.less'
@@ -87,13 +87,19 @@ const availablePlayground = {
 function Choose() {
   const current = ref(location.query.component)
 
-  window.getCurrent = () => current
-
   const onChange = (next) => {
     current.value = next
     location.patchQuery({ component: next })
   }
 
+  window.getCurrent = () => current
+
+  window.onChange = onChange
+
+  const currentComputed = refComputed(() => {
+    debugger
+    return current.value
+  })
 
 
   return (

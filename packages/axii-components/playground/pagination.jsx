@@ -35,7 +35,6 @@ function InfinitePagination() {
 		})
 	}
 
-
 	return <div>
 		<Pagination {...pageProps} onChange={onPageChange}/>
 		<button onClick={() => total.value = 80}>patchTotalTo 80</button>

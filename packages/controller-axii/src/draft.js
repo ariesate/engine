@@ -4,7 +4,6 @@ import {
   reactive, ref,
   refComputed,
   toRaw,
-  getComputation
 } from './reactive'
 import watch from './watch'
 import deepClone from '@iusername/js-deep-clone'

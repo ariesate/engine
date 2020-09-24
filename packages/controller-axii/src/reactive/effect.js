@@ -45,6 +45,7 @@ function getFromMap(collection, key, createIfUndefined) {
  *   - $$payload.computation : ?Computation
  *
  * key: KeyNode
+ *   - key: key name
  *   - indep: Reactive
  *   - computations: Set<Computation>
  *
@@ -92,7 +93,7 @@ class ComputedToken {}
 export function createComputed(computation, type, shallow) {
   invariant(typeof computation === 'function', 'computation must be a function')
 
-  computation.computed = type ? (type === TYPE.REF ? ref(undefined) : new ComputedToken()) : undefined
+  computation.computed = type ? (type === TYPE.REF ? ref(undefined, true) : new ComputedToken()) : undefined
   computation.indeps = new Set()
   computation.levelChildren = new Set()
   computation.level = 0
@@ -117,7 +118,9 @@ function applyCollectComputed(computed) {
   if (!computedCollectFrame.length) return
 
   const collectFrame = computedCollectFrame[computedCollectFrame.length - 1]
-  // 2. 如果不是第一层，并且又没有标记 includeInner
+  // 2. 如果当前 computation 是在另一个 computation 里面，即 computed 里面的 computed。
+  // 但是收集的 frame 并没有需求收集，那么就 return。
+  // 通常收集都是为了主动销毁，inner computed 一般不用收集，因为 computed 本身就会记录自己内部的 computed，自己重新计算的时候会销毁掉之前的。所以没有进行外部收集进行销毁的需求。
   if (computationStack.length && !collectFrame.includeInner ) return
   // 3. 是第一层，或者不是第一层但标记了 includeInner ，那么收集一下
   collectFrame.computed.push(computed)
@@ -170,7 +173,7 @@ function applyComputation() {
 
   // 第一创建的时候，如果用户没有指定类型，那么就要让框架来根据类型自动创建
   if (computation.computed === undefined) {
-    computation.computed = (Array.isArray(nextValue) || isPlainObject(nextValue)) ? reactive(nextValue) : ref(nextValue)
+    computation.computed = (Array.isArray(nextValue) || isPlainObject(nextValue)) ? reactive(nextValue, true) : ref(nextValue, true)
   } else if(!isToken) {
     // 未来可能提供能力让 computed token 可以销毁自己。所以这里的 isToken 变量要在前面定义，否则到这里的时候 computation 已经被清理得差不多了
     if (computation.type === TYPE.REF || computation.shallow) {
@@ -356,26 +359,48 @@ export function afterDigestion(callback) {
   }
 }
 
-const cachedComputations = []
+// 用来注册 computation 的 observer，通常是 devtools 用。
+// observer 是个对象，可以设置 start/compute/end 三个回调，分别对应 digestion 执行前，中，后。
+const computationObservers = []
+export function observeComputation(observer) {
+  computationObservers.push(observer)
+  return () => {
+    computationObservers.splice(computationObservers.indexOf(observer), 1)
+  }
+}
+
+// reactive 变化时 trigger 的多个 computed 都会先一起存在 cachedComputations 里面，然后一起计算。
+// 在 computed 计算中继续触发的依赖 computed ，也会不断插入到 cachedComputations 中。
+// 这个对象暴露出去，可以给 devtools 等工具用来做监控，或者查询
+export const cachedComputations = []
 let inComputationDigestion = false
 // 用来临时记录在 computation 中改变了层级的
 let levelChangedComputations = []
+// 用来记录在一次 digestion 中发生了变化的 computation，
+const appliedComputations = new Set()
 function digestComputations() {
   invariant(!inComputationDigestion, 'already in computation digestion')
   invariant(!inDigestionCallback, 'in digestion callback loop, should not trigger digest')
   inComputationDigestion = true
   let computation
+  computationObservers.forEach(observer => observer.start && observer.start(cachedComputations))
   while(computation = cachedComputations.shift()) {
     // 一定不要忘了清空
     levelChangedComputations = []
+    // 通知全局的 observer,observer 可以自己去 cachedComputations 取后续的，去 appliedComputations 中取执行过的。
+    computationObservers.forEach(observer => observer.compute && observer.compute(computation, appliedComputations))
     compute(computation)
-    // 产生了层级变化的 computation， 要重新排序。
-    // 绝大部分场景，应该不会有层级频繁变化的 computaion。
+    appliedComputations.add(computation)
+    // 产生了层级变化的 computation， 要重新排序。level 低的排前面。
+    // 绝大部分场景，应该不会有层级频繁变化的 computation。
     const changedLevelComputations = filterOut(cachedComputations, levelChangedComputations)
     changedLevelComputations.forEach(c => {
       insertIntoOrderedArray(cachedComputations, c, (a, b) => b.level < a.level)
     })
   }
+  // 这个对象只是给 observer 用，执行完就要清空。
+  computationObservers.forEach(observer => observer.end && observer.end(appliedComputations))
+  appliedComputations.clear()
   inComputationDigestion = false
   inDigestionCallback = true
   let callback
@@ -469,7 +494,7 @@ export function track(indep, type, key) {
   // CAUTION 不能 track ComputedToken，如果有这种情况，很可能程序写错了
   invariant(!(indep instanceof ComputedToken), 'cannot track computedToken')
   const payload = getFromMap(reactiveToPayloads, toRaw(indep), createPayload)
-  const keyNode = getFromMap(payload.keys, key, () => createKeyNode(indep))
+  const keyNode = getFromMap(payload.keys, key, () => createKeyNode(indep, key))
   frame.indeps.add(keyNode)
 }
 
@@ -491,37 +516,41 @@ export function trigger(source, type, key, extraInfo) {
   // 不要直接使用 scheduleToRun, 因为会直接执行。
   // 在一个对象的 trigger 中，依赖的 computed 也会有层级关系。因此这里要一起插进去，利用
   //系统的排序能力保证顺序是正确的
-  const computationsToRun = []
+  const computationsToRun = new Set()
   const { keys } = getFromMap(reactiveToPayloads, toRaw(source), createPayload)
   // 剩下的都是真正改变过的
   if (type === TriggerOpTypes.CLEAR /* CLEAR */) {
     // collection being cleared, trigger all effects for target
     // 触发所有依赖于此 indep 的 computation
     keys.forEach(({ computations }) => {
-      computationsToRun.push(...computations)
+      computations.forEach(computation => computationsToRun.add(computation))
     });
   }
   else {
     // SET | ADD | DELETE 触发依赖于相应的 key 的 computation
     if (key) {
-      const { computations } = getFromMap(keys, key, () => createKeyNode(source))
-      computationsToRun.push(...computations)
+      const { computations } = getFromMap(keys, key, () => createKeyNode(source, key))
+      computations.forEach(computation => computationsToRun.add(computation))
     }
     // 如果触发了长度变化(add|delete)，那么还要触发监听了 length 或进行过遍历的 computed
     if (type === "add" /* ADD */ || type === "delete" /* DELETE */) {
       // length/ITERATE_KEY 都要，即使是数组，Object.keys 也是触发的 ITERATE_KEY。
       if (Array.isArray(source)) {
-        computationsToRun.push(...getFromMap(keys, 'length', () => createKeyNode(source)).computations)
+        const { computations } = getFromMap(keys, 'length', () => createKeyNode(source, 'length'))
+        computations.forEach(computation => computationsToRun.add(computation))
       }
-      computationsToRun.push(...getFromMap(keys, ITERATE_KEY, () => createKeyNode(source)).computations)
+      const { computations: iterateComputations } = getFromMap(keys, ITERATE_KEY, () => createKeyNode(source, ITERATE_KEY))
+      iterateComputations.forEach(computation => computationsToRun.add(computation))
     }
   }
 
   // 把 any 取出来
-  const { computations} = getFromMap(keys, ANY_KEY, () => createKeyNode(source))
-  computationsToRun.push(...computations)
+  const { computations : anyComputations} = getFromMap(keys, ANY_KEY, () => createKeyNode(source, ANY_KEY))
+  anyComputations.forEach(computation => computationsToRun.add(computation))
 
-  scheduleToRun(computationsToRun)
+  if (computationsToRun.size) {
+    scheduleToRun(Array.from(computationsToRun))
+  }
 }
 
 /****************************************
@@ -674,9 +703,10 @@ export function createPayload() {
   }
 }
 
-function createKeyNode(indep) {
+function createKeyNode(indep, key) {
   return {
     indep,
+    key,
     computations: new Set()
   }
 }
@@ -746,8 +776,11 @@ export function getComputation(computed) {
 }
 
 /**
- * 如果用户想要手机某个操作中的创建的 computed。
- * 可以通过第二个参数指定是否要手机 computed 里面再创建的。
+ * 收集一个 operation 执行中产生的 computed，因为我们的 computed 会一直在 dep 链上，外部丢失引用也不会消失，需要主动销毁。
+ * 所以外部收集，然后执行销毁很重要。
+ *
+ * 如果用户想要收集某个操作中的创建的 computed。
+ * 可以通过第二个参数指定是否要收集 computed 里面再创建的。
  * 注意如果在 operation 中又出现了 collectComputed，那么上层的 frame 收集不到里面的。
  */
 const computedCollectFrame = []
@@ -772,4 +805,45 @@ export function collectComputed(operation, includeInner = false) {
 
 export function isCollectingComputed() {
   return computedCollectFrame.length !== 0
+}
+
+/**
+ * 通过 computed 或者 computation 来获取整个 indep tree.
+ * 目前提供给 devtools 用。
+ *
+ * 构建树。这个树的结构是:
+ * [
+ *  {
+ *    object: 依赖的 reactive 对象。外界获取后可以查看值。必须得是 raw，不然读的过程中可能造成 track 的问题。
+ *    keys: 依赖对象的 key
+ *    indeps: []，该对象的依赖，只有 computed 才会有。
+ *    computation：该对象的 computation，只有 computed 才有。可以用 debug(computation) 来 debug 或者 inspect 到源码。
+ *  }
+ * ]
+ */
+export function getIndepTree(computationOrComputed) {
+  const computation = typeof computationOrComputed === 'function' ?
+    computationOrComputed :
+    getComputation(computationOrComputed)
+
+  invariant(computation, `cannot get computation for ${computationOrComputed}`)
+
+  const resultContainer = []
+
+  computation.indeps.forEach(({ indep, key }) => {
+    let indepInfo = resultContainer.find(({ object }) => object === indep)
+    if (!indepInfo) resultContainer.push((indepInfo = { object: indep, keys: []}))
+    indepInfo.keys.push(key)
+  })
+
+  resultContainer.forEach(indepInfo => {
+    if (isComputed(indepInfo.object)) {
+      indepInfo.indeps = getIndepTree(indepInfo.object)
+      indepInfo.computation = getComputation(indepInfo.object)
+      // CAUTION 一定要 raw，防止读操作扰乱了 track
+      indepInfo.object = tryToRaw(indepInfo.object)
+    }
+  })
+
+  return resultContainer
 }

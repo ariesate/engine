@@ -7,6 +7,7 @@ import {
 } from './collectionHandlers'
 import { track, trigger } from './effect';
 import { TrackOpTypes, TriggerOpTypes } from './operations';
+import {invariant} from "../util";
 
 // WeakMaps that store {raw <-> observed} pairs.
 const rawToReactive = new WeakMap()
@@ -21,16 +22,22 @@ const canObserve = (value) => {
   return isObservableType(toRawType(value))
 }
 
-export function reactive(target) {
-  return createReactiveObject(
+export function reactive(target, isComputed) {
+  const reactiveObject = createReactiveObject(
     target,
     rawToReactive,
     reactiveToRaw,
     mutableHandlers,
     mutableCollectionHandlers
   )
-}
 
+  // CAUTION 只有是真正新建 proxy 的才收集。如果已经有了，说明是别处创建的。
+  if (!isComputed && !rawToReactive.get(target) && reactiveObject !== target) {
+    applyCollectSource(reactiveObject)
+  }
+
+  return reactiveObject
+}
 
 function createReactiveObject(
   target,
@@ -39,12 +46,7 @@ function createReactiveObject(
   baseHandlers,
   collectionHandlers
 ) {
-  if (!isObject(target)) {
-    if (__DEV__) {
-      console.warn(`value cannot be made reactive: ${String(target)}`)
-    }
-    return target
-  }
+  invariant(isObject(target), `value cannot be made reactive: ${String(target)}`)
   // target already has corresponding Proxy
   let observed = toProxy.get(target)
   if (observed !== void 0) {
@@ -94,7 +96,7 @@ export function refLike(value) {
   }
 }
 
-export function ref(raw) {
+export function ref(raw, isComputed) {
   if (isRef(raw)) {
     return raw
   }
@@ -118,6 +120,7 @@ export function ref(raw) {
     }
   }
 
+  if (!isComputed) applyCollectSource(r)
   return r
 }
 
@@ -144,3 +147,41 @@ function toProxyRef(object, key) {
   }
 }
 
+
+
+
+/**
+ * 如果用户想要手机某个操作中的创建的 computed。
+ * 可以通过第二个参数指定是否要手机 computed 里面再创建的。
+ * 注意如果在 operation 中又出现了 collectComputed，那么上层的 frame 收集不到里面的。
+ */
+const sourceCollectFrame = []
+export function collectSource(operation) {
+  const frame = []
+  sourceCollectFrame.push(frame)
+
+  let error
+  // 执行
+  try{
+    operation()
+  } catch(e) {
+    error = e
+  } finally {
+    sourceCollectFrame.pop()
+  }
+
+  if (error) throw error
+
+  return frame
+}
+
+export function isCollectingSource() {
+  return sourceCollectFrame.length !== 0
+}
+
+function applyCollectSource(source) {
+  // 1. 看有没有收集的需要
+  if (!sourceCollectFrame.length) return
+  const collectFrame = sourceCollectFrame[sourceCollectFrame.length - 1]
+  collectFrame.push(source)
+}

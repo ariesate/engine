@@ -56,3 +56,6 @@ export const activeEvent = (function() {
   }
 })()
 
+export const reactiveToOwnerScope = new WeakMap()
+
+

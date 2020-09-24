@@ -3,6 +3,18 @@
   "version":"0.0.1",
   "manifest_version": 2,
   "description":"Axii devtools",
-  "permissions":[],
+  "permissions":[
+    "debugger"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+
+    {
+      "matches": ["http://*:*/*", "https://*:*/*"],
+      "js": ["content.js"]
+    }
+  ],
   "devtools_page": "devtools.html"
 }

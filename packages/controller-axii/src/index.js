@@ -19,6 +19,7 @@ import createScheduler from '@ariesate/are/createScheduler'
 import createPainter from '@ariesate/are/createPainter'
 import createDOMView from '@ariesate/are/DOMView/createDOMView'
 import createAxiiController from './controller'
+import { observeComputation, getIndepTree } from "./reactive";
 
 export { default as createPortal } from '@ariesate/are/createPortal'
 export { default as Fragment } from '@ariesate/are/Fragment'
@@ -43,6 +44,7 @@ export { default as Scenario, createRange, matrixMatch } from './Scenario'
 export { default as useContext } from './useContext'
 export { default as batchOperation } from './batchOperation'
 
+
 export function render(vnode, domElement, ...controllerArgv) {
   const controller = createAxiiController(domElement, ...controllerArgv)
 
@@ -63,4 +65,37 @@ export function render(vnode, domElement, ...controllerArgv) {
 
   return controller
 }
+
+// 目前是个 devtools 用的
+
+
+// TODO 应该还要个获取 source scope 的 helper。
+// TODO 重新设计一下！！！！和 panel script 的通信。
+window.AXII_HELPERS = {
+  computation: null,
+  observeComputation,
+  // 只能获取当前的。
+  getCurrentIndepTree: () => {
+    console.log("calling from devtools", window.AXII_HELPERS.computation)
+    // TODO 还要把脏的都计算出来。
+    return window.AXII_HELPERS.computation && getIndepTree(window.AXII_HELPERS.computation)
+  },
+  inspect(path) {
+    // TODO devtools 只能传 path 过来
+  },
+  debug(path) {
+    // TODO devtools 只能传 path 过来
+  }
+}
+
+// TODO 还可以增加每个 computation 都 debug。
+observeComputation({
+  compute(computation) {
+    window.AXII_HELPERS.computation = computation
+  },
+  end() {
+    window.AXII_HELPERS.computation = null
+    console.log("computing")
+  }
+})
 
