@@ -839,10 +839,9 @@ export function getIndepTree(computationOrComputed) {
   resultContainer.forEach(indepInfo => {
     if (isComputed(indepInfo.object)) {
       indepInfo.indeps = getIndepTree(indepInfo.object)
-      indepInfo.computation = getComputation(indepInfo.object)
-      // CAUTION 一定要 raw，防止读操作扰乱了 track
-      indepInfo.object = tryToRaw(indepInfo.object)
     }
+    // CAUTION 一定要 raw，防止读操作扰乱了 track
+    indepInfo.object = tryToRaw(indepInfo.object)
   })
 
   return resultContainer

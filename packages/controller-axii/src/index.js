@@ -69,16 +69,46 @@ export function render(vnode, domElement, ...controllerArgv) {
 // 目前是个 devtools 用的
 
 
-// TODO 应该还要个获取 source scope 的 helper。
-// TODO 重新设计一下！！！！和 panel script 的通信。
+/**
+ * 通信机制
+ * 1. panel 调用 window.AXII_HELPERS.observe。开启监听。
+ * 2. 监听开始后，只要进行了 compute，就会计算 indepTree，panel 通过调用 window.AXII_HELPERS.flashCurrentIndepTree 获取
+ * 获取一次之后，该变量就会重置回 null。除非再有 compute 进行计算。
+ * 3. panel 可以调用 unobserve 取消监听。
+ */
+
 window.AXII_HELPERS = {
   computation: null,
-  observeComputation,
-  // 只能获取当前的。
-  getCurrentIndepTree: () => {
-    console.log("calling from devtools", window.AXII_HELPERS.computation)
-    // TODO 还要把脏的都计算出来。
-    return window.AXII_HELPERS.computation && getIndepTree(window.AXII_HELPERS.computation)
+  observe() {
+    const base = window.AXII_HELPERS
+    if (base.unobserve) return
+
+    let indepTree = null
+
+    const unobserveComputation = observeComputation({
+      compute(computation) {
+        indepTree = getIndepTree(computation)
+      },
+      end() {
+        // end 的时候就清空了。
+        // devtool 时 setTimeout 来拿的，所以实际上只有在页面 debug 的时候可以拿到 indepTree。
+        indepTree = null
+      }
+    })
+
+    base.flashCurrentIndepTree = () => {
+      const result = indepTree
+      indepTree = null
+      return result
+    }
+
+    base.unobserve = () => {
+      unobserveComputation()
+      indepTree = null
+      delete base.unobserve
+    }
+
+    console.log("observe start")
   },
   inspect(path) {
     // TODO devtools 只能传 path 过来
@@ -88,14 +118,4 @@ window.AXII_HELPERS = {
   }
 }
 
-// TODO 还可以增加每个 computation 都 debug。
-observeComputation({
-  compute(computation) {
-    window.AXII_HELPERS.computation = computation
-  },
-  end() {
-    window.AXII_HELPERS.computation = null
-    console.log("computing")
-  }
-})
 

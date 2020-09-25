@@ -97,7 +97,6 @@ function Choose() {
   window.onChange = onChange
 
   const currentComputed = refComputed(() => {
-    debugger
     return current.value
   })
 
