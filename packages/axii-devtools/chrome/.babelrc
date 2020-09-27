@@ -5,6 +5,7 @@
       "pragma": "createElement",
       "pragmaFrag": "Fragment",
       "throwIfNamespace": false
-    }]
+    }],
+    "babel-plugin-set-display-name"
   ]
 }

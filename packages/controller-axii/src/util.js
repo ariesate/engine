@@ -449,3 +449,13 @@ export function createFrameContainer() {
     }
   }
 }
+
+
+export function createObjectIdContainer() {
+  const ids = new WeakMap()
+  const generateId = createUniqueIdGenerator()
+  return function getId(obj) {
+    if (!ids.has(obj)) ids.set(obj, generateId())
+    return ids.get(obj)
+  }
+}

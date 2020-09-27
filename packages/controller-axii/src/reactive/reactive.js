@@ -117,6 +117,9 @@ export function ref(raw, isComputed) {
         'value',
         isUnChanged
       )
+    },
+    get raw() {
+      return raw
     }
   }
 

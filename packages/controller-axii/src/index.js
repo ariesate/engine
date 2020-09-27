@@ -20,6 +20,8 @@ import createPainter from '@ariesate/are/createPainter'
 import createDOMView from '@ariesate/are/DOMView/createDOMView'
 import createAxiiController from './controller'
 import { observeComputation, getIndepTree } from "./reactive";
+import {createObjectIdContainer, tryToRaw} from "./util";
+import {cachedTriggerSources} from "./reactive/effect";
 
 export { default as createPortal } from '@ariesate/are/createPortal'
 export { default as Fragment } from '@ariesate/are/Fragment'
@@ -77,17 +79,40 @@ export function render(vnode, domElement, ...controllerArgv) {
  * 3. panel 可以调用 unobserve 取消监听。
  */
 
+const getIndepId = createObjectIdContainer()
+
 window.AXII_HELPERS = {
   computation: null,
-  observe() {
+  observe(keepRef) {
     const base = window.AXII_HELPERS
     if (base.unobserve) return
 
     let indepTree = null
 
     const unobserveComputation = observeComputation({
-      compute(computation) {
-        indepTree = getIndepTree(computation)
+      compute(computation, appliedComputations, cachedTriggerSources) {
+        indepTree = {
+          object: tryToRaw(computation.computed),
+          name: computation.displayName || computation.name,
+          indeps: getIndepTree(computation, (indepInfo) => {
+            // 增加 id，因为会有环，多个依赖的源头可能是同一个。用 id 能更快判断
+            if (!indepInfo.id) indepInfo.id = getIndepId(indepInfo.object)
+
+            // TODO source name 怎么处理还没设计好
+            indepInfo.name = indepInfo.computation ?
+              (indepInfo.computation.displayName || indepInfo.computation.name) :
+              indepInfo.id
+
+            // 增加脏标记
+            if (indepInfo.computation && appliedComputations.has(indepInfo.computation)) {
+              indepInfo.changed = true
+            } else {
+              indepInfo.changed = cachedTriggerSources.has(indepInfo.indep)
+            }
+
+            // TODO 删除的操作应该也改到这里执行，这样就不用传 keepRef 了
+          }, keepRef)
+        }
       },
       end() {
         // end 的时候就清空了。

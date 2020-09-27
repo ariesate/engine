@@ -82,7 +82,7 @@ export function isReactiveLike(obj) {
 
 export function toRaw(obj, unwrap) {
   if (isReactive(obj)) return internalToRaw(obj)
-  if (isRef(obj)) return unwrap ? obj.value : { value: obj.value }
+  if (isRef(obj)) return unwrap ? obj.raw : { value: obj.raw }
   invariant(false, 'obj is not reactiveLike')
 }
 

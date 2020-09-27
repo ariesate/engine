@@ -373,6 +373,7 @@ export function observeComputation(observer) {
 // 在 computed 计算中继续触发的依赖 computed ，也会不断插入到 cachedComputations 中。
 // 这个对象暴露出去，可以给 devtools 等工具用来做监控，或者查询
 export const cachedComputations = []
+export const cachedTriggerSources = new Set()
 let inComputationDigestion = false
 // 用来临时记录在 computation 中改变了层级的
 let levelChangedComputations = []
@@ -383,12 +384,12 @@ function digestComputations() {
   invariant(!inDigestionCallback, 'in digestion callback loop, should not trigger digest')
   inComputationDigestion = true
   let computation
-  computationObservers.forEach(observer => observer.start && observer.start(cachedComputations))
+  computationObservers.forEach(observer => observer.start && observer.start(cachedTriggerSources, cachedComputations))
   while(computation = cachedComputations.shift()) {
     // 一定不要忘了清空
     levelChangedComputations = []
     // 通知全局的 observer,observer 可以自己去 cachedComputations 取后续的，去 appliedComputations 中取执行过的。
-    computationObservers.forEach(observer => observer.compute && observer.compute(computation, appliedComputations))
+    computationObservers.forEach(observer => observer.compute && observer.compute(computation, appliedComputations, cachedTriggerSources, cachedComputations))
     compute(computation)
     appliedComputations.add(computation)
     // 产生了层级变化的 computation， 要重新排序。level 低的排前面。
@@ -399,8 +400,9 @@ function digestComputations() {
     })
   }
   // 这个对象只是给 observer 用，执行完就要清空。
-  computationObservers.forEach(observer => observer.end && observer.end(appliedComputations))
+  computationObservers.forEach(observer => observer.end && observer.end(appliedComputations, cachedTriggerSources))
   appliedComputations.clear()
+  cachedTriggerSources.clear()
   inComputationDigestion = false
   inDigestionCallback = true
   let callback
@@ -419,7 +421,7 @@ function isValidComputation(computation) {
  * 我们把小层级的 computation 放到前面计算，大的放大后面，因为小层级计算的后可能会加入新的 computation，
  * 这时加入的 computation 就可能是和谋面的一样的，这时就能跳过了。
  */
-function scheduleToRun(computations) {
+function scheduleToRun(computations, source) {
   computations.forEach(c => {
     if (!isValidComputation(c)) {
       console.error(`invalid computation`, c)
@@ -427,6 +429,7 @@ function scheduleToRun(computations) {
       insertIntoOrderedArray(cachedComputations, c, (a, b) => b.level < a.level)
     }
   })
+  cachedTriggerSources.add(source)
   if (!inComputationDigestion && !debounced) {
     digestComputations()
   }
@@ -549,7 +552,7 @@ export function trigger(source, type, key, extraInfo) {
   anyComputations.forEach(computation => computationsToRun.add(computation))
 
   if (computationsToRun.size) {
-    scheduleToRun(Array.from(computationsToRun))
+    scheduleToRun(Array.from(computationsToRun), source)
   }
 }
 
@@ -820,28 +823,62 @@ export function isCollectingComputed() {
  *    computation：该对象的 computation，只有 computed 才有。可以用 debug(computation) 来 debug 或者 inspect 到源码。
  *  }
  * ]
+ *
+ *
  */
-export function getIndepTree(computationOrComputed) {
-  const computation = typeof computationOrComputed === 'function' ?
-    computationOrComputed :
-    getComputation(computationOrComputed)
-
-  invariant(computation, `cannot get computation for ${computationOrComputed}`)
+export function getIndepTree(computation, handle, keepRef, seen = new WeakMap(), refRaw= new WeakMap) {
+  // TODO 如果这个 computed 是某个 computed 对象的局部，name就没有 computation
 
   const resultContainer = []
 
   computation.indeps.forEach(({ indep, key }) => {
-    let indepInfo = resultContainer.find(({ object }) => object === indep)
-    if (!indepInfo) resultContainer.push((indepInfo = { object: indep, keys: []}))
+    // tryToRaw 对 ref 会创建新对象，因此要自己记录一下
+    let rawObject
+    if (isRef(indep)) {
+      if (!refRaw.has(indep)) refRaw.set(indep, tryToRaw(indep))
+      rawObject = refRaw.get(indep)
+    } else {
+      rawObject = tryToRaw(indep)
+    }
+
+    // 一个对象可能依赖另一个对象的多个 key。
+    // 我们把按照 key 来组织的 indep 改成按照 indep 来组织的，key 都放到 keys 里面
+    let indepInfo = resultContainer.find(({ object }) => object === rawObject)
+    if (!indepInfo) resultContainer.push((indepInfo = {
+      indep,
+      object:
+      rawObject, keys: [],
+      computation: getComputation(indep)
+    }))
+
     indepInfo.keys.push(key)
+
+    // 可以增加些别的信息，例如给对象打上个 id, name 用来标记。
+    handle(indepInfo)
   })
 
   resultContainer.forEach(indepInfo => {
-    if (isComputed(indepInfo.object)) {
-      indepInfo.indeps = getIndepTree(indepInfo.object)
+    if (seen.has(indepInfo.object)) {
+      indepInfo.indeps = seen.get(indepInfo.object).indeps
+    } else if (isComputed(indepInfo.indep)) {
+      const indepComputation = getComputation(indepInfo.indep)
+      // 可能没有，例如依赖的 indep 只是某个 computed 对象的局部
+      if (indepComputation) {
+        indepInfo.indeps = getIndepTree(indepComputation, handle, keepRef, seen, refRaw)
+      } else {
+        console.warn('did not find computation for', indepInfo.object)
+        // TODO 这里有个溯源到 root 的问题。
+      }
     }
-    // CAUTION 一定要 raw，防止读操作扰乱了 track
-    indepInfo.object = tryToRaw(indepInfo.object)
+    // 剩下来的就是 source reactive 了。
+
+    // 记录一下，如果其他 indeps 也有同样的依赖，就不用处理了。生成的树上会有
+    seen.set(indepInfo.object, indepInfo)
+    // CAUTION 一定要 delete，防止读操作扰乱了 track
+    if (!keepRef) {
+      delete indepInfo.indep
+      delete indepInfo.computation
+    }
   })
 
   return resultContainer

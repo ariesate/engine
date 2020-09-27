@@ -1,11 +1,24 @@
 const path = require( 'path')
-
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
-    entry: './src/panel.js',
+    entry: {
+        panel: './src/panel.js',
+        localDev: './src/localDev.js',
+    },
+    mode: 'development',
     output: {
-        filename: 'panel.js',
+        filename: '[name].bundle.js',
         path: path.resolve(__dirname)
     },
+    devtool: 'inline-source-map',
+    plugins: [
+        new HtmlWebpackPlugin({
+            title: 'panel',
+            chunks: ['localDev'],
+            filename: 'local.html',
+            template: 'common-template.html'
+        }),
+    ],
     module: {
         rules: [
             { test: /\.js?$/, exclude: /node_modules/, loader: 'babel-loader' },
