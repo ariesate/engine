@@ -1,70 +1,80 @@
 /** @jsx createElement */
 /** @jsxFrag Fragment */
 import {createElement, render, ref, refComputed, computed, observeComputation} from 'axii'
-import App from './App'
+import DevPanel from './App'
 
 
-const source = ref()
-const source2 = ref()
-
-const computed1 = computed(() => {
-  return {
-    firstName: source.value + source2.value
-  }
-})
-
-const computed2 = computed(() => {
-  return {
-    secondName: source.value
-  }
-})
-
-const refComputed1 = refComputed(() => {
-  return `${computed1.firstName}-${computed2.secondName}`
-})
 
 
-const indepTree = ref()
+const inspectObject = (path) => {
+  window.target = window.AXII_HELPERS.getTargetByPath(path)
 
-const inspectObject = (obj, path) => {
-  window.selected = obj
-  console.log(path)
 }
 
-render(<App indepTree={indepTree} onInspect={inspectObject}/>, document.getElementById('root'))
+function App() {
+  const source = ref()
+  const source2 = ref()
 
-// 开始注册监听。
-const operate = (fn) => {
-  window.AXII_HELPERS.observe(true)
-  const stop = observeComputation({
-    compute() {
-      // 会发生在 axii  compute 的后面，所以可以使用 flashCurrentIndepTree
-      const tree = window.AXII_HELPERS.flashCurrentIndepTree()
-      console.log("get new tree", tree)
-      if (tree) {
-        // 防止 .value = 又被监听变成死循环。
-        setTimeout(() => {
-          indepTree.value = tree
-        }, 1)
-
-      }
+  const computed1 = computed(() => {
+    return {
+      firstName: source.value + source2.value
     }
   })
 
-  fn()
-
-  window.AXII_HELPERS.unobserve()
-  stop()
-}
-
-
-window.changeSource = (value) => {
-  operate(() => {
-    source.value = value
+  const computed2 = computed(() => {
+    return {
+      secondName: source.value
+    }
   })
+
+  const refComputed1 = refComputed(() => {
+    return `${computed1.firstName}-${computed2.secondName}`
+  })
+
+
+  const indepTree = ref()
+
+  window.source = source
+  // 开始注册监听。
+  let lastTreeId
+  const operate = (fn) => {
+    window.AXII_HELPERS.observe(true)
+    const stop = observeComputation({
+      compute() {
+        // 会发生在 axii  compute 的后面，所以可以使用 flashCurrentIndepTree
+        const [treeId, tree] = window.AXII_HELPERS.getCurrentIndepTree()
+        console.log("get new tree", tree, lastTreeId, treeId)
+        if (tree && treeId !== lastTreeId) {
+          lastTreeId = treeId
+          console.log(treeId)
+          // 防止 .value = 赋值又被监听变成死循环。
+          setTimeout(() => {
+            indepTree.value = tree
+          }, 1)
+        }
+      }
+    })
+
+    fn()
+
+    window.AXII_HELPERS.unobserve()
+    stop()
+  }
+
+  window.changeSource = (value) => {
+    operate(() => {
+      source.value = value
+    })
+  }
+
+
+  return <DevPanel indepTree={indepTree} onInspect={inspectObject}/>
+
 }
 
-window.operate = operate
+render(<App />, document.getElementById('root'))
+
+
 
 changeSource("1111")
 

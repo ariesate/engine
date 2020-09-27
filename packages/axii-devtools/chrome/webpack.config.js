@@ -1,5 +1,6 @@
 const path = require( 'path')
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 module.exports = {
     entry: {
         panel: './src/panel.js',
@@ -12,6 +13,9 @@ module.exports = {
     },
     devtool: 'inline-source-map',
     plugins: [
+        new MiniCssExtractPlugin({
+            filename: '[name].css'
+        }),
         new HtmlWebpackPlugin({
             title: 'panel',
             chunks: ['localDev'],
@@ -22,7 +26,20 @@ module.exports = {
     module: {
         rules: [
             { test: /\.js?$/, exclude: /node_modules/, loader: 'babel-loader' },
-            { test: /\.css$/, use: ['style-loader', 'css-loader'] },
+            {
+                test: /\.(less|css)$/,
+                use: [
+                    {
+                        loader: 'style-loader'
+                    },
+                    {
+                        loader: 'css-loader'
+                    },
+                    {
+                        loader: 'less-loader',
+                    }
+                ]
+            },
         ],
     },
     resolve: {

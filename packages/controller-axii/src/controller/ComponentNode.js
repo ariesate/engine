@@ -25,14 +25,16 @@ export default class ComponentNode {
 	// 组件 render 的过程中产生的所有 computed 都要收集起来！computed 是需要手动销毁的。
 	collectReactive(operation, scope) {
 		let result
-		const [sources, innerComputedArr] = collectReactive(() => {
+		const [sourceWithCallers, innerComputedArr] = collectReactive(() => {
 			result = operation()
 		})
 		// 收集 computed, 之后组件更新要主动销毁
 		this.computed.push(...innerComputedArr)
 		// 收集 source, 主要是用来给 devtools 用的
 		// 有可能没 scope，例如 render 中创建的 watch 也用了收集，但不会创建用户需要的 ref，所以会不传第二参数。
-		if (scope) sources.forEach(source => reactiveToOwnerScope.set(source, scope))
+		if (scope) sourceWithCallers.forEach((source) => {
+			reactiveToOwnerScope.set(source, scope)
+		})
 
 		return result
 	}

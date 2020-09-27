@@ -826,7 +826,7 @@ export function isCollectingComputed() {
  *
  *
  */
-export function getIndepTree(computation, handle, keepRef, seen = new WeakMap(), refRaw= new WeakMap) {
+export function getIndepTree(computation, handle, seen = new WeakMap(), refRaw= new WeakMap) {
   // TODO 如果这个 computed 是某个 computed 对象的局部，name就没有 computation
 
   const resultContainer = []
@@ -853,18 +853,18 @@ export function getIndepTree(computation, handle, keepRef, seen = new WeakMap(),
 
     indepInfo.keys.push(key)
 
-    // 可以增加些别的信息，例如给对象打上个 id, name 用来标记。
-    handle(indepInfo)
   })
 
+  // 加载子 indep
   resultContainer.forEach(indepInfo => {
+
     if (seen.has(indepInfo.object)) {
       indepInfo.indeps = seen.get(indepInfo.object).indeps
     } else if (isComputed(indepInfo.indep)) {
       const indepComputation = getComputation(indepInfo.indep)
       // 可能没有，例如依赖的 indep 只是某个 computed 对象的局部
       if (indepComputation) {
-        indepInfo.indeps = getIndepTree(indepComputation, handle, keepRef, seen, refRaw)
+        indepInfo.indeps = getIndepTree(indepComputation, handle, seen, refRaw)
       } else {
         console.warn('did not find computation for', indepInfo.object)
         // TODO 这里有个溯源到 root 的问题。
@@ -875,11 +875,9 @@ export function getIndepTree(computation, handle, keepRef, seen = new WeakMap(),
     // 记录一下，如果其他 indeps 也有同样的依赖，就不用处理了。生成的树上会有
     seen.set(indepInfo.object, indepInfo)
     // CAUTION 一定要 delete，防止读操作扰乱了 track
-    if (!keepRef) {
-      delete indepInfo.indep
-      delete indepInfo.computation
-    }
+    handle(indepInfo)
   })
 
+  // 可以增加些别的信息，例如给对象打上个 id, name 用来标记。
   return resultContainer
 }

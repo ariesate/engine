@@ -20,8 +20,8 @@ import createPainter from '@ariesate/are/createPainter'
 import createDOMView from '@ariesate/are/DOMView/createDOMView'
 import createAxiiController from './controller'
 import { observeComputation, getIndepTree } from "./reactive";
-import {createObjectIdContainer, tryToRaw} from "./util";
-import {cachedTriggerSources} from "./reactive/effect";
+import {createObjectIdContainer, createUniqueIdGenerator, tryToRaw} from "./util";
+import { reactiveToOwnerScope } from './renderContext'
 
 export { default as createPortal } from '@ariesate/are/createPortal'
 export { default as Fragment } from '@ariesate/are/Fragment'
@@ -80,6 +80,15 @@ export function render(vnode, domElement, ...controllerArgv) {
  */
 
 const getIndepId = createObjectIdContainer()
+const genIndepTree = createUniqueIdGenerator()
+
+function getTargetByPath(indepTree, path) {
+  let base = indepTree
+  path.forEach(index => {
+    base = base.indeps[index]
+  })
+  return base
+}
 
 window.AXII_HELPERS = {
   computation: null,
@@ -88,17 +97,20 @@ window.AXII_HELPERS = {
     if (base.unobserve) return
 
     let indepTree = null
+    let indepTreeId = null
 
     const unobserveComputation = observeComputation({
       compute(computation, appliedComputations, cachedTriggerSources) {
+        const object = tryToRaw(computation.computed)
         indepTree = {
-          object: tryToRaw(computation.computed),
+          id : getIndepId(object),
+          object,
           name: computation.displayName || computation.name,
           indeps: getIndepTree(computation, (indepInfo) => {
             // 增加 id，因为会有环，多个依赖的源头可能是同一个。用 id 能更快判断
             if (!indepInfo.id) indepInfo.id = getIndepId(indepInfo.object)
 
-            // TODO source name 怎么处理还没设计好
+            // TODO source name 还需要 Plugin 处理
             indepInfo.name = indepInfo.computation ?
               (indepInfo.computation.displayName || indepInfo.computation.name) :
               indepInfo.id
@@ -110,37 +122,48 @@ window.AXII_HELPERS = {
               indepInfo.changed = cachedTriggerSources.has(indepInfo.indep)
             }
 
-            // TODO 删除的操作应该也改到这里执行，这样就不用传 keepRef 了
-          }, keepRef)
+
+            if (!indepInfo.indeps) {
+              indepInfo.scope = reactiveToOwnerScope.get(indepInfo.indep)
+            }
+
+            // TODO 增加 caller/scope 标记
+
+          })
         }
+        indepTreeId = genIndepTree()
+
       },
       end() {
         // end 的时候就清空了。
         // devtool 时 setTimeout 来拿的，所以实际上只有在页面 debug 的时候可以拿到 indepTree。
-        indepTree = null
+        // indepTree = null
+        // indepTreeId = null
       }
     })
 
-    base.flashCurrentIndepTree = () => {
-      const result = indepTree
-      indepTree = null
-      return result
+    base.getCurrentIndepTree = (keepRef) => {
+      // TODO 要去掉 indep/computation/scope。否则序列化传给 devtools 会报错。
+      return [indepTreeId, indepTree]
+    }
+
+    base.getTargetByPath = (path) => {
+      console.log(path)
+      return getTargetByPath(indepTree, path)
     }
 
     base.unobserve = () => {
       unobserveComputation()
-      indepTree = null
+      // indepTree = null
       delete base.unobserve
+      delete base.getCurrentIndepTree
     }
 
     console.log("observe start")
   },
-  inspect(path) {
-    // TODO devtools 只能传 path 过来
-  },
-  debug(path) {
-    // TODO devtools 只能传 path 过来
-  }
+
+
+
 }
 
 

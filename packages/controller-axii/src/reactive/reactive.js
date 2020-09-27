@@ -122,7 +122,6 @@ export function ref(raw, isComputed) {
       return raw
     }
   }
-
   if (!isComputed) applyCollectSource(r)
   return r
 }
