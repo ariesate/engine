@@ -652,7 +652,8 @@ function replaceObjectLikeValue(source, nextKey, nextValue) {
 }
 
 export function deepPatch(source, nextSourceValue) {
-  invariant(typeEqual(source, nextSourceValue), 'computed should always return same tyep')
+  invariant(isRef(source) || typeEqual(source, nextSourceValue), 'computed should always return same type')
+
 
   if (isRef(source)) {
     source.value = nextSourceValue

@@ -70,14 +70,14 @@ module.exports = {
     factory: 'createElement',
     fragment: 'Fragment'
   },
-  // plugins: [setDisplayNamePlugin],
+  plugins: [setDisplayNamePlugin],
   resolvers: [resolver],
   cssPreprocessOptions: {
     less: { javascriptEnabled: true }
   },
-	optimizeDeps: {
-  	include: ['axios']
-	},
+  optimizeDeps: {
+    include: ['axios']
+  },
   define: {
     __DEV__: true
   }
