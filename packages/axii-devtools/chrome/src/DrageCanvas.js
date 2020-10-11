@@ -3,6 +3,12 @@ import { Canvas, Layout } from 'butterfly-dag'
 class DrageCanvas extends Canvas {
   constructor(options) {
     super(options);
+
+    this.on('events', ({ type, node }, ...rest) => {
+      if (type=== 'node:click' && options.onClick) {
+        options.onClick(node)
+      }
+    })
   }
   drageReDraw(newParam) {
     let {nodes, layout, edges} = this;
@@ -43,6 +49,13 @@ class DrageCanvas extends Canvas {
         item.moveTo(currentNodeNewLeft, currentNodeNewTop);
       }
     });
+  }
+  focus(node) {
+    this.nodes.forEach((node) => {
+      node.unFocus();
+    });
+
+    node.focus()
   }
 }
 

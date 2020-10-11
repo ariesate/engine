@@ -1,6 +1,7 @@
 const path = require( 'path')
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const RemoveStrictPlugin = require( 'remove-strict-webpack-plugin' );
 module.exports = {
     entry: {
         panel: './src/panel.js',
@@ -22,10 +23,16 @@ module.exports = {
             filename: 'local.html',
             template: 'common-template.html'
         }),
+        new RemoveStrictPlugin(),
     ],
     module: {
         rules: [
-            { test: /\.js?$/, exclude: /node_modules/, loader: 'babel-loader' },
+            {
+                test: /\.js?$/,
+                exclude: /node_modules/,
+                loader: 'babel-loader',
+
+            },
             {
                 test: /\.(less|css)$/,
                 use: [

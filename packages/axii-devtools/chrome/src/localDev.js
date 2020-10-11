@@ -9,6 +9,7 @@ import DevPanel from './App'
 const inspectObject = (path) => {
   window.target = window.AXII_HELPERS.getTargetByPath(path)
 
+  console.log("inspecting", window.target)
 }
 
 function App() {
@@ -46,7 +47,6 @@ function App() {
         console.log("get new tree", tree, lastTreeId, treeId)
         if (tree && treeId !== lastTreeId) {
           lastTreeId = treeId
-          console.log(treeId)
           // 防止 .value = 赋值又被监听变成死循环。
           setTimeout(() => {
             indepTree.value = tree

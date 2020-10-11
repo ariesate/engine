@@ -9,28 +9,34 @@ export default class BaseNode extends Node {
     super(opts);
     this.options = opts;
   }
-  draw = (opts) => {
+  draw = ({ top, left, options: meta}) => {
     let container = $('<div class="relation-node"></div>')
-      .css('top', opts.top)
-      .css('left', opts.left)
-      .attr('id', opts.id)
-      .css('background-color', opts.options.color);
+      .css('top', top)
+      .css('left', left)
+      .attr('id', meta.id)
+      .css('background-color', meta.color);
 
     let logoContainer = $(`<div class="logo-container">
-        ${opts.options.name}
-        ${opts.options.changed ? '*' : ''}
+        ${meta.name}
+        ${meta.changed ? '*' : ''}
     </div>`);
-    logoContainer.css('background-color', opts.options.color);
+    logoContainer.css('background-color', meta.color);
 
     container.append(logoContainer);
 
+    container.on('click', () => {
+      if(meta.onClick) {
+        meta.onClick(meta)
+      }
+    })
+
     return container[0];
   }
-  focus = ({ options }) => {
-    console.log(options)
-    if (options.onFocus) {
-      options.onFocus(options)
-    }
+  focus = () => {
+    $(this.dom).addClass('active')
+  }
+  unFocus = () => {
+    $(this.dom).removeClass('active')
   }
 }
 

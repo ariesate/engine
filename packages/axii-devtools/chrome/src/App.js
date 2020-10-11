@@ -7,17 +7,18 @@ import RelationEdge from "./RelationEdge";
 import node from "./Node";
 
 
-// TODO 增加回调，增加 path。
 function flattenTree(indeps, nodes = [], edges = []) {
-
   const children = []
-  indeps.forEach(indep => {
+  indeps.forEach((indep, index) => {
+    const parentPath = indep.parentPath || []
+    const path = parentPath.concat(index)
     // 梳理节点
     if (!nodes.find(node => node.id === indep.id)) {
       nodes.push({
         id :indep.id,
         changed: indep.changed,
         name: indep.name,
+        path,
         Class: node,
         onFocus: (node) => console.log(node)
       })
@@ -33,7 +34,7 @@ function flattenTree(indeps, nodes = [], edges = []) {
         })
       })
 
-      children.push(...indep.indeps)
+      children.push(...indep.indeps.map(childIndep => ({ ...childIndep, parentPath: path})))
     }
   })
 
@@ -42,7 +43,16 @@ function flattenTree(indeps, nodes = [], edges = []) {
   return { nodes, edges }
 }
 
-
+function debounce(fn, duration = 1) {
+  let lastCall
+  return () => {
+    if (lastCall) return
+    lastCall = setTimeout(() => {
+      fn()
+      lastCall = null
+    }, duration)
+  }
+}
 
 function App({indepTree, onInspect, onDebug}) {
   // TODO
@@ -57,7 +67,7 @@ function App({indepTree, onInspect, onDebug}) {
   const receiveRef = (ref) => {
     console.log('receiveRef')
     canvas = new DrageCanvas({
-      root: root,
+      root: ref,
       disLinkable: true, // 可删除连线
       linkable: true,    // 可连线
       draggable: true,   // 可拖动
@@ -79,22 +89,24 @@ function App({indepTree, onInspect, onDebug}) {
           arrowPosition: 0.5,
           Class: RelationEdge
         }
+      },
+      onClick(node) {
+        // CAUTION 因为起始的时候把 indepTree 伪装成 indeps 数组去处理的，所以 path[0] 没有意义。
+        if (onInspect) onInspect(node.options.path.slice(1))
+        canvas.focus(node)
       }
     });
   }
 
-  // TODO 目前 redraw 有 bug。只能通过一个 debounce 解决。
-  let s
+  // CAUTION redraw 有 bug，在一个周期内不能连续调用。只能通过一个 debounce 解决。
+  const redraw = debounce(() => {
+    const { nodes, edges } = flattenTree([indepTree.value])
+    canvas.redraw({nodes, edges})
+  })
+
   watch(() => indepTree.value, () => {
     if (!canvas) return
-    if (!s) {
-      s = setTimeout(() => {
-        const { nodes, edges } = flattenTree([indepTree.value])
-        canvas.redraw({nodes, edges})
-      }, 20)
-    }
-
-
+    redraw()
   })
 
   return <container>

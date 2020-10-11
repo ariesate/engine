@@ -30,7 +30,7 @@ const unobserve = (callback) => execute(scriptUnobserve, callback)
 document.addEventListener('DOMContentLoaded', function () {
 
 	const indepTree = ref(null)
-
+	const checkInterval = 200
 
 	function startRepaintCheckInterval () {
 		let nextCheckTask = null
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
 				// 又创建一个新的任务
 				nextCheckTask = setTimeout(() => {
 					repaintCheck()
-				}, 200)
+				}, checkInterval)
 			})
 		}
 
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	startRepaintCheckInterval()
 
-
+	// TODO inspect 回调和执行
 	render(<App indepTree={indepTree}/>, document.getElementById('root'))
 })
 
