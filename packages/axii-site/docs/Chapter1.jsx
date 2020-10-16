@@ -17,6 +17,7 @@ export const text = `
 如果没有外部引起的变化，那么组件函数只会执行一次。 
 `
 
+// noinspection LanguageDetectionInspection
 export function Code() {
   const firstName = ref('')
   const lastName = ref('')

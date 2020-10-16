@@ -57,7 +57,7 @@ import { filter, mapValues, shallowEqual } from '../util'
 import {
 	isRef,
 } from '../reactive';
-import { withCurrentWorkingCnode, activeEvent } from '../renderContext'
+import {withCurrentWorkingCnode, activeEvent, getCurrentWorkingCnode} from '../renderContext'
 import LayoutManager from '../LayoutManager'
 import { afterDigestion } from '../reactive/effect';
 import { normalizeLeaf } from '../createElement'
@@ -268,6 +268,8 @@ export default function createAxiiController(rootElement) {
 
 			session: (sessionName, startSession) => {
 				startSession()
+				// TODO 应该在 session 结束后统一处理所有的 effects。应该由 startSession 返回所有的处理了的 cnode 信息？
+				// 但是这样调用栈看起来就会看起来很复杂。8
 			},
 		},
 		/*********************
@@ -303,7 +305,7 @@ export default function createAxiiController(rootElement) {
 			isComponentVnode,
 		},
 		interceptViewActions({ createElement, updateElement, ...rest}) {
-			// 2. 劫持 createElement/updateElement 支持 ref 形式的 props
+			// 2. 劫持 createElement/updateElement 支持 ref 形式的 props、layoutAttributes 变 style。
 			const createShallowNode = (vnodeOrPatch, ...rest) => {
 				// shallowClone 一下是为了和原来的 vnodeOrPatch 断开链接，不要改了原来的对象。
 				return [shallowCloneElement(vnodeOrPatch), ...rest]
@@ -371,5 +373,15 @@ function attachLayoutStyle(injectedVnode) {
 			}
 		}
 	}
+}
+
+/**
+ * 因为 useEffect 的调度都是和 cnode 紧密相关的，因此写在这里
+ */
+
+export function useEffect(fn, deps) {
+	const cnode = getCurrentWorkingCnode()
+	invariant(cnode, 'can only use useEffect in component render function')
+	cnode.effects.push([fn, deps])
 }
 

@@ -101,7 +101,7 @@ function replaceVnodeWith(vnode, matchAndReplace) {
 export function replaceVnodeComputedAndWatchReactive(renderResult, collectChangePatchNode, cnode) {
 	if (typeof renderResult !== 'object') return renderResult
 
-	const [currentWorkingCnode] = getCurrentWorkingCnode()
+	const currentWorkingCnode = getCurrentWorkingCnode()
 	invariant(currentWorkingCnode === cnode, 'you can only call watch reactive props from cnode self')
 	if (!isCollectingComputed()) debugger
 	invariant(isCollectingComputed(), 'you are not collecting computed, can not watch reactive prop vnode')

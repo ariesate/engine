@@ -10,12 +10,19 @@ import watch from "../watch";
  * ComponentNode
  * 这个对象最终会传个 painter 作为创建 cnode 的依据。
  * 使用这个对象可以将很多代码从 controller 的 initialRender/updateRender 中抽出来
+ *
+ * TODO 组件回调里会产生异步 task 的问题，没有考虑。应该提供全局的 task 管理工具？？？
+ * 除了 ajax，现在绘图的工具也可能出现，还有 web worker。
  */
 export default class ComponentNode {
 	constructor() {
 		this.localProps = {}
 		// render 过程中创造的 reactive prop/reactive vnode 收集在这里，之后要回收。
 		this.computed = []
+		// 用户使用 useEffect 存的 fn。
+		this.effects = []
+		// effect return 的清理函数
+		this.effectClearHandles = []
 	}
 
 	clearComputed()  {

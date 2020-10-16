@@ -1,5 +1,6 @@
 import { setUseProxies, enablePatches, enableMapSet, setAutoFreeze } from 'immer'
 import { applyPatch as internalApplyPatch } from 'fast-json-patch'
+// TODO produce 还要处理复杂的结构，如 moment.js
 export { createDraft, produce, finishDraft } from 'immer'
 
 enableMapSet()

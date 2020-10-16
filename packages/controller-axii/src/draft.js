@@ -6,7 +6,7 @@ import {
   toRaw,
 } from './reactive'
 import watch from './watch'
-import deepClone from '@iusername/js-deep-clone'
+import deepClone from './cloneDeep'
 
 const draftDisplayValue = new WeakMap()
 const mutationTimeTable = new WeakMap()
@@ -23,7 +23,7 @@ export function draft(computedTarget) {
   const isRefComputed = isRef(computedTarget)
   // 用当前的值重新建立一个 reactive/ref 保持同步即可。如果是 computed 直接用 computation 执行一遍就可以了。
   // TODO 如果是复杂的 reactive 对象里面有非 plain object 怎么办？
-  const draftValue = isRefComputed ? ref(computedTarget.value) : reactive(deepClone(toRaw(computedTarget)))
+  const draftValue = isRefComputed ? ref(computedTarget.value) : reactive(deepClone(toRaw(computedTarget), typeToCloneHandle))
 
   // TODO 深度 watch 的问题
   // 什么时候 destroy watchToken? 不需要手动销毁，因为外部的 computed 会被手动销毁，这时候会连带销毁依赖的 watchToken。
@@ -55,8 +55,8 @@ export function draft(computedTarget) {
   return draftValue
 }
 
-// TODO handle moment 等复杂类型
-draft.handle = function handleClass(Type, cloneType) {
-
+// handle moment 等复杂类型
+const typeToCloneHandle = new WeakMap()
+draft.handle = function handleClass(Type, handleFn) {
+  typeToCloneHandle.set(Type, handleFn)
 }
-

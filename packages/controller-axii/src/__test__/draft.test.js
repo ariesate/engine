@@ -68,4 +68,26 @@ describe('draft', () => {
     expect(base.value).toBe('base')
     expect(getDisplayValue(drafted).value).toBe('draft')
   })
+
+  test('draft with complex type', () => {
+    class A {
+      constructor(text) {
+        this.inner = {
+          text
+        }
+      }
+    }
+
+    function cloneA(a) {
+      return new A(a.inner.text)
+    }
+
+    const base = reactive({
+      a : new A('a')
+    })
+
+    draft.handle(A, cloneA)
+    const drafted = draft(base)
+    expect(drafted.a !== base.a).toBe(true)
+  })
 })

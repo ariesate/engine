@@ -1,6 +1,7 @@
 AXII 官网规划
 
 
+
 # AXII 的官网设计
 
  - 完全无样式的简介
@@ -14,14 +15,13 @@ AXII 官网规划
      - 组件的 layout system 分离？
        - layout manager
        - scenario
-     - feature based 体系？
      - listener 自动实现 controlled 和 uncontrolled
+     - feature based 体系？
    - 数据的高级应用 
      - draft
      - toReactive
      - lastValue
      - do not use watch/ make everything reactive
-     - use with rxjs
      - 性能提升
        - batchOperation
        - debounceComputed
@@ -58,3 +58,17 @@ codeSandbox。
 5. 基本的布局组件、图片组件等
 
 6. 文章开始。
+
+怎么能更好，更快速地写出文章？？？头脑 hack，自然就熟练了。
+怎么 hack 读者的头脑？完全符合他的默认意识。
+他的默认意识是什么？
+第一部分，基础。
+第一章，数据？视图？如何修改数据？
+第二章，稍微复杂点的情况，引导它什么是复杂情况 - 动态结构
+
+第二部分，组件库的领域问题。需要引导，有哪些问题。如何解决
+样式
+逻辑
+feature
+
+第三部分，应用的主要问题，需要引导，有哪些问题。

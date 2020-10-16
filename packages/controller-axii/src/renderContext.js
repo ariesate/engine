@@ -26,11 +26,13 @@ export function withCurrentWorkingCnode(cnode, fn) {
   return result
 }
 
-export function getCurrentWorkingCnode(initialData) {
-  const data = currentWorkingCnodeData === undefined ? initialData : currentWorkingCnodeData
-  return [currentWorkingCnode, data, (nextData) => currentWorkingCnodeData = nextData]
+export function getCurrentWorkingCnode() {
+  return currentWorkingCnode
 }
 
+/**
+ * 全局的事件
+ */
 export const activeEvent = (function() {
   let currentEvent = null
   let shouldPreventDefault = false
