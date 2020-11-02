@@ -170,6 +170,7 @@ function createInjectedProps(cnode) {
 			const runtimeArgv = ((event === activeEvent.getCurrentEvent() && restArgv.length === 0) || event === undefined) ? [] : [event, ...restArgv]
 
 			const userMutateFn = props[propName]
+
 			// 注意这里，defaultMutateFn 可以拿到 props 的引用，这样我们就不用在调用的时候去往第一个参数去传了。
 			const defaultMutateFn = propType.createDefaultValue(props)
 			const valueProps = filter(mergedProps, isReactiveLike)
@@ -187,13 +188,17 @@ function createInjectedProps(cnode) {
 					// 常见的我们在 input onChange 中去取 event.target.value 实际上也就是去取 nextProps，如果能拿到，就不需要 event。
 					// 补足参数永远放在最后，这样开发者心智负担更小。
 					const allArgv = [...draftArgv, ...extraArgv]
-					defaultMutateFn(...allArgv)
-					// 显式的返回 false 就是不要应用原本的修改。
-					// CAUTION 注意这里的补全参数设计，补全的第一参数是事件，第二参数是现在的 prop 和 nextProps
-					shouldStopApply = userMutateFn ?
-						userMutateFn(...allArgv) === false :
-						false
-
+					// 可以传入一个标记为 overwrite 的 callback 来完全复写组件行为
+					if (userMutateFn && userMutateFn.overwrite) {
+						shouldStopApply = userMutateFn(defaultMutateFn, ...allArgv)
+					} else {
+						defaultMutateFn(...allArgv)
+						// 显式的返回 false 就是不要应用原本的修改。
+						// CAUTION 注意这里的补全参数设计，补全的第一参数是事件，第二参数是现在的 prop 和 nextProps
+						shouldStopApply = userMutateFn ?
+							userMutateFn(...allArgv) === false :
+							false
+					}
 				},
 				(patches) => draftChanges.push(...patches)
 			)
@@ -232,6 +237,9 @@ export function isSmartProp(prop) {
 	return typeof prop === 'function' && prop.isSmart
 }
 
+export function overwrite(fn) {
+	fn.overwrite = true
+}
 
 function isNaivePropType(propType) {
 	return propType.is(propTypes.string)
