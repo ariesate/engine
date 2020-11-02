@@ -10,7 +10,7 @@
  
 # 核心能力
 
-## derive
+## derive(DEPRECATED)
 
 组件对外接受的 props 和内部使用的 state 在某些情况下可能会不一致，为了让用户使用组件更方便，props 往往是复合和形态。
 state 为了让内部数据操作更方便、性能更高，往往对 props 进行了拆解。
@@ -18,9 +18,8 @@ state 为了让内部数据操作更方便、性能更高，往往对 props 进�
 在组件频繁接受 props 变化时，或者组件为受控组件，外部需要获取 props 时，这个拆解过程容易引起性能问题。
 框架提供的 derive 对这个过程进行了标注，当没有必要重复计算时，可以跳过并仍然认为 state 与 props 是一致的。
 
-// TODO 废弃！！！！
-已经证明了没有 derive 的需求！！！！
-可以变成 computed + draft 来实现。
+update:
+已经证明了没有 derive 的需求，可以变成 computed + draft 来实现。
 
 ## draft
 
@@ -35,7 +34,7 @@ draft 的本质是什么？？？
 
 ## scenario
 
-
+样式系统的场景化。将 design pattern 写成真正的逻辑，在组件中只需要描述对应的场景即可得到相应的样式。
 
 # 核心代码
 
