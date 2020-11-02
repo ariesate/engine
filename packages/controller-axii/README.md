@@ -54,8 +54,9 @@ draft 的本质是什么？？？
 这样会导致每次新增的时候，都重新预处理全部的数据，应该把每个数据的预处理的结果写成一个 computed。
 这样数据在进行调整时，能够只根据依赖进行计算。
 
+# Misc
 
-=== computed 是更具一个列表来动态产生的，如何优化，不重复为其中的元素产生 computed 的过程？？
+computed 是根据一个列表来动态产生的，如何优化，不重复为其中的元素产生 computed 的过程？？?
 computed((memo) => {
     xxx = memo(computed(() => {
         // 这个 computed 不会重复创建。

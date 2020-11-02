@@ -15,20 +15,9 @@
  - controller-*: 通过核心打造的不同前端框架，已实现:
    - react: 兼容 react 写法的框架
    - novice: 默认支持全局状态树、lego 组件、分层模块化的框架(加强版金蝉)
-   - axii: 默认支持 reactive 数据、片段更新(性能更高)的框架。计划中的金蝉 3.0 引擎，彻底解决复合/动态组件的性能问题，正在实现组件库，摆脱对 antd react 的依赖。
- - example: 各个版本框架的 example。axii-todoMVC 是最新 axii 的示例。
- 
-# 项目启动
-
-进入 example 下想要查看的示例目录。如 axii-todoMVC。执行：
-
-```
-npm i
-npm start 
-``` 
-
-会启动本地 dev server。依照命令行提示访问相应路径。默认为 127.0.0.1:8080/index.html。
-可通过查看 webpack.config.js 中 plugins 字段下的 filename 找到所有可访问的页面地址。
+   - axii: 默认支持 reactive 数据、片段更新(性能更高)的框架。
+ - example: 各个版本框架的 example。部分已失效，待修复。
+ - axii-components: axii 的组件库，可当做 axii 的示例。
 
 # engine 细则
 
