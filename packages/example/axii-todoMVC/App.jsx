@@ -1,20 +1,15 @@
 import {
   createElement,
-  render,
   reactive,
   ref,
   refComputed,
-  arrayComputed,
-  vnodeComputed,
-  propTypes,
-  derive,
-  effect
+  computed,
 } from 'axii'
 import Input from './Input'
 import Todo from './Todo'
 import Filter from './Filter'
 
-const TODO_TYPES = ['all', 'uncompleted', 'completed']
+export const TODO_TYPES = ['all', 'uncompleted', 'completed']
 
 const createId = (function() {
   let i = 0
@@ -39,8 +34,8 @@ function randomTodos() {
 
 export function App() {
   const todos = reactive(randomTodos())
-  const todoType = ref(TODO_TYPES[0])
-  const showTodos = arrayComputed(() => todos.filter((todo) => {
+  const todoType = ref(TODO_TYPES[1])
+  const visibleTodos = computed(() => todos.filter((todo) => {
     return todoType.value === TODO_TYPES[0] ? true: (todo.type === todoType.value)
   }))
 
@@ -72,13 +67,14 @@ export function App() {
       <div>这个 todoMVC 是用来演示 Axii 的基本组件结构、reactive data 的实现的。</div>
       <div>说明：输入完按回车能提交</div>
       <Input onAddSubmit={onAddSubmit} />
-      {refComputed(() => {
-        const newList = showTodos.map(todo => {
+      {() => {
+        const newList = visibleTodos.map(todo => {
           return <Todo key={todo.id} item={todo} onDelete={onDelete} />
         })
+        console.log(visibleTodos)
         return newList
-      })}
-      <div>下面的 radio button 可以用来筛选</div>
+      }}
+      <div>过滤器：</div>
       {TODO_TYPES.map((type) => (
         <span key={type}>
           <input type="radio" name={type}

@@ -5,7 +5,7 @@ const isDevMode = process.env.NODE_ENV === 'dev'
 
 const config = {
   entry: {
-    todoMVC: './index.js',
+    todoMVC: './index.jsx',
   },
   output: {
     filename: '[name].js',

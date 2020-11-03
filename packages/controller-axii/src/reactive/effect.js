@@ -161,6 +161,12 @@ export function destroyComputed(computed) {
  * Computation
  ****************************************/
 
+/* TODO 最后的 replace 和 deepPatch 都是既是用来修改数据，也是用来再出发 computed 上的依赖的。
+ * 对于"数组"这种可变索引的数据类型来说，用户如果没有"具名"的路径依赖，就不需要 deepPatch。
+ * 具名指的是 arr[1].xxx 这样的，其中 1 就是具体的索引。
+ * 一般情况下都是使用 arr.map/forEach。这个时候其实都只是坚挺了 iteration，只要出发 iteration 的依赖冲计算就够了。
+ */
+
 function applyComputation() {
   const { computation } = computationStack[computationStack.length - 1]
   const isToken = computation.computed instanceof ComputedToken
@@ -640,9 +646,12 @@ export function replace(source, nextSourceValue) {
 function replaceObjectLikeValue(source, nextKey, nextValue) {
   const isMap = source instanceof Map
 
-  if (typeEqual(nextValue, source[nextKey]) && isCollectionLike(nextValue)  ) {
+  // CAUTION 只有当 nextValue 不是来自别的地方的 reactive 引用，并且新 value 和老 value 都是同类型的 collection，
+  // 才继续 deepPatch。
+  if (!isReactiveLike(nextValue) && typeEqual(nextValue, source[nextKey]) && isCollectionLike(nextValue)  ) {
     deepPatch(isMap ? source.get(nextKey) : source[nextKey], nextValue)
   } else {
+    // Map/Array/Object || nextValue 已经是 reactive，或说明是来自别的地方的引用。
     if (isMap) {
       source.set(nextKey, nextValue)
     } else {
@@ -651,9 +660,11 @@ function replaceObjectLikeValue(source, nextKey, nextValue) {
   }
 }
 
+/**
+ * TODO 还需要进一步允许性能优化，比如对象上可以标记"时间戳"，直接通过时间戳来判断是否要进行深度 patch。
+ */
 export function deepPatch(source, nextSourceValue) {
   invariant(isRef(source) || typeEqual(source, nextSourceValue), 'computed should always return same type')
-
 
   if (isRef(source)) {
     source.value = nextSourceValue
@@ -683,9 +694,13 @@ export function deepPatch(source, nextSourceValue) {
       replaceObjectLikeValue(source, nextKey, nextValue)
     })
   } else if (source instanceof Set) {
-    // TODO 这里没法深度
-    source.clear()
-    nextSourceValue.forEach(n => source.add(n))
+    // CAUTION Set 没法深度
+    source.forEach(s => {
+      if (!nextSourceValue.has(s)) source.delete(s)
+    })
+    nextSourceValue.forEach(n => {
+      if (!source.has(n)) source.add(n)
+    })
   } else {
     invariant(false, 'unknown computed value')
   }
