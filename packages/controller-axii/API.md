@@ -75,7 +75,7 @@ console.log(displayValue.value) // sourceChanged
 ### 将 reactive 数据直接用在 attribute 或者 children 中。
 注意，当使用 ref 创建的 reactive 用在 vnode 中时，不要去读 `.value`，axii 需要完整地对象来判断。
 ```jsx
-import {ref, computed} from 'axii
+import {ref, computed} from 'axii'
 function App(){
     const isOrigin = ref(true)
     const reactiveStyle = computed(() => {
@@ -191,7 +191,7 @@ function App() {
 
 ### createComponent
 
-参见 axii-component/tale
+参见 axii-component/table。
 
 ### fragments\[name\]
 
