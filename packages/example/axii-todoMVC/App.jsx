@@ -52,12 +52,6 @@ export function App() {
     todos.splice(todos.findIndex(t => t.id === item.id), 1)
   }
 
-  // 不允许两个同名的，这个逻辑放在那里？
-  const onUpdateTodo = (nextTodo) => {
-    // TODO checkUpdateTodo
-    // TODO 如果需要异步处理怎么办？
-  }
-
   const changeType = (type) => {
     todoType.value = type
   }
@@ -68,11 +62,9 @@ export function App() {
       <div>说明：输入完按回车能提交</div>
       <Input onAddSubmit={onAddSubmit} />
       {() => {
-        const newList = visibleTodos.map(todo => {
+        return visibleTodos.map(todo => {
           return <Todo key={todo.id} item={todo} onDelete={onDelete} />
         })
-        console.log(visibleTodos)
-        return newList
       }}
       <div>过滤器：</div>
       {TODO_TYPES.map((type) => (

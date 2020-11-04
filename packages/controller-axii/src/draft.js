@@ -27,6 +27,7 @@ export function draft(targetReactive) {
 
   // 什么时候 destroy watchToken? 不需要手动销毁，因为外部的 computed 会被手动销毁，这时候会连带销毁依赖的 watchToken。
   watch(() => traverse(targetReactive), (isUnchanged) => {
+    // TODO 应该也要重置一下 draft
     !isUnchanged && mutationTimeTable.set(targetReactive, Date.now())
   })
 
@@ -44,8 +45,8 @@ export function draft(targetReactive) {
     const draftMutationTime = mutationTimeTable.get(draftValue)
     const computedMutationTime = mutationTimeTable.get(targetReactive) || 0
     const target = (draftMutationTime > computedMutationTime) ? draftValue : targetReactive
-
     // CAUTION 这里为了性能并没有用 cloneDeep，而是直接包装了一下，因为是 computed，也不会被外部修改。
+
     return isRefComputed ? target.value : toRaw(target)
   })
 
