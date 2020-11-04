@@ -6,7 +6,7 @@
 这两个 API 是用来创建 reactive 类型的数据的，区别在于 `reactive()` 创建的数组或者对象可以实现深度监听，在使用的时也是按照正常的对象来读取和赋值。
 而 `ref()` 则主要是用来创建非对象类型的数据，例如 number/string/undefined 等。如果某些对象不想要深度监听，也可以使用 ref。在读取和赋值时都是使用 `.value` 。
 
-```
+```jsx
 import { reactive, ref } from 'axii'
 const reactiveArray = reactive([])
 const reactiveString = ref('')
@@ -27,7 +27,7 @@ console.log(reactiveString) // {value: 'axii'}
 这三个 API 是用来创建"计算"数据的。当计算数据是要深度监听的对象或者普通值类型，使用 `computed`。当要创建"不需要深度监听的对象类型"时，使用 `refComputed`。
 `vnodeComputed` 是用来返回的 vnode 节点中标记动态结构的，因为 axii 会自动将函数节点包装成 vnodeComputed，所以一般不需要显式调用。
 
-```
+```jsx
 import { reactive, computed } from 'axii'
 const source = reactive([])
 const computedArray = computed(() => {
@@ -42,7 +42,7 @@ console.log(computedArray) // [2]
 ### watch
 import { watch } from 'axii'
 这个 API 是用来处理一些副作用的，理论上在业务开发中*不应该直接使用*，应该将相应的场景再包装。参考 draft 的实现。
-```
+```jsx
 watch(function readSource() {
     // 在这里读取要依赖的 reactive 对象
 }, function callback() {
@@ -54,7 +54,7 @@ watch(function readSource() {
 
 这个 API 是通过 watch 创造的用来处理业务中需要有"副本"的数据的，例如从 server 拿到数据后，在本地需要编辑，但又要能随时重置。
 通过 getDisplayValue，可以创造出一个显示最近一次修改的 reactive 数据。可以参考 todoMVC 中的例子。
-```
+```jsx
 const source = ref('origin')
 const draftValue = draft(source)
 const displayValue = getDisplayValue(draft)
@@ -74,7 +74,7 @@ console.log(displayValue.value) // sourceChanged
 ## 将数据用在 vnode 节点中
 
 ### 将 reactive 数据直接用在 attribute 或者 children 中。注意，当使用 ref 创建的 reactive 用在 vnode 中时，不要去读 `.value`，axii 需要完整地对象来判断。
-```
+```jsx
 import {ref, computed} from 'axii
 function App(){
     const isOrigin = ref(true)
@@ -94,7 +94,7 @@ function App(){
 
 ### 动态结构
 当我们要根据数据来创建动态的结构时(例如循环输入、条件判断输出)，我们可以直接使用"函数"，axii 会自动检测到其中依赖的 reactive 对象，并且当其变化时精确更新相应区域。
-```
+```jsx
 import {reactive} from 'axii'
 function App() {
 
@@ -102,7 +102,7 @@ function App() {
 
     return (
         <ul>
-            {() => array.map(item => <li>{item}<li>)}
+            {() => array.map(item => <li>{item}</li>)}
         </ul>
     )
 }
@@ -113,7 +113,7 @@ function App() {
 ### render
 
 用来将组件渲染到 dom 节点上。
-```
+```jsx
 import {render} from 'axii'
 function App(){
     return <div>Axii</div>
@@ -126,13 +126,12 @@ render(<App />, document.getElementById('root'))
 为了保持对象操作的一致性， reactive 不会把对象的叶子节点自动转成 ref。这也使得当我们希望把叶子节点的数据委托给其他组件来修改时，需要一个机制来保持修改的是原 reactive 对象。
 再不使用 delegateLeaf 之前，我们可以写成：
 
-```
+```jsx
 // 注意这里节点还要写成函数的形式，因为 source[index] 是个普通值，不是 reactive 对象，axii 检测不到，数据更新后找不到相应的 dom 更新。
 function AddOne({source, index}) {
     return <div onClick={() => source[index] += 1}>
-        <span>content:>
         <span>{() => source[index]}</span>
-    <div>
+    </div>
 }
 
 function App() {
@@ -144,12 +143,11 @@ function App() {
 ```
 
 这种写法会使得组件的可复用极大降低，因为对 `AddOne` 来说，不想关心拿到的数据到底是一个对象上的叶子节点，还是一个普通的值。当有了 delegateLeaf 之后，可以写成:
-```
+```jsx
 function AddOne({item}) {
     return <div onClick={() => item.value += 1}>
-        <span>content:>
         <span>{item}</span>
-    <div>
+    </div>
 }
 
 function App() {
@@ -164,7 +162,7 @@ function App() {
 
 用作组件的 property 声明和初始化。对于声明为 callback 类型的 property，axii 会自动为其补全 3 个参数。注意 `default(createDefaultValue: function)` 接受的是一个函数，
 这意味着在声明 callback 类型的默认值时，我们传入的是一个创建 callback 函数的函数，见下面例子。 
-```
+```jsx
 import { propTypes } from 'axii'
 
 function Child({ onChangeContent, content }) {
