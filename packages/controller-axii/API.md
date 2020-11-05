@@ -15,7 +15,7 @@ const reactiveString = ref('')
 reactiveArray.push(1)
 reactiveArray.push(2)
 console.log(reactiveArray.length) // 2
-console.log(Array.isArray(reactiveArray) // true
+console.log(Array.isArray(reactiveArray)) // true
  
 // 通过 ref 创建的数据要通过 .value 来读取或者赋值
 reactiveString.value = 'axii'
@@ -158,6 +158,28 @@ function App() {
 }
 ```
 
+### 语义化标签 & layout attributes & use
+在 axii 中鼓励使用用户自定义的有语义的标签名，不再使用 div/span 等原生标签。同时推荐在标签上直接使用 layout attributes。如果只使用自定义的标签名，浏览器会默认认为是 inline 布局。
+使用了语义化标签后，还可以通过 `use` attribute 来指定要使用的原生标签。例如我们有多个 input，像给它语义化明明，但还是使用原生 input 组件。
+
+```jsx
+function App() {
+  const height= ref(200)
+  const hidden = ref(false)
+  // layout attribute 支持三种写法:
+  // 1. 快捷方式。将键值直接通过连接符写在一起。
+  // 2. 正常 attribute 键值模式。支持值为 reactive 对象。
+  // 3. 快捷模式&布尔值。可以通过 布尔值来控制是否需要该 attribute。
+  return (
+    <app block block-width-200px block-height={height} block-display-none={hidden}>
+      <name>Axii app</name>
+      <firstName use="input"></firstName>
+      <lastName use="input"></lastName>
+    </app>
+  )
+}
+```
+
 ### propTypes
 
 用作组件的 property 声明和初始化。对于声明为 callback 类型的 property，axii 会自动为其补全 3 个参数。注意 `default(createDefaultValue: function)` 接受的是一个函数，
@@ -191,25 +213,63 @@ function App() {
 
 ### createComponent
 
-参见 axii-component/table。
+当某些功能可能涉及到组件内多个不连续的视图区域，不适合使用子组件的方式进行拆分时，我们推荐使用 `createComponent` 
+以 feature 来拆分代码，示例参见 axii-component/table。
+
+```jsx
+import {createComponent} from 'axii'
+
+function BaseComponent({ number, onAdd, onMinus }) {
+  
+  return (
+    <container>
+      <minus use="button">-</minus>
+      <result>{number}</result>
+      <add use="button">+</add>
+    </container>
+  )
+}
+
+BaseComponent.Style = (fragments) => {
+  fragments.root.elements.container.style({
+    border: '1px black dashed'
+  })
+}
+
+export default createComponent(BaseComponent)
+```
 
 ### fragments\[name\]
 
-TODO
+使用 createComponent 时，会给组件传入第二参数 fragments。使用 fragments 来标记有"局部状态"的片段，这样在 feature 中就可以获取到这些局部状态。
+
+```jsx
+
+```
 
 ### fragments\[name\].modify
 
-TODO
+feature 可以修改组件的结构。同时 feature 也可以声明 propsTypes 和 Style。
+
+```jsx
+function AddIcon(fragments) {
+  fragments.root.modify((result, propsAndState) => {
+    result.push(<icon />)
+  })
+}
+
+export default createComponent(BaseComponent, [AddIcon])
+```
 
 ### fragments\[name\].elements.style
 
-TODO
+组件和 feature 声明的 Style 实际上也是 feature 实现的，只不过通常我们把样式相关的代码放在这里面。
 
 ### fragments\[name\].elements\[eventName\]
 
-TODO
+可以在 feature 中监听节点事件
 
 ### scen
 
-TODO
+design pattern 的实现。
 
