@@ -31,8 +31,8 @@ const App = () => {
   };
 
   const todos = reactive([]);
-  const handleTodoChange = (index, newItem) => {
-    Object.assign(todos[index], newItem);
+  const handleTodoChange = (checked, item) => {
+    item.status = checked ? "completed" : "uncompleted";
   };
 
   const filter = ref(FILTER_ALL);
@@ -63,7 +63,6 @@ const App = () => {
   });
   const handleFilterChange = (currentFilter) => {
     filter.value = currentFilter;
-    console.log(filter);
   };
 
   const handleClearCompleted = () => {
