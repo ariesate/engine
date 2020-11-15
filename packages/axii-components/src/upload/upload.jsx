@@ -1,3 +1,8 @@
+/**
+ * if you need a upload server for test,
+ * there is a simple node server here:
+ * https://github.com/zhang-quan-yi/node-upload-server.git
+ */
 import { createElement, createComponent, reactive, propTypes } from "axii";
 import { useUpload } from "./useUpload";
 import Progress from "../progress/progress";
