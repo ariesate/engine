@@ -1,6 +1,6 @@
 /** @jsx createElement */
 import { createElement, render, reactive, ref } from "axii";
-import Upload from "../src/upload/upload.jsx";
+import Upload, { DragAndDrop } from "../src/upload/upload.jsx";
 /**
  * 1.
  * <Upload value={files} action="//localhost:8801/upload" method="POST" />
@@ -44,7 +44,7 @@ const App = () => {
   };
 
   return (
-    <Upload
+    <DragAndDrop
       value={files}
       action="//localhost:8801/upload"
       method="POST"
@@ -55,7 +55,9 @@ const App = () => {
       onError={handleError}
       disabled={false}
       isShowPreviewList
-    />
+    >
+      Click or drag file to this area to upload
+    </DragAndDrop>
   );
 };
 render(<App />, document.getElementById("root"));

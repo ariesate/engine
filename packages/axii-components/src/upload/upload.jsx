@@ -1,11 +1,19 @@
 /**
- * if you need a upload server for test,
+ * if you need an upload server for test,
  * there is a simple node server here:
  * https://github.com/zhang-quan-yi/node-upload-server.git
  */
-import { createElement, createComponent, reactive, propTypes } from "axii";
+import {
+  createElement,
+  createComponent,
+  ref,
+  refComputed,
+  reactive,
+  propTypes,
+} from "axii";
 import { useUpload } from "./useUpload";
 import Progress from "../progress/progress";
+import { useDragAndDropUpload } from "./useDragAndDropUpload";
 // Question:
 // 1. value: control or uncontrol;
 // 2. how to customize the Process(child component) style
@@ -24,19 +32,23 @@ const Upload = (props, fragments) => {
   const value = props.value || [];
   return (
     <container>
-      <uploadArea use="label" block onClick={handleClick}>
-        <uploadButton use="div">
-          {fragments.uploadButton({ disabled })(() => {
-            return <text use="span">Upload</text>;
-          })}
-        </uploadButton>
-        <input
-          type="file"
-          accept={accept ? accept : undefined}
-          disabled={disabled}
-          onChange={handleChange}
-        />
-      </uploadArea>
+      {fragments.uploadInputContainer({ disabled, onChange: handleChange })(
+        () => {
+          return (
+            <uploadInput use="label" block onClick={handleClick}>
+              <uploadButton use="div">
+                {props.children ? props.children : "Upload"}
+              </uploadButton>
+              <input
+                type="file"
+                accept={accept ? accept : undefined}
+                disabled={disabled}
+                onChange={handleChange}
+              />
+            </uploadInput>
+          );
+        }
+      )}
       {isShowPreviewList ? (
         <fileList use="ul">
           {() =>
@@ -70,7 +82,7 @@ const Upload = (props, fragments) => {
 };
 Upload.Style = (fragments) => {
   fragments.root.elements.container.style({});
-  fragments.root.elements.input.style({
+  fragments.uploadInputContainer.elements.input.style({
     width: 0,
     height: 0,
     opacity: 0,
@@ -136,3 +148,34 @@ Upload.propTypes = {
   fileSizeLimit: propTypes.number, // byte
 };
 export default createComponent(Upload);
+
+const DragAndDropFeature = (fragments) => {
+  fragments.uploadInputContainer.modify((result, { onChange }) => {
+    const status = ref("");
+    const setStatus = (value) => {
+      status.value = value;
+    };
+    const state = { status, setStatus };
+    const props = { onChange };
+    const events = useDragAndDropUpload(state, props);
+    const style = refComputed(() => ({
+      borderColor: status.value === "hover" ? "#1890FF" : "#999999",
+      backgroundColor: status.value === "hover" ? "#FAFAFA" : "#EEEEEE",
+    }));
+    return (
+      <container use="div" style={style} {...events}>
+        {result}
+      </container>
+    );
+  });
+};
+
+DragAndDropFeature.Style = (fragments) => {
+  fragments.uploadInputContainer.elements.container.style({
+    padding: 16,
+    borderWidth: 1,
+    borderStyle: "dashed",
+  });
+};
+
+export const DragAndDrop = createComponent(Upload, [DragAndDropFeature]);
