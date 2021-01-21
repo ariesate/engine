@@ -28,16 +28,15 @@ export { default as useImperativeHandle } from './useImperativeHandle'
 export { default as createRef } from './createRef'
 // TODO 和 createRef 区别？
 export { default as useRef } from './useRef'
-export { default as watch } from './watch'
+export { default as watch, traverse } from './watch'
 export { StyleEnum, StyleRule } from './StyleManager'
 export { default as createFlatChildrenProxy } from './createFlatChildrenProxy'
-export { isComponentVnode, useEffect } from './controller'
+export { isComponentVnode, useViewEffect, useContext, createContext } from './controller'
 export { createSmartProp, overwrite } from './controller/ComponentNode'
 export { invariant, tryToRaw, shallowEqual } from './util'
 export { default as createComponent} from './component/createComponent'
 export { flattenChildren } from './component/utils'
 export { default as Scenario, createRange, matrixMatch } from './Scenario'
-export { default as useContext } from './useContext'
 export { default as batchOperation } from './batchOperation'
 export * from './draft'
 
@@ -62,6 +61,8 @@ export function render(vnode, domElement, ...controllerArgv) {
 
   return controller
 }
+
+
 
 // TODO 根据 _DEV_ 变量判断
 implementDevToolInterface()

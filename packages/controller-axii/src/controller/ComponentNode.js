@@ -1,7 +1,7 @@
 import {destroyComputed, isReactiveLike, refLike, collectReactive, setDisplayName, getComputation} from "../reactive";
 import {filter, invariant, mapValues, tryToRaw} from "../util";
 import propTypes from "../propTypes";
-import {activeEvent, reactiveToOwnerScope} from "../renderContext";
+import {activeEvent, getCurrentWorkingCnode, reactiveToOwnerScope} from "../renderContext";
 import {applyPatches, produce} from "../produce";
 import { replaceVnodeComputedAndWatchReactive } from './VirtualComponent'
 import watch from "../watch";
@@ -20,9 +20,13 @@ export default class ComponentNode {
 		// render 过程中创造的 reactive prop/reactive vnode 收集在这里，之后要回收。
 		this.computed = []
 		// 用户使用 useEffect 存的 fn。
-		this.effects = []
+		this.viewEffects = []
 		// effect return 的清理函数
 		this.effectClearHandles = []
+		// 框架会为 ComponentNode 提供 parent，主要用来往上寻找 context
+		this.parent = null
+		// key: context 对象. value: 创建时的 defaultValue 或者 Provider value 中提供的
+		this.contexts = new Map()
 	}
 
 	clearComputed()  {
@@ -49,10 +53,18 @@ export default class ComponentNode {
 	willMount() {
 		// virtual type 的 watch 和清理工作都放到 render 里面去做了，这样能最大化保持一致性。见 virtualCnodeRender
 	}
+	// AXII lifeCycle: 在 节点真正挂载了并且 session 结束了之后触发。
+	didMount() {
+		this.viewEffects.forEach((effect) => {
+			this.effectClearHandles.push(effect())
+		})
+	}
 	// AXII lifeCycle: 在 supervisor 中发现不存在了时直接调用。
-	unmount() {
+	willUnmount() {
 		// 1. 回收 render 中间产生的所有 computed。包括 watch token，其实也是 computed。
 		this.clearComputed()
+		// 2. 清理 didMount 中产生的 viewEffect
+		this.effectClearHandles.forEach((clearEffect) => clearEffect && clearEffect())
 	}
 	// AXII lifeCycle: willUpdate。
 	willUpdate() {
@@ -156,6 +168,8 @@ function createInjectedProps(cnode) {
 	// 对两种类型props 特殊处理：
 	// 2. 随 smartProp 进行回调处理
 	// 3. 开始对其中的 mutation 回调 prop 进行注入。
+	// TODO 考虑用户不需要 produce 的场景，能不能提前声明？虽然传入的是 ref，但是某些事件就是不要 apply，不是动态决定的，是提前就决定好的。
+	// TODO 虽然已经有 overwrite 了，但是还是会去 produce。连这一步也不要有？性能影响到底大不大？
 	const transformedProps = mapValues(thisPropTypes || {}, (propType, propName) => {
 		const prop = mergedProps[propName]
 		if (!propType) return prop
@@ -259,4 +273,41 @@ function filterFixedValueChanges(changes, values) {
 			return isReactiveLike(values[path[0]])
 		}
 	})
+}
+
+
+/**
+ * 因为 useViewEffect 的调度都是和 cnode 紧密相关的，因此写在这里
+ * 这里和 react 的 useEffect 不同，viewEffect 只在 didMount 和 willUnmount 时调用
+ */
+export function useViewEffect(fn) {
+	const cnode = getCurrentWorkingCnode()
+	invariant(cnode, 'can only use useEffect in component render function')
+	cnode.viewEffects.push(fn)
+}
+
+function attachContext(context, value) {
+	const cnode = getCurrentWorkingCnode()
+	cnode.contexts.set(context, value)
+}
+
+export function createContext(defaultValue) {
+	const context = {}
+	function Provider({ value = defaultValue, children }) {
+		attachContext(context, value)
+		return children
+	}
+	context.Provider = Provider
+
+	return context
+}
+
+export function useContext(context) {
+	let currentCnode = getCurrentWorkingCnode()
+	let contextValue
+	while(contextValue === undefined && currentCnode) {
+		contextValue = currentCnode.contexts.get(context)
+		currentCnode = currentCnode.parent
+	}
+	return contextValue
 }

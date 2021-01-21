@@ -50,10 +50,10 @@
  */
 
 import Fragment from '@ariesate/are/Fragment'
-import { UNIT_PAINT } from '@ariesate/are/constant'
+import { UNIT_PAINT, UNIT_DISPOSE } from '@ariesate/are/constant'
 import { shallowCloneElement } from '../index.js'
 import { reverseWalkCnodes } from '../common'
-import { filter, mapValues, shallowEqual } from '../util'
+import { filter, mapValues, shallowEqual, nextTick } from '../util'
 import {
 	isRef,
 } from '../reactive';
@@ -63,6 +63,9 @@ import { afterDigestion } from '../reactive/effect';
 import { normalizeLeaf } from '../createElement'
 import ComponentNode from './ComponentNode'
 import {invariant} from "../index";
+import {UNIT_INITIAL_DIGEST} from "../../../engine/constant";
+
+export { useViewEffect, createContext, useContext } from './ComponentNode'
 
 const layoutManager = new LayoutManager()
 
@@ -139,6 +142,8 @@ export default function createAxiiController(rootElement) {
 	let scheduler = null
 	let ctree = null
 
+
+
 	// 这里有个优化，由于我们的数据变化不一定来自于用户行为，也可能是 setInterval 之类的。可能出现多个数据变化，
 	// 但是影响的 cnode 相同，我们当然不希望 cnode 重复更新，最好在数据都变化玩之后，才开始更新 cnode。
 	// 所以，当数据变化调用 collectChangeCnode 时，只是先把要更新的节点收集到 changedCnodes 中
@@ -147,6 +152,9 @@ export default function createAxiiController(rootElement) {
 	const changedCnodes = []
 	// 一定要单独变成一个函数，因为 afterDigestion 中是通过对比函数引用来合并重复的 callback 的。
 	function scheduleCnodeToRepaint() {
+		// scheduler 判断如果不是在 session 中，那么就会开启一个 updateSession。所以为了性能，controller 对于已知的可以合并的流程
+		// 最好主动启用 startUpdateSession。例如下面的事件 invoke 回调，回调中可能会有多个 cnode 变化，这样主动开启后 scheduler 在 paint
+		// 阶段会做一些性能优化。
 		scheduler.collectChangedCnodes(changedCnodes.splice(0))
 	}
 	const reportChangedCnode = (cnode) => {
@@ -173,8 +181,6 @@ export default function createAxiiController(rootElement) {
 			afterDigestion(schedulePatchNodeToRepaint)
 		}
 	}
-
-
 
 	const commonInitialRender = (cnode) => {
 		/**
@@ -210,6 +216,24 @@ export default function createAxiiController(rootElement) {
 		return result
 	}
 
+	let sessionEffectedCnodes = null
+	// 用来处理 session 中产生的 effect 的
+	function deferStartEffectSession(effectedCnodes = []) {
+		if (effectedCnodes.length === 0) return
+		// TODO 这里有个问题就是当前的 effect 还没有都执行完，结果下一个 session 就开始了？怎么确定 nextTick 的中的 effect session 一定最新执行？
+		nextTick(() => {
+			// CAUTION 这个 session 里面的 effect 可能不会再产生新的 cnode 变化，因此达到稳定，session 结束时再调用 deferStartEffectSession 时，参数 length 就是 0 了。
+			scheduler.startUpdateSession(() => {
+				effectedCnodes.forEach(({ unitName, cnode }) => {
+					// 目前只处理了 didMount
+					if (unitName === UNIT_INITIAL_DIGEST) {
+						cnode.didMount && cnode.didMount()
+					}
+				})
+			})
+		})
+	}
+
 	return {
 		/****************
 		 * painter interfaces
@@ -240,8 +264,10 @@ export default function createAxiiController(rootElement) {
 				const { toInitialize, toDestroy = {}, toRemain = {} } = result
 
 				// 通知所有的 cnode 进行 unmount，unmount 的时候通常会回收里面创建的 computed。
+				// unmount 也是在这里立即就处理了，不要等到节点都卸载了，因为那时候很多 reactive 变量都清理完了，上下文丢失了
 				reverseWalkCnodes(Object.values(toDestroy), cnode => {
-					cnode.unmount && cnode.unmount()
+					cnode.willUnmount && cnode.willUnmount()
+					sessionEffectedCnodes.push({ unitName: UNIT_DISPOSE, cnode})
 				})
 
 				// CAUTION 这里有 virtual type 上都写了 shouldComponentUpdate，基本都会重新渲染。
@@ -261,15 +287,21 @@ export default function createAxiiController(rootElement) {
 			},
 			unit: (sessionName, unitName, cnode, startUnit) => {
 				// 第一渲染，执行一下 willMount 的生命周期
+				sessionEffectedCnodes.push({ unitName, cnode, sessionName })
+				// willMount 直接在这里就处理了，到 session 结束时 digest 都完了，再处理就没意义了。
 				if (unitName === UNIT_PAINT) cnode.willMount && cnode.willMount()
 				// 记录一下，其他功能要用
 				return withCurrentWorkingCnode(cnode, startUnit)
 			},
 
 			session: (sessionName, startSession) => {
+				// CAUTION 一个 session 不能互相嵌套，所以我们可以放心地收集要处理副作用的节点。
+				invariant(sessionEffectedCnodes === null, 'last session effect not cleared, something wrong')
+				sessionEffectedCnodes = []
 				startSession()
-				// TODO 应该在 session 结束后统一处理所有的 effects。应该由 startSession 返回所有的处理了的 cnode 信息？
-				// 但是这样调用栈看起来就会看起来很复杂。8
+
+				deferStartEffectSession(sessionEffectedCnodes.slice())
+				sessionEffectedCnodes = null
 			},
 		},
 		/*********************
@@ -330,6 +362,11 @@ export default function createAxiiController(rootElement) {
 		apply: fn => scheduler.startUpdateSession(fn),
 		dump() {},
 		getCtree: () => ctree,
+		destroy: () => {
+			// TODO 目前只是利用 diff 的 toDestroy 去销毁了所有的 computed。dom 事件之类的没处理
+			ctree.props.destroyed = true
+			reportChangedCnode(ctree)
+		}
 	}
 }
 
@@ -375,13 +412,5 @@ function attachLayoutStyle(injectedVnode) {
 	}
 }
 
-/**
- * 因为 useEffect 的调度都是和 cnode 紧密相关的，因此写在这里
- */
 
-export function useEffect(fn, deps) {
-	const cnode = getCurrentWorkingCnode()
-	invariant(cnode, 'can only use useEffect in component render function')
-	cnode.effects.push([fn, deps])
-}
 

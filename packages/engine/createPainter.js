@@ -96,6 +96,9 @@ function prepareRetForAttach(rawRet, cnode, { isComponentVnode, createCnode, nor
       const nextIndex = getVnodeNextIndex(vnode, parentVnodePath)
       // CAUTION cnode has object reference inside: props/children/parent
       next[nextIndex] = createCnode(vnode, cnode)
+      // CAUTION 这里有双向链接，是用来给 context 之类的功能用的
+      next[nextIndex].parent = cnode
+
       if (vnode.transferKey !== undefined) {
         transferKeyedVnodes[vnode.transferKey] = vnode
       }

@@ -459,3 +459,7 @@ export function createObjectIdContainer() {
     return ids.get(obj)
   }
 }
+
+export function nextTick(callback) {
+  setTimeout(callback, 0)
+}

@@ -103,8 +103,9 @@ export default function createScheduler(painter, view, supervisor) {
     supervisor.session(SESSION_INITIAL, () => {
 
       ctree = painter.createCnode({
-        type: function ROOT(){
-          return vnode
+        type: function ROOT({ destroyed }){
+          // 用来支持 整个应用 destroy，return null 之后 diff 就会把整个树做 toDestroy 处理
+          return destroyed ? null : vnode
         },
       })
 
@@ -138,6 +139,7 @@ export default function createScheduler(painter, view, supervisor) {
         startUpdateSession()
       }
     },
+    // 除了 cnode 带来的结构性变化（消化 diff 产生的结果）。我们还支持精确的 vnode 的变化处理（例如 axii 中由于使用了 reactive 对象来表示 text/style，只需要局部更新）。
     collectChangePatchNode: (vnodesIndexedByCnode) => {
       // CAUTION 这里不要去动原来的对象
       vnodesIndexedByCnode.forEach((vnodes, cnode) => {

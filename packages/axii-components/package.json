@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
-    "@ant-design/colors": "^4.0.5",
+    "@ant-design/colors": "^5.0.1",
     "@ant-design/icons-svg": "^4.1.0",
     "axios": "^0.20.0",
     "history": "^5.0.0",
@@ -26,10 +26,10 @@
     "less": "^3.12.2",
     "lodash": "^4.17.20",
     "style-loader": "^1.2.1",
-    "vite": "^1.0.0-rc.4"
+    "vite": "^2.0.0-beta.31"
   },
   "scripts": {
-    "start": "vite"
+    "start": "vite --force"
   },
   "author": "sskyy",
   "license": "MIT"
