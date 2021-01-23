@@ -111,7 +111,7 @@ export function createCreateElement(normalizeLeaf = defaultNormalizeLeaf) {
   }
 
   function shallowCloneElement(vnode) {
-    const clonedVnode = createElement(vnode.type)
+    const clonedVnode = new VNode()
     Object.assign(clonedVnode, vnode)
     return clonedVnode
   }

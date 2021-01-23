@@ -17,14 +17,10 @@
  * even if it is not in the same place after re-render.
  */
 import {
-  walkRawVnodes,
-  makeVnodeTransferKey,
-  vnodePathToString,
-  createVnodePath,
-  makeVnodeKey,
-  getVnodeNextIndex,
   walkVnodes,
   isComponentVnode as defaultIsComponentVnode,
+  getVnodeType,
+  makeVnodeKey,
 } from './common'
 import {
   each,
@@ -46,7 +42,7 @@ import {
 import { defaultNormalizeLeaf, shallowCloneElement } from './createElement'
 
 /**
- * Diff the detail of two vnode.
+ * Diff the detail of two non-component vnode.
  */
 function defaultDiffNodeDetail(lastVnode, vnode) {
   if (lastVnode.type === String && lastVnode.value !== vnode.value) {
@@ -86,36 +82,36 @@ function prepareRetForAttach(rawRet, cnode, { isComponentVnode, createCnode, nor
   // user may render single component or null, we should normalize it.
   const ret = ensureArray(rawRet).map(rawVnode => normalizeLeaf(rawVnode))
   const next = {}
+  const refs = {}
   const transferKeyedVnodes = {}
-  walkRawVnodes(ret, (vnode, path, parentVnodePath = []) => {
-    vnode.key = makeVnodeKey(vnode, path[path.length - 1])
-    const currentPath = parentVnodePath.concat(vnode.key)
-    // 字符串化的 path，可以作为该 vnode 在 cnode 里面的唯一标识。在 diff 过程中也会不断传递给 patchNode，这样就能通过 vnode 找到对应
-    // patchNode了。在框架中需要这个功能，因为我们可以局部更新，框架在上报要更新的 patchNode 时要通过 vnode 找 patchNode，因为它自己感知不到 patchNode。
-    vnode.id = vnodePathToString(currentPath)
+  // 注意，我们不会深入到传给 children 组件的 children 中去。
+  walkVnodes(ret, (vnode, uniquePathStr) => {
+    // 在当前 children 中的唯一值，如果用户没有指定，那么就用当前的 index
+    vnode.key = uniquePathStr
     // CAUTION if transferKey is undefined， then `makeVnodeTransferKey` will return undefined
-    vnode.transferKey = makeVnodeTransferKey(vnode)
+    vnode.transferKey = vnode.rawTransferKey === undefined ? undefined : `${getVnodeType(vnode)}@${vnode.rawTransferKey}`
+
+    // 在整个组件中的唯一值。之后会传到到所有 patchNode 作为标记，这样就能通过 vnode 查找 patchNode 了。
+    vnode.id = vnode.transferKey || vnode.key
+
     if (isComponentVnode(vnode)) {
-      const nextIndex = getVnodeNextIndex(vnode, parentVnodePath)
       // CAUTION cnode has object reference inside: props/children/parent
-      next[nextIndex] = createCnode(vnode, cnode)
+      next[vnode.id] = createCnode(vnode, cnode)
       // CAUTION 这里有双向链接，是用来给 context 之类的功能用的
-      next[nextIndex].parent = cnode
+      next[vnode.id].parent = cnode
 
       if (vnode.transferKey !== undefined) {
         transferKeyedVnodes[vnode.transferKey] = vnode
       }
-      // TODO 研究这个 feature, 如果组件没有指明 transparent，那么就不穿透。穿透的场景是什么？
-      if (!vnode.transparent) {
-        return false
-      }
-    }
 
-    // 返回当前 path 作为下一个节点的 parentVnodePath
-    return currentPath
+      return true
+    } else if (vnode.ref) {
+      // 不是 component，但是有 ref 标记也要记录
+      refs[vnode.id] = vnode
+    }
   })
 
-  return { next, ret, transferKeyedVnodes }
+  return { next, ret, transferKeyedVnodes, refs }
 }
 
 /**
@@ -130,13 +126,14 @@ function prepareRetForAttach(rawRet, cnode, { isComponentVnode, createCnode, nor
  */
 function paint(cnode, renderer, utils) {
   const specificRenderer = cnode.parent === undefined ? renderer.rootRender : renderer.initialRender
-  const { next, ret, transferKeyedVnodes } = prepareRetForAttach(specificRenderer(cnode, cnode.parent), cnode, utils)
+  const { next, ret, transferKeyedVnodes, refs } = prepareRetForAttach(specificRenderer(cnode, cnode.parent), cnode, utils)
   cnode.ret = ret
   cnode.next = next
+  cnode.refs = refs
   cnode.transferKeyedVnodes = transferKeyedVnodes
   cnode.isPainted = true
 
-  return { toInitialize: next }
+  return { toInitialize: next, newRefs: refs }
 }
 
 /* *******************************
@@ -158,6 +155,10 @@ function createPatchNode(lastVnode = {}, vnode, actionType) {
     },
   })
 
+  // CAUTION 这里断开了 children，防止误操作
+  // 注意一定要有判断，因为 string 等叶子节点是没有 children，这会是一个判断依据。
+  if (patch.children) patch.children = []
+
   return patch
 }
 
@@ -165,31 +166,36 @@ function createPatchNode(lastVnode = {}, vnode, actionType) {
  * Handle new vnode. A new vnode is a vnode with key(transferKey) that do not exist in last render result.
  * This method was used to create patchNode for new vnode, and recursively find cnode in its descendants.
  */
-function handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain, cnode, { isComponentVnode, createCnode }) {
-  patch.push(createPatchNode({}, vnode, PATCH_ACTION_INSERT, cnode))
+function handleInsertPatchNode(vnode, collections, parentPatch, cnode, utils) {
+  const { isComponentVnode, createCnode } = utils
+  const { toInitialize, toRemain, newRefs } = collections
+  const patchNode = createPatchNode({}, vnode, PATCH_ACTION_INSERT, cnode)
+  parentPatch.push(patchNode)
+
+  // component 节点
   if (isComponentVnode(vnode)) {
-    const nextIndex = vnode.transferKey === undefined ? vnodePathToString(currentPath) : vnode.transferKey
-    toInitialize[nextIndex] = createCnode(vnode, cnode)
-  } else if (vnode.children !== undefined) {
-    walkVnodes(vnode.children, (childVnode, vnodePath) => {
-      if (isComponentVnode(childVnode)) {
-        const nextIndex = childVnode.transferKey === undefined ? vnodePathToString(currentPath.concat(vnodePath)) : childVnode.transferKey
-
-        // Because current vnode is a new vnode,
-        // so its child vnode patch action will have "remain" type only if it has a transferKey
-        if (childVnode.transferKey !== undefined && cnode.next[nextIndex] !== undefined) {
-          invariant(childVnode.portalRoot === undefined, `portal vnode ${childVnode.name} cannot use transferKey`)
-          toRemain[nextIndex] = cnode.next[nextIndex]
-          if (childVnode.transferKey !== undefined) {
-            childVnode.action = { type: PATCH_ACTION_MOVE_FROM }
-          }
-        } else {
-          toInitialize[nextIndex] = createCnode(childVnode, cnode)
-        }
-
-        return true
+    // Because current vnode is a new vnode,
+    // so its child vnode patch action will have "remain" type only if it has a transferKey
+    if (vnode.transferKey !== undefined && cnode.next[vnode.id] !== undefined) {
+      invariant(vnode.portalRoot === undefined, `portal vnode ${vnode.name} cannot use transferKey`)
+      toRemain[vnode.id] = cnode.next[vnode.id]
+      if (vnode.transferKey !== undefined) {
+        vnode.action = { type: PATCH_ACTION_MOVE_FROM }
       }
+    } else {
+      toInitialize[vnode.id] = createCnode(vnode, cnode)
+    }
+
+  } else if (vnode.children !== undefined) {
+    // TODO 普通节点不允许用 transfer 吗？
+    if (vnode.ref) newRefs[vnode.id] = patchNode
+    // 普通节点，先记录一下 ref。这里通过 children 排除的是文字等叶子节点。
+    vnode.children.forEach(childVnode => {
+      handleInsertPatchNode(childVnode, collections, patchNode.children, cnode, utils)
     })
+
+  } else {
+    // 只有文字等叶子节点没有 children。他们是跟着父节点一起处理的，所以这里过滤了
   }
 }
 
@@ -207,27 +213,32 @@ function handleToMovePatchNode(lastVnode, patch) {
 /**
  * If a vnode remains the same position, we use this method to (recursively) handle its children.
  */
-function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, currentPath, cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes, utils) {
-  const {isComponentVnode, createCnode, diffNodeDetail} = utils
+function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, cnode, collections, parentPatch, nextTransferKeyedVnodes, utils) {
+  const { toInitialize, toRemain, remainedRefs, newRefs } = collections
+  const {isComponentVnode, diffNodeDetail} = utils
   const patchNode = createPatchNode(lastVnode, vnode, actionType, cnode)
 
   if (isComponentVnode(vnode)) {
-    const path = vnodePathToString(currentPath)
-    toRemain[path] = cnode.next[path]
+    toRemain[vnode.id] = cnode.next[vnode.id]
     // update Props
-    updateCnodeByVnode(cnode.next[path], vnode)
+    updateCnodeByVnode(cnode.next[vnode.id], vnode)
   } else {
+    // 如果是普通节点，对比 attribute 的变化，之后 digest 的时候对 element 进行更新。
     patchNode.diff = diffNodeDetail(lastVnode, vnode)
     if (vnode.children !== undefined) {
+      if (vnode.ref) remainedRefs[vnode.id] = patchNode
+      // 继续递归 diff
       /* eslint-disable no-use-before-define */
-      const childDiffResult = diff(lastVnode.children, vnode.children, currentPath, cnode, nextTransferKeyedVnodes, utils)
+      const childDiffResult = diff(lastVnode.children, vnode.children, cnode, nextTransferKeyedVnodes, utils)
       /* eslint-enable no-use-before-define */
       Object.assign(toInitialize, childDiffResult.toInitialize)
       Object.assign(toRemain, childDiffResult.toRemain)
+      Object.assign(newRefs, childDiffResult.newRefs)
+      Object.assign(remainedRefs, childDiffResult.remainedRefs)
       patchNode.children = childDiffResult.patch
     }
   }
-  patch.push(patchNode)
+  parentPatch.push(patchNode)
 }
 
 /**
@@ -244,11 +255,17 @@ function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, currentPat
  * If consumer need to compare props, should do it self with toRemain prop in result.
  * See Controller Axii for example.
  */
-function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeyedVnodes, utils) {
-  const { isComponentVnode, createCnode } = utils
-  const toRemain = {}
-  const toInitialize = {}
-  const patch = []
+function createPatch(lastVnodes, nextVnodes, cnode, nextTransferKeyedVnodes, utils) {
+  const { isComponentVnode } = utils
+  const collections = {
+    toRemain: {},
+    toInitialize: {},
+    newRefs: {},
+    remainedRefs: {},
+    patch: []
+  }
+  const patch = collections.patch
+
   const lastVnodesLen = lastVnodes.length
   const vnodesLen = nextVnodes.length
   let lastVnodesIndex = 0
@@ -282,7 +299,7 @@ function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeye
       }
       // If it still exist and current vnode have the same type, we mark it as "remain".
       if (vnode !== undefined && vnode.type === lastVnode.type && vnode.transferKey === lastVnode.transferKey) {
-        handleRemainLikePatchNode(lastVnode, vnode, PATCH_ACTION_REMAIN, [getVnodeNextIndex(vnode)], cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes, utils)
+        handleRemainLikePatchNode(lastVnode, vnode, PATCH_ACTION_REMAIN, cnode, collections, patch, nextTransferKeyedVnodes, utils)
         lastVnodesIndex += 1
         vnodesIndex += 1
         continue
@@ -300,10 +317,10 @@ function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeye
     ) {
       if (cnode.next[vnode.transferKey] === undefined) {
         // If it is new vnode
-        handleInsertPatchNode(vnode, [getVnodeNextIndex(vnode)], patch, toInitialize, toRemain, cnode, utils)
+        handleInsertPatchNode(vnode, collections, patch, cnode, utils)
       } else {
         // If it is not new, it must be transferred from somewhere. Mark it as `moveFrom`
-        handleRemainLikePatchNode(cnode.transferKeyedVnodes[vnode.transferKey], vnode, PATCH_ACTION_MOVE_FROM, [getVnodeNextIndex(vnode)], cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes, utils)
+        handleRemainLikePatchNode(cnode.transferKeyedVnodes[vnode.transferKey], vnode, PATCH_ACTION_MOVE_FROM, cnode, collections, patch, nextTransferKeyedVnodes, utils)
       }
 
       // jump the condition of `lastVnode === vnode`, because we dealt with it before
@@ -322,14 +339,13 @@ function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeye
       continue
     }
 
-    const currentPath = createVnodePath(vnode, parentPath)
     // 2) lastVnodes runs out.
     if (!(lastVnodesIndex < lastVnodesLen)) {
       const correspondingLastVnode = lastVnodesIndexedByKey[vnode.key]
       if (correspondingLastVnode !== undefined && correspondingLastVnode.type === vnode.type) {
-        handleRemainLikePatchNode(correspondingLastVnode, vnode, PATCH_ACTION_MOVE_FROM, currentPath, cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes, utils)
+        handleRemainLikePatchNode(correspondingLastVnode, vnode, PATCH_ACTION_MOVE_FROM, cnode, collections, patch, nextTransferKeyedVnodes, utils)
       } else {
-        handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain, cnode, utils)
+        handleInsertPatchNode(vnode, collections, patch, cnode, utils)
       }
 
       vnodesIndex += 1
@@ -360,7 +376,7 @@ function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeye
 
     // If current vnode is new.
     if (!lastVnodeKeys.includes(vnode.key)) {
-      handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain, cnode, utils)
+      handleInsertPatchNode(vnode, collections, patch, cnode, utils)
       vnodesIndex += 1
       continue
     }
@@ -370,10 +386,10 @@ function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeye
       // 1) different type, then we remove the old, insert the new.
       if (vnode.type !== lastVnode.type) {
         handleRemovePatchNode(lastVnode, patch)
-        handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain, cnode, utils)
+        handleInsertPatchNode(vnode, collections, patch, cnode, utils)
         // 2) same type
       } else {
-        handleRemainLikePatchNode(lastVnode, vnode, PATCH_ACTION_REMAIN, currentPath, cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes, utils)
+        handleRemainLikePatchNode(lastVnode, vnode, PATCH_ACTION_REMAIN, cnode, collections, patch, nextTransferKeyedVnodes, utils)
       }
       lastVnodesIndex += 1
       vnodesIndex += 1
@@ -384,37 +400,54 @@ function createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeye
     }
   }
 
-  return {
-    toInitialize,
-    toRemain,
-    patch,
-  }
+  return collections
 }
 
 /**
  * The entry point of diffing the last patch and the new return value.
  */
-function diff(lastVnodesOrPatch, nextVnodes, parentPath, cnode, nextTransferKeyedVnodes, utils) {
+function diff(lastVnodesOrPatch, nextVnodes, cnode, nextTransferKeyedVnodes, utils) {
   const lastNext = { ...cnode.next }
+  const lastRefs = { ...cnode.refs }
   const toInitialize = {}
   const toRemain = {}
+  const toDestroy = {}
+  const newRefs = {}
+  const remainedRefs = {}
+  const disposedRefs = {}
 
-  const toUpdate = {}
   const lastVnodes = lastVnodesOrPatch.filter(lastVnode => lastVnode.action === undefined || lastVnode.action.type !== PATCH_ACTION_MOVE_FROM)
 
-  const result = createPatch(lastVnodes, nextVnodes, parentPath, cnode, nextTransferKeyedVnodes, utils)
+  const result = createPatch(lastVnodes, nextVnodes, cnode, nextTransferKeyedVnodes, utils)
   Object.assign(toInitialize, result.toInitialize)
   Object.assign(toRemain, result.toRemain)
-  each(toRemain, (_, key) => {
-    delete lastNext[key]
+  each(lastNext, (value, key) => {
+    if (!toRemain[key]) toDestroy[key] = value
   })
 
-  const lastToDestroyPatch = cnode.toDestroyPatch || {}
+  Object.assign(newRefs, result.newRefs)
+  Object.assign(remainedRefs, result.remainedRefs)
+  each(lastRefs, (value, key) => {
+    if (!remainedRefs[key]) disposedRefs[key] = value
+  })
+
   // CAUTION Maybe last patch have not been consumed, so we need to keep its info.
   // `lastToDestroyPatch` contains the real dom reference to remove.
-  const toDestroyPatch = { ...lastNext, ...lastToDestroyPatch }
+  const lastToDestroyPatch = cnode.toDestroyPatch || {}
+  const toDestroyPatch = { ...toDestroy, ...lastToDestroyPatch }
 
-  return { toInitialize, toRemain, toDestroy: lastNext, patch: result.patch, toDestroyPatch, toUpdate }
+  return {
+    toInitialize,
+    toRemain,
+    toDestroy,
+    toDestroyPatch,
+    // ref 相关
+    newRefs,
+    remainedRefs,
+    disposedRefs,
+    // patch
+    patch: result.patch,
+  }
 }
 
 
@@ -429,7 +462,7 @@ function repaint(cnode, renderer, utils) {
   if (renderResult === false) return {}
 
   const { transferKeyedVnodes, ret } = prepareRetForAttach(renderResult, cnode, utils)
-  const diffResult = diff(lastPatch, ret, [], cnode, transferKeyedVnodes, utils)
+  const diffResult = diff(lastPatch, ret, cnode, transferKeyedVnodes, utils)
   cnode.ret = ret
 
   cnode.patch = diffResult.patch

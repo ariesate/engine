@@ -15,7 +15,7 @@
  *
  * getSnapshotBeforeUpdate() 在 digest 的 unit 之前，不能再 setState(正好也不能，因为 lock 了)。
  */
-import {walkCnodes, walkVnodes} from './common'
+import {walkCnodes} from './common'
 import { each } from './util'
 import {
   SESSION_INITIAL,
@@ -53,7 +53,7 @@ export default function createScheduler(painter, view, supervisor) {
             const unit = cnode.isPainted ? UNIT_REPAINT : UNIT_PAINT
             supervisor.unit(SESSION_UPDATE, unit , cnode, () => {
               const paintMethod = cnode.isPainted ? painter.repaint : painter.paint
-              const { toPaint = {}, toRepaint = {}, toDispose = {} } = supervisor.filterNext(paintMethod(cnode), cnode)
+              const { toPaint = {}, toRepaint = {}, toDispose = {} } = supervisor.handlePaintResult(paintMethod(cnode), cnode)
               each(toPaint, toPaintCnode => cnodeTrackingTree.track(toPaintCnode))
               each(toRepaint, toRepaintCnode => {
                 cnodeTrackingTree.track(toRepaintCnode)
@@ -107,18 +107,22 @@ export default function createScheduler(painter, view, supervisor) {
         },
       })
 
-      walkCnodes([ctree], (cnode) => {
+
+      cnodeTrackingTree.track(ctree)
+      cnodeTrackingTree.walk((cnode) => {
         supervisor.unit(SESSION_INITIAL, UNIT_PAINT, cnode, () => {
-          // initialize will create cnode.next, so walkCnode will go on.
-          painter.paint(cnode)
+          const { toPaint } = supervisor.handlePaintResult(painter.paint(cnode), cnode)
+          each(toPaint, toPaintCnode => cnodeTrackingTree.track(toPaintCnode))
         })
       })
 
-      walkCnodes([ctree], (cnode) => {
+      cnodeTrackingTree.lock()
+      cnodeTrackingTree.walk((cnode) => {
         supervisor.unit(SESSION_INITIAL, UNIT_INITIAL_DIGEST, cnode, () => {
           view.initialDigest(cnode)
         })
-      })
+      }, true) // 最后一个参数会消耗掉tree
+      cnodeTrackingTree.unlock()
 
     })
 

@@ -27,6 +27,9 @@ function prepareCnodeForView(cnode, vnode, parentNode, viewUtil) {
     // 用来便于快速根据 id 查找 patch 中的 patchNode。做局部跟新的时候用来节约性能。
     // 需要 initialDigest/updateDigest 中手动维护。
     patchNodesQuickRefById: {},
+    getElementByPatchNode(p) {
+      return cnode.view.patchNodesQuickRefById[p.id].element
+    },
     startPlaceholder,
     endPlaceholder,
     // 这是用来获取 cnode 自己的第一层 elements。
@@ -39,7 +42,7 @@ function prepareCnodeForView(cnode, vnode, parentNode, viewUtil) {
 /**
  * dom ref is handled by View in view.createElement.
  */
-function handleInitialNaiveVnode(vnode, cnode, viewUtil, patch, currentPath, parentNode) {
+function handleInitialNaiveVnode(vnode, cnode, viewUtil, patch, parentNode) {
   const element = viewUtil.createElement(vnode, cnode, patch)
   parentNode.appendChild(element)
   // Save it for update
@@ -48,18 +51,17 @@ function handleInitialNaiveVnode(vnode, cnode, viewUtil, patch, currentPath, par
   if (vnode.children !== undefined) {
     patch.children = []
     /* eslint-disable no-use-before-define */
-    handleInitialVnodeChildren(vnode.children, cnode, viewUtil, patch.children, currentPath, element)
+    handleInitialVnodeChildren(vnode.children, cnode, viewUtil, patch.children, element)
     /* eslint-enable no-use-before-define */
   }
 }
 
-export function handleInitialVnode(vnode, cnode, viewUtil, parentPatch, parentPath, parentNode, index) {
+export function handleInitialVnode(vnode, cnode, viewUtil, parentPatch, parentNode, index) {
   const patch = viewUtil.shallowCloneElement(vnode)
   parentPatch[index] = patch
   // 之后用来快速查找 patch
   cnode.view.patchNodesQuickRefById[patch.id] = patch
 
-  const currentPath = createVnodePath(vnode, parentPath)
   // vnode types:
   // 1) string/null。undefined 改成了 type: String, value: 'undefined'
 
@@ -75,19 +77,19 @@ export function handleInitialVnode(vnode, cnode, viewUtil, parentPatch, parentPa
   // There will be a empty element in path, it is ok.
   if (vnode.type === Fragment || vnode.type === Array) {
     /* eslint-disable no-use-before-define */
-    return handleInitialVnodeChildren(vnode.children, cnode, viewUtil, patch.children, currentPath, parentNode)
+    return handleInitialVnodeChildren(vnode.children, cnode, viewUtil, patch.children, parentNode)
     /* eslint-enable no-use-before-define */
   }
 
   // vnode/component vnode 可以使用 createPortal 渲染到别的节点下
   // 2) normal node
   if (vnode instanceof VNode && !viewUtil.isComponentVnode(vnode)) {
-    return handleInitialNaiveVnode(vnode, cnode, viewUtil, patch, currentPath, vnode.portalRoot || parentNode)
+    return handleInitialNaiveVnode(vnode, cnode, viewUtil, patch,vnode.portalRoot || parentNode)
   }
   // 3) component node
   if (viewUtil.isComponentVnode(vnode)) {
     /* eslint-disable no-use-before-define */
-    return handleInitialComponentNode(vnode, cnode, viewUtil, patch, currentPath, vnode.portalRoot || parentNode)
+    return handleInitialComponentNode(vnode, cnode, viewUtil, patch,vnode.portalRoot || parentNode)
     /* eslint-enable no-use-before-define */
   }
 
@@ -105,28 +107,26 @@ export function handleInitialVnode(vnode, cnode, viewUtil, parentPatch, parentPa
   throw new Error(`unknown vnode detected: ${(vnode ? `type: ${vnode.type || typeof vnode}, name: ${vnode.name}, key: ${vnode.key}` : 'undefined')}`)
 }
 
-function handleInitialVnodeChildren(vnodes, cnode, viewUtil, patch, parentPath, parentNode) {
+function handleInitialVnodeChildren(vnodes, cnode, viewUtil, patch, parentNode) {
   // vnodes conditions:
   // 1) vnode children
   // 2) vnode of array type
   // TODO 同类型、同key或者同没 key 的检测。
   vnodes.forEach((vnode, index) => {
     if (vnode.action && vnode.action.type === PATCH_ACTION_MOVE_FROM) {
-      handleMoveFromPatchNode(vnode, patch, parentPath, cnode, parentNode, viewUtil)
+      handleMoveFromPatchNode(vnode, patch, cnode, parentNode, viewUtil)
     } else {
-      handleInitialVnode(vnode, cnode, viewUtil, patch, parentPath, parentNode, index)
+      handleInitialVnode(vnode, cnode, viewUtil, patch, parentNode, index)
     }
   })
 }
 
-function handleInitialComponentNode(vnode, cnode, viewUtil, patch, currentPath, parentNode) {
-  const currentPathStr = vnodePathToString(currentPath)
-  const nextIndex = vnode.transferKey === undefined ? currentPathStr : vnode.transferKey
-  const childCnode = cnode.next[nextIndex]
+function handleInitialComponentNode(vnode, cnode, viewUtil, patch, parentNode) {
+  const childCnode = cnode.next[vnode.id]
   childCnode.patch = []
   prepareCnodeForView(childCnode, vnode, parentNode, viewUtil)
 
-  patch.element = nextIndex
+  patch.element = vnode.id
 }
 
 /**
@@ -150,7 +150,7 @@ export default function initialDigest(cnode, viewUtil) {
   if (cnode.view.startPlaceholder === undefined) throw new Error(`cnode is not prepared for initial digest ${cnode.type.displayName}`)
   cnode.patch = []
   const fragment = viewUtil.createFragment()
-  handleInitialVnodeChildren(cnode.ret, cnode, viewUtil, cnode.patch,[], fragment)
+  handleInitialVnodeChildren(cnode.ret, cnode, viewUtil, cnode.patch, fragment)
   const parentNode = cnode.view.startPlaceholder.parentNode
   parentNode.insertBefore(fragment, cnode.view.startPlaceholder.nextSibling)
   // 还是留着 startPlaceholder。直到 remove 的时候

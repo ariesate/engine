@@ -28,12 +28,12 @@ export function createVnodePath(vnode, parentPath = []) {
 }
 
 export function walkVnodes(vnodes, handler, parentPath = []) {
-  vnodes.forEach((vnode) => {
-    const currentPath = createVnodePath(vnode, parentPath)
-    const shouldStop = handler(vnode, currentPath)
+  vnodes.forEach((vnode, index) => {
+    const uniquePath = parentPath.concat(makeVnodeKey(vnode, index))
+    const shouldStop = handler(vnode, uniquePath.join('-'))
 
     if (!shouldStop && vnode.children !== undefined) {
-      walkVnodes(vnode.children, handler, currentPath)
+      walkVnodes(vnode.children, handler, uniquePath)
     }
   })
 }
@@ -99,26 +99,22 @@ export function makeVnodeKey(vnode, index) {
   return `<${getVnodeType(vnode)}>${rawKey}`
 }
 
-export function makeVnodeTransferKey(vnode) {
-  return vnode.rawTransferKey === undefined ? undefined : `${getVnodeType(vnode)}@${vnode.rawTransferKey}`
-}
 
 export function createResolveElement(first) {
-  return function resolveFirstOrLastElement(vnode, parentPath, cnode, isComponentVnode) {
+  return function resolveFirstOrLastElement(vnode, cnode, isComponentVnode) {
     let result = null
     if (vnode.type === String || typeof vnode.type === 'string') {
       result = vnode.element
     } else if (vnode.type === Array || vnode.type === Fragment) {
       const children = first ? vnode.children.slice() : vnode.children.slice().reverse()
       children.some((child) => {
-        result = resolveFirstOrLastElement(child, createVnodePath(vnode, parentPath), cnode, isComponentVnode)
+        result = resolveFirstOrLastElement(child, cnode, isComponentVnode)
         return Boolean(result)
       })
     } else if (isComponentVnode(vnode)){
-      const nextIndex = getVnodeNextIndex(vnode, parentPath)
-      const nextCnode = cnode.next[nextIndex]
+      const nextCnode = cnode.next[vnode.id]
       if (!nextCnode) {
-        throw new Error(`unknown vnode type ${nextIndex}`)
+        throw new Error(`unknown vnode type ${vnode.id}`)
       }
       return first ? nextCnode.view.startPlaceholder : nextCnode.view.endPlaceholder
     }

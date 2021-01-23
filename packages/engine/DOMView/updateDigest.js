@@ -16,7 +16,7 @@ import {
 import Fragment from '../Fragment'
 import {invariant} from "../util";
 
-function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, parentPath, cnode, view) {
+function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, cnode, view) {
   nextPatch.push(p)
   // 之后用来快速查找 patch
   cnode.view.patchNodesQuickRefById[p.id] = p
@@ -25,7 +25,7 @@ function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, parent
 
   if (p.type === Array || p.type === Fragment) {
     /* eslint-disable no-use-before-define */
-    p.children = handlePatchVnodeChildren(p.children, parentNode, prevSiblingNode, createVnodePath(p, parentPath), cnode, view)
+    p.children = handlePatchVnodeChildren(p.children, parentNode, prevSiblingNode, cnode, view)
     /* eslint-enable no-use-before-define */
   } else if (typeof p.type === 'string' || p.type === String) {
     if (p.diff !== undefined) {
@@ -36,18 +36,18 @@ function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, parent
 
     if (typeof p.type === 'string' && p.children !== undefined) {
       /* eslint-disable no-use-before-define */
-      p.children = handlePatchVnodeChildren(p.children, p.element, null, createVnodePath(p, parentPath), cnode, view)
+      p.children = handlePatchVnodeChildren(p.children, p.element, null, cnode, view)
       /* eslint-enable no-use-before-define */
     }
   }
   // CAUTION 理论上剩下的都是 ComponentVnode 了，不需要进一步对比它的 children。
 }
 
-function handleRemovePatchNode(p, parentPath, toDestroy, view) {
+function handleRemovePatchNode(p, toDestroy, view) {
   if (view.isComponentVnode(p)) {
     // 如果是组件删除 利用 placeHolder 一次性删干净了
     // remove placeholder
-    const toDestroyCnode = toDestroy.next[getVnodeNextIndex(p, parentPath)]
+    const toDestroyCnode = toDestroy.next[p.id]
 
     const parentNode = toDestroyCnode.view.startPlaceholder.parentNode
     let toDelete = toDestroyCnode.view.startPlaceholder
@@ -59,18 +59,18 @@ function handleRemovePatchNode(p, parentPath, toDestroy, view) {
     parentNode.removeChild(toDestroyCnode.view.endPlaceholder)
   } else {
 
-    const elements = resolveFirstLayerElements([p], parentPath, toDestroy)
+    const elements = resolveFirstLayerElements([p], toDestroy)
     elements.forEach((ele) => {
       ele.parentNode.removeChild(ele)
     })
   }
 }
 
-export function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view) {
+export function handleMoveFromPatchNode(p, nextPatch, cnode, toInsert, view) {
   // 之后用来快速查找 patch
   cnode.view.patchNodesQuickRefById[p.id] = p
 
-  const elements = resolveFirstLayerElements([p], parentPath, cnode)
+  const elements = resolveFirstLayerElements([p], cnode)
   elements.forEach((ele) => {
     toInsert.appendChild(ele)
   })
@@ -79,13 +79,13 @@ export function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInser
   // because user can only use 'key' attribute on this two types in jsx.
   if (typeof p.type === 'string' && p.children !== undefined) {
     /* eslint-disable no-use-before-define */
-    p.children = handlePatchVnodeChildren(p.children, p.element, null, createVnodePath(p, parentPath), cnode, view)
+    p.children = handlePatchVnodeChildren(p.children, p.element, null, cnode, view)
     /* eslint-enable no-use-before-define */
   }
 
   nextPatch.push(p)
   // if (cnodesToUpdateParentNode && isComponentVnode(p)) {
-  //   cnodesToUpdateParentNode.push(cnode.next[vnodePathToString(createVnodePath(p, parentPath))])
+  //   cnodesToUpdateParentNode.push(cnode.next[vnodePathToString(createVnodePath(p))])
   // }
   return elements.length
 }
@@ -93,8 +93,8 @@ export function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInser
 // CAUTION No more handle `toMove`, trust `moveFrom` will handle every node.
 // In dom manipulation, appendChild will  automatically detach the dom node from its original parent.
 function handleToMovePatchNode() {
-// function handleToMovePatchNode(p, parentPath, cnode, toMove) {
-  // const elements = resolveFirstLayerElements([p], parentPath, cnode)
+// function handleToMovePatchNode(p, cnode, toMove) {
+  // const elements = resolveFirstLayerElements([p], cnode)
   // elements.forEach((ele) => {
   //   toMove.appendChild(ele)
   // })
@@ -112,7 +112,7 @@ function handleToMovePatchNode() {
  * 2) Delete every vnode between them.
  * 3) Insert vnode of "insert" type and "moveFrom" type to the right place.
  */
-function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, parentPath, cnode, view) {
+function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, cnode, view) {
   const nextPatch = []
   let toInsert = view.createFragment()
   // Save "toMove" type vnode to a fragment for later check if the algorithm is right.
@@ -121,15 +121,15 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
 
   patch.forEach((p) => {
     if (p.action.type === PATCH_ACTION_TO_MOVE) {
-      handleToMovePatchNode(p, parentPath, cnode, toMove)
+      handleToMovePatchNode(p, cnode, toMove)
     } else if (p.action.type === PATCH_ACTION_MOVE_FROM) {
       p.action.type = PATCH_ACTION_REMAIN
-      handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view)
+      handleMoveFromPatchNode(p, nextPatch,  cnode, toInsert, view)
     } else if (p.action.type === PATCH_ACTION_INSERT) {
       p.action.type = PATCH_ACTION_REMAIN
-      handleInitialVnode(p, cnode, view, nextPatch, parentPath, toInsert, nextPatch.length)
+      handleInitialVnode(p, cnode, view, nextPatch,  toInsert, nextPatch.length)
     } else if (p.action.type === PATCH_ACTION_REMOVE) {
-      handleRemovePatchNode(p, parentPath, { next: cnode.toDestroyPatch }, view)
+      handleRemovePatchNode(p, { next: cnode.toDestroyPatch }, view)
     } else if (p.action.type === PATCH_ACTION_REMAIN) {
       // CAUTION 注意 p.patch 可以是 undefined，表示没有任何变化
       // 一旦碰到 remain 的节点，就先把要 insert 的全部插入进去。为什么有个 currentLastStableSiblingNode 判断？？？
@@ -143,10 +143,10 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
       }
 
       // Only "p.type === Array" condition needs previousSibling
-      handleRemainPatchNode(p, nextPatch, parentNode, currentLastStableSiblingNode, parentPath, cnode, view)
+      handleRemainPatchNode(p, nextPatch, parentNode, currentLastStableSiblingNode, cnode, view)
       // Find last element in patch node to update currentLastStableSiblingNode
 
-      const lastElement = resolveLastElement(p, parentPath, cnode, view.isComponentVnode)
+      const lastElement = resolveLastElement(p, cnode, view.isComponentVnode)
       if (lastElement) {
         currentLastStableSiblingNode = lastElement
       }
@@ -180,7 +180,7 @@ export default function updateDigest(cnode, view) {
   //  所以可以这样用。
   cnode.view.patchNodesQuickRefById = {}
   // 这里返回一个新的 patch 对象的原因是在处理过程中只留下还有用的，remove/moveTo 的都不要了，虽然也可以通过操作原本对象来实现。
-  cnode.patch = handlePatchVnodeChildren(cnode.patch, cnode.view.parentNode, cnode.view.startPlaceholder, [], cnode, view)
+  cnode.patch = handlePatchVnodeChildren(cnode.patch, cnode.view.parentNode, cnode.view.startPlaceholder,  cnode, view)
   // CAUTION toDestroyPatch should be reset after update digest.
   cnode.toDestroyPatch = {}
 }

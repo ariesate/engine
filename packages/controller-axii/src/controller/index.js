@@ -26,8 +26,8 @@
  * initialRender: 两者都正常，都需要对结果再进行 reactive 替换成 virtual cnode。每次只替换一层。
  * updateRender: cnode 是父亲传递的 props 引用发生了变化时才会 update。父亲一定重新 render 了。
  *              virtual cnode 是自身 watch 触发的回调。父亲一定没有重新 render，否则自己就被卸载了。
- * unmount: cnode 一定是父亲重新 render 导致自己 unmount。filterNext 中的 toDestroy 一定是 cnode。
- *          virtual cnode unmount 一定是父亲也销毁了。filterNext 中的 toDestroy 一定不是 virtual cnode。
+ * unmount: cnode 一定是父亲重新 render 导致自己 unmount。handlePaintResult 中的 toDestroy 一定是 cnode。
+ *          virtual cnode unmount 一定是父亲也销毁了。handlePaintResult 中的 toDestroy 一定不是 virtual cnode。
  *
  * 更新时机详细说明：
  * 正常的 Component：不会主动更新，除非父亲来更新，并且传过来的 props 引用有不同。
@@ -114,19 +114,11 @@ function isPropsEqual({ children, ...props }, { children: lastChildren, ...lastP
 }
 
 
-function attachRef(element, patch, ref) {
-
+function attachRef(element, ref) {
 	if (typeof ref === 'function') {
-		ref(element, patch)
+		ref(element)
 	} else {
 		ref.current = element
-	}
-}
-
-export function composeRef(origin, next) {
-	return (el, patch) => {
-		attachRef(el, patch, next)
-		if (origin) attachRef(el, patch, origin)
 	}
 }
 
@@ -218,20 +210,13 @@ export default function createAxiiController(rootElement) {
 		return result
 	}
 
-	let sessionEffectedCnodes = null
+	let sessionSideEffects = null
 	// 用来处理 session 中产生的 effect 的
-	function deferStartEffectSession(effectedCnodes = []) {
-		if (effectedCnodes.length === 0) return
-		// TODO 这里有个问题就是当前的 effect 还没有都执行完，结果下一个 session 就开始了？怎么确定 nextTick 的中的 effect session 一定最新执行？
+	function deferStartEffectSession(sessionSideEffectsToRun = []) {
+		if (sessionSideEffectsToRun.length === 0) return
 		nextTick(() => {
-			// CAUTION 这个 session 里面的 effect 可能不会再产生新的 cnode 变化，因此达到稳定，session 结束时再调用 deferStartEffectSession 时，参数 length 就是 0 了。
 			scheduler.startUpdateSession(() => {
-				effectedCnodes.forEach(({ unitName, cnode }) => {
-					// 目前只处理了 didMount
-					if (unitName === UNIT_INITIAL_DIGEST) {
-						cnode.didMount && cnode.didMount()
-					}
-				})
+				sessionSideEffectsToRun.forEach(effect => effect())
 			})
 		})
 	}
@@ -262,15 +247,42 @@ export default function createAxiiController(rootElement) {
 		 * scheduler 的接口
 		 **********************/
 		schedulerInterfaces: {
-			filterNext(result) {
-				const { toInitialize, toDestroy = {}, toRemain = {} } = result
+			handlePaintResult(result, cnode) {
+				const { toInitialize, toDestroy = {}, toRemain = {}, newRefs = {}, disposedRefs = {} } = result
 
-				// 通知所有的 cnode 进行 unmount，unmount 的时候通常会回收里面创建的 computed。
-				// unmount 也是在这里立即就处理了，不要等到节点都卸载了，因为那时候很多 reactive 变量都清理完了，上下文丢失了
 				reverseWalkCnodes(Object.values(toDestroy), cnode => {
-					cnode.willUnmount && cnode.willUnmount()
-					sessionEffectedCnodes.push({ unitName: UNIT_DISPOSE, cnode})
+					// 通知所有的 cnode 进行 willUnmount，unmount 的时候通常会回收里面创建的 computed。
+					if (cnode.willUnmount) cnode.willUnmount()
+
+					if (cnode.refs) {
+						// 立刻通知回收，没有必要等到下一个 tick，只有挂载需要等到 nextTick，因为要 digest。
+						Object.values(cnode.refs).forEach(patchNode => attachRef(null, patchNode.ref))
+					}
 				})
+
+				// 处理新的 refs
+				Object.values(newRefs).forEach(patchNode => {
+					sessionSideEffects.unshift(() => {
+						attachRef(cnode.view.getElementByPatchNode(patchNode), patchNode.ref)
+					})
+				})
+
+				// 处理要删除的 refs
+				Object.values(disposedRefs).forEach(patchNode => {
+					attachRef(null, patchNode.ref)
+				})
+
+				// 处理新节点
+				Object.values(toInitialize).forEach(newCnode => {
+					if (newCnode.didMount) {
+						sessionSideEffects.push(() => {
+							newCnode.didMount()
+						})
+					}
+				})
+
+				// 准备通知所有的 newRefs/disposedRefs 进行接收。
+				// CAUTION 不能放到响应 cnode 的 effects 里面去，因为 ref 的 cnode 不一定会重新挂载之类的。
 
 				// CAUTION 这里有 virtual type 上都写了 shouldComponentUpdate，基本都会重新渲染。
 				// 默认的用户写的组件如果没有 shouldComponentUpdate, 根据 props 浅对比来决定是否更新
@@ -292,16 +304,16 @@ export default function createAxiiController(rootElement) {
 
 			session: (sessionName, startSession) => {
 				// CAUTION 一个 session 不能互相嵌套，所以我们可以放心地收集要处理副作用的节点。
-				invariant(sessionEffectedCnodes === null, 'last session effect not cleared, something wrong')
-				sessionEffectedCnodes = []
+				invariant(sessionSideEffects === null, 'last session effect not cleared, something wrong')
+				sessionSideEffects = []
 				startSession()
 				// 结束 session 之后，再开启一个 effectSession 处理所有的 viewEffect
-				deferStartEffectSession(sessionEffectedCnodes.slice())
-				sessionEffectedCnodes = null
+				// TODO session 结束后，对于新增的 ref，要进行通知。对于取消挂载的，也要进行 ref 通知。
+
+				deferStartEffectSession(sessionSideEffects.slice())
+				sessionSideEffects = null
 			},
 			unit: (sessionName, unitName, cnode, startUnit) => {
-				// 第一渲染，执行一下 willMount 的生命周期
-				sessionEffectedCnodes.push({ unitName, cnode, sessionName })
 				// willMount 直接在这里就处理了，到 session 结束时 digest 都完了，再处理就没意义了。
 				if (unitName === UNIT_PAINT) cnode.willMount && cnode.willMount()
 				// 记录一下，其他功能要用
@@ -356,18 +368,6 @@ export default function createAxiiController(rootElement) {
 						formElementToBindingValue.set(element, vnode.attributes.value)
 					}
 
-					// TODO
-					// 新改版之后 ref 需要 controller 自己处理，同时也可以更好地处理 unmount 的时候再通知一遍。
-					if (patchNode.ref) {
-						// 注意这里是放在前面，因为用户的 useViewEffect 里面可能要用到 ref
-						cnode.viewEffects.unshift(() => {
-							attachRef(element, patchNode, patchNode.ref)
-							// 在组件被销毁时
-							return () => {
-								attachRef(null, patchNode, patchNode.ref)
-							}
-						})
-					}
 					return element
 				},
 				updateElement: composeInterceptors(createShallowNode, [translateRefAttributes, attachLayoutStyle], updateElement),
@@ -382,7 +382,8 @@ export default function createAxiiController(rootElement) {
 		destroy: () => {
 			// TODO 目前只是利用 diff 的 toDestroy 去销毁了所有的 computed。dom 事件之类的没处理
 			ctree.props.destroyed = true
-			reportChangedCnode(ctree)
+			changedCnodes.push(ctree)
+			scheduleCnodeToRepaint()
 		}
 	}
 }
@@ -397,9 +398,11 @@ function composeInterceptors(createBaseResult, interceptors, method) {
 
 
 function translateRefAttributes(injectedVnode) {
-	injectedVnode.attributes = mapValues(injectedVnode.attributes, (attribute) => {
-		return isRef(attribute) ? attribute.value : attribute
-	})
+	injectedVnode.attributes = injectedVnode.attributes ?
+		mapValues(injectedVnode.attributes, (attribute) => {
+			return isRef(attribute) ? attribute.value : attribute
+		}) :
+		injectedVnode.attributes
 }
 
 

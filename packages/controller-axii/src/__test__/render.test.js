@@ -1,9 +1,16 @@
 /** @jsx createElement */
-import { vnodeComputed, createElement, Fragment } from '../index';
+import {
+  createElement,
+  Fragment,
+  render,
+  ref,
+  reactive,
+  refComputed,
+  delegateLeaf
+} from '../index';
 import $ from 'jquery'
 
-const { ref, reactive, refComputed, delegateLeaf } = require('../reactive/index.js')
-const { render } = require('../index.js')
+const {  } = require('../reactive/index.js')
 
 describe('basic render', () => {
 

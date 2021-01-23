@@ -222,6 +222,7 @@ describe('repaint key diff', () => {
 
     const thirdKeySpan = <span>3</span>
     thirdKeySpan.action = { type: PATCH_ACTION_REMAIN}
+    debugger
     expect(diffResult.patch[0].children[0].children[2]).toMatchObject(thirdKeySpan)
   })
 
