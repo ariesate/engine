@@ -51,7 +51,7 @@ import {collectSource, isReactive, isRef, toRaw as internalToRaw} from './reacti
 import { invariant } from '../util';
 import { isRef as internalIsRef } from './reactive'
 export { reactive, ref, isRef, isReactive, refLike } from './reactive'
-export { default as delegateLeaf } from './delegateLeaf'
+export { default as delegateLeaf, delegateLeaves } from './delegateLeaf'
 export {
   refComputed,
   createComputed,

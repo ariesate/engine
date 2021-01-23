@@ -6,25 +6,27 @@ import {
 import {
   PATCH_ACTION_MOVE_FROM,
 } from '../constant'
-import createVnode, { shallowCloneElement as shallowCloneVnode} from '../createElement'
 import { handleMoveFromPatchNode } from './updateDigest'
-import { mapValues, isObject } from '../util'
+import {isObject, invariant} from '../util'
 import Fragment from '../Fragment'
-import VNode from '../VNode';
+import VNode from '../VNode'
 
 /**
  * Attach element reference to cnode.
  */
 function prepareCnodeForView(cnode, vnode, parentNode, viewUtil) {
-  const startPlaceholder = viewUtil.createPlaceholder(`<${vnode.key}>`)
-  const endPlaceholder = viewUtil.createPlaceholder(`</${vnode.key}>`)
+  // 但 cnode 是根节点时就没有对应的 vnode。
+  const placeHolderText = vnode ? vnode.key: 'root'
+  const startPlaceholder = viewUtil.createPlaceholder(`start: ${placeHolderText}`)
+  const endPlaceholder = viewUtil.createPlaceholder(`end: ${placeHolderText}`)
   parentNode.appendChild(startPlaceholder)
   parentNode.appendChild(endPlaceholder)
   if (parentNode._childCnodes === undefined) parentNode._childCnodes = []
   parentNode._childCnodes.push(cnode)
   cnode.view = {
-    // 对应的 vnode
-    vnode,
+    // 用来便于快速根据 id 查找 patch 中的 patchNode。做局部跟新的时候用来节约性能。
+    // 需要 initialDigest/updateDigest 中手动维护。
+    patchNodesQuickRefById: {},
     startPlaceholder,
     endPlaceholder,
     // 这是用来获取 cnode 自己的第一层 elements。
@@ -52,8 +54,10 @@ function handleInitialNaiveVnode(vnode, cnode, viewUtil, patch, currentPath, par
 }
 
 export function handleInitialVnode(vnode, cnode, viewUtil, parentPatch, parentPath, parentNode, index) {
-  const patch = shallowCloneVnode(vnode)
+  const patch = viewUtil.shallowCloneElement(vnode)
   parentPatch[index] = patch
+  // 之后用来快速查找 patch
+  cnode.view.patchNodesQuickRefById[patch.id] = patch
 
   const currentPath = createVnodePath(vnode, parentPath)
   // vnode types:
@@ -139,14 +143,14 @@ function handleInitialComponentNode(vnode, cnode, viewUtil, patch, currentPath, 
 
 // initialDigest handle the whole tree
 export default function initialDigest(cnode, viewUtil) {
-  if (cnode.isDigested) throw new Error('cnode is digested, please use updateDigest.')
+  invariant(!cnode.isDigested, 'cnode is digested, please use updateDigest.')
   // 根节点，要提前 prepare 一下。非根节点后面 handle 的时候会 prepare。
   // 对于组件里面再嵌套的组件，我们也只是 prepare 一下，不继续递归，渲染。
-  if (cnode.parent === undefined) prepareCnodeForView(cnode, createVnode(cnode.type), viewUtil.getRoot(), viewUtil)
+  if (cnode.parent === undefined) prepareCnodeForView(cnode, null, viewUtil.getRoot(), viewUtil)
   if (cnode.view.startPlaceholder === undefined) throw new Error(`cnode is not prepared for initial digest ${cnode.type.displayName}`)
   cnode.patch = []
   const fragment = viewUtil.createFragment()
-  handleInitialVnodeChildren(cnode.ret, cnode, viewUtil, cnode.patch, [], fragment)
+  handleInitialVnodeChildren(cnode.ret, cnode, viewUtil, cnode.patch,[], fragment)
   const parentNode = cnode.view.startPlaceholder.parentNode
   parentNode.insertBefore(fragment, cnode.view.startPlaceholder.nextSibling)
   // 还是留着 startPlaceholder。直到 remove 的时候

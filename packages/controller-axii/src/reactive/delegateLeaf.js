@@ -3,6 +3,7 @@
  * 把 get/set/delete 都 delegate 到 parent 上。
  */
 import { isReactiveLike } from './index';
+import {mapValues} from "../util";
 
 
 export default function delegateLeaf(parent) {
@@ -28,4 +29,8 @@ export default function delegateLeaf(parent) {
     },
   })
 
+}
+
+export function delegateLeaves(obj) {
+  return mapValues(obj, (value, key) => delegateLeaf(obj)[key])
 }

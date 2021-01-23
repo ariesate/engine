@@ -91,7 +91,7 @@ export default class ComponentNode {
 			 */
 			return replaceVnodeComputedAndWatchReactive(
 				this.type(createInjectedProps(this), this.ref),
-				(patchNode) => this.reportChangedPatchNode(patchNode, this),
+				(patchNode) => this.reportChangedVnode(patchNode, this),
 				this
 				)
 		}, this.type)
@@ -131,7 +131,7 @@ export default class ComponentNode {
 		return this.collectReactive(() => {
 			return replaceVnodeComputedAndWatchReactive(
 				vnodeComputedRef.value,
-				(patchNode) => this.reportChangedPatchNode(patchNode, this),
+				(patchNode) => this.reportChangedVnode(patchNode, this),
 				this
 			)
 		}, getComputation(vnodeComputedRef))

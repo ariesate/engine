@@ -26,7 +26,7 @@ describe('basic render', () => {
     expect(root).toHaveTextContent('tom')
     // 不需要再渲染
     expect(rendered).toBe(1)
-    expect($(root).children().get(0)).partialMatch(<div>tom</div>)
+    expect($(root).children().get(0)).partialMatchDOM(<div>tom</div>)
   })
 
   test('reactive props', () => {
@@ -47,11 +47,11 @@ describe('basic render', () => {
     const root = document.createElement('div')
     render(<App />, root)
 
-    expect(root.children[0]).partialMatch(<div style={{color: 'red'}}/>)
+    expect(root.children[0]).partialMatchDOM(<div style={{color: 'red'}}/>)
     expect(rendered).toBe(1)
 
     base.value = 2
-    expect(root.children[0]).partialMatch(<div style={{color: 'blue'}}/>)
+    expect(root.children[0]).partialMatchDOM(<div style={{color: 'blue'}}/>)
     // // 不需要再渲染
     // expect(rendered).toBe(1)
 
@@ -79,7 +79,7 @@ describe('basic render', () => {
 
     list.push(3)
 
-    expect(root.children[0]).partialMatch(
+    expect(root.children[0]).partialMatchDOM(
       <div>
         <span key={1}>1</span>
         <span key={2}>2</span>
@@ -124,7 +124,7 @@ describe('basic render', () => {
 
     expect(rendered).toBe(1)
     expect(childRendered).toBe(2)
-    expect(root.children[0]).partialMatch(
+    expect(root.children[0]).partialMatchDOM(
       <div>
         <span>john</span>
         <span>-</span>
@@ -135,7 +135,7 @@ describe('basic render', () => {
     person.firstName = 'tim'
     expect(rendered).toBe(1)
     expect(childRendered).toBe(2)
-    expect(root.children[0]).partialMatch(
+    expect(root.children[0]).partialMatchDOM(
       <div>
         <span>tim</span>
         <span>-</span>
@@ -147,7 +147,7 @@ describe('basic render', () => {
     childResetFns.forEach(fn => fn())
     expect(rendered).toBe(1)
     expect(childRendered).toBe(2)
-    expect(root.children[0]).partialMatch(
+    expect(root.children[0]).partialMatchDOM(
       <div>
         <span>reset</span>
         <span>-</span>
@@ -189,7 +189,7 @@ describe('complex vnodeComputed', () => {
 
     expect(rendered).toBe(1)
     expect(computedCalled).toBe(1)
-    expect(root.children[0]).partialMatch(
+    expect(root.children[0]).partialMatchDOM(
       <div>
         <span>1</span>
       </div>
@@ -198,7 +198,7 @@ describe('complex vnodeComputed', () => {
     base.value = 2
     expect(rendered).toBe(1)
     expect(computedCalled).toBe(2)
-    expect(root.children[0]).partialMatch(
+    expect(root.children[0]).partialMatchDOM(
       <div>
         <div>2</div>
       </div>
@@ -234,7 +234,7 @@ describe('complex vnodeComputed', () => {
 
     expect(rendered).toBe(1)
     expect(childRendered).toBe(1)
-    expect(root.children[0]).partialMatch(
+    expect(root.children[0]).partialMatchDOM(
       <div>
         <div>
           <div>child</div>
@@ -246,7 +246,7 @@ describe('complex vnodeComputed', () => {
     base.value = 2
     expect(rendered).toBe(1)
     expect(childRendered).toBe(1)
-    expect(root.children[0]).partialMatch(
+    expect(root.children[0]).partialMatchDOM(
       <div>
         <div>
           <div>child</div>
@@ -278,7 +278,7 @@ describe('complex vnodeComputed', () => {
 
     expect(rendered).toBe(1)
     expect(innerComputedCalled).toBe(1)
-    expect(root.children[0]).partialMatch(
+    expect(root.children[0]).partialMatchDOM(
       <div>
         <span>2</span>
       </div>
@@ -287,7 +287,7 @@ describe('complex vnodeComputed', () => {
     base.value = 2
     expect(rendered).toBe(1)
     expect(innerComputedCalled).toBe(2)
-    expect(root.children[0]).partialMatch(
+    expect(root.children[0]).partialMatchDOM(
       <div>
         <span>3</span>
       </div>
@@ -296,7 +296,7 @@ describe('complex vnodeComputed', () => {
     base.value = 3
     expect(rendered).toBe(1)
     expect(innerComputedCalled).toBe(3)
-    expect(root.children[0]).partialMatch(
+    expect(root.children[0]).partialMatchDOM(
       <div>
         <span>4</span>
       </div>
@@ -328,34 +328,34 @@ describe('complex vnodeComputed', () => {
     const root = document.createElement('div')
     render(<App />, root)
 
-    expect(root.children[0]).partialMatch(<div><span style={{color: 'red'}}/></div>)
+    expect(root.children[0]).partialMatchDOM(<div><span style={{color: 'red'}}/></div>)
     expect(computedCalled).toBe(1)
     // 第一次外层不变化时，内层应该响应
     base2.value = 2
-    expect(root.children[0]).partialMatch(<div><span style={{color: 'blue'}}/></div>)
+    expect(root.children[0]).partialMatchDOM(<div><span style={{color: 'blue'}}/></div>)
     expect(computedCalled).toBe(1)
     // 引起外层变化
     base1.value = 2
-    expect(root.children[0]).partialMatch(<div><span style={{color: 'blue'}}/></div>)
+    expect(root.children[0]).partialMatchDOM(<div><span style={{color: 'blue'}}/></div>)
     expect(computedCalled).toBe(2)
 
     // 外层变化后，内层也还是应该能响应变化
     base2.value = 1
-    expect(root.children[0]).partialMatch(<div><span style={{color: 'red'}}/></div>)
+    expect(root.children[0]).partialMatchDOM(<div><span style={{color: 'red'}}/></div>)
     expect(computedCalled).toBe(2)
 
     // 即使外层变成一次null
     base1.value = 11
-    expect(root.children[0]).partialMatch(<div></div>)
+    expect(root.children[0]).partialMatchDOM(<div></div>)
     expect(computedCalled).toBe(3)
 
     // 又变回来
     base1.value = 3
-    expect(root.children[0]).partialMatch(<div><span style={{color: 'red'}}/></div>)
+    expect(root.children[0]).partialMatchDOM(<div><span style={{color: 'red'}}/></div>)
     expect(computedCalled).toBe(4)
 
     base2.value = 2
-    expect(root.children[0]).partialMatch(<div><span style={{color: 'blue'}}/></div>)
+    expect(root.children[0]).partialMatchDOM(<div><span style={{color: 'blue'}}/></div>)
     expect(computedCalled).toBe(4)
   })
 

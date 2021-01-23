@@ -1,5 +1,5 @@
 import {
-  createVnodePath, getVnodeNextIndex, resolveFirstElement,
+  createVnodePath, getVnodeNextIndex,
   resolveFirstLayerElements,
   resolveLastElement,
 } from '../common'
@@ -14,9 +14,13 @@ import {
   PATCH_ACTION_TO_MOVE,
 } from '../constant'
 import Fragment from '../Fragment'
+import {invariant} from "../util";
 
 function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, parentPath, cnode, view) {
   nextPatch.push(p)
+  // 之后用来快速查找 patch
+  cnode.view.patchNodesQuickRefById[p.id] = p
+
   if (typeof p.type === 'object') return
 
   if (p.type === Array || p.type === Fragment) {
@@ -63,6 +67,9 @@ function handleRemovePatchNode(p, parentPath, toDestroy, view) {
 }
 
 export function handleMoveFromPatchNode(p, nextPatch, parentPath, cnode, toInsert, view) {
+  // 之后用来快速查找 patch
+  cnode.view.patchNodesQuickRefById[p.id] = p
+
   const elements = resolveFirstLayerElements([p], parentPath, cnode)
   elements.forEach((ele) => {
     toInsert.appendChild(ele)
@@ -161,14 +168,18 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, pare
   }
 
   // for debug
-  if (toMove.childNodes.length !== 0) throw new Error('to move length not 0')
+  invariant(toMove.childNodes.length === 0, 'to move length not 0')
 
   return nextPatch
 }
 
 // updateDigest only handle one cnode and its new child cnodes.
 export default function updateDigest(cnode, view) {
-  if (cnode.view.parentNode === undefined) throw new Error(`cnode has not been initial digested ${cnode.type.displayName}`)
+  invariant(cnode.view.parentNode, `cnode has not been initial digested ${cnode.type.displayName}`)
+  // CAUTION, 清空一下之前的 refs，只是需要手动维护的。由于我们确定 digest 过程中只要还留存者的 vnode 一定会被遍历到，遍历的时候会 attach 到 quickRefs 上。
+  //  所以可以这样用。
+  cnode.view.patchNodesQuickRefById = {}
+  // 这里返回一个新的 patch 对象的原因是在处理过程中只留下还有用的，remove/moveTo 的都不要了，虽然也可以通过操作原本对象来实现。
   cnode.patch = handlePatchVnodeChildren(cnode.patch, cnode.view.parentNode, cnode.view.startPlaceholder, [], cnode, view)
   // CAUTION toDestroyPatch should be reset after update digest.
   cnode.toDestroyPatch = {}

@@ -63,24 +63,20 @@ export function createVirtualCnodeForComputedVnodeOrText(reactiveVnode, cnode, c
 const reservedAttrNames = ['key', 'ref']
 
 /**
- * 这个函数是在 render 时被调用的，所以直接在里面创建 watch 没有关系，在组件销毁或者更新时，上一次的 watch 会被自动销毁。
+ * 这个函数是在 render 时被调用的，每次 render 都会销毁上一次里面创建的 computed， 所以这里放心 watch 没有关系。在组件销毁或者更新时，上一次的 watch 会被自动销毁。
  */
-export function watchReactiveAttributesVnode(vnode, reportChangedPatchNode) {
-	let patchNode
-
+export function watchReactiveAttributesVnode(vnode, currentPath, reportChangedVnode, cnode) {
 	const reactiveAttributes = Object.entries(vnode.attributes).filter(([attrName, attr]) => {
 		return isReactiveLike(attr) && !reservedAttrNames.includes(attrName)
 	})
+
+
 	if (reactiveAttributes.length) {
 		watch(() => reactiveAttributes.forEach(([attrName, attr]) => traverse(attr)), () => {
-			invariant(patchNode, `vnode have not been attached. watching: ${reactiveAttributes.map(([name]) => name).join(',')}`)
-			reportChangedPatchNode(patchNode)
+			// CAUTION 只要上报这个 vnode 就够了。engine 会使用这个 vnode 上的 path 去找对应的 patchNode。
+			reportChangedVnode(vnode)
 		})
 	}
-
-	vnode.ref = composeRef(vnode.ref, (el, p) => {
-		patchNode = p
-	})
 }
 
 
@@ -103,7 +99,6 @@ export function replaceVnodeComputedAndWatchReactive(renderResult, collectChange
 
 	const currentWorkingCnode = getCurrentWorkingCnode()
 	invariant(currentWorkingCnode === cnode, 'you can only call watch reactive props from cnode self')
-	if (!isCollectingComputed()) debugger
 	invariant(isCollectingComputed(), 'you are not collecting computed, can not watch reactive prop vnode')
 	return replaceVnodeWith(renderResult, (vnode, currentPath) => {
 		// 返回的三个参数 [shouldStop, vnodeToReplace]
@@ -111,8 +106,9 @@ export function replaceVnodeComputedAndWatchReactive(renderResult, collectChange
 		// 一旦碰到 component vnode 就要中断掉。里面的 replace 要交给这个组件 render 的时候自己处理。
 		if (isComponentVnode(vnode)) return [true]
 		// 替换为 virtual cnode 之后也要停止 walk，让 virtual cnode render 的时候再处理里面的。
-		if (hasRefAttributes(vnode)) {
-			watchReactiveAttributesVnode(vnode, collectChangePatchNode, cnode)
+		// CAUTION 普通的 dom 元素 attribute 除了 style 意外全部都只能接受 "number|string"，所以只能是 ref。只有 style 单独考虑了一下。
+		if (hasRefAttributes(vnode) || isReactiveLike(vnode.attributes?.style)) {
+			watchReactiveAttributesVnode(vnode, currentPath, collectChangePatchNode, cnode)
 			return [false]
 		} else if (isRef(vnode)) {
 			// CAUTION 严格模式也是 ref/vnodeComputed 才替换成真的 VirtualComponent。否则是 refLike。直接取 value 就可以了。

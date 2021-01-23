@@ -1,4 +1,5 @@
 import { Graph, Addon, FunctionExt, Shape } from '@antv/x6'
+import '../../shape'
 import Entity from './Entity'
 
 ///////////////////
@@ -146,5 +147,23 @@ function initEvent(graph, container) {
   })
 }
 
-// 注册 shape
+// 在开头已经通过引入 shape 来注册过能渲染 axii 的shape了。
+// 这里 注册 Axii 组件
 Graph.registerAxiiComponent('Entity', Entity)
+
+// 注册 entity-shape，提供一通用参数，例如 Ports
+Graph.registerNode('entity-shape', {
+  inherit: 'axii-shape',
+  ports: {
+    groups: {
+      left: {
+        position: 'absolute',
+        args: { x: 0, y: 0 },
+      },
+      right: {
+        position: 'absolute',
+        args: { x: 1, y: 0 },
+      }
+    }
+  }
+})

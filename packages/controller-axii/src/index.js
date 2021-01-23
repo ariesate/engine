@@ -28,7 +28,7 @@ export { default as useImperativeHandle } from './useImperativeHandle'
 export { default as createRef } from './createRef'
 // TODO 和 createRef 区别？
 export { default as useRef } from './useRef'
-export { default as watch, traverse } from './watch'
+export { default as watch, traverse, watchReactive } from './watch'
 export { StyleEnum, StyleRule } from './StyleManager'
 export { default as createFlatChildrenProxy } from './createFlatChildrenProxy'
 export { isComponentVnode, useViewEffect, useContext, createContext } from './controller'

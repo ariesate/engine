@@ -15,7 +15,7 @@
  *
  * getSnapshotBeforeUpdate() 在 digest 的 unit 之前，不能再 setState(正好也不能，因为 lock 了)。
  */
-import { walkCnodes } from './common'
+import {walkCnodes, walkVnodes} from './common'
 import { each } from './util'
 import {
   SESSION_INITIAL,
@@ -23,7 +23,7 @@ import {
   UNIT_PAINT,
   UNIT_REPAINT,
   UNIT_INITIAL_DIGEST,
-  UNIT_UPDATE_DIGEST, UNIT_PARTIAL_UPDATE_DIGEST,
+  UNIT_UPDATE_DIGEST, UNIT_PARTIAL_UPDATE_DIGEST, PATCH_ACTION_REMOVE,
 } from './constant'
 import createTrackingTree from './createTrackingTree'
 import { invariant } from './util';
@@ -77,18 +77,16 @@ export default function createScheduler(painter, view, supervisor) {
           cnodeTrackingTree.unlock()
 
           // 开始处理局部 vnode 的更新
-          vnodeTrackingMap.forEach((changedPatchNodes, cnode) => {
-            changedPatchNodes.forEach(changedPatchNode => {
+          vnodeTrackingMap.forEach((changedVnodes, cnode) => {
+            changedVnodes.forEach(changedVnode => {
               supervisor.unit(SESSION_UPDATE, UNIT_PARTIAL_UPDATE_DIGEST, cnode, () => {
                 // 第一参数表示根据什么去更新，可能会被外面劫持。所以最后还补了一个参数，外部可以动第一个，但不要动最后一个。
-                view.updateElement(changedPatchNode, cnode, changedPatchNode)
+                view.updateElement(changedVnode, cnode, changedVnode)
               })
             })
             vnodeTrackingMap.delete(cnode)
           })
 
-          // CAUTION 一定要放在这里才调用，这个时候才稳定。
-          view.didMount()
         })
       }
     } catch(e) {
@@ -122,8 +120,6 @@ export default function createScheduler(painter, view, supervisor) {
         })
       })
 
-      // CAUTION 一定要放在这里才调用，这个时候子元素之类才都有了，才算稳定。
-      view.didMount()
     })
 
     currentSession = null
@@ -140,12 +136,14 @@ export default function createScheduler(painter, view, supervisor) {
       }
     },
     // 除了 cnode 带来的结构性变化（消化 diff 产生的结果）。我们还支持精确的 vnode 的变化处理（例如 axii 中由于使用了 reactive 对象来表示 text/style，只需要局部更新）。
-    collectChangePatchNode: (vnodesIndexedByCnode) => {
-      // CAUTION 这里不要去动原来的对象
+    collectChangedVnode: (vnodesIndexedByCnode) => {
+      // CAUTION 这里不要去动原来的对象，只是复制了一遍
       vnodesIndexedByCnode.forEach((vnodes, cnode) => {
-        let trackedVnodes = vnodeTrackingMap.get(cnode)
-        if (!trackedVnodes) vnodeTrackingMap.set(cnode, (trackedVnodes = new Set()))
-        vnodes.forEach(vnode => trackedVnodes.add(vnode))
+        let trackedPatchNodes = vnodeTrackingMap.get(cnode)
+        if (!trackedPatchNodes) vnodeTrackingMap.set(cnode, (trackedPatchNodes = new Set()))
+        vnodes.forEach(vnode => {
+          trackedPatchNodes.add(vnode)
+        })
       })
       if (!currentSession) {
         startUpdateSession()

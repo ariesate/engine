@@ -127,7 +127,6 @@ const valueRules = {
      *     1.2.1 常亮 primary | 正常 primary | disabled 灰色。常亮和正常下还要判断 interacting
      *     1.2.1.1 interacting 是 变亮一点。否，正常
      */
-    console.log(color)
     const matrix = [
       [undefined, undefined, undefined, 'transparent'],
       [undefined, INDEX.active.active, undefined, colors.white()],

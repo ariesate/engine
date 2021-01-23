@@ -1,6 +1,6 @@
 # AOP drawbacks
 
-feature 没有理论能保证正交。feature 的划分本来就是人在理解软件时的主管划分。人的理解应该分成了三层：
+feature 没有理论能保证正交。feature 的划分本来就是人在理解软件时的主观划分。人的理解应该分成了三层：
 
 - Base：基础功能
 - Feature：可插拔的能力

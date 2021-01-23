@@ -13,9 +13,9 @@ import {
   propTypes,
   delegateLeaf
 } from 'axii'
-import Node from '../../components/Node'
-import Edge from '../../components/Edge'
-import Port from '../../components/Port'
+import Node from '../../../components/Node'
+import Edge from '../../../components/Edge'
+import Port from '../../../components/Port'
 
 /**
  * nextNodes 是个数组，表示后面并行，应该是先并行，再分支。

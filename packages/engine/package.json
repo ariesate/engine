@@ -20,7 +20,8 @@
     "babel-jest": "^26.3.0",
     "dom-serialize": "^2.2.1",
     "jest": "^26.4.2",
-    "jquery": "^3.5.1"
+    "jquery": "^3.5.1",
+    "pretty-data": "^0.40.0"
   },
   "jest": {
     "moduleFileExtensions": [

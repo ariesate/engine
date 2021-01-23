@@ -21,10 +21,17 @@ export class AxiiShape extends Node {
     }
     return this
   }
-
   removeComponent(options) {
     this.store.remove('component', options)
     return this
+  }
+  get getAxiiProps() {
+    return this.store.get('getAxiiProps')
+  }
+  set getAxiiProps(props) {
+    console.log("11121231", props)
+    this.store.remove('getAxiiProps' )
+    this.store.set('getAxiiProps', props)
   }
 }
 

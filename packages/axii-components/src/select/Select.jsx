@@ -93,11 +93,9 @@ Select.propTypes = {
   }),
   renderOption: propTypes.function.default(() => (option) => option.name),
   renderValue: propTypes.function.default(() => (value) => value.value ? value.value.name : ''),
-  assignOption: propTypes.function.default(() => (target, source) => Object.assign(target, source)),
-  onChange: propTypes.callback.default(() => (option, {value, assignOption}) => {
-    const next = {}
-    assignOption(next, option)
-    value.value = next
+  optionToValue: propTypes.function.default(() => (option) => Object.assign({}, option)),
+  onChange: propTypes.callback.default(() => (option, {value, optionToValue}) => {
+    value.value = optionToValue(option)
   }),
 }
 

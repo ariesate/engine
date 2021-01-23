@@ -41,7 +41,8 @@
     "jest": "^26.4.2",
     "jquery": "^3.5.1",
     "jsdom": "^16.4.0",
-    "lodash": "^4.17.20"
+    "lodash": "^4.17.20",
+    "pretty-data": "^0.40.0"
   },
   "jest": {
     "moduleFileExtensions": [

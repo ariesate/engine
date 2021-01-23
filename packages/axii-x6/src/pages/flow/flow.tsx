@@ -7,9 +7,9 @@ import { GraphContext } from '../../components/Graph'
 import styles from '../index.module.less'
 import rawData from './data'
 import { createUniqueIdGenerator } from '../../util'
-import { EventNode, EventEdges } from "../components/EventNode.jsx";
+import { EventNode, EventEdges } from "./components/EventNode.jsx";
 import createFlowGraph from './createFlowGraph'
-import ConfigPanel from '../components/ConfigPanel'
+import ConfigPanel from './components/ConfigPanel'
 
 const createId = createUniqueIdGenerator()
 

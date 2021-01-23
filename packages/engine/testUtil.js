@@ -1,6 +1,5 @@
 import { walkRawVnodes } from './common';
 import $ from 'jquery'
-import initialDigest  from './DOMView/initialDigest';
 
 export function match() {
   // TODO
@@ -31,7 +30,7 @@ function isSubset(styles, computedStyle) {
   )
 }
 
-export function partialMatch(inputDomNodes, inputVnode) {
+export function partialMatchDOM(inputDomNodes, inputVnode) {
   const isArray = Array.isArray(inputVnode)
   const vnodes = isArray ? inputVnode : [inputVnode]
   const domNodes = isArray ? inputDomNodes : [inputDomNodes]
@@ -67,16 +66,11 @@ export function partialMatch(inputDomNodes, inputVnode) {
 }
 
 export function stringifyVnodes(vnodes, changeLine) {
+  return JSON.stringify(vnodes)
+}
+
+export function partialMatchVnode(received, expected) {
 
 }
 
-export function createDOMFromVnode(vnodes) {
-  // 伪造 cnode
-  const cnode = {
-    ret: vnodes
-  }
-
-
-
-}
 

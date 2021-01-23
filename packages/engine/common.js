@@ -94,6 +94,7 @@ export function resolveFirstLayerElements(vnodes, parentPath, cnode) {
 }
 
 export function makeVnodeKey(vnode, index) {
+  // rawKey 是用户用 key prop 写入的。
   const rawKey = vnode.rawKey !== undefined ? vnode.rawKey : `[${index}]`
   return `<${getVnodeType(vnode)}>${rawKey}`
 }

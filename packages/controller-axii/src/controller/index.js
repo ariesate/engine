@@ -166,19 +166,20 @@ export default function createAxiiController(rootElement) {
 
 	// 处理局部更新的节点
 	let changedVnodesIndexedByCnode = new Map()
-	function schedulePatchNodeToRepaint() {
+	function scheduleVnodeToRepaint() {
 		let toUpdate = changedVnodesIndexedByCnode
 		// 先把 changedVnodesIndexedByCnode 腾出来，因为 update 的过程中可能又会产生新的 patch vnode。
 		changedVnodesIndexedByCnode = new Map()
-		scheduler.collectChangePatchNode(toUpdate)
+		scheduler.collectChangedVnode(toUpdate)
 	}
-	const reportChangedPatchNode = (patchNode, cnode) => {
-		invariant(patchNode, 'report undefined patchNode')
+	// 这里通过 vnode 去 report 就够了。在引擎内部会自己根据 vnode.path 去找相应的 patchNode。我们不用管。
+	const reportChangedVnode = (vnode, cnode) => {
+		invariant(vnode, 'report undefined patchNode')
 		let trackedVnodes = changedVnodesIndexedByCnode.get(cnode)
 		if (!trackedVnodes) changedVnodesIndexedByCnode.set(cnode, (trackedVnodes = new Set()))
-		if (!trackedVnodes.has(patchNode)) {
-			trackedVnodes.add(patchNode)
-			afterDigestion(schedulePatchNodeToRepaint)
+		if (!trackedVnodes.has(vnode)) {
+			trackedVnodes.add(vnode)
+			afterDigestion(scheduleVnodeToRepaint)
 		}
 	}
 
@@ -186,11 +187,12 @@ export default function createAxiiController(rootElement) {
 		/**
 		 * 给 cnode 增加基本的能力:
 		 * 1. reportChangedCnode: 报告自己的内部的变化，这个其实是 VirtualComponent 用的，正常的组件时不会自己变化的。
-		 * 2. reportChangePatchNode: 报告自己的局部变化，这是两种类型的组件都可能用到。
+		 * 2. reportChangePatchNode: 报告自己的局部变化，这是两种类型的组件都可能用到。patchNode 主要是 attributes/innerText 变化。
+		 * 因为不想再伪造 cnode，所以需要局部更新。
 		 */
 
 		cnode.reportChange = reportChangedCnode
-		cnode.reportChangedPatchNode = reportChangedPatchNode
+		cnode.reportChangedVnode = reportChangedVnode
 		let result
 		result = cnode.render()
 
@@ -274,7 +276,9 @@ export default function createAxiiController(rootElement) {
 				// 默认的用户写的组件如果没有 shouldComponentUpdate, 根据 props 浅对比来决定是否更新
 				const toRepaint = filter(toRemain, (cnode) => {
 					if (cnode.type.shouldComponentUpdate) return cnode.type.shouldComponentUpdate(cnode)
-					// CAUTION children 是不对比的！这里要特别注意，如果要对比，请组件自己提供 shouldComponentUpdate。
+					// TODO 目前没有优化数据不变，但是函数引用变了的情况。
+					//  例如对一个数组进行遍历，里面的对象引用没变，但是在在遍历的闭包里面创建了函数，传给了组件。实际上是不需要重新渲染的。
+					//  要是能悄悄替换函数内的引用就好了。！！！
 					return !isPropsEqual(cnode.props, cnode.lastProps)
 				})
 
@@ -285,6 +289,16 @@ export default function createAxiiController(rootElement) {
 
 				return { toPaint: toInitialize, toDispose: toDestroy, toRepaint }
 			},
+
+			session: (sessionName, startSession) => {
+				// CAUTION 一个 session 不能互相嵌套，所以我们可以放心地收集要处理副作用的节点。
+				invariant(sessionEffectedCnodes === null, 'last session effect not cleared, something wrong')
+				sessionEffectedCnodes = []
+				startSession()
+				// 结束 session 之后，再开启一个 effectSession 处理所有的 viewEffect
+				deferStartEffectSession(sessionEffectedCnodes.slice())
+				sessionEffectedCnodes = null
+			},
 			unit: (sessionName, unitName, cnode, startUnit) => {
 				// 第一渲染，执行一下 willMount 的生命周期
 				sessionEffectedCnodes.push({ unitName, cnode, sessionName })
@@ -292,16 +306,6 @@ export default function createAxiiController(rootElement) {
 				if (unitName === UNIT_PAINT) cnode.willMount && cnode.willMount()
 				// 记录一下，其他功能要用
 				return withCurrentWorkingCnode(cnode, startUnit)
-			},
-
-			session: (sessionName, startSession) => {
-				// CAUTION 一个 session 不能互相嵌套，所以我们可以放心地收集要处理副作用的节点。
-				invariant(sessionEffectedCnodes === null, 'last session effect not cleared, something wrong')
-				sessionEffectedCnodes = []
-				startSession()
-
-				deferStartEffectSession(sessionEffectedCnodes.slice())
-				sessionEffectedCnodes = null
 			},
 		},
 		/*********************
@@ -332,8 +336,6 @@ export default function createAxiiController(rootElement) {
 					})
 				})
 			},
-			// 获取到真实的 dom node，并且引擎保证已经挂载到 document 上了。
-			receiveElement: (element, patch) => attachRef(element, patch, patch.ref),
 			isComponentVnode,
 		},
 		interceptViewActions({ createElement, updateElement, ...rest}) {
@@ -344,12 +346,27 @@ export default function createAxiiController(rootElement) {
 			}
 			const composedCreateElement = composeInterceptors(createShallowNode, [translateRefAttributes, attachLayoutStyle, attachScopeId], createElement)
 			return {
-				createElement: (vnode, ...argv) => {
-					const element = composedCreateElement(vnode, ...argv)
+				// vnode 是用户 render return 出来的, patchNode 是根据 vnode clone 出来的, patchNode 上面会有真正的 element 引用。
+				// 我们不能直接把 vnode 和 patchNode 做引用关系，因为 patchNode 在 engine 可能会为了防止误操作多次 clone 断开原来引用。只能有 engine 提供的机制去找对应的 patchNode
+				createElement: (vnode, cnode, patchNode) => {
+					const element = composedCreateElement(vnode, cnode, patchNode)
 					// 因为 html form 本身是 uncontrolled，要实现元素的 value 和上面 value 绑定的 reactive 数据一致。
 					// 就必须在每次事件修改后判断一下，强行和 value 一致
 					if (isFormElement(element) && 'value' in vnode.attributes) {
 						formElementToBindingValue.set(element, vnode.attributes.value)
+					}
+
+					// TODO
+					// 新改版之后 ref 需要 controller 自己处理，同时也可以更好地处理 unmount 的时候再通知一遍。
+					if (patchNode.ref) {
+						// 注意这里是放在前面，因为用户的 useViewEffect 里面可能要用到 ref
+						cnode.viewEffects.unshift(() => {
+							attachRef(element, patchNode, patchNode.ref)
+							// 在组件被销毁时
+							return () => {
+								attachRef(null, patchNode, patchNode.ref)
+							}
+						})
 					}
 					return element
 				},

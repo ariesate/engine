@@ -88,7 +88,7 @@ describe('create component', () => {
       }
     }</BaseComponent>, root)
 
-    expect(root.children[0]).partialMatch(<container><child><span>1</span></child></container>)
+    expect(root.children[0]).partialMatchDOM(<container><child><span>1</span></child></container>)
   })
 
   test('partial rewrite', () => {
@@ -132,7 +132,7 @@ describe('Feature based', () => {
     const items = [1,2,3]
     render(<BaseComponent items={items}/>, root)
 
-    expect(root.children[0]).partialMatch(<container>
+    expect(root.children[0]).partialMatchDOM(<container>
       <list>
         <item>1</item>
         <item>2</item>
@@ -179,7 +179,7 @@ describe('Feature based', () => {
     </BaseComponent>, root)
 
 
-    expect(root.children[0]).partialMatch(<container>
+    expect(root.children[0]).partialMatchDOM(<container>
         <list>
           <item>
             <span>2</span>
@@ -222,7 +222,7 @@ describe('Feature based', () => {
     const items = [1, 2]
     render(<BaseComponent items={items} />, root)
 
-    expect(root.children[0]).partialMatch(<container>
+    expect(root.children[0]).partialMatchDOM(<container>
         <list>
           <item>
             1
@@ -263,7 +263,7 @@ describe('Feature based', () => {
     const items = [1, 2]
     render(<BaseComponent items={items} overwrite={[Feature1]}/>, root)
 
-    expect(root.children[0]).partialMatch(<container>
+    expect(root.children[0]).partialMatchDOM(<container>
         <list>
           <item>
             1

@@ -37,7 +37,6 @@ export default function Node({onClick, children, attrs, ...rest}) {
     const clickCallback = ({ node: clickedNode }) => {
       if (clickedNode === node) onClick(clickedNode)
     }
-
     if (onClick) graphRef.value.on('node:click', clickCallback)
 
     return () => {

@@ -184,6 +184,8 @@ export default function createComponent(Base, featureDefs=[]) {
 
 	// 7. TODO 穿透处理 layout props 的问题。应该任何一个节点协商 acceptLayout 就都能变成 inline/block。这里又有 inline-flex 和 flex 的问题。
 
+  // 8. 允许通过 extend 快速增加 feature
+  Component.extend = (features) => createComponent(Base, featureDefs.concat(features))
   return Component
 }
 

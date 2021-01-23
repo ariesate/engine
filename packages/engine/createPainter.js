@@ -43,8 +43,7 @@ import {
   PATCH_ACTION_TO_MOVE,
   DEV_MAX_LOOP,
 } from './constant'
-import { defaultNormalizeLeaf } from './createElement'
-import VNode from './VNode';
+import { defaultNormalizeLeaf, shallowCloneElement } from './createElement'
 
 /**
  * Diff the detail of two vnode.
@@ -90,6 +89,10 @@ function prepareRetForAttach(rawRet, cnode, { isComponentVnode, createCnode, nor
   const transferKeyedVnodes = {}
   walkRawVnodes(ret, (vnode, path, parentVnodePath = []) => {
     vnode.key = makeVnodeKey(vnode, path[path.length - 1])
+    const currentPath = parentVnodePath.concat(vnode.key)
+    // 字符串化的 path，可以作为该 vnode 在 cnode 里面的唯一标识。在 diff 过程中也会不断传递给 patchNode，这样就能通过 vnode 找到对应
+    // patchNode了。在框架中需要这个功能，因为我们可以局部更新，框架在上报要更新的 patchNode 时要通过 vnode 找 patchNode，因为它自己感知不到 patchNode。
+    vnode.id = vnodePathToString(currentPath)
     // CAUTION if transferKey is undefined， then `makeVnodeTransferKey` will return undefined
     vnode.transferKey = makeVnodeTransferKey(vnode)
     if (isComponentVnode(vnode)) {
@@ -108,7 +111,8 @@ function prepareRetForAttach(rawRet, cnode, { isComponentVnode, createCnode, nor
       }
     }
 
-    return parentVnodePath.concat(vnode.key)
+    // 返回当前 path 作为下一个节点的 parentVnodePath
+    return currentPath
   })
 
   return { next, ret, transferKeyedVnodes }
@@ -127,7 +131,6 @@ function prepareRetForAttach(rawRet, cnode, { isComponentVnode, createCnode, nor
 function paint(cnode, renderer, utils) {
   const specificRenderer = cnode.parent === undefined ? renderer.rootRender : renderer.initialRender
   const { next, ret, transferKeyedVnodes } = prepareRetForAttach(specificRenderer(cnode, cnode.parent), cnode, utils)
-
   cnode.ret = ret
   cnode.next = next
   cnode.transferKeyedVnodes = transferKeyedVnodes
@@ -147,14 +150,14 @@ function paint(cnode, renderer, utils) {
  * from the parent vnode.
  */
 function createPatchNode(lastVnode = {}, vnode, actionType) {
-  const patch = new VNode()
+  const patch = shallowCloneElement(lastVnode)
   Object.assign(patch, {
-    ...lastVnode,
     ...vnode,
     action: {
       type: actionType,
     },
   })
+
   return patch
 }
 
@@ -163,7 +166,7 @@ function createPatchNode(lastVnode = {}, vnode, actionType) {
  * This method was used to create patchNode for new vnode, and recursively find cnode in its descendants.
  */
 function handleInsertPatchNode(vnode, currentPath, patch, toInitialize, toRemain, cnode, { isComponentVnode, createCnode }) {
-  patch.push(createPatchNode({}, vnode, PATCH_ACTION_INSERT))
+  patch.push(createPatchNode({}, vnode, PATCH_ACTION_INSERT, cnode))
   if (isComponentVnode(vnode)) {
     const nextIndex = vnode.transferKey === undefined ? vnodePathToString(currentPath) : vnode.transferKey
     toInitialize[nextIndex] = createCnode(vnode, cnode)
@@ -206,7 +209,7 @@ function handleToMovePatchNode(lastVnode, patch) {
  */
 function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, currentPath, cnode, patch, toInitialize, toRemain, nextTransferKeyedVnodes, utils) {
   const {isComponentVnode, createCnode, diffNodeDetail} = utils
-  const patchNode = createPatchNode(lastVnode, vnode, actionType)
+  const patchNode = createPatchNode(lastVnode, vnode, actionType, cnode)
 
   if (isComponentVnode(vnode)) {
     const path = vnodePathToString(currentPath)
