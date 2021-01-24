@@ -29,7 +29,7 @@ export default function Node({onClick, children, attrs, ...rest}) {
     nodeRef.value = node
 
     // TODO 先粗糙处理 attrs 任何变化都重新设置 attrs， 第二参数表示深度 merge
-    const [_, watchToken] = watch(() => traverse(attrs), () => {
+    watch(() => traverse(attrs), () => {
       node.setAttrs(toRaw(attrs), true)
     })
 
@@ -42,7 +42,6 @@ export default function Node({onClick, children, attrs, ...rest}) {
     return () => {
       graphRef.value.removeNode(node)
       if (onClick) graphRef.value.off('node:click', clickCallback)
-      destroyComputed(watchToken)
     }
   })
 

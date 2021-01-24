@@ -159,10 +159,20 @@ Graph.registerNode('entity-shape', {
       left: {
         position: 'absolute',
         args: { x: 0, y: 0 },
+        attrs: {
+          circle: {
+            magnet: true
+          }
+        }
       },
       right: {
         position: 'absolute',
         args: { x: 1, y: 0 },
+        attrs: {
+          circle: {
+            magnet: true
+          }
+        }
       }
     }
   }

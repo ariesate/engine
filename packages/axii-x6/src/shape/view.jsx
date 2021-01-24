@@ -1,11 +1,9 @@
 /** @jsx createElement */
-import { render, createElement } from 'axii'
+import { render, createElement, createContext } from 'axii'
 import { NodeView } from '@antv/x6'
 import ViewContext from './context'
 
 export const axiiAction = 'axii'
-
-
 
 class AxiiShapeResizeObserver {
   constructor() {

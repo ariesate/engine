@@ -108,7 +108,7 @@ export default function EREditor() {
         </div>
       </div>
       <GraphContext.Provider value={graphRef}>
-        {() => graphRef.value ? entities.map(entity => <AxiiNode shape='entity-shape' component="Entity" viewProps={entity.view} entity={entity}/>): null}
+        {() => graphRef.value ? entities.map(entity => <AxiiNode key={entity.id} shape='entity-shape' component="Entity" viewProps={entity.view} entity={entity}/>): null}
       </GraphContext.Provider>
     </div>
   )

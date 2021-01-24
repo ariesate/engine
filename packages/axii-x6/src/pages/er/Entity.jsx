@@ -12,7 +12,9 @@ import {
 } from 'axii'
 import Select from 'axii-components/select/Select'
 import OriginInput from 'axii-components/input/Input'
-import Port from '../../components/Port'
+import useElementPosition from 'axii-components/hooks/useElementPosition'
+import createMannualTrigger from 'axii-components/hooks/mannualTrigger'
+import Port from './Port'
 
 
 const Input = OriginInput.extend(function CaptureClick(fragments) {
@@ -52,22 +54,36 @@ const Input = OriginInput.extend(function CaptureClick(fragments) {
 //   )
 // }
 
-function RawField({ name, type, onPosition }) {
-  const el = useRef()
+function RawField({ field, entityPosition, positionTrigger }) {
 
+  const fieldPosition = reactive({})
+  const {ref: fieldRef} = useElementPosition(fieldPosition, positionTrigger)
+
+  const portPosition = computed(() => {
+
+    const result = {}
+    // 如果 fieldPosition
+    if (field.type === 'rel' && fieldPosition.y && entityPosition.y) {
+      console.log("computing", entityPosition, fieldPosition, field.id)
+      result.x = "100%"
+      result.y = fieldPosition.y - entityPosition.y + (fieldPosition.height/2)
+    }
+    return result
+  })
+
+  // TODO 监听形状变化。任何形状变化。都会引起其他的位置变化。所以要
   useViewEffect(() => {
-    onPosition(el.getBoundingClientRect())
-
-    // TODO 定时检测？？？position 会受到其他人影响。
+    console.log(1111, portPosition.x)
     return () => {
-      onPosition(null)
+
     }
   })
 
   return (
-    <field ref={el}>
-      <name>{name}</name>
-      <type>{type}</type>
+    <field block ref={fieldRef} block-padding-20px>
+      <name>{() => field.name}</name>
+      <type>{() => field.type}</type>
+      {() => portPosition.x ? <Port group="right" key={field.id} id={field.id} args={portPosition}/> : null}
     </field>
   )
 }
@@ -94,16 +110,23 @@ function Entity({ entity }) {
 
   const { fields } = entity
 
+  const entityPosition = reactive({})
+  const positionTrigger = createMannualTrigger()
+  const {ref: entityRef} = useElementPosition(entityPosition, positionTrigger)
 
-  const fieldPositionsByFieldId = {}
+  useViewEffect(() => {
+    positionTrigger.trigger()
+    return () => {
+      positionTrigger.destroy()
+    }
+  })
 
   return (
-    <entity inline inline-border-width-1px>
+    <entity inline inline-border-width-1px ref={entityRef}>
       <name block>{() => entity.name}</name>
       {() => fields.map(field=> (
         <row block>
-          <Field {...delegateLeaves(field)} onPosition={position => fieldPositionsByFieldId[field.id] = ref(position)}/>
-          {() => field.type === 'rel' ? <Port args={fieldPositionsByFieldId[field.id]}/> : null}
+          <Field key={field.id} field={field} entityPosition={entityPosition} positionTrigger={positionTrigger}/>
         </row>
       ))}
     </entity>

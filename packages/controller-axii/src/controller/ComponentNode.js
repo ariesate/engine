@@ -55,8 +55,11 @@ export default class ComponentNode {
 	}
 	// AXII lifeCycle: 在 节点真正挂载了并且 session 结束了之后触发。
 	didMount() {
-		this.viewEffects.forEach((effect) => {
-			this.effectClearHandles.push(effect())
+		// viewEffects 里面允许创建 watch，同样会自动回收
+		this.collectReactive(() => {
+			this.viewEffects.forEach((effect) => {
+				this.effectClearHandles.push(effect())
+			})
 		})
 	}
 	// AXII lifeCycle: 在 supervisor 中发现不存在了时直接调用。
@@ -182,8 +185,9 @@ function createInjectedProps(cnode) {
 			// 当直接传给事件回调时，由于事件回调会补足 event，而我们不需要，因此在这里判断一下。
 			// 注意，我们认为用户不可能自己把 event 当第一参数传入，没有这样的需求场景。
 			const runtimeArgv = ((event === activeEvent.getCurrentEvent() && restArgv.length === 0) || event === undefined) ? [] : [event, ...restArgv]
-
-			const userMutateFn = props[propName]
+			// CAUTION 特别注意这里，对于 callback 类型的 prop 一定是在执行时重新去 cnode.props 上去读。
+			//  因为我们为了性能作了优化，callback 即使是函数引用变了，我们也不会重新渲染，这时候就靠这里重新去 props 上读来保证使用的是正确的引用了。
+			const userMutateFn = cnode.props[propName]
 
 			// 注意这里，defaultMutateFn 可以拿到 props 的引用，这样我们就不用在调用的时候去往第一个参数去传了。
 			const defaultMutateFn = propType.createDefaultValue(props)

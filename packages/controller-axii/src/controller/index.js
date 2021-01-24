@@ -64,6 +64,7 @@ import { normalizeLeaf } from '../createElement'
 import ComponentNode from './ComponentNode'
 import {invariant} from "../index";
 import {UNIT_INITIAL_DIGEST} from "../../../engine/constant";
+import propTypes from "../propTypes";
 
 export { useViewEffect, createContext, useContext } from './ComponentNode'
 
@@ -99,18 +100,75 @@ export function isComponentVnode(vnode) {
 	return (typeof vnode.type === 'function') && vnode.type !== String && vnode.type !== Array && vnode.type !== Fragment
 }
 
-function isPropsEqual({ children, ...props }, { children: lastChildren, ...lastProps }) {
-	// 先对比 children
-	if (Object.keys(children).length !== Object.keys(lastChildren).length ) return false
-	if (Object.entries(children).some(([childIndex, child]) => {
-		return child !== lastChildren[childIndex]
-	})) return false
+function defaultShouldComponentUpdate(cnode) {
+	/**
+	 * repaint 的策略：
+	 * repaint 的源头应该都是 vnodeComputed。普通的 component 是不会刷新的，靠的是数据之间的联动。
+	 * 起始处收集到的 virtualComponent(vnodeComputed) 一定会重新 render，接下来才会进入到 handleResult。
+	 * 在接下来的里面，会遇到 remain 的 Component/VirtualComponent。
+	 *
+	 * 1. 遇到 Component 的时候，就涉及到要不要判断。判断因素：
+	 * 1> props 引用有没有变化。数据引用如果有变化，是肯定要 repaint 的
+	 *
+	 * 2> 传入的 children 有没有变化。
+	 * {() => {
+	 *  	fields.map((field) => {
+	 *  	  return <Field>{ field.name }</Field>
+	 *  	})
+	 * }}
+	 * TODO children 的情况比较复杂，首先 children 的引用一定是全新的：
+	 *  2.1> 传入的 children 没有任何动态的部分(没有局部变量引用、没有动态部分)，全部是确定的静态的，那么实际上不需要更新
+	 *  2.2> 传入的 children 整体，或者部分是动态的。这时候也不一定要更新：
+	 *    2.2.1> 如果每个动态的部分都是 reactive data 的情况，并且引用也没有变。那么不需要更新。
+	 *    2.2.2> 如果有动态的 reactive data 引用变了。那么要更新。
+	 *    2.2.3> 如果有动态的 vnodeComputed。？？？其实可能不用，因为如果组件自己 render 过程中没有去读过 children。纯粹只是再继续传递下去，children 不影响我的 render，那么当然就不需要再 repaint 啊。
+	 *
+	 *
+	 * 3> 传入的 function prop 引用没有变化。
+	 *  3.1> 如果是 "callback" 类型的 function（只要不是在 render 期间调用的），那么就可以不用 repaint，我们可以做一个 callback delegator，在回调中动态指向正确的函数即可！
+	 *  3.2> 如果是在 render 期间调用的，那么就需要 repaint，因为可能改变了 render 的结果。
+	 *
+	 * 综合上面的所有情况来看，还是要看传入的 prop 到底有没有在 render 执行的过程中"用到"，如果没有被用到，那么就不会影响原来的 render 过程。就不需要重新刷新。
+	 *
+	 * 梳理后的逻辑：
+	 * 1. reactive prop 引用变了，那么需要重新 render。（即使当前组件并没有去读，只是进一步往下传递，也需要，因为最终肯定会被叶子节点读到，它的 reactive 需要建立在正确的 prop 上，如果这种情况还要继续优化，有点太复杂了）
+	 * 2. children 中有 reactive，并且相比之前来说"引用"变化了（可能没变，例如 children 是字符串、数字，value 没变，或者是个静态结构，里面完全没有 reactive。）。
+	 *   2.1 这里的问题就还是和 reactive prop 一样了。如果自己读了其中的引用，那么当然要重新。
+	 *   2.2 如果没读：
+	 *     2.2.1 作为render 的结果，渲染了。那么那个节点，所使用的的 引用是过时的，我们能做到动态替换吗？？？暂时很难。因为这还是涉及到如果那个节点也只是读了引用的一部分呢？很难往上溯源去替换。
+	 *     2.2.2 直接传递给了下一个组件。对下一个组件来说就相当于"引用"变了，
+	 *
+	 * 所以目前能做的应该只有：
+	 * 1. callback prop 优化
+	 * 2. string|null children 对比的优化。
+	 * 3. 静态结果的 children 对比(需要深度去读 children了，是否会产生性能损失？暂时没有必要。)
+	 *
+	 * 2. 遇到 VirtualComponent 的时候，肯定要重新 render，既然是 vnodeComputed 创建出来的，那么肯定读了当前作用于里的数据。既然当前都刷新了，那么自己肯定也要刷新。
+	 */
+	if (cnode.type.isVirtual) return true
 
-	// 在对比剩下的 prop
-	if (Object.keys(props).length !== Object.keys(lastProps).length ) return false
-	return Object.entries(props).every(([propName, propValue]) => {
-		return propValue === lastProps[propName]
-	})
+	const {props: {children, ...props}, lastProps: { children: lastChildren, ...lastProps}, type} = cnode
+
+	// 1. 先对比 prop 引用变化，这里对 callback 类型的 prop 进行了优化。callback 会在注入的时候生成一个伪造的函数，每次都动态指向当前的。
+	if (Object.keys(props).length !== Object.keys(lastProps).length ) return true
+	if (Object.entries(props).some(([propName, propValue]) => {
+		// 如果是 callback，那么默认认为是相同的，我们在处理 callback 的时候进行了优化。
+		if (type.propTypes && type.propTypes[propName] && type.propTypes[propName].is(propTypes.callback)) return false
+		return propValue !== lastProps[propName]
+	})) return true
+
+	// 再 先对比 children
+	if (Object.keys(children).length !== Object.keys(lastChildren).length ) return true
+	if (Object.entries(children).some(([childIndex, child]) => {
+		// 针对 string(number 也是 string)|null 等简单结构进行的优化。
+		if (child.type === String) return child.value !== lastChildren[childIndex].value
+		if (child.type === null) return child.type !== lastChildren[childIndex].type
+
+		return child !== lastChildren[childIndex]
+	})) return true
+
+	// 所有校验都通过了，那么就不刷新
+	return false
 }
 
 
@@ -250,8 +308,17 @@ export default function createAxiiController(rootElement) {
 			handlePaintResult(result, cnode) {
 				const { toInitialize, toDestroy = {}, toRemain = {}, newRefs = {}, disposedRefs = {} } = result
 
+				// 处理新节点
+				Object.values(toInitialize).forEach(newCnode => {
+					if (newCnode.didMount) {
+						sessionSideEffects.push(() => {
+							newCnode.didMount()
+						})
+					}
+				})
+
+				// 递归通知所有的 cnode 进行 willUnmount，unmount 的时候通常会回收里面创建的 computed。会通知 ref 回收
 				reverseWalkCnodes(Object.values(toDestroy), cnode => {
-					// 通知所有的 cnode 进行 willUnmount，unmount 的时候通常会回收里面创建的 computed。
 					if (cnode.willUnmount) cnode.willUnmount()
 
 					if (cnode.refs) {
@@ -260,6 +327,8 @@ export default function createAxiiController(rootElement) {
 					}
 				})
 
+				// 准备通知所有的 newRefs/disposedRefs 进行接收。
+				// CAUTION 不能放到相应的 cnode 的 effects 里面去，因为 ref 的 cnode 不一定会重新挂载之类的。
 				// 处理新的 refs
 				Object.values(newRefs).forEach(patchNode => {
 					sessionSideEffects.unshift(() => {
@@ -272,26 +341,11 @@ export default function createAxiiController(rootElement) {
 					attachRef(null, patchNode.ref)
 				})
 
-				// 处理新节点
-				Object.values(toInitialize).forEach(newCnode => {
-					if (newCnode.didMount) {
-						sessionSideEffects.push(() => {
-							newCnode.didMount()
-						})
-					}
-				})
-
-				// 准备通知所有的 newRefs/disposedRefs 进行接收。
-				// CAUTION 不能放到响应 cnode 的 effects 里面去，因为 ref 的 cnode 不一定会重新挂载之类的。
-
-				// CAUTION 这里有 virtual type 上都写了 shouldComponentUpdate，基本都会重新渲染。
-				// 默认的用户写的组件如果没有 shouldComponentUpdate, 根据 props 浅对比来决定是否更新
 				const toRepaint = filter(toRemain, (cnode) => {
-					if (cnode.type.shouldComponentUpdate) return cnode.type.shouldComponentUpdate(cnode)
-					// TODO 目前没有优化数据不变，但是函数引用变了的情况。
-					//  例如对一个数组进行遍历，里面的对象引用没变，但是在在遍历的闭包里面创建了函数，传给了组件。实际上是不需要重新渲染的。
-					//  要是能悄悄替换函数内的引用就好了。！！！
-					return !isPropsEqual(cnode.props, cnode.lastProps)
+					// 如果用户有自定义的 update 策略，那么使用用户的。如果没有，用我们的策略。
+					return cnode.type.shouldComponentUpdate ?
+						cnode.type.shouldComponentUpdate(cnode):
+						defaultShouldComponentUpdate(cnode)
 				})
 
 				// 通知 willUpdate，可能用户有些清理工作要做

@@ -7,7 +7,6 @@ import {walkRawVnodes} from "../common";
 import { getCurrentWorkingCnode } from '../renderContext'
 import { isCollectingComputed } from "../reactive/effect";
 import { replaceItem} from "../util";
-import { composeRef } from "./index";
 
 const virtualComponentCacheByCnode = new WeakMap()
 function getTypeCache(cnode, currentPath) {
@@ -50,8 +49,6 @@ export function createVirtualCnodeForComputedVnodeOrText(reactiveVnode, cnode, c
 		}
 
 		Component.isVirtual = true
-		// 标记一下，因为内部结构可能变化，这个变化是无法判断的，所以永远要 rerender。
-		Component.shouldComponentUpdate = () => true
 		Component.displayName = reactiveVnode.displayName || `VnodeComputed`
 
 		currentCache.Component = Component
