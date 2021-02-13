@@ -68,6 +68,7 @@ export {
   cachedComputations,
   observeComputation,
   getIndepTree,
+  observeTrigger,
 } from './effect'
 
 import {collectComputed, createComputed} from './effect'

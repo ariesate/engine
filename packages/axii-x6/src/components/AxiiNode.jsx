@@ -16,11 +16,12 @@ import { GraphContext } from "./Graph.jsx";
 
 // Axii node 只是负责做声明周期的管理，其他的能力全部 delegate 给里面的 axii 组件。
 // componentProps 才是真正传给里面组件用的数据
-export default function AxiiNode({shape='axii-shape', component, viewProps = {}, ...componentProps}) {
+export default function AxiiNode({id, shape='axii-shape', component, viewProps = {}, ...componentProps}) {
   const graphRef = useContext(GraphContext)
 
   useViewEffect(() => {
     const node = graphRef.value.addNode({
+      id,
       shape,
       component,
       ...viewProps,

@@ -59,6 +59,7 @@ const InlineRules = {
   // CAUTION 注意，要配合 css reset 将所有默认值设置为 0。border width 默认是 3px，会导致只设置一个方向的时候，其他也跟着以 3px 显示出来了。
   ...createWithDirection('border', (key) => createSimpleKeyToValue(`${key}-width`)),
   ...createSimpleKeyToValue('white-space'),
+  ...createSimpleKeyToValue('box-sizing'),
   ...createSimpleKeyToValue('line-height'),
   ...createSimpleKeyToValue('font-size'),
   ...createSimpleKeyToValue('overflow-x'),
@@ -67,7 +68,6 @@ const InlineRules = {
   ...createSimpleKeyToValue('right'),
   ...createSimpleKeyToValue('top'),
   ...createSimpleKeyToValue('bottom'),
-  ...createSimpleKeyToValue('white-space'),
   ...createWithRange('width'),
   ...createWithRange('height'),
 }

@@ -18,10 +18,8 @@ import { shallowEqual } from "../util";
 /**
  * nextNodes 是个数组，表示后面并行，应该是先并行，再分支。
  */
-export default function Edge({ source, target, attrs, label, ...rest }) {
+export default function Edge({ source, target, attrs, labels, onChange, ...rest }) {
   const graphRef = useContext(GraphContext)
-
-  // TODO 监听 target 的变化？
 
   useViewEffect(() => {
     const edge = graphRef.value.addEdge({
@@ -39,49 +37,49 @@ export default function Edge({ source, target, attrs, label, ...rest }) {
       },
       source,
       target,
-      label: label.value,
+      labels,
       ...rest
     })
 
 
-    const [_, watchToken] = watch(() => traverse(attrs), () => {
+    watch(() => traverse(attrs), () => {
       edge.setAttrs(toRaw(attrs), true)
     })
 
-    // watch source
-    const [__, watchSourceToken] = watch(() => traverse(source), () => {
-      const rawSource = toRaw(source)
 
+    // watch source
+    watch(() => traverse(source), () => {
+      console.log("source change", source)
+      const rawSource = toRaw(source)
       if (!shallowEqual(rawSource, edge.getSource())) {
         edge.setSource(rawSource, true)
       }
     })
 
     // watch target
-    const [___, watchTargetToken] = watch(() => traverse(target), () => {
+    watch(() => traverse(target), () => {
       const rawTarget = toRaw(target)
-      console.log("target change")
+      console.log("target change", target, edge.getTarget())
       if (!shallowEqual(rawTarget, edge.getTarget())) {
-        console.log("setTarget", rawTarget, edge.getTarget())
         edge.setTarget(rawTarget, true)
       }
     })
 
-    // watch label
-    const [____, watchLabelToken] = watch(() => label.value, () => {
-      edge.setLabels([label.value])
+    // watch target
+    watch(() => traverse(labels), () => {
+      console.log("labels change", toRaw(labels))
+      // CAUTION x6会用引用判定所以要复制
+      edge.setLabels(toRaw(labels).slice())
     })
 
+
+
+
     return () => {
+      console.log(111111111)
       graphRef.value.removeEdge(edge)
-      destroyComputed(watchToken)
-      destroyComputed(watchSourceToken)
-      destroyComputed(watchTargetToken)
-      destroyComputed(watchLabelToken)
     }
   })
-
-
 
   return null
 }

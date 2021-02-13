@@ -24,19 +24,12 @@ import Select from 'axii-components/select/Select.jsx'
  *
  */
 
-export default function ConfigEntity({entity, graph}) {
-  const addField = () => {
-    entity.fields.push({
-      name: '',
-      type: 'string'
-    })
-  }
+export default function ConfigRelation({relation, graph}) {
 
-  const options = ['string', 'number', 'boolean', 'rel']
-
+  const options = ['1:1', '1:n', 'n:1', 'n:n']
 
   const match = (value, option) => {
-    return value === option.name
+    return value === option
   }
 
   const optionToValue = option => option
@@ -46,28 +39,20 @@ export default function ConfigEntity({entity, graph}) {
   return (
     <panel block>
       <h3>名称</h3>
-      <Input value={delegateLeaf(entity).name}/>
-      <h3>Fields</h3>
-      {() => entity.fields.map(field => {
-        return (
-          <filed block block-padding-20px>
-            <Input value={delegateLeaf(field).name}/>
-            <Select
-              value={delegateLeaf(field).type}
-              options={options}
-              match={match}
-              optionToValue={optionToValue}
-              renderOption={renderOption}
-              renderValue={renderValue}
-            />
-          </filed>
-        )
-      })}
-      <a onClick={addField}>新增字段</a>
+      <Input value={delegateLeaf(relation).name}/>
+      <h3>类型</h3>
+      <Select
+        value={delegateLeaf(relation).type}
+        options={options}
+        match={match}
+        optionToValue={optionToValue}
+        renderOption={renderOption}
+        renderValue={renderValue}
+      />
     </panel>
   )
 }
 
-ConfigEntity.propTypes = {
-  node: propTypes.object.default(() => reactive({}))
+ConfigRelation.propTypes = {
+  relation: propTypes.object.default(() => reactive({}))
 }

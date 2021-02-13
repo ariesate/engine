@@ -12,6 +12,7 @@ export default function watch(computation, callback) {
       isFirstRun = false
     } else {
       computation(watchAnyMutation)
+      // TODO 是不是要考虑 queueMicroTask ？？？需要从整体再设计各种 callback 的触发时机。
       callback()
     }
   }, TYPE.TOKEN)

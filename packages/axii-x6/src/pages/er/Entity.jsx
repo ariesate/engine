@@ -8,18 +8,19 @@ import {
   ref,
   reactive,
   useRef,
+  watch,
+  traverse,
   computed,
+  delegateLeaf,
 } from 'axii'
 import Select from 'axii-components/select/Select'
-import OriginInput from 'axii-components/input/Input'
+// import OriginInput from 'axii-components/input/Input'
+import Input from 'axii-components/input/Input'
 import useElementPosition from 'axii-components/hooks/useElementPosition'
 import createMannualTrigger from 'axii-components/hooks/mannualTrigger'
 import Port from './Port'
+import { PORT_JOINT } from "./er";
 
-
-const Input = OriginInput.extend(function CaptureClick(fragments) {
-
-})
 
 /**
  * 字段的所有选项：
@@ -64,26 +65,31 @@ function RawField({ field, entityPosition, positionTrigger }) {
     const result = {}
     // 如果 fieldPosition
     if (field.type === 'rel' && fieldPosition.y && entityPosition.y) {
-      console.log("computing", entityPosition, fieldPosition, field.id)
-      result.x = "100%"
-      result.y = fieldPosition.y - entityPosition.y + (fieldPosition.height/2)
+      const y = fieldPosition.y - entityPosition.y + (fieldPosition.height/2)
+      result.right = {
+        x: "100%",
+        y
+      }
+      result.left = {
+        x: 0,
+        y
+      }
     }
+
     return result
   })
 
   // TODO 监听形状变化。任何形状变化。都会引起其他的位置变化。所以要
   useViewEffect(() => {
-    console.log(1111, portPosition.x)
-    return () => {
-
-    }
+    return () => {}
   })
 
   return (
-    <field block ref={fieldRef} block-padding-20px>
+    <field block ref={fieldRef} block-padding-10px>
       <name>{() => field.name}</name>
-      <type>{() => field.type}</type>
-      {() => portPosition.x ? <Port group="right" key={field.id} id={field.id} args={portPosition}/> : null}
+      <type inline inline-margin-left-10px>{() => `${field.type}${field.isCollection? '[]' : ''}`}</type>
+      {() => portPosition.left ? <Port group="right" key={field.id} id={[field.id, 'left'].join(PORT_JOINT)} args={portPosition.left}/> : null}
+      {() => portPosition.right ? <Port group="left" key={field.id} id={[field.id,'right'].join(PORT_JOINT)} args={portPosition.right}/> : null}
     </field>
   )
 }
@@ -102,11 +108,8 @@ RawField.Style = (fragments) => {
 const Field = createComponent(RawField)
 
 
-
-
-
 // 真正用 axii 来渲染的组件
-function Entity({ entity }) {
+function Entity({ entity, onChange }) {
 
   const { fields } = entity
 
@@ -115,6 +118,10 @@ function Entity({ entity }) {
   const {ref: entityRef} = useElementPosition(entityPosition, positionTrigger)
 
   useViewEffect(() => {
+    if (onChange) {
+      watch(() => traverse(entity), onChange)
+    }
+
     positionTrigger.trigger()
     return () => {
       positionTrigger.destroy()
@@ -123,7 +130,7 @@ function Entity({ entity }) {
 
   return (
     <entity inline inline-border-width-1px ref={entityRef}>
-      <name block>{() => entity.name}</name>
+      <name block block-padding-4px>{() => entity.name}</name>
       {() => fields.map(field=> (
         <row block>
           <Field key={field.id} field={field} entityPosition={entityPosition} positionTrigger={positionTrigger}/>
@@ -134,14 +141,20 @@ function Entity({ entity }) {
 }
 
 Entity.Style = (fragments) => {
-  fragments.root.elements.entity.style({
+  const el = fragments.root.elements
+  el.entity.style({
     background: '#fff',
     borderColor: '#333',
     borderStyle: 'solid',
     overflow: 'visible',
   })
 
-  fragments.root.elements.field.style({
+  el.name.style({
+    background: '#0060a0',
+    color: '#fff',
+  })
+
+  el.field.style({
     borderColor: '#333',
     whiteSpace: 'nowrap',
     overflow: 'visible'

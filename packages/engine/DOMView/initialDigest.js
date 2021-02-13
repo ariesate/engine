@@ -34,7 +34,7 @@ function prepareCnodeForView(cnode, vnode, parentNode, viewUtil) {
     endPlaceholder,
     // 这是用来获取 cnode 自己的第一层 elements。
     getRootElements() {
-      return resolveFirstLayerElements(cnode.patch, [], cnode)
+      return resolveFirstLayerElements(cnode.patch, cnode)
     },
   }
 }

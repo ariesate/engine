@@ -44,11 +44,13 @@ export function Input({value, onChange, children}, fragments) {
   return (
     <container block flex-display-inline block-border-width-1px flex-align-items-stretch>
       {prefixVnode}
-      <middle inline flex-display-inline flex-align-items-stretch>
+      <middle inline flex-display-inline flex-align-items-stretch inline-max-width="100%">
         {beforeVnode}
         <input
           inline
           inline-border-width-0
+					inline-max-width="100%"
+					inline-box-sizing="border-box"
           inline-font-size={scen().fontSize()}
           inline-padding={`${scen().spacing(-1)}px ${scen().spacing()}px `}
           value={value}

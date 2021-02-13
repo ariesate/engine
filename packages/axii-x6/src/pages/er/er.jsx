@@ -1,15 +1,30 @@
 /** @jsx createElement */
-import { createElement, render, reactive, ref, refComputed, useViewEffect, useRef, toRaw } from 'axii'
+import {
+  createElement,
+  render,
+  reactive,
+  ref,
+  observeTrigger,
+  useViewEffect,
+  useImperativeHandle,
+  useRef,
+  toRaw,
+  computed,
+} from 'axii'
 import copyTextToClipboard from 'copy-text-to-clipboard'
 import '../../reset.less'
 import '../../global.css'
 import { GraphContext } from '../../components/Graph'
+import Relation from './Relation'
 import styles from './index.module.less'
-import rawData from './data'
-import { createUniqueIdGenerator } from '../../util'
+import {createUniqueIdGenerator, nextTick} from '../../util'
 import AxiiNode from "../../components/AxiiNode";
 import createERGraph from './createERGraph'
 import ConfigPanel from './components/ConfigPanel'
+import ToolBar from './components/ToolBar'
+import message from 'axii-components/message/message'
+import {debounceComputed} from "../../../../controller-axii/src/reactive";
+import Split from "axii-components/split/Split";
 
 const createId = createUniqueIdGenerator()
 
@@ -21,51 +36,149 @@ function getContainerSize() {
   }
 }
 
-export default function EREditor() {
-  const entities = reactive(rawData)
-  const containerRef = useRef()
-  const stencilRef = useRef()
-  const graphRef = ref()
-  const selectedEntityRef = ref()
+export const PORT_JOINT = '|'
 
-  const copy = () => {
-    // const { graph } = FlowGraph
-    // copyTextToClipboard(`const data = ${JSON.stringify(graph.toJSON(), null, 4)}; export default data;`)
-    // alert("成功")
+export default function EREditor({ data: rawData, onChange }, editorRef) {
+  const { entities, relations } = reactive(rawData)
+  const containerRef = useRef()
+  const graphRef = ref()
+  const selectedItemRef = ref()
+  const selectedTypeRef = ref('')
+
+  useImperativeHandle(editorRef, () => ({
+    getData() {
+      return {
+        entities: toRaw(entities),
+        relations: toRaw(relations)
+      }
+    }
+  }))
+
+  const commands = {
+    copy: () => {
+      copyTextToClipboard(`
+const data = ${JSON.stringify({ entities: toRaw(entities), relations: toRaw(relations) }, null, 4)}; 
+export default data;
+`
+      )
+      message.success("成功")
+    }
   }
 
   // TODO 因为 node click 的事件不是由我们的组件自己决定发出的，所以没发写在自己组件里面，并传相应的值，只能写在这里。
-  const onNodeClick = ({node, e}) => {
-    if (node.getAxiiProps) {
-      selectedEntityRef.value = node.getAxiiProps().entity
+  const onCellClick = ({cell, e}) => {
+    if (cell.isNode()) {
+      if (cell.getAxiiProps) {
+        selectedItemRef.value = entities.find(e => e.id === cell.id)
+        selectedTypeRef.value = 'entity'
+      }
+    } else if (cell.isEdge()) {
+      selectedItemRef.value = relations.find(e => e.id === cell.id)
+      selectedTypeRef.value = 'relation'
     }
   }
-  const onGraphClick = () => selectedEntityRef.value = null
-  const onEdgeConnect = ({ edge }) => {
-    // 找到 source /target
-    const source = edge.getSource()
-    const target = edge.getTarget()
 
-    const node = entities.find(n => n.id = source.cell)
-    const parallel = node.nextParallelBranches.find(parallel => parallel.id === source.port)
-
-    const branch = parallel.conditionBranches.find(b => b.id === edge.id)
-    branch.target = { id: target.cell }
-    // console.log(JSON.stringify(toRaw(entities)), '\n', 4)
+  const onNodeMoved = ({ x, y, node}) => {
+    const entity = entities.find(e => e.id === node.id)
+    console.log(x, y)
+    entity.view = {
+      x, y
+    }
   }
 
-  const onAddNode = (position) => {
+  const onGraphClick = () => {
+    debounceComputed(()=>{
+      selectedItemRef.value = null
+      selectedTypeRef.value = 'graph'
+    })
+  }
+
+  const onEdgeConnect = ({ edge }) => {
+    console.log("connected", edge.getTarget(), edge.getSource())
+  }
+
+  const onEdgeDelete = ({ edge }) => {
+    onGraphClick()
+    const index = relations.findIndex(r => r.id === edge.id)
+    if (index > -1) {
+      relations.splice(index, 1)
+    }
+  }
+
+  const onAddNode = ({ x, y }) => {
     entities.push({
       id: createId(),
-      name: '事件节点',
-      position,
-      nextParallelBranches: []
+      name: 'newEntity',
+      view: {
+        position: { x, y },
+      },
+      fields: []
     })
     return false
   }
 
+  const validateEdge = ({ edge, type, previous }) => {
+    // CAUTION 我们希望一切都由我们数据驱动来控制，所以一直 return false。
+    //  但 x6 的 validate return false 实际上是执行了 undo，无法真正的去阻止默认行为。
+    //  所以我们只能在 nextTick 里修正，但这样界面会闪动一下。
+    const source = edge.getSource()
+    const target = edge.getTarget()
+    console.log("validateEdge", source, target, type, previous)
+    if (previous.cell) {
+      // 说明是修改 target/source
+      console.log(`change ${type}`, source, target, type, previous)
+      // TODO 要修改数据。但是不需要重绘。
+      const relation = relations.find(r => r.id === edge.id)
+      nextTick(() => {
+        debounceComputed(() => {
+          const [sourceField, sourcePortSide] = source.port.split(PORT_JOINT)
+          const [targetField, targetPortSide] = target.port.split(PORT_JOINT)
+          relation.source = {
+            entity: source.cell,
+            field: sourceField
+          }
+          relation.target = {
+            entity: target.cell,
+            field: targetField
+          }
+          relation.view = {
+            sourcePortSide,
+            targetPortSide
+          }
+        })
+      })
+
+    } else {
+      console.log(`new ${type}`, edge.id, source, target)
+      // 说明是新增，不允许，改为手动新增。
+      const [sourceFieldId, sourcePortSide] = source.port.split(PORT_JOINT)
+      const [targetFieldId, targetPortSide] = source.port.split(PORT_JOINT)
+      nextTick(() => {
+        relations.push({
+          id: edge.id,
+          name: '',
+          type: '1:1',
+          source: {
+            entity: source.cell,
+            field: sourceFieldId
+          },
+          target: {
+            entity: target.cell,
+            field: targetFieldId
+          },
+          view: {
+            sourcePortSide,
+            targetPortSide
+          }
+        })
+      })
+    }
+    // 阻止默认行为
+    return false
+  }
+
   useViewEffect(() => {
-    const graph = createERGraph(containerRef.current, stencilRef.current, onAddNode)
+    const graph = createERGraph(containerRef.current, { validateEdge })
     graph.createId = createId
 
 
@@ -74,7 +187,6 @@ export default function EREditor() {
       // const { width, height } = getContainerSize()
       // graph.resize(width, height)
       graph.resize(containerRef.current.clientWidth, containerRef.current.clientHeight)
-
     }
     resizeFn()
     window.addEventListener('resize', resizeFn)
@@ -82,14 +194,18 @@ export default function EREditor() {
     graph.on('blank:click', onGraphClick)
     graph.on('blank:dblclick', onAddNode)
     graph.on('edge:connected', onEdgeConnect)
-    graph.on('node:click', onNodeClick)
+    graph.on('edge:removed', onEdgeDelete)
+    graph.on('cell:click', onCellClick)
+    graph.on('node:moved', onNodeMoved)
 
     return () => {
       window.removeEventListener('resize', resizeFn)
       graph.off('blank:click', onGraphClick)
       graph.off('blank:dblclick', onGraphClick)
       graph.off('edge:connected', onEdgeConnect)
-      graph.off('node:click', onNodeClick)
+      graph.off('edge:removed', onEdgeDelete)
+      graph.off('cell:click', onCellClick)
+      graph.off('node:moved', onNodeMoved)
     }
   })
 
@@ -98,18 +214,23 @@ export default function EREditor() {
       <div className={styles.header}>
         <span>ER 图</span>
       </div>
-      <div className={styles.content}>
+      <Split>
         <div className={styles.panel}>
-          <div className={styles.toolbar}></div>
+          <div className={styles.toolbar}>
+            <ToolBar commands={commands}/>
+          </div>
           <div id="container" className="x6-graph" ref={containerRef}/>
         </div>
         <div className={styles.config}>
-          {() => graphRef.value? <ConfigPanel graph={graphRef.value} entity={selectedEntityRef}/> : null}
+          {() => graphRef.value? <ConfigPanel graph={graphRef.value} item={selectedItemRef.value} type={selectedTypeRef}/> : null}
         </div>
-      </div>
+      </Split>
       <GraphContext.Provider value={graphRef}>
-        {() => graphRef.value ? entities.map(entity => <AxiiNode key={entity.id} shape='entity-shape' component="Entity" viewProps={entity.view} entity={entity}/>): null}
+        {() => graphRef.value ? entities.map(entity => <AxiiNode id={entity.id} key={entity.id} shape='entity-shape' component="Entity" viewProps={entity.view} entity={entity} onChange={onChange}/>): null}
+        {() => graphRef.value ? relations.map(relation => <Relation key={relation.id} relation={relation} onChange={onChange} />) : null}
       </GraphContext.Provider>
     </div>
   )
 }
+
+EREditor.forwardRef = true

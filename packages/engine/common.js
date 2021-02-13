@@ -72,7 +72,7 @@ export function getVnodeNextIndex(vnode, parentPath) {
   return vnode.transferKey === undefined ? vnodePathToString(createVnodePath(vnode, parentPath)) : vnode.transferKey
 }
 
-export function resolveFirstLayerElements(vnodes, parentPath, cnode) {
+export function resolveFirstLayerElements(vnodes, cnode) {
   return vnodes.reduce((result, vnode) => {
     if (vnode.type === null) {
       return result
@@ -80,14 +80,13 @@ export function resolveFirstLayerElements(vnodes, parentPath, cnode) {
       return [vnode.element]
     } else if (vnode.type === Array || vnode.type === Fragment) {
       return vnode.children.reduce((elements, child) => {
-        return elements.concat(resolveFirstLayerElements([child], createVnodePath(vnode, parentPath), cnode))
+        return elements.concat(resolveFirstLayerElements([child], cnode))
       }, [])
     } else {
       // CAUTION 剩余的类型，全部认为是组件
-      const nextPath = getVnodeNextIndex(vnode, parentPath)
-      const nextCnode = cnode.next[nextPath]
-      if (!nextCnode) throw new Error(`unknown vnode with path ${nextPath}`)
-      return resolveFirstLayerElements(nextCnode.patch, [], nextCnode)
+      const nextCnode = cnode.next[vnode.id]
+      if (!nextCnode) throw new Error(`unknown vnode with path ${vnode.id}`)
+      return resolveFirstLayerElements(nextCnode.patch, nextCnode)
     }
     return result
   }, [])

@@ -367,11 +367,11 @@ export function afterDigestion(callback) {
 
 // 用来注册 computation 的 observer，通常是 devtools 用。
 // observer 是个对象，可以设置 start/compute/end 三个回调，分别对应 digestion 执行前，中，后。
-const computationObservers = []
+const computationObservers = new Set()
 export function observeComputation(observer) {
-  computationObservers.push(observer)
+  computationObservers.add(observer)
   return () => {
-    computationObservers.splice(computationObservers.indexOf(observer), 1)
+    computationObservers.delete(observer)
   }
 }
 
@@ -513,11 +513,22 @@ function shouldSkipComputation(computation) {
   return scopeIdToSkip && (computation.scopeId === scopeIdToSkip)
 }
 
+/**
+ * 用来检测任何 trigger 的，通常是 devtools 或者第三方使用
+ */
+const triggerObservers = new Set()
+export function observeTrigger(observer) {
+  triggerObservers.add(observer)
+  return () => {
+    triggerObservers.delete(observer)
+  }
+}
+
 export function trigger(source, type, key, extraInfo) {
   // 当 type === type === TriggerOpTypes.SET 时，extraInfo 是个 bool， 用来表示数据是不是没变化。
   // 执行了赋值操作，但数据没变，外部可以要求仍然触发 trigger。
   // derive 中需要追踪某个数据改变后，所有可能影响的数据，用于保持一致性。所以用 trigger，外部继续监听的方式来找到所有可能影响的。
-  if (type === TriggerOpTypes.SET && extraInfo ) {
+  if (type === TriggerOpTypes.SET && extraInfo === true) {
     if (scopeIdToSpreadUnchanged) triggerUnchangedInScope(source, scopeIdToSpreadUnchanged)
     return
   }
@@ -559,6 +570,11 @@ export function trigger(source, type, key, extraInfo) {
 
   if (computationsToRun.size) {
     scheduleToRun(Array.from(computationsToRun), source)
+  }
+
+  // CAUTION 如果需要 debounce，外部自己去做
+  if (triggerObservers.size) {
+    triggerObservers.forEach(callback => callback())
   }
 }
 

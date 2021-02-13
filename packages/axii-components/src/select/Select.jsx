@@ -63,9 +63,10 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
     })
 
   return (
-    <>
+    <container block flex-display-inline>
       <selectInput
-        inline
+        layout:inline
+        layout:inline-max-width="100%"
         use={Input}
         ref={source}
         onFocus={onInputFocus}
@@ -75,7 +76,7 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
       >
       </selectInput>
       {optionListNode}
-    </>
+    </container>
   )
 }
 

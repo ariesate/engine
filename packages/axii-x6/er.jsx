@@ -3,7 +3,54 @@
  * 理论上用 playground.jsx 会更好。
  */
 /** @jsx createElement */
-import { createElement, render, reactive, ref, refComputed } from 'axii'
+import { createElement, render, reactive, ref, refComputed, useRef } from 'axii'
+import { debounce } from 'lodash-es'
 import Editor from './src/pages/er/er'
+import localRawData from './src/pages/er/data'
 
-render(<Editor />, document.getElementById('root'))
+
+/**
+ *
+ * 页面和 vs code 的通信
+ */
+
+function ab2str(buf) {
+  return String.fromCharCode.apply(null, new Uint16Array(buf));
+}
+
+const isLocal = window.acquireVsCodeApi === undefined
+const editorRef = useRef()
+const root = document.getElementById('root')
+
+
+if (isLocal) {
+  render(<Editor data={localRawData} ref={editorRef} />, root)
+} else {
+  const vscode = isLocal ? window: window.acquireVsCodeApi()
+  const onDataChange = debounce(() => {
+    vscode.postMessage({type: 'change'})
+  }, 100)
+
+  window.addEventListener('message', async e => {
+    const { type, body, requestId } = e.data;
+    switch (type) {
+      case 'init': {
+        console.log("init",body.value)
+        const rawData = JSON.parse(body.value)
+        render(<Editor data={rawData} ref={editorRef} onChange={onDataChange}/>, root)
+        return;
+      }
+      case 'getFileData': {
+        // Get the image data for the canvas and post it back to the extension.
+        vscode.postMessage({ type: 'response', requestId, body: JSON.stringify(editorRef.current.getData())});
+        console.log("getFileData")
+        return;
+      }
+    }
+  });
+
+  vscode.postMessage({ type: 'ready' });
+}
+
+
+

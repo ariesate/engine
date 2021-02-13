@@ -3,7 +3,7 @@ import '../../shape'
 import Entity from './Entity'
 
 ///////////////////
-export default function createFlowGraph(container, stencilContainer, onAddNode ) {
+export default function createFlowGraph(container,  connectingValidate = {}) {
   const graph = new Graph({
     container,
     width: 1000,
@@ -39,6 +39,7 @@ export default function createFlowGraph(container, stencilContainer, onAddNode )
       anchor: 'center',
       connector: 'rounded',
       connectionPoint: 'boundary',
+      ...connectingValidate,
       createEdge() {
         return new Shape.Edge({
           attrs: {
@@ -55,27 +56,7 @@ export default function createFlowGraph(container, stencilContainer, onAddNode )
             name: 'manhattan',
           },
         })
-      },
-      validateConnection({
-                           sourceView,
-                           targetView,
-                           sourceMagnet,
-                           targetMagnet,
-                         }) {
-        // 不允许自己连自己
-        if (sourceView === targetView) {
-          return false
-        }
-        // 不允许没有出口的
-        if (!sourceMagnet) {
-          return false
-        }
-        // 没有连上的
-        if (!targetMagnet) {
-          return false
-        }
-        return true
-      },
+      }
     },
     highlighting: {
       magnetAvailable: {

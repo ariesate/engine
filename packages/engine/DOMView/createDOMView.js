@@ -44,7 +44,7 @@ export default function createDOMView(
 		// CAUTION 关于劫持的约定：可以劫持第一参数，这决定这最终创建什么样的真实 dom。但不要动最后一个参数 patchNode。
 		// 这是真正在内存中表示当前节点的对象。入了引擎，谁都不应该修改。
 		// 另外劫持做的事情应该只能翻译一些框架特定的 attr，但不应该修改行为，例如 ref，因此我们的 ref 都是根据原始的 patchNode 来记录的。
-		createElement: (vnodeToCreateElement, cnode, patchNode) => {
+		createElement: (vnodeToCreateElement, cnode) => {
 			return createElement(vnodeToCreateElement, invoke)
 		},
 		// 这里参数尽量和 createElement 保持一致，这样外界可以用同一个 interceptor 来处理
@@ -52,6 +52,7 @@ export default function createDOMView(
 			const patchNode = cnode.view.patchNodesQuickRefById[vnode.id]
 			invariant(patchNode, `can not find patchNode from vnode ${vnode.id}`)
 			updateElement(vnode, patchNode.element, invoke)
+			return patchNode.element
 		},
 		createFragment() {
 			return document.createDocumentFragment()

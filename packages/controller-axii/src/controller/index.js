@@ -187,12 +187,26 @@ function attachRef(element, ref) {
  ***************************************/
 
 
+function processLayoutAttributes(cnode, result) {
+	if (!cnode.type.isVirtual) {
+		// 2. 普通组件
+		const [layoutProps, originLayoutProps] =layoutManager.processLayoutProps(cnode.props)
+
+		// 把 cnode 上面的 layout props 穿透到渲染出来后的第一层上。如果第一层还是组件，那么还要穿透。
+		if (layoutProps) {
+			if(isComponentVnode(result)) {
+				result.attributes = Object.assign({}, result.attributes, originLayoutProps)
+			} else {
+				result.attributes = Object.assign({}, result.attributes, layoutProps)
+			}
+		}
+	}
+}
+
 
 export default function createAxiiController(rootElement) {
 	let scheduler = null
 	let ctree = null
-
-
 
 	// 这里有个优化，由于我们的数据变化不一定来自于用户行为，也可能是 setInterval 之类的。可能出现多个数据变化，
 	// 但是影响的 cnode 相同，我们当然不希望 cnode 重复更新，最好在数据都变化玩之后，才开始更新 cnode。
@@ -246,21 +260,7 @@ export default function createAxiiController(rootElement) {
 		let result
 		result = cnode.render()
 
-		if (!cnode.type.isVirtual) {
-			// 2. 普通组件
-			const [layoutProps, originLayoutProps] =layoutManager.processLayoutProps(cnode.props)
-
-			// 把 cnode 上面的 layout props 穿透到渲染出来后的第一层上。如果第一层还是组件，那么还要穿透。
-			if (layoutProps) {
-				if(isComponentVnode(result)) {
-					result.attributes = Object.assign({}, result.attributes, originLayoutProps)
-				} else {
-					result.attributes = Object.assign({}, result.attributes, layoutProps)
-				}
-			}
-
-		}
-
+		processLayoutAttributes(cnode, result)
 		/**
 		 * 不管是哪一种，最后都要继续替换。如果有 vnodeComputed 嵌套的情况，每次处理的时候只替换一层。
 		 * 下一层的处理等到当前这层变成了 virtualCnode，render 之后又回到这里继续处理。
@@ -293,7 +293,9 @@ export default function createAxiiController(rootElement) {
 					 * 1. virtualCnode。也可以理解成 cnode 中使用 reactive 的片段更新。
 					 * 2. cnode props 的引用发生了变化。
 					 */
-					return cnode.render()
+					const result = cnode.render()
+					processLayoutAttributes(cnode, result)
+					return result
 				},
 			},
 			diffNodeDetail,
@@ -396,6 +398,7 @@ export default function createAxiiController(rootElement) {
 							// 2. 始终保持和 reactive value 一致。
 							if (bindingValue !== undefined) {
 								// 即可以绑定 ref 也可以绑定一个固定的值。
+								console.log("reset biding", bindingValue)
 								e.target.value = isRef(bindingValue) ? bindingValue.value : bindingValue
 							}
 						}
@@ -411,20 +414,28 @@ export default function createAxiiController(rootElement) {
 				return [shallowCloneElement(vnodeOrPatch), ...rest]
 			}
 			const composedCreateElement = composeInterceptors(createShallowNode, [translateRefAttributes, attachLayoutStyle, attachScopeId], createElement)
+			const composedUpdateElement = composeInterceptors(createShallowNode, [translateRefAttributes, attachLayoutStyle], updateElement)
 			return {
 				// vnode 是用户 render return 出来的, patchNode 是根据 vnode clone 出来的, patchNode 上面会有真正的 element 引用。
 				// 我们不能直接把 vnode 和 patchNode 做引用关系，因为 patchNode 在 engine 可能会为了防止误操作多次 clone 断开原来引用。只能有 engine 提供的机制去找对应的 patchNode
-				createElement: (vnode, cnode, patchNode) => {
-					const element = composedCreateElement(vnode, cnode, patchNode)
+				createElement: (vnode, cnode) => {
+					const element = composedCreateElement(vnode, cnode)
 					// 因为 html form 本身是 uncontrolled，要实现元素的 value 和上面 value 绑定的 reactive 数据一致。
-					// 就必须在每次事件修改后判断一下，强行和 value 一致
+					// 就必须在每次事件修改后判断一下，强行和 value 一致。
+					// 这里先在创建的时候先把 element 和上面绑定的 value 记录一下，之后在事件处取出来重新同步。
 					if (isFormElement(element) && 'value' in vnode.attributes) {
 						formElementToBindingValue.set(element, vnode.attributes.value)
 					}
 
 					return element
 				},
-				updateElement: composeInterceptors(createShallowNode, [translateRefAttributes, attachLayoutStyle], updateElement),
+				updateElement: (vnode, cnode) => {
+					// update 的时候可能会更新 form element 的引用。
+					const updatedElement = composedUpdateElement(vnode, cnode)
+					if (isFormElement(updatedElement) && 'value' in vnode.attributes) {
+						formElementToBindingValue.set(updatedElement, vnode.attributes.value)
+					}
+				},
 				...rest
 			}
 		},

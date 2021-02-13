@@ -69,7 +69,8 @@ const availablePlayground = {
     'icon', // x
   ],
   Layout: [
-    'grid' // 7  row/col 实现
+    'grid', // 7  row/col 实现
+    'split'
   ],
   Utilities: [
     'useForm', // x

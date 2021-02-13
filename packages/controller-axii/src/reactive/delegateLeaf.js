@@ -29,6 +29,10 @@ export default function delegateLeaf(parent) {
           _id: Math.random(),
           _isRef: true,
           _isLeafRef: true,
+          // 伪造 ref，需要提供这个 raw 来创造 draft，不要通过 value，因为读 value 在 ref 中是会被 track 的。
+          get raw() {
+            return parent[key]
+          },
           get value() {
             return parent[key]
           },

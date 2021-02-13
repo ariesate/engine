@@ -10,13 +10,13 @@ function withCamelCase(last, current) {
 	)
 }
 
-export const IS_ATTR_NUMBER = new RegExp([
+export const IS_ATTR_NUMBER = new RegExp(`^(${[
 	'flex',
 	'flex-grow',
 	'flex-shrink',
 	'line-height',
 	'z-index'
-	].reduce(withCamelCase, []).join('|'), 'i')
+	].reduce(withCamelCase, []).join('|')})$`, 'i')
 
 export const PATCH_ACTION_REMAIN = 'patch.remain'
 export const PATCH_ACTION_REMOVE = 'patch.remove'

@@ -23,7 +23,7 @@ export default function Icon({ type, size=14, unit='px', color='#000', theme='ou
       ...iconDef.icon.attrs,
       width: `${size}${unit}`,
       height: `${size}${unit}`,
-      fill: color
+      fill: color,
     }
   })
 

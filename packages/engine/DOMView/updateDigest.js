@@ -47,7 +47,8 @@ function handleRemovePatchNode(p, toDestroy, view) {
   if (view.isComponentVnode(p)) {
     // 如果是组件删除 利用 placeHolder 一次性删干净了
     // remove placeholder
-    const toDestroyCnode = toDestroy.next[p.id]
+    // 删除的组件信息崔仔
+    const toDestroyCnode = toDestroy.toDestroyPatch[p.id]
 
     const parentNode = toDestroyCnode.view.startPlaceholder.parentNode
     let toDelete = toDestroyCnode.view.startPlaceholder
@@ -129,7 +130,7 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, cnod
       p.action.type = PATCH_ACTION_REMAIN
       handleInitialVnode(p, cnode, view, nextPatch,  toInsert, nextPatch.length)
     } else if (p.action.type === PATCH_ACTION_REMOVE) {
-      handleRemovePatchNode(p, { next: cnode.toDestroyPatch }, view)
+      handleRemovePatchNode(p, cnode, view)
     } else if (p.action.type === PATCH_ACTION_REMAIN) {
       // CAUTION 注意 p.patch 可以是 undefined，表示没有任何变化
       // 一旦碰到 remain 的节点，就先把要 insert 的全部插入进去。为什么有个 currentLastStableSiblingNode 判断？？？
