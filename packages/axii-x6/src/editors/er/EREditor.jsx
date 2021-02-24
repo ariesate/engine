@@ -23,8 +23,9 @@ import createERGraph from './createERGraph'
 import ConfigPanel from './components/ConfigPanel'
 import ToolBar from './components/ToolBar'
 import message from 'axii-components/message/message'
-import {debounceComputed} from "../../../../controller-axii/src/reactive";
+import { debounceComputed } from "axii";
 import Split from "axii-components/split/Split";
+import "axii-components/style/global.less";
 
 const createId = createUniqueIdGenerator()
 
@@ -45,14 +46,16 @@ export default function EREditor({ data: rawData, onChange }, editorRef) {
   const selectedItemRef = ref()
   const selectedTypeRef = ref('')
 
-  useImperativeHandle(editorRef, () => ({
-    getData() {
-      return {
-        entities: toRaw(entities),
-        relations: toRaw(relations)
+  if (editorRef) {
+    useImperativeHandle(editorRef, () => ({
+      getData() {
+        return {
+          entities: toRaw(entities),
+          relations: toRaw(relations)
+        }
       }
-    }
-  }))
+    }))
+  }
 
   const commands = {
     copy: () => {
@@ -211,9 +214,6 @@ export default data;
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.header}>
-        <span>ER 图</span>
-      </div>
       <Split>
         <div className={styles.panel}>
           <div className={styles.toolbar}>

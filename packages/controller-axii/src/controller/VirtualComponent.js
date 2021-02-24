@@ -7,6 +7,7 @@ import {walkRawVnodes} from "../common";
 import { getCurrentWorkingCnode } from '../renderContext'
 import { isCollectingComputed } from "../reactive/effect";
 import { replaceItem} from "../util";
+import vnodeComputed from "../vnodeComputed";
 
 const virtualComponentCacheByCnode = new WeakMap()
 function getTypeCache(cnode, currentPath) {
@@ -41,7 +42,7 @@ function getTypeCache(cnode, currentPath) {
 export function createVirtualCnodeForComputedVnodeOrText(reactiveVnode, cnode, currentPath) {
 	// CAUTION 拿到 originVnode 的时候如果是 function，一定要立即包装成 vnodeComputed 得到结果，这样作为 children 传给子组件之后才能被子组件理解使用。
 	const currentCache = getTypeCache(cnode, currentPath)
-	currentCache.vnode = reactiveVnode
+	currentCache.vnode = (typeof reactiveVnode === 'function') ? vnodeComputed(reactiveVnode) : reactiveVnode
 	let { Component } = currentCache
 	if (!Component) {
 		Component = function VirtualComponent() {
@@ -107,9 +108,9 @@ export function replaceVnodeComputedAndWatchReactive(renderResult, collectChange
 		if (hasRefAttributes(vnode) || isReactiveLike(vnode.attributes?.style)) {
 			watchReactiveAttributesVnode(vnode, currentPath, collectChangePatchNode, cnode)
 			return [false]
-		} else if (isRef(vnode)) {
+		} else if (isRef(vnode) || (typeof vnode === 'function') ) {
 			// CAUTION 严格模式也是 ref/vnodeComputed 才替换成真的 VirtualComponent。否则是 refLike。直接取 value 就可以了。
-			const replaceVnode = isRef(vnode, true) ?
+			const replaceVnode = (isRef(vnode, true) || (typeof vnode === 'function')) ?
 				createVirtualCnodeForComputedVnodeOrText(vnode, cnode, currentPath) :
 				normalizeLeaf(vnode.value)
 			return [true, replaceVnode]

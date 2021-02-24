@@ -26,11 +26,16 @@ import Checkbox from 'axii-components/checkbox/Checkbox.jsx'
  * 好像可以通过伪造一个 ref, 利用 ref 来刷新，利用 onChange 同步回视图就行了，
  * 但这样数据就不是"单项"的了，出现异常的时候怎么"处理"？？
  *
+ * TODO
+ *  1. defaultValue
+ *  2. allowNull
+ *  3. string|number size
  */
 
 function ConfigEntity({entity, graph}) {
   const addField = () => {
     entity.fields.push({
+      id: graph.createId(),
       name: '',
       type: 'string'
     })
@@ -89,6 +94,16 @@ function ConfigEntity({entity, graph}) {
           )
         })}
         <Button onClick={addField}>新增字段</Button>
+      </panelBlock>
+      <panelBlock block block-margin-bottom-30px>
+        <title block block-margin-10px block-margin-left-0>通用</title>
+        <Checkbox
+          layout:inline-width-100px
+          layout:inline-margin-right-10px
+          value={delegateLeaf(entity).belongToUser}
+        >
+          属于用户
+        </Checkbox>
       </panelBlock>
     </panel>
   )

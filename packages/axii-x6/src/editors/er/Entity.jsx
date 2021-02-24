@@ -19,7 +19,7 @@ import Input from 'axii-components/input/Input'
 import useElementPosition from 'axii-components/hooks/useElementPosition'
 import createMannualTrigger from 'axii-components/hooks/mannualTrigger'
 import Port from './Port'
-import { PORT_JOINT } from "./er";
+import { PORT_JOINT } from "./EREditor";
 
 
 /**
@@ -66,14 +66,17 @@ function RawField({ field, entityPosition, positionTrigger }) {
     // 如果 fieldPosition
     if (field.type === 'rel' && fieldPosition.y && entityPosition.y) {
       const y = fieldPosition.y - entityPosition.y + (fieldPosition.height/2)
+
       result.right = {
         x: "100%",
         y
       }
+
       result.left = {
         x: 0,
         y
       }
+
     }
 
     return result

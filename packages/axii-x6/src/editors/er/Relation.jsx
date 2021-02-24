@@ -15,7 +15,7 @@ import {
 } from 'axii'
 
 import Edge from "../../components/Edge";
-import {PORT_JOINT} from "./er";
+import {PORT_JOINT} from "./EREditor";
 
 export default function Relation({ relation, onChange }) {
   useViewEffect(() => {

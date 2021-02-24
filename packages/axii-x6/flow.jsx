@@ -4,6 +4,6 @@
  */
 /** @jsx createElement */
 import { createElement, render, reactive, ref, refComputed } from 'axii'
-import Editor from './src/pages/flow/flow'
+import Editor from './src/editors/flow/flow'
 
 render(<Editor />, document.getElementById('root'))

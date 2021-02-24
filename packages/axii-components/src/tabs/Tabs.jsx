@@ -8,7 +8,8 @@ import {
   createComponent,
   refComputed,
   ref,
-  createRef
+  createRef,
+  flattenChildren
 } from 'axii'
 import Icon from '../icon/Icon'
 import scen from '../pattern'
@@ -18,11 +19,13 @@ import scen from '../pattern'
  * tab 左右移动的代码怎么写，需要判断渲染后的宽度
  */
 function Tabs({ children, activeKey, onChangeActiveKey }, fragments) {
+  const flattenedChildren = flattenChildren(children)
+
   const visibleKey = refComputed(() => {
-    if (activeKey.value && children.some((child) => child.props.tabKey === activeKey.value)) {
+    if (activeKey.value && flattenedChildren.some((child) => child.props.tabKey === activeKey.value)) {
       return activeKey.value
     } else {
-      return children[0].props.tabKey
+      return flattenedChildren[0]?.props.tabKey
     }
   })
 
@@ -54,7 +57,7 @@ function Tabs({ children, activeKey, onChangeActiveKey }, fragments) {
         </tabHeaderScrollLeft>
         <tabHeaders block block-white-space-nowrap block-overflow-x-hidden flex-grow-1 ref={headerRef}>
           {fragments.tabHeaders({visibleKey})(() => {
-            return children.map(child =>
+            return flattenedChildren.map(child =>
               fragments.tabHeader({ tabKey: child.props.tabKey})(() =>
                 <tabHeader inline inline-padding={scen().spacing()} onClick={() => onChangeActiveKey(child.props.tabKey) }>{child.props.title}</tabHeader>
               )
@@ -67,7 +70,7 @@ function Tabs({ children, activeKey, onChangeActiveKey }, fragments) {
       </tabHeadersContainer>
       <tabContents block>
         {fragments.tabContents()(() => {
-          return children.map(child => {
+          return flattenedChildren.map(child => {
             const hidden = refComputed(() => child.props.tabKey !== visibleKey.value)
             return <tabContent block block-visible-none={hidden}>{child.children}</tabContent>
           })

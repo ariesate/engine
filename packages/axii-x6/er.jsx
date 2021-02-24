@@ -5,8 +5,8 @@
 /** @jsx createElement */
 import { createElement, render, reactive, ref, refComputed, useRef } from 'axii'
 import { debounce } from 'lodash-es'
-import Editor from './src/pages/er/er'
-import localRawData from './src/pages/er/data'
+import Editor from './src/editors/er/EREditor'
+import localRawData from './src/editors/er/data'
 
 
 /**
@@ -42,7 +42,7 @@ if (isLocal) {
       }
       case 'getFileData': {
         // Get the image data for the canvas and post it back to the extension.
-        vscode.postMessage({ type: 'response', requestId, body: JSON.stringify(editorRef.current.getData())});
+        vscode.postMessage({ type: 'response', requestId, body: JSON.stringify(editorRef.current.getData(), null, 2)});
         console.log("getFileData")
         return;
       }

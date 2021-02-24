@@ -2,8 +2,8 @@ import VNode from '@ariesate/are/VNode'
 import vnodeComputed from "./vnodeComputed"
 import { createCreateElement, defaultNormalizeLeaf } from '@ariesate/are/createElement'
 
-
-let shouldReplaceFunction = true
+// TODO deprecate
+let shouldReplaceFunction = false
 
 const methods = createCreateElement((rawChild) => {
 	const vnode = defaultNormalizeLeaf(rawChild)

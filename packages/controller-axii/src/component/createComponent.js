@@ -1,6 +1,6 @@
 import { invariant, mapValues } from '../util'
 import { isRef, refComputed } from '../reactive'
-import vnodeComputed, {isVnodeComputed, lazyComputed} from '../vnodeComputed'
+import vnodeComputed, {isVnodeComputed} from '../vnodeComputed'
 import { stopReplaceFunction } from "../createElement";
 import {
   createDefaultMatch,
@@ -185,7 +185,7 @@ export default function createComponent(Base, featureDefs=[]) {
 	// 7. TODO 穿透处理 layout props 的问题。应该任何一个节点协商 acceptLayout 就都能变成 inline/block。这里又有 inline-flex 和 flex 的问题。
 
   // 8. 允许通过 extend 快速增加 feature
-  Component.extend = (features) => createComponent(Base, featureDefs.concat(features))
+  Component.extend = (...features) => createComponent(Base, featureDefs.concat(features))
   return Component
 }
 
@@ -216,12 +216,17 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
   function renderProcess() {
     // CAUTION 从这里开始不要自动处理 函数节点，因为我们需要包装一下，以确保每次重新调用都会 invoke 相应的 feature。
     // 因为 fragments 节点是个 FragmentDynamic 对象，底层是不认识的。经过我们包装后，会去便利里面的这些节点，才能正确 render。
-    const resumeReplace = stopReplaceFunction()
-    const resumeComputed = lazyComputed()
+    // const resumeReplace = stopReplaceFunction()
+
     // 1. render
+    // CAUTION 这里让 computed 不再直接计算，是因为后面要处理 renderResult 的过程中药把它替换成一个匿名的 fragments。
+    //  以便继续使用 renderFragments 递归对里面的节点进行处理。
+    // const resumeComputed = lazyComputed()
     // CAUTION 可以支持直接把 vnode 作为 render。
     let renderResult = (typeof fragment.render === 'function') ? fragment.render() : fragment.render
+    // resumeComputed()
     let renderResultToWalk = Array.isArray(renderResult) ? renderResult : [renderResult]
+
 
     // 2. 在当前作用域下的参数合集，包括 上层的参数、当前 fragment 上定义的参数。这就是当前 fragment 下所有能用到的变量。
     const commonArgv = {...upperArgv, ...fragment.localVars}
@@ -259,7 +264,8 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
     /**
      * 4. 递归处理每一个节点，绑定 style 和 开始绑定事件。以下几个情况特别注意：
      * 1. 遇到 Component 节点，还是要往下递归处理 children。因为这表示的是"我们传给 Component 的children"，我们还没有处理完。
-     * 2. 如果遇到 vnodeComputed/function。要把 computation 重新替换一下。确保每次重新执行的时候会再进行这个递归过程。
+     * 2. 如果遇到 vnodeComputed/function。要把 computation 重新替换成一个 匿名的 fragments，以此确保每次重新执行的时候会再进行这个 fragments 处理的过程，
+     *     不然可能 vnodeComputed 第二次更新的时候，就没有 feature 的特性了。
      * 3. 如果遇到 fragment，就递归渲染。
      */
     //
@@ -272,24 +278,21 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
       }
 
 
-
-      const currentVnodeIndex = vnodes.indexOf(originVnode)
       // 如果是 fragment，就递归渲染
       // 如果碰到函数或者 lazyVnodeComputed 就要替换成能继续驱动的
       if (originVnode instanceof FragmentDynamic || typeof originVnode === 'function' || isVnodeComputed(originVnode)) {
-        invariant(!(isVnodeComputed(originVnode) && !originVnode.computation), 'vnodeComputed should be set to lazy in fragment')
+        invariant(!(isVnodeComputed(originVnode) && !originVnode.computation), 'do not use vnodeComputed in fragment, use function instead')
         const isTrueFragment = originVnode instanceof FragmentDynamic
         const subFragmentToRender = isTrueFragment ?
           originVnode :
-          baseActionCollector.anonymous()(isVnodeComputed(originVnode) ? originVnode.computation : originVnode)
-
-        // 如果是我们伪造的 fragment，只是为了在 vnodeComputed 重新计算时正确执行，那么就要在 extend 上记录上，因为还要复用 style 和 listener。
+          baseActionCollector.anonymous()(originVnode)
 
         if (!isTrueFragment) {
-
+          // 如果是我们伪造的 fragment，只是为了在 vnodeComputed 重新计算时正确执行，那么就要在 extend 上记录上，因为还要复用 style 和 listener。
           subFragmentToRender.extend = fragment.name
         }
-        vnodes[currentVnodeIndex] = renderFragments(subFragmentToRender, props, selfHandleRef, actionCollectorContainer, commonArgv, useNamedChildrenSlot, baseActionCollector)
+
+        vnodes[vnodes.indexOf(originVnode)] = renderFragments(subFragmentToRender, props, selfHandleRef, actionCollectorContainer, commonArgv, useNamedChildrenSlot, baseActionCollector)
         return
       }
 
@@ -360,9 +363,7 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
       }
     })
     // 递归处理结束
-
-    resumeReplace()
-    resumeComputed()
+    // resumeReplace()
     return renderResult
   }
 

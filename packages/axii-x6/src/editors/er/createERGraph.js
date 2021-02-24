@@ -142,6 +142,7 @@ Graph.registerNode('entity-shape', {
         args: { x: 0, y: 0 },
         attrs: {
           circle: {
+            r: 6,
             magnet: true
           }
         }
@@ -151,6 +152,7 @@ Graph.registerNode('entity-shape', {
         args: { x: 1, y: 0 },
         attrs: {
           circle: {
+            r: 6,
             magnet: true
           }
         }

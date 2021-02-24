@@ -12,7 +12,7 @@ function NOOP() {}
 const GUTTER_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg=='
 
 // TODO 先不管 vertical ？
-export default function Split({ children, gutterSize, asideSize, vertical, onChange }) {
+export default function Split({ children, gutterSize, asideSize, vertical, onChange, asideLeft }) {
   const mainRef = useRef()
   const asideRef = useRef()
   let isDragging = false
@@ -65,7 +65,8 @@ export default function Split({ children, gutterSize, asideSize, vertical, onCha
   const onDragging = (e) => {
     if (!isDragging) throw new Error('not dragging')
     const offset = getRelativeMousePosition(e) - startMousePosition
-    onChange(startSize - offset)
+    // CAUTION  offset 永远都是往后边拉为正，往左边拉为负。所以如果是左边为 aside 的话，就要加上 offset.
+    onChange(asideLeft.value ? startSize + offset : startSize - offset)
   }
 
   const stopDrag = () => {
@@ -130,17 +131,39 @@ export default function Split({ children, gutterSize, asideSize, vertical, onCha
     calculateStartBoundsAndDragOffset(e)
   }
 
+  const leftFlexGrow = computed(() => {
+    return asideLeft.value ? 0 : 1
+  })
+  const rightFlexGrow = computed(() => {
+    return asideLeft.value ? 1 : 0
+  })
+  const leftFlexShrink = computed(() => {
+    return asideLeft.value ? 0 : 'auto'
+  })
+  const rightFlexShrink = computed(() => {
+    return asideLeft.value ? 'auto' : 0
+  })
+
+  const leftFlexBasis = computed(() => {
+    return asideLeft.value ? asideSize.value : 'auto'
+  })
+  const rightFlexBasis = computed(() => {
+    return asideLeft.value ? 'auto' : asideSize.value
+  })
+
+
   return <container block flex-display flex-align-items-stretch>
-    <main inline flex-grow-1 ref={mainRef}>{children[0]}</main>
+    <main inline flex-grow={leftFlexGrow} flex-shrink={leftFlexShrink} flex-basis={leftFlexBasis} ref={mainRef}>{children[0]}</main>
     <gutter inline style={gutterStyle} onMouseDown={startDrag}/>
-    <aside inline flex-shrink-0 flex-grow-0 flex-basis={asideSize} ref={asideRef}>{children[1]}</aside>
+    <aside inline flex-grow={rightFlexGrow} flex-shrink={rightFlexShrink} flex-basis={rightFlexBasis} ref={asideRef}>{children[1]}</aside>
   </container>
 }
 
 Split.propTypes = {
   vertical: propTypes.string.default(() => ref(false)),
   gutterSize: propTypes.number.default(() => ref(10)),
-  asideSize: propTypes.number.default(() => ref(250)),
+  asideLeft: propTypes.number.default(() => false),
+  asideSize: propTypes.number.default(() => ref(350)),
   onChange: propTypes.callback.default(() => (nextAsideSize, { asideSize }) => {
     asideSize.value = nextAsideSize
   }),

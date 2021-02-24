@@ -9,10 +9,14 @@ import { isRef } from './reactive';
  * 3. 如果使用 React.Children.toArray 的话，会对children 中的数组递归展开。
  */
 
-function getChildrenFromArrayType(vnode) {
+function getChildrenFromArrayType(input) {
+  // CAUTION 如果是函数，直接执行就是，目前看起来也没有必要做缓存。去读 children 中的内容的情况并不常见。
+  const vnode = (typeof input  === 'function') ? input() : input
+
   if (isRef(vnode)) {
     return Array.isArray(vnode.value) ? vnode.value : undefined
   }
+
   // 因为 vnodeComputed 的节点阻断了 normalizeChildren 的过程，我们又不愿意在 vnodeComputed 里面去处理，
   // 而是希望保持数组原貌，所以这里来做判断兼容。
   if (Array.isArray(vnode)) return vnode

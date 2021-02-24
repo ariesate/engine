@@ -7,7 +7,7 @@ import {
 	ref,
 	createComponent,
 	refComputed,
-	vnodeComputed,
+	reactive,
 } from 'axii';
 import scen from '../pattern'
 
@@ -22,15 +22,15 @@ import scen from '../pattern'
  *
  */
 
-function renderItem(item, level, actions, fragments) {
+function renderItem(item, level, actions, fragments, parents = []) {
 	const { onFold, onOpen, onSetActive } = actions
-	const hasChildren = refComputed(() => item.children && item.children.length !== 0)
+	const hasChildren = refComputed(() => item.children !== undefined)
 	return <>
 		<item
 			block
 			flex-display
 		>
-			<expand onClick={() => item.fold ? onOpen(item) : onFold(item)}>{() =>
+			<expand onClick={() => item.fold ? onOpen(item, parents) : onFold(item, parents)}>{() =>
 				hasChildren.value ?
 					(item.fold ? '+' : '-'):
 					null
@@ -41,7 +41,7 @@ function renderItem(item, level, actions, fragments) {
 			if (!item.children || item.children.length === 0 || item.fold) return null
 			return item.children.map(child => {
 				const nextLevel = level + 1
-				return fragments.item({ item : child, level: nextLevel })(renderItem(child, nextLevel, actions, fragments))
+				return fragments.item({ item : child, level: nextLevel, parents: parents.concat(item) })(renderItem(child, nextLevel, actions, fragments, parents.concat(item)))
 			})
 		}}
 	</>
@@ -49,11 +49,12 @@ function renderItem(item, level, actions, fragments) {
 
 export function Menu({data, onFold, onOpen, onSetActive}, fragments) {
 	return (<container block block-max-width-300px>
-		{() => data.map(item => fragments.item({item})(renderItem(item, 0, { onFold, onOpen, onSetActive }, fragments)))}
+		{() => data.map(item => fragments.item({item, level: 0, parents: []})(renderItem(item, 0, { onFold, onOpen, onSetActive }, fragments)))}
 	</container>)
 }
 
 Menu.propTypes = {
+	data: propTypes.object.default(() => reactive([])),
 	onFold: propTypes.callback.default(() => (item) => item.fold = true),
 	onOpen: propTypes.callback.default(() => (item) => item.fold = false),
 	onSetActive: propTypes.callback.default(() => (item, { activeKey }) => activeKey.value = item.key),
