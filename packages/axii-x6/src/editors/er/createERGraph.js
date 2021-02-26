@@ -3,11 +3,11 @@ import '../../shape'
 import Entity from './Entity'
 
 ///////////////////
-export default function createFlowGraph(container,  connectingValidate = {}) {
+export default function createFlowGraph(container,  {connectingValidate = {}, width = 1000, height = 800} = {}) {
   const graph = new Graph({
     container,
-    width: 1000,
-    height: 800,
+    width,
+    height,
     grid: {
       size: 10,
       visible: true,

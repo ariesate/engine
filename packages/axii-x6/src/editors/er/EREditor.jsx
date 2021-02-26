@@ -181,7 +181,11 @@ export default data;
   }
 
   useViewEffect(() => {
-    const graph = createERGraph(containerRef.current, { validateEdge })
+    const graph = createERGraph(containerRef.current, {
+      width: containerRef.current.clientWidth,
+      height: containerRef.current.clientHeight,
+      connecting: { validateEdge }
+    })
     graph.createId = createId
 
 
@@ -213,13 +217,13 @@ export default data;
   })
 
   return (
-    <div className={styles.wrap}>
-      <Split>
-        <div className={styles.panel}>
-          <div className={styles.toolbar}>
+    <container>
+      <Split layout:block layout:block-height="100%">
+        <div block flex-display flex-direction-column block-height="100%">
+          <div block flex-grow-0 className={styles.toolbar}>
             <ToolBar commands={commands}/>
           </div>
-          <div id="container" className="x6-graph" ref={containerRef}/>
+          <div block flex-grow-1 id="container" className="x6-graph" ref={containerRef}/>
         </div>
         <div className={styles.config}>
           {() => graphRef.value? <ConfigPanel graph={graphRef.value} item={selectedItemRef.value} type={selectedTypeRef}/> : null}
@@ -229,7 +233,7 @@ export default data;
         {() => graphRef.value ? entities.map(entity => <AxiiNode id={entity.id} key={entity.id} shape='entity-shape' component="Entity" viewProps={entity.view} entity={entity} onChange={onChange}/>): null}
         {() => graphRef.value ? relations.map(relation => <Relation key={relation.id} relation={relation} onChange={onChange} />) : null}
       </GraphContext.Provider>
-    </div>
+    </container>
   )
 }
 

@@ -20,7 +20,7 @@ export function Checkbox({ value, disabled, onChange, children }) {
   return (
     <container use="label" inline flex-display-inline flex-align-items-center>
       <input type="checkbox" value="" disabled={disabled} checked={value} onChange={onChange} />
-      <span>{children}</span>
+      <affix inline inline-padding-left={scen().small().spacing()}>{children}</affix>
     </container>
   )
 }
