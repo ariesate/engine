@@ -1,14 +1,11 @@
 /** @jsx createElement */
 import {
   createElement,
-  useViewEffect,
   propTypes,
-  ref,
-  overwrite,
   reactive,
   delegateLeaf,
-  watch,
-  createComponent
+  createComponent,
+  computed,
 } from 'axii'
 import Input from 'axii-components/input/input.jsx'
 import Select from 'axii-components/select/Select.jsx'
@@ -32,7 +29,7 @@ import Checkbox from 'axii-components/checkbox/Checkbox.jsx'
  *  3. string|number size
  */
 
-function ConfigEntity({entity, graph}) {
+function ConfigEntity({entity, graph, customFields}) {
   const addField = () => {
     entity.fields.push({
       id: graph.createId(),
@@ -45,8 +42,7 @@ function ConfigEntity({entity, graph}) {
     entity.fields.splice(entity.fields.indexOf(field), 1)
   }
 
-  const options = ['string', 'number', 'boolean', 'rel']
-
+  const options = computed(() => ['string', 'number', 'boolean', 'rel'].concat(customFields))
 
   const match = (value, option) => {
     return value === option.name
@@ -110,7 +106,8 @@ function ConfigEntity({entity, graph}) {
 }
 
 ConfigEntity.propTypes = {
-  node: propTypes.object.default(() => reactive({}))
+  node: propTypes.object.default(() => reactive({})),
+  customFields: propTypes.object.default(() => reactive([]))
 }
 
 ConfigEntity.Style = (fragments) => {

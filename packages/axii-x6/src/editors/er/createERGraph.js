@@ -77,6 +77,7 @@ export default function createFlowGraph(container,  {connectingValidate = {}, wi
     },
     keyboard: {
       enabled: true,
+      global: false
     },
   })
 

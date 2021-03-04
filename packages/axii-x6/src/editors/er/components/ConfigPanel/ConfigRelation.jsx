@@ -24,7 +24,7 @@ import Select from 'axii-components/select/Select.jsx'
  *
  */
 
-export default function ConfigRelation({relation, graph}) {
+export default function ConfigRelation({relation, graph, customFields}) {
 
   const options = ['1:1', '1:n', 'n:1', 'n:n']
 
@@ -54,5 +54,6 @@ export default function ConfigRelation({relation, graph}) {
 }
 
 ConfigRelation.propTypes = {
-  relation: propTypes.object.default(() => reactive({}))
+  relation: propTypes.object.default(() => reactive({})),
+  customFields: propTypes.object.default(() => reactive([]))
 }

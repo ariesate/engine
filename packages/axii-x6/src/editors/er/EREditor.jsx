@@ -39,7 +39,9 @@ function getContainerSize() {
 
 export const PORT_JOINT = '|'
 
-export default function EREditor({ data: rawData, onChange }, editorRef) {
+export default function EREditor({ data: rawData, customFields, onChange, onSave }, editorRef) {
+  console.log(rawData, customFields)
+
   const { entities, relations } = reactive(rawData)
   const containerRef = useRef()
   const graphRef = ref()
@@ -187,7 +189,11 @@ export default data;
       connecting: { validateEdge }
     })
     graph.createId = createId
-
+    graph.bindKey('cmd+s', (e) => {
+      e.stopPropagation()
+      e.preventDefault()
+      if (onSave) onSave({ entities: toRaw(entities), relations: toRaw(relations) })
+    })
 
     graphRef.value = graph
     const resizeFn = () => {
@@ -226,7 +232,7 @@ export default data;
           <div block flex-grow-1 id="container" className="x6-graph" ref={containerRef}/>
         </div>
         <div className={styles.config}>
-          {() => graphRef.value? <ConfigPanel graph={graphRef.value} item={selectedItemRef.value} type={selectedTypeRef}/> : null}
+          {() => graphRef.value? <ConfigPanel graph={graphRef.value} item={selectedItemRef.value} type={selectedTypeRef} customFields={customFields}/> : null}
         </div>
       </Split>
       <GraphContext.Provider value={graphRef}>
