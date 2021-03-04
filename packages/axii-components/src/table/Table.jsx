@@ -140,7 +140,6 @@ export const tdStyle = {
 Table.Style = (fragments) => {
   fragments.headCell.elements.th.style(thStyle)
   fragments.cell.elements.td.style(tdStyle)
-
 }
 
 Table.propTypes = {

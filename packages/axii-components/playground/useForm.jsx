@@ -34,23 +34,23 @@ function App() {
       <div>
         <span>姓名</span>
         <Input {...form.fields.name.props()}/>
-        <span>{refComputed(() =>  form.fields.name.changed.value? '*' :'' )}</span>
-        <span>{refComputed(() =>  {
+        <span>{() =>  form.fields.name.changed.value? '*' :''}</span>
+        <span>{() =>  {
           return form.fields.name.isValid.value === false ? form.fields.name.errors[0] : ''
-        })
+        }
         }</span>
       </div>
       <div>
         <span>年龄</span>
         <Input {...form.fields.age.props()}/>
-        <span>{refComputed(() =>  form.fields.age.changed.value ? '*' :'' )}</span>
-        <span>{refComputed(() =>  {
+        <span>{() =>  form.fields.age.changed.value ? '*' :'' }</span>
+        <span>{() =>  {
             return form.fields.age.isValid.value === false ? form.fields.age.errors[0] : ''
-          })
+          }
         }</span>
       </div>
       <div>
-        <button onClick={form.submit} disabled={form.isSubmitting}>{refComputed(() => form.isSubmitting.value ? '提交中': '提交')}</button>
+        <button onClick={form.submit} disabled={form.isSubmitting}>{() => form.isSubmitting.value ? '提交中': '提交'}</button>
         <button onClick={() => {
           form.reset()
           form.resetValidation()

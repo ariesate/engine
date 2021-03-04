@@ -3,9 +3,6 @@ import { createElement, ref, render, debounceComputed } from 'axii'
 import Pagination, { useInfinitePageHelper } from "../src/pagination/Pagination";
 
 function App() {
-
-
-
 	return (
 		<div>
 			<div>

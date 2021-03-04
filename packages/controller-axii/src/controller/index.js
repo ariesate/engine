@@ -491,7 +491,8 @@ function attachLayoutStyle(injectedVnode) {
 		if (style) {
 			injectedVnode.attributes = {
 				...injectedVnode.attributes,
-				style: Object.assign({}, injectedVnode.attributes.style, style)
+				// 注意这里的顺序，还是写在 attribute.style 的优先级最高，这样才能让 feature 进行完全覆盖。
+				style: Object.assign({}, style, injectedVnode.attributes.style )
 			}
 		}
 	}

@@ -38,7 +38,7 @@ export function DatePicker({focused, onFocus, onBlur, value, onChange, format,})
       tabindex={-1}
       onFocusOut={() => onBlur()}
       inline-display-none={refComputed(() => !focused.value)}
-      style={{background: "#fff", zIndex: 99}}
+      style={{background: "#fff", zIndex: 99999}}
       ref={calendarRef}
     >
       <calendar use={Calendar} value={value} onChange={onChange}/>
@@ -71,6 +71,5 @@ DatePicker.propTypes = {
   }),
   format: propTypes.string.default(() => ref('YYYY-MM-DD'))
 }
-
 
 export default createComponent(DatePicker)

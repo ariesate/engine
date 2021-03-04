@@ -1,6 +1,8 @@
-import { createElement, render, reactive, ref } from 'axii'
+import { createElement, render, reactive, ref, useRef, useViewEffect  } from 'axii'
 import queryString from 'querystringify';
+import CodeFlask from 'codeflask';
 import '../src/style/global.less'
+import './index.less'
 
 const { component } = queryString.parse(location.search)
 
@@ -13,11 +15,37 @@ const renderEmptyContent = (name) => {
 }
 
 
-if ( component) {
-  const script = document.createElement('script')
-  script.setAttribute('type', 'module');
-  script.setAttribute('src', `./${component}.jsx`);
-  script.onerror = () => renderEmptyContent(component)
-  document.head.appendChild(script)
+function ExampleCode() {
+  const codeContainerRef = useRef()
+
+  useViewEffect(() => {
+    if ( component) {
+      const script = document.createElement('script')
+      script.setAttribute('type', 'module');
+      script.setAttribute('src', `./${component}.jsx`);
+      script.onerror = () => renderEmptyContent(component)
+      document.head.appendChild(script)
+
+      const promise = import(`./${component}.jsx?raw`)
+      promise.then((contentModule) => {
+
+        const flask = new CodeFlask(codeContainerRef.current, { language: 'js', readonly: true });
+        flask.updateCode(contentModule.default)
+      }).catch(e => {
+        console.error(e)
+      })
+    }
+  })
+
+  return (
+    <div>
+      <div className="name">{component}</div>
+      <div id="root" />
+      <codeContainer block ref={codeContainerRef} />
+    </div>
+  )
 }
+
+render(<ExampleCode />, document.getElementById('container'))
+
 

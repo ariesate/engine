@@ -156,7 +156,8 @@ function createInjectedProps(cnode) {
 				localProps[propName] = propType.createDefaultValue({...props, ...localProps})
 				if (isReactiveLike(localProps[propName])) setDisplayName(localProps[propName])
 			}
-		} else if (!isReactiveLike(props[propName])) {
+		} else if (!isReactiveLike(props[propName]) && !isSmartProp(props[propName])) {
+			// CAUTION 注意一定要排除 smartProp
 			// 对值对象中的简单类型，"数字、文字、bool"，还要包装成 ref 的形式。
 			// 对传入固定值(非 reactive 值)，比如 bool/number 等的 prop 进行包装，兼容 reactive 格式。
 			// 后面 patch 的时候会判断，对于非 reactive 的值，都当做是固定值，不进行 patch
@@ -176,7 +177,9 @@ function createInjectedProps(cnode) {
 	const transformedProps = mapValues(thisPropTypes || {}, (propType, propName) => {
 		const prop = mergedProps[propName]
 		if (!propType) return prop
-		if (isSmartProp(prop)) return prop(propType, propName)
+		if (isSmartProp(prop)) {
+			return prop(propType, propName)
+		}
 
 		// 下面只针对 callback 类型进行处理
 		if (!propType.is(propTypes.callback)) return prop
