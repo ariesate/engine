@@ -43,4 +43,5 @@ Icon.propTypes = {
   size: propTypes.number.default(() => ref(14)),
   unit: propTypes.string.default(() => ref('px')),
   theme: propTypes.string.default(() => ref('outlined')),
+  color: propTypes.string.default(() => ref('#333')),
 }

@@ -80,4 +80,3 @@ export function App() {
   )
 }
 
-// 有个编辑态，还有 draft 状态。之前是怎么想的？？？？
