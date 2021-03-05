@@ -30,7 +30,7 @@ const availablePlayground = {
     'upload*', // 3
     // 以上是必须要常用的 7
     'timePicker*',
-    'radio',
+    'radios',
     'autoComplete*',
     'switch*',
     'richText*', // 试用 quill

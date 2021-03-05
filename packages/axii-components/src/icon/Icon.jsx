@@ -3,6 +3,7 @@
 import {
   createElement,
   propTypes,
+  refComputed,
   ref
 } from 'axii';
 import * as icons from '@ant-design/icons-svg'
@@ -18,21 +19,23 @@ function transName(type, theme) {
 
 export default function Icon({ type, size, unit, color, theme }) {
 
-  const iconDef = icons[transName(type, theme)]
-  if (!iconDef) {
+  const iconDef = refComputed(() => icons[transName(type, theme)])
+  if (!iconDef.value) {
     console.error(`unknown icon ${transName(type, theme)}`)
     return null
   }
 
-  return createAXIIElement({
-    ...iconDef.icon,
-    attrs: {
-      ...iconDef.icon.attrs,
-      width: `${size.value}${unit.value}`,
-      height: `${size.value}${unit.value}`,
-      fill: color.value,
-    }
-  })
+  return <i>
+    {() => createAXIIElement({
+      ...iconDef.value.icon,
+      attrs: {
+        ...iconDef.value.icon.attrs,
+        width: `${size.value}${unit.value}`,
+        height: `${size.value}${unit.value}`,
+        fill: color.value,
+      }
+    })}
+  </i>
 }
 
 Icon.propTypes = {
