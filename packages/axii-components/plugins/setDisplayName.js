@@ -1,8 +1,8 @@
-const path = require('path')
-const { transformSync } = require('@babel/core')
-const setNamePlugin = require('babel-plugin-set-display-name')
+import path from 'path'
+import { transformSync } from '@babel/core'
+import setNamePlugin from 'babel-plugin-set-display-name'
 
-module.exports = {
+export default {
 	transforms: [
 		{
 			test({ path: filePath }) {

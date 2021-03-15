@@ -25,3 +25,11 @@ export function composeRef(...refReceivers) {
 export function nextTick(fn) {
   setTimeout(() => fn(), 1)
 }
+
+export function mapValues(obj, fn) {
+  const result = {}
+  Object.entries(obj).forEach(([key, value]) => {
+    result[key] = fn(value, key)
+  })
+  return result
+}

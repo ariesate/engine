@@ -1,8 +1,8 @@
 import { createElement, render, reactive, ref, useRef, useViewEffect  } from 'axii'
 import queryString from 'querystringify';
 import CodeFlask from 'codeflask';
-import '../src/style/global.less'
-import './index.less'
+import './src/style/global.less'
+import './playground/index.less'
 
 const { component } = queryString.parse(location.search)
 
@@ -20,17 +20,14 @@ function ExampleCode() {
 
   useViewEffect(() => {
     if ( component) {
-      const script = document.createElement('script')
-      script.setAttribute('type', 'module');
-      script.setAttribute('src', `./${component}.jsx`);
-      script.onerror = () => renderEmptyContent(component)
-      document.head.appendChild(script)
+      import(`./playground/${component}.jsx`)
 
-      const promise = import(`./${component}.jsx?raw`)
+      // const promise = import(`./playground-assets/${component}.jst?raw`)
+      // TODO 因为 vite 不支持 dynamic assets 所以不得已只能这样写.
+      const promise = import(`./playground-assets/${component}.jsx`)
       promise.then((contentModule) => {
-
         const flask = new CodeFlask(codeContainerRef.current, { language: 'js', readonly: true });
-        flask.updateCode(contentModule.default)
+        flask.updateCode(decodeURIComponent(contentModule.content))
       }).catch(e => {
         console.error(e)
       })

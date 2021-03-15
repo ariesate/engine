@@ -17,7 +17,7 @@ import scen from '../pattern'
  * 或者有个规划位置的作为 base。
  */
 
-export function Input({value, onChange, children}, fragments) {
+export function Input({value, onChange, children, placeholder}, fragments) {
 	const prefixLikeProps = {
 		'flex-display-inline': true,
 		'flex-align-items-center': true,
@@ -55,6 +55,7 @@ export function Input({value, onChange, children}, fragments) {
           inline-padding={`${scen().spacing(-1)}px ${scen().spacing()}px `}
           value={value}
           onInput={onChange}
+					placeholder={placeholder}
         />
         {afterVnode}
       </middle>
@@ -68,6 +69,7 @@ Input.useNamedChildrenSlot = true
 
 Input.propTypes = {
 	value: propTypes.string.default(() => ref('')),
+	placeholder: propTypes.string.default(() => ref('')),
 	// onChange 这个函数会由系统自动补足三个参数： draftProps, props, event
 	// 所以当我们直接把这个参数传到事件上时，不用冗余去写成 (e) => onChange(e.target.value)
 	// 外部也同样推荐这种模式。

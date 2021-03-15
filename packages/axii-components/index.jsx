@@ -135,7 +135,7 @@ function Choose() {
         <div block block-height="100%">
           {() => {
             if(!current.value) return <div>点击选择一个组件</div>
-            return <iframe height="100%" width="100%" src={`/playground/playground.html?component=${current.value}`}/>
+            return <iframe height="100%" width="100%" src={`./playground.html?component=${current.value}`}/>
           }}
         </div>
       </Split>

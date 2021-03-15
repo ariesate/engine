@@ -6,7 +6,7 @@ import {
   reactive,
   createComponent,
   refComputed,
-  vnodeComputed,
+  computed,
   createSmartProp,
   delegateLeaf,
   tryToRaw,
@@ -16,7 +16,7 @@ import {
   replace,
   isRef
 } from 'axii';
-import { chain, hasConflict } from '../util';
+import { chain, hasConflict, mapValues } from '../util';
 /**
  * useForm
  * 关于 touched，只要和 initialValue 不一样，就算是 touched
@@ -112,110 +112,141 @@ export const VALIDATION_STATUS_NONE = 'none'
 function validationPlugin({ scheme }, values) {
   if (!scheme) return {}
 
-  const tryToValidate = (changedFieldName, { value: nextValue }, { value }, callFromManual) => {
+  const tryToValidate = (changedFieldName, { value: nextValue }, { value }, ruleNames = [], callFromManual = false) => {
     // CAUTION 这里修改了一下格式，因为验证函数没有必要知晓 ref 的格式
     const nextRawValue = isRef(value) ? nextValue.value : nextValue
-    const result = scheme(changedFieldName, nextRawValue, tryToRaw(value, true), callFromManual)
-    if (!result) return
+    const rulesOfField = scheme[changedFieldName]
+    if (!rulesOfField) return
 
     debounceComputed(() => {
-      Object.entries(result).forEach(([ruleName, result]) => {
-        if (result instanceof Promise) {
-          // 注意在发送时、发送失败并不清空上一次的 error 等状态。只有在成功时才修改。
-          validationStatusByRuleName[ruleName].value = VALIDATION_STATUS_PENDING
-          result.then(({ passed, errors }) => {
-            invariant(passed ? true : (errors && errors.length), `failed rule ${ruleName} must have errors in result.` )
-            debounceComputed(() => {
-              validationStatusByRuleName[ruleName].value = VALIDATION_STATUS_NONE
-              validationResultByRuleName[ruleName].value = passed
-              errorsByRuleName[ruleName].splice(0, errorsByRuleName[ruleName].length, ...(passed ? [] : errors))
-            })
-          }).catch(() => {
-            validationStatusByRuleName[ruleName].value = VALIDATION_STATUS_ERROR
-          })
+      // 分类，先执行本地的，在执行 async 的。如果本地的没执行通过，后面的都不用执行了。
+      const syncRules = {}
+      const asyncRules = {}
+      Object.entries(rulesOfField).forEach(([ruleName, ruleFn]) => {
+        if (ruleNames.length && !ruleNames.includes(ruleName)) return
+
+        if (ruleFn.constructor.name === 'AsyncFunction') {
+          asyncRules[ruleName] = ruleFn
         } else {
-          invariant(result.passed ? true : (result.errors && result.errors.length), `failed rule ${ruleName} must have errors in result.` )
-          validationResultByRuleName[ruleName].value = result.passed
-          errorsByRuleName[ruleName].splice(0, errorsByRuleName[ruleName].length, ...(result.passed ? [] : result.errors))
+          syncRules[ruleName] = ruleFn
         }
+      })
+
+      // TODO 要拿到其他 value 怎么办？？？例如 password 双校验这种
+      let hasErrorInSyncRules = false
+      for(let ruleName in syncRules) {
+        const ruleFn = syncRules[ruleName]
+        const result = ruleFn(nextRawValue, value, { fieldName: changedFieldName, values })
+        validationResultByFieldName[changedFieldName][ruleName] = result.passed === true
+        errorsByFieldName[changedFieldName][ruleName].splice(0, errorsByFieldName[changedFieldName][ruleName].length, ...(result.passed ? [] : result.errors))
+        hasErrorInSyncRules = result.passed !== true
+      }
+
+      // sync rule 有问题，直接退出
+      if (hasErrorInSyncRules) return
+
+      Object.entries(asyncRules).forEach(([ruleName, ruleFn]) => {
+        if (ruleNames.length && !ruleNames.includes(ruleName)) return
+        const result = ruleFn(nextRawValue, value, { fieldName: changedFieldName, values })
+          // 注意在发送时、发送失败并不清空上一次的 error 等状态。只有在成功时才修改。
+        validationStatusByFieldName[changedFieldName][ruleName] = VALIDATION_STATUS_PENDING
+        result.then(({ passed, errors }) => {
+          invariant(passed ? true : (errors && errors.length), `failed rule ${ruleName} must have errors in result.` )
+          debounceComputed(() => {
+            validationStatusByFieldName[changedFieldName][ruleName] = VALIDATION_STATUS_NONE
+            validationResultByFieldName[changedFieldName][ruleName] = passed
+            errorsByFieldName[changedFieldName][ruleName].splice(0, errorsByFieldName[changedFieldName][ruleName].length, ...(passed ? [] : errors))
+          })
+        }).catch(() => {
+          validationStatusByFieldName[changedFieldName][ruleName] = VALIDATION_STATUS_ERROR
+        })
       })
     })
   }
 
-  const errorsByRuleName = {}
-  const validationResultByRuleName = {}
-  const validationStatusByRuleName = {}
+  const errorsByFieldName = reactive({})
+  const validationResultByFieldName = reactive({})
+  const validationStatusByFieldName = reactive({})
 
   // TODO 可以通过 proxy，在读时在创建 output 中的 computed。
   return {
     state: {
-      errorsByRuleName,
-      validationResultByRuleName,
+      errorsByFieldName,
+      validationResultByFieldName,
     },
     createField: (fieldName) => {
-      if(!(fieldName in errorsByRuleName)) errorsByRuleName[fieldName] = reactive([])
-      if(!(fieldName in validationResultByRuleName)) validationResultByRuleName[fieldName] = ref()
-      if(!(fieldName in validationStatusByRuleName)) validationStatusByRuleName[fieldName] = ref()
+      if(!(fieldName in errorsByFieldName)) errorsByFieldName[fieldName] = mapValues(scheme[fieldName], () => [])
+      if(!(fieldName in validationResultByFieldName)) validationResultByFieldName[fieldName] = mapValues(scheme[fieldName], () => undefined)
+      if(!(fieldName in validationStatusByFieldName)) validationStatusByFieldName[fieldName] = mapValues(scheme[fieldName], () => undefined)
 
-      const validate = (draftProps, props) => tryToValidate(fieldName, draftProps, props)
+      const validate = (...ruleNames) => (draftProps, props) => tryToValidate(fieldName, draftProps, props, ruleNames)
+      // 增加快捷的方法
+      const rules = scheme[fieldName]
+      Object.keys(rules).forEach((ruleName) => {
+        validate[ruleName] = (draftProps, props) => tryToValidate(fieldName, draftProps, props, ruleName)
+      })
 
       return {
         // 默认每个 field 都可以有多个验证条件，errors 记录每一个条件的结果
-        errors: errorsByRuleName[fieldName],
-        validateStatus: validationStatusByRuleName[fieldName],
+        errorsByRule: errorsByFieldName[fieldName],
+        errors: computed(() => {
+          return [].concat(...Object.values(errorsByFieldName[fieldName]))
+        }),
+        validateStatus: validationStatusByFieldName[fieldName],
         // 语法糖，validateStatus 其实已经可以判断
-        isValidating: refComputed(() => validationStatusByRuleName[fieldName].value === VALIDATION_STATUS_PENDING),
+        isValidating: refComputed(() => {
+          return Object.values(validationStatusByFieldName[fieldName]).some(status => status === VALIDATION_STATUS_PENDING)
+        }),
         validate,
-        isValid: validationResultByRuleName[fieldName],
-        // 这是要传到组件上的 listener
-        props: ({ validateTrigger = 'onChange'} = {}) => ({
-          ...(validateTrigger ? {[validateTrigger] : validate} : {}),
+        isValid: refComputed(() => {
+          return Object.values(validationResultByFieldName[fieldName]).every(passed => passed === true)
         }),
       }
     },
     output: {
       // 有一个是 error，整体就是 false。此外，有一个 undefined，就是 undefined。最后没有 error 也没有 undefined 才是 valid。
       isValid: refComputed(() => {
-
-        let hasError = false
         let hasUndefined = false
-        const noError =  Object.values(validationResultByRuleName).every(({ passed }) => {
-          if (passed === false) hasError = true
-          if (passed === undefined) hasUndefined = true
-          // 注意，我们只在 passed === false 是打断，因为不管有没有 undefined，都应该标记为 false
-          // 但是 passed 为 Undefined 的情况，还要判断后面有没有 error，所有不打断
-          return passed !== false
-        })
+        // TODO 潜在的性能问题，准备解决。可能要从 debouncedComputed 考虑
+        console.log(Object.keys(validationResultByFieldName))
+        for( let resultByRules of Object.values(validationResultByFieldName)) {
+          for (let ruleResult of Object.values(resultByRules)) {
+            // 有任何错误直接返回
+            if (ruleResult === false) return false
+            // 如果是有 undefined 先记着，最后如果没有因为 error 返回，那么再作为 undefined 返回
+            if (ruleResult === undefined) hasUndefined = true
+          }
+        }
         // 如果没有 error，那么就看有没有 undefined。
-        return noError ? (hasUndefined ? undefined : true) : false
+        return hasUndefined ? undefined : true
       }),
       hasError: refComputed(() => {
         // 虽然前面确保了只要有没 pass， 就一定有 error，但是这里是用 validationResultByRuleName 还是更保险。
-        return Object.values(errorsByRuleName).some(({ passed }) => {
-          return passed === false
+        return Object.values(errorsByFieldName).some((errorsByRules) => {
+          return Object.values(errorsByRules).some(errors => errors.length)
         })
       }),
       validate() {
         // TODO 手动执行
         debounceComputed(() => {
           Object.entries(values).forEach(([valueName, value]) => {
-            tryToValidate(valueName, { value }, { value }, true)
+            tryToValidate(valueName, { value }, { value }, [], true)
           })
         })
 
       },
       resetValidation() {
         debounceComputed(() => {
-          Object.keys(validationResultByRuleName).forEach(key => {
-            validationResultByRuleName[key].value = undefined
+          Object.keys(validationResultByFieldName).forEach(key => {
+            validationResultByFieldName[key] = undefined
           })
 
-          Object.keys(validationStatusByRuleName).forEach(key => {
-            validationStatusByRuleName[key].value = undefined
+          Object.keys(validationStatusByFieldName).forEach(key => {
+            validationStatusByFieldName[key] = undefined
           })
 
-          Object.keys(errorsByRuleName).forEach(key => {
-            errorsByRuleName[key].splice(0)
+          Object.values(errorsByFieldName).forEach(errorsByRules => {
+            return Object.values(errorsByRules).forEach(errors => errors.splice(0))
           })
         })
       }
@@ -223,72 +254,42 @@ function validationPlugin({ scheme }, values) {
   }
 }
 
-export function simpleScheme(keyToRules) {
-  return function scheme(fieldName, nextValue, value) {
-    const rules = keyToRules[fieldName]
-    if (rules) {
-      // rules 支持两种格式
-      let result
-      // 1. 一个函数，需要返回 { passed, errors }
-      if (typeof rules === 'function') {
-        result = rules(nextValue, value)
-      } else if (typeof rules === 'object') {
-        // 2. map 形式 [ruleName] : [ruleFn]
-        // ruleFn 有错误则返回 error, 没有不用返回
-        const errors = []
-        Object.entries(rules).forEach(([ruleName, ruleFn]) => {
-          const error = ruleFn(fieldName, nextValue, value)
-          if (error) errors.push(error)
-        })
-
-        result = {
-          passed: errors.length === 0,
-          errors
-        }
-      }
-
-      return {
-        [fieldName] : result
-      }
-    } else {
-      console.warn(`${fieldName} have not validation rules`)
-    }
-  }
+export function simpleScheme(fieldToRules) {
+  return fieldToRules
 }
 
 // 基本的 rule
 simpleScheme.required = (asEmpty = [undefined, '']) => {
   // 默认只检测 undefined 和 空字符串，用户可以自定义
-  return (fieldName, nextValue) => {
+  return (nextValue, preValue, { fieldName }) => {
     let error
     asEmpty.some((isEmpty) => {
       if (typeof isEmpty === 'function') {
         const result = isEmpty(nextValue)
         if (result) {
           error = result
-          return true
         }
       } else {
         if (nextValue === isEmpty) {
           error = `${fieldName} cannot be ${JSON.stringify(isEmpty)}`
-          return true
         }
       }
     })
 
-    return error
+    return { passed: error === undefined, errors: error ? [error]: [] }
   }
 }
 
 simpleScheme.range = (from, to, excludeFrom, excludeTo) => {
-  return (fieldName, nextValue) => {
+  return (nextValue, preValue, { fieldName }) => {
     invariant(!isNaN(nextValue), `${fieldName} is not a number, cannot use range rule to validate.`)
     if (from !== undefined && (excludeFrom ? (nextValue <= from) : (nextValue < from))) {
-      return `${fieldName} cannot be smaller than ${from}`
+      return { errors: [`${fieldName} cannot be smaller than ${from}`] }
     }
     if (to !== undefined && (excludeTo ? (nextValue >= to) : (nextValue > to))) {
-      return `${fieldName} cannot be larger than ${to}`
+      return { errors: [`${fieldName} cannot be larger than ${to}`] }
     }
+    return { passed: true }
   }
 }
 
@@ -366,6 +367,7 @@ function createNamedFieldProxy(fieldName, values, pluginInstances) {
   const attributes = {}
   const pluginPropsCollection = []
   const pluginSmartValue = []
+
   pluginInstances.forEach(({ createField, smartValue }) => {
     if (smartValue) pluginSmartValue.push(smartValue)
 
@@ -376,6 +378,7 @@ function createNamedFieldProxy(fieldName, values, pluginInstances) {
       if (props) pluginPropsCollection.push(props)
     }
   })
+
 
   const smartValueProp = createSmartProp((propType) => {
     const hasValue = fieldName in values
@@ -458,7 +461,9 @@ function createUseForm(...plugins) {
     const fields = new Proxy({}, {
       get: (target, fieldName) => {
         if (!target[fieldName]) {
-          target[fieldName] = createNamedFieldProxy(fieldName, values, pluginInstances)
+          debounceComputed(() => {
+            target[fieldName] = createNamedFieldProxy(fieldName, values, pluginInstances)
+          })
         }
         return target[fieldName]
 

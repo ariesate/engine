@@ -398,7 +398,6 @@ export default function createAxiiController(rootElement) {
 							// 2. 始终保持和 reactive value 一致。
 							if (bindingValue !== undefined) {
 								// 即可以绑定 ref 也可以绑定一个固定的值。
-								console.log("reset biding", bindingValue)
 								e.target.value = isRef(bindingValue) ? bindingValue.value : bindingValue
 							}
 						}
