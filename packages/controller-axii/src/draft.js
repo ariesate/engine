@@ -5,7 +5,7 @@ import {
   refComputed,
   toRaw,
 } from './reactive'
-import watch, { traverse } from './watch'
+import { watchReactive, traverse } from './watch'
 import deepClone from './cloneDeep'
 
 const draftDisplayValue = new WeakMap()
@@ -26,13 +26,13 @@ export function draft(targetReactive) {
   const draftValue = isRefComputed ? ref(targetReactive.value) : reactive(deepClone(toRaw(targetReactive), typeToCloneHandle))
 
   // 什么时候 destroy watchToken? 不需要手动销毁，因为外部的 computed 会被手动销毁，这时候会连带销毁依赖的 watchToken。
-  watch(() => traverse(targetReactive), (isUnchanged) => {
+  watchReactive(targetReactive, () => {
     // TODO 应该也要重置一下 draft
-    !isUnchanged && mutationTimeTable.set(targetReactive, Date.now())
+    mutationTimeTable.set(targetReactive, Date.now())
   })
 
-  watch(() => traverse(draftValue), (isUnchanged) => {
-    !isUnchanged && mutationTimeTable.set(draftValue, Date.now())
+  watchReactive(draftValue, () => {
+    mutationTimeTable.set(draftValue, Date.now())
   })
   // 设置个初始值
   mutationTimeTable.set(draftValue, Date.now())
@@ -42,17 +42,17 @@ export function draft(targetReactive) {
   const displayValue = computeMethod(() => {
     traverse(draftValue)
     traverse(targetReactive)
+    console.log("recompute draft")
     const draftMutationTime = mutationTimeTable.get(draftValue)
     const computedMutationTime = mutationTimeTable.get(targetReactive) || 0
     const target = (draftMutationTime > computedMutationTime) ? draftValue : targetReactive
     // CAUTION 这里为了性能并没有用 cloneDeep，而是直接包装了一下，因为是 computed，也不会被外部修改。
-
     return isRefComputed ? target.value : toRaw(target)
   })
 
   draftDisplayValue.set(draftValue, displayValue)
 
-  return draftValue
+  return { draftValue, displayValue }
 }
 
 // handle moment 等复杂类型

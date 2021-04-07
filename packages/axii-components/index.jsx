@@ -19,6 +19,7 @@ const location = useLocation()
  * 必须/总数 : 21/33
  * 已完成 : 19/21
  */
+
 const availablePlayground = {
   Form: [
     // 'form', 写到 common hooks 里
@@ -34,12 +35,17 @@ const availablePlayground = {
     'autoComplete*',
     'switch*',
     'richText*', // 试用 quill
+    'editorjs', // 试用 editorjs
+    'imageEditor', // 试用 editorjs
+    'luckysheet', // 试用 editorjs
+    'toastGrid', // 试用 editorjs
   ],
   Data: [
     'table', // x
     'tabs', // x
     'calendar', // x
     'tree',  // 5
+    'optionTree',
     // 以上是常用必须的
     'collapse*',
     'tooltip*',
@@ -51,6 +57,7 @@ const availablePlayground = {
   Dialog: [
     // 'modal', 直接使用 useLayer 即可
     'message', // x
+    'contextmenu',
     // 以上是常用必须的
     'spin*',
     'alert*',
@@ -60,6 +67,7 @@ const availablePlayground = {
   Navigation: [
     'menu', // x
     'pagination', // x
+    'tabStrip',
       // 以上是常用必须的
     'breadcrumb*',
     'steps*',
@@ -68,6 +76,7 @@ const availablePlayground = {
   Misc: [
     'button', // x
     'icon', // x
+    'iconPark', // x
   ],
   Layout: [
     'grid*', // 7  row/col 实现
@@ -101,6 +110,7 @@ const MenuWithDisabledStyle = Menu.extend(function disabledStyle(fragments) {
     }
   })
 })
+
 
 
 function Choose() {

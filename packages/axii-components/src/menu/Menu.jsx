@@ -8,7 +8,9 @@ import {
 	createComponent,
 	refComputed,
 	reactive,
+	tryToRaw,
 } from 'axii';
+import Icon from '../iconPark/IconPark.jsx'
 import scen from '../pattern'
 
 /**
@@ -16,7 +18,7 @@ import scen from '../pattern'
  * 根据数据渲染：
  * [{
  *   title: <String>|<Vnode>,
- *   fold: false,
+ *   expand: false,
  *   children: []
  * }]
  *
@@ -29,16 +31,19 @@ function renderItem(item, level, actions, fragments, parents = []) {
 		<item
 			block
 			flex-display
+			flex-align-items-center
 		>
-			<expand onClick={() => item.fold ? onOpen(item, parents) : onFold(item, parents)}>{() =>
-				hasChildren.value ?
-					(item.fold ? '+' : '-'):
-					null
-			}</expand>
-			<name block flex-grow-1 onClick={() => onSetActive(item)}>{item.title}</name>
+			<expand
+				inline
+				flex-display
+				flex-align-items-center
+				onClick={() => item.expand ? onFold(item, parents) : onOpen(item, parents)}>
+				{() => hasChildren.value ? (item.expand ? <Icon type="Down"/> : <Icon type="Right"/>): null}
+			</expand>
+			<name block flex-grow-1 onClick={() => onSetActive(item, parents)}>{item.title}</name>
 		</item>
 		{function menuChildren() {
-			if (!item.children || item.children.length === 0 || item.fold) return null
+			if (!item.children || item.children.length === 0 || !item.expand) return null
 			return item.children.map(child => {
 				const nextLevel = level + 1
 				return fragments.item({ item : child, level: nextLevel, parents: parents.concat(item) })(renderItem(child, nextLevel, actions, fragments, parents.concat(item)))
@@ -48,17 +53,17 @@ function renderItem(item, level, actions, fragments, parents = []) {
 }
 
 export function Menu({data, onFold, onOpen, onSetActive}, fragments) {
-	return (<container block block-max-width-300px>
-		{() => data.map(item => fragments.item({item, level: 0, parents: []})(renderItem(item, 0, { onFold, onOpen, onSetActive }, fragments)))}
+	return (<container block>
+		{function rootMenuData() { return data.map(item => fragments.item({item, level: 0, parents: []})(renderItem(item, 0, { onFold, onOpen, onSetActive }, fragments)))}}
 	</container>)
 }
 
 Menu.propTypes = {
 	data: propTypes.object.default(() => reactive([])),
-	onFold: propTypes.callback.default(() => (item) => item.fold = true),
-	onOpen: propTypes.callback.default(() => (item) => item.fold = false),
-	onSetActive: propTypes.callback.default(() => (item, { activeKey }) => activeKey.value = item.key),
-	activeKey: propTypes.string.default(() => ref())
+	onFold: propTypes.callback.default(() => (item) => item.expand = false),
+	onOpen: propTypes.callback.default(() => (item) => item.expand = true),
+	onSetActive: propTypes.callback.default(() => (item, parents, { activeItemKeyPath }) => activeItemKeyPath.value = parents.concat(item).map(i => i.key)),
+	activeItemKeyPath: propTypes.string.default(() => ref([]))
 }
 
 Menu.Style = (fragments) => {
@@ -69,8 +74,9 @@ Menu.Style = (fragments) => {
 		cursor: 'pointer'
 	})
 
-	fragments.item.elements.item.style(({ item, activeKey, level }) => {
-		const isActive = activeKey.value === item.key
+	fragments.item.elements.item.style(({ item, parents, activeItemKeyPath, level }) => {
+		const currentPath = parents.concat(item)
+		const isActive = activeItemKeyPath.value.length && (currentPath.length === activeItemKeyPath.value.length) && activeItemKeyPath.value.every((p, i) => p === currentPath[i]?.key)
 		return {
 			paddingLeft: scen().spacing(2) * level,
 			borderRight : isActive ? `4px ${scen().interactable().active().color()} solid` : undefined,

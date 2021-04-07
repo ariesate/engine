@@ -1,5 +1,4 @@
-import { each } from '../util'
-import { IS_NON_DIMENSIONAL, IS_ATTR_NUMBER } from '../constant'
+import { each } from './util'
 
 /** Attempt to set a DOM property to the given value.
  *  IE & FF throw for certain property-value combinations.
@@ -16,7 +15,6 @@ function setProperty(node, name, value) {
 
 function eventProxy(e) {
   const listener = this._listeners[e.type]
-  console.log("calling", e.type)
   return Array.isArray(listener) ? listener.forEach(l => l(e)) : listener(e)
 }
 
@@ -37,7 +35,7 @@ export function setAttribute(node, name, value, isSvg) {
         if (value[k] === undefined) {
           node.style[k] = ''
         } else {
-          node.style[k] = (typeof v === 'number' && !IS_NON_DIMENSIONAL.test(k) && !IS_ATTR_NUMBER.test(k)) ? (`${v}px`) : v
+          node.style[k] = typeof v === 'number' ? (`${v}px`) : v
         }
       })
     }
@@ -56,64 +54,79 @@ export function setAttribute(node, name, value, isSvg) {
   } else if (name !== 'list' && name !== 'type' && !isSvg && name in node) {
     setProperty(node, name, value == null ? '' : value)
     if (value == null || value === false) node.removeAttribute(name)
-
   } else {
     const ns = isSvg && (name !== (name = name.replace(/^xlink\:?/, '')))
     if (value == null || value === false) {
       if (ns) node.removeAttributeNS('http://www.w3.org/1999/xlink', name.toLowerCase())
       else node.removeAttribute(name)
     } else if (typeof value !== 'function') {
-      if (ns) {
-        node.setAttributeNS('http://www.w3.org/1999/xlink', name.toLowerCase(), value)
-      } else {
-        node.setAttribute(name, value)
-      }
+      if (ns) node.setAttributeNS('http://www.w3.org/1999/xlink', name.toLowerCase(), value)
+      else node.setAttribute(name, value)
     }
   }
 }
 
-function setAttributes(attributes, element, isSVG, invoke) {
+function setAttributes(attributes, element, invoke) {
   each(attributes, (attribute, name) => {
     if (/^on[A-Z]/.test(name) && typeof attribute === 'function') {
-      setAttribute(element, name, (...argv) => invoke(attribute, ...argv), isSVG)
-    } else if (name === 'style' || name==='dangerouslySetInnerHTML' || !/^_+/.test(name) && !(typeof attribute === 'object')){
-      // 不允许 _ 开头的私有attribute，不允许 attribute 为数组或者对象。除非是 style。
-      setAttribute(element, name, attribute, isSVG)
+      if (invoke) {
+        setAttribute(element, name, (...argv) => invoke(attribute, ...argv))
+      } else {
+        setAttribute(element, name, attribute)
+      }
+    } else if (name === 'style' || (!/^_+/.test(name) && !(typeof attribute === 'object'))) {
+      // 不允许 _ 开头的私有attribute，不允许 attribute 为数组或者对象
+      setAttribute(element, name, attribute)
     } else {
-      console.warn(`invalid attribute: ${name}, value: ${attribute}`)
+      console.warn(`invalid attribute: ${name}`)
     }
   })
 }
 
-function setData(dataset, element) {
-  if (!dataset) return
-  each(dataset, (v, k) => {
-    element.dataset[k] = v
+function handlerChildren(container, children) {
+  children && children.forEach((child) => {
+    if (child !== undefined && child !== null) {
+      if (typeof child === 'string') {
+        container.appendChild(document.createTextNode(child))
+      } else if (child instanceof HTMLElement) {
+        container.appendChild(child)
+      } else if (Array.isArray(child)) {
+        handlerChildren(container, child)
+      }
+    }
   })
 }
 
-export function createElement(node, invoke) {
-  if (node.type === String) return document.createTextNode(node.value)
-  const element = node.isSVG
-    ? document.createElementNS('http://www.w3.org/2000/svg', node.type)
-    : document.createElement(node.type)
-
-  if (node.attributes) {
-    setAttributes(node.attributes, element, node.isSVG, invoke)
+export function createElement(type, props, ...children) {
+  if (type !== Fragment && typeof type === 'function') {
+    // 组件
+    return type({ ...props, children })
   }
 
-  if (node.dataset) {
-    setData(node.dataset, element)
+  // TODO 处理 attributes
+  let container
+  if (type === Fragment) {
+    container = document.createDocumentFragment()
+  } else if (typeof type === 'string') {
+    container = document.createElement(type)
+  } else {
+    throw new Error(`known type ${type}`)
   }
 
-  return element
+  if (props) {
+    setAttributes(props, container)
+  }
+
+  handlerChildren(container, children)
+  if (props.ref) {
+    props.ref(container)
+  }
+  return container
 }
 
-export function updateElement(vnode, element, invoke) {
-  if (vnode.type === String) {
-    element.nodeValue = vnode.value
-  } else {
-    setAttributes(vnode.attributes, element, vnode.isSVG, invoke)
-    setData(vnode.dataset, element)
-  }
+export function Fragment() {}
+
+export default {
+  createElement,
+  Fragment,
 }

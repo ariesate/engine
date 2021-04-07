@@ -50,25 +50,24 @@
  */
 
 import Fragment from '@ariesate/are/Fragment'
-import { UNIT_PAINT, UNIT_DISPOSE } from '@ariesate/are/constant'
+import { UNIT_PAINT } from '@ariesate/are/constant'
 import { shallowCloneElement } from '../index.js'
 import { reverseWalkCnodes } from '../common'
 import { filter, mapValues, shallowEqual, nextTick } from '../util'
 import {
 	isRef,
 } from '../reactive';
-import {withCurrentWorkingCnode, activeEvent, getCurrentWorkingCnode} from '../renderContext'
+import {withCurrentWorkingCnode, activeEvent} from '../renderContext'
 import LayoutManager from '../LayoutManager'
 import { afterDigestion } from '../reactive/effect';
 import { normalizeLeaf } from '../createElement'
 import ComponentNode from './ComponentNode'
 import {invariant} from "../index";
-import {UNIT_INITIAL_DIGEST} from "../../../engine/constant";
 import propTypes from "../propTypes";
 
 export { useViewEffect, createContext, useContext } from './ComponentNode'
 
-const layoutManager = new LayoutManager()
+export const layoutManager = new LayoutManager()
 
 function isFormElement(target) {
 	return (target instanceof HTMLInputElement)
@@ -187,21 +186,7 @@ function attachRef(element, ref) {
  ***************************************/
 
 
-function processLayoutAttributes(cnode, result) {
-	if (!cnode.type.isVirtual) {
-		// 2. 普通组件
-		const [layoutProps, originLayoutProps] =layoutManager.processLayoutProps(cnode.props)
 
-		// 把 cnode 上面的 layout props 穿透到渲染出来后的第一层上。如果第一层还是组件，那么还要穿透。
-		if (layoutProps) {
-			if(isComponentVnode(result)) {
-				result.attributes = Object.assign({}, result.attributes, originLayoutProps)
-			} else {
-				result.attributes = Object.assign({}, result.attributes, layoutProps)
-			}
-		}
-	}
-}
 
 
 export default function createAxiiController(rootElement) {
@@ -257,15 +242,7 @@ export default function createAxiiController(rootElement) {
 
 		cnode.reportChange = reportChangedCnode
 		cnode.reportChangedVnode = reportChangedVnode
-		let result
-		result = cnode.render()
-
-		processLayoutAttributes(cnode, result)
-		/**
-		 * 不管是哪一种，最后都要继续替换。如果有 vnodeComputed 嵌套的情况，每次处理的时候只替换一层。
-		 * 下一层的处理等到当前这层变成了 virtualCnode，render 之后又回到这里继续处理。
-		 */
-		return result
+		return cnode.render()
 	}
 
 	let sessionSideEffects = null
@@ -293,9 +270,7 @@ export default function createAxiiController(rootElement) {
 					 * 1. virtualCnode。也可以理解成 cnode 中使用 reactive 的片段更新。
 					 * 2. cnode props 的引用发生了变化。
 					 */
-					const result = cnode.render()
-					processLayoutAttributes(cnode, result)
-					return result
+					return cnode.render()
 				},
 			},
 			diffNodeDetail,
@@ -430,6 +405,8 @@ export default function createAxiiController(rootElement) {
 				},
 				updateElement: (vnode, cnode) => {
 					// update 的时候可能会更新 form element 的引用。
+					// TODO 大问题，可能会出现当前的 element 已经被卸载，element ref 不存在了的情况！！！！！！
+					//  还是要整理视图和 reactive 数据联动的问题！！！
 					const updatedElement = composedUpdateElement(vnode, cnode)
 					if (isFormElement(updatedElement) && 'value' in vnode.attributes) {
 						formElementToBindingValue.set(updatedElement, vnode.attributes.value)

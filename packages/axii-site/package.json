@@ -3,13 +3,16 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "dependencies": {
+    "@mdx-js/mdx": "^2.0.0-next.8",
     "axios": "^0.20.0",
     "history": "^5.0.0",
     "moment": "^2.28.0",
     "normalize.css": "^8.0.1",
     "path-to-regexp": "^6.1.0",
-    "querystringify": "^2.2.0"
+    "querystringify": "^2.2.0",
+    "vite-plugin-mdx": "^3.2.2"
   },
   "devDependencies": {
     "@babel/core": "^7.11.6",
@@ -24,7 +27,7 @@
     "less": "^3.12.2",
     "lodash": "^4.17.20",
     "style-loader": "^1.2.1",
-    "vite": "^1.0.0-rc.4"
+    "vite": "^2.0.5"
   },
   "scripts": {
     "start": "vite"

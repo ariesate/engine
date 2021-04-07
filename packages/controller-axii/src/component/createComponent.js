@@ -7,7 +7,7 @@ import {
   createActionCollectorContainer,
   createNamedChildrenSlotProxy,
   walkVnodes,
-  FragmentDynamic,
+  FragmentDynamic, createWalker,
 } from './utils'
 import { Fragment, normalizeLeaf, VNode } from '../index';
 
@@ -173,6 +173,13 @@ export default function createComponent(Base, featureDefs=[]) {
     return result
   }
 
+  // CAUTION 要传递用户定义的其他数据
+  for(let prop in Base) {
+    if (Base.hasOwnProperty(prop)) {
+      Component[prop] = Base[prop]
+    }
+  }
+
   // 6. TODO 作为 Feature，会需要去修改、抑制 Base 或者其他 Feature 的默认 callback 行为吗？
   // 我们目前没有处理，如果有需求，目前 Feature 声明 propTypes 时会覆盖前面，自己也可以做。
   Component.propTypes = Object.assign({},
@@ -186,12 +193,14 @@ export default function createComponent(Base, featureDefs=[]) {
 
   // 8. 允许通过 extend 快速增加 feature
   Component.extend = (...features) => createComponent(Base, featureDefs.concat(features))
+
+
   return Component
 }
 
 
 export const GLOBAL_NAME = 'global'
-
+// const walkVnodes = createWalker()
 /**
  * renderFragments 的实现
  * 1. 在 Base render 的时候，fragments 并没有被 render，只是作为一个 vnode 节点放在了结果里面，这里才开始 render。
@@ -269,6 +278,8 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
      * 3. 如果遇到 fragment，就递归渲染。
      */
     //
+
+
     // TODO 这里可以改善一下性能，先取出所有有定义的 elements，再在遍历中去匹配，而不是每个节点都试探去取一次。
     walkVnodes(renderResultToWalk, (walkChildren, originVnode, vnodes) => {
       if (!originVnode) return
@@ -291,7 +302,6 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
           // 如果是我们伪造的 fragment，只是为了在 vnodeComputed 重新计算时正确执行，那么就要在 extend 上记录上，因为还要复用 style 和 listener。
           subFragmentToRender.extend = fragment.name
         }
-
         vnodes[vnodes.indexOf(originVnode)] = renderFragments(subFragmentToRender, props, selfHandleRef, actionCollectorContainer, commonArgv, useNamedChildrenSlot, baseActionCollector)
         return
       }

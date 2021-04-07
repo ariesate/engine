@@ -16,7 +16,7 @@
  * getSnapshotBeforeUpdate() 在 digest 的 unit 之前，不能再 setState(正好也不能，因为 lock 了)。
  */
 import {walkCnodes} from './common'
-import { each } from './util'
+import { each, invariant } from './util'
 import {
   SESSION_INITIAL,
   SESSION_UPDATE,
@@ -26,8 +26,6 @@ import {
   UNIT_UPDATE_DIGEST, UNIT_PARTIAL_UPDATE_DIGEST, PATCH_ACTION_REMOVE,
 } from './constant'
 import createTrackingTree from './createTrackingTree'
-import { invariant } from './util';
-
 
 
 export default function createScheduler(painter, view, supervisor) {
@@ -59,7 +57,7 @@ export default function createScheduler(painter, view, supervisor) {
                 cnodeTrackingTree.track(toRepaintCnode)
                 vnodeTrackingMap.delete(toRepaintCnode)
               })
-              each(toDispose, toDisposeCnode => {
+              walkCnodes(Object.values(toDispose), toDisposeCnode => {
                 cnodeTrackingTree.dispose(toDisposeCnode, true)
                 vnodeTrackingMap.delete(toDisposeCnode)
               })

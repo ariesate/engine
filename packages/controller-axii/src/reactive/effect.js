@@ -199,8 +199,8 @@ function applyComputation() {
  */
 function compute(computation) {
   invariant(!computationStack.find(({computation: c}) => c === computation ), 'recursive computation detected')
+  computationStack.push({computation, indeps: new Set()});
   try {
-    computationStack.push({computation, indeps: new Set()});
     // computed 里面可以在创建 computed，我们在重新计算之前要清理一下。
     destroyInnerComputed()
     // 会从 computationStack 中读当前的 frame，所以不用传值。
@@ -385,12 +385,15 @@ let inComputationDigestion = false
 let levelChangedComputations = []
 // 用来记录在一次 digestion 中发生了变化的 computation，
 const appliedComputations = new Set()
+const maxComputationCalls = 1000
+let computationCalled = 0
 function digestComputations() {
   invariant(!inComputationDigestion, 'already in computation digestion')
   invariant(!inDigestionCallback, 'in digestion callback loop, should not trigger digest')
   inComputationDigestion = true
   let computation
   computationObservers.forEach(observer => observer.start && observer.start(cachedTriggerSources, cachedComputations))
+  computationCalled = 0
   while(computation = cachedComputations.shift()) {
     // 一定不要忘了清空
     levelChangedComputations = []
@@ -404,6 +407,12 @@ function digestComputations() {
     changedLevelComputations.forEach(c => {
       insertIntoOrderedArray(cachedComputations, c, (a, b) => b.level < a.level)
     })
+    computationCalled++
+    if (computationCalled > maxComputationCalls) {
+      console.error(`computation called more than ${maxComputationCalls}, seems like infinite loop`)
+      cachedComputations.splice(0, cachedComputations.length)
+      break
+    }
   }
   // 这个对象只是给 observer 用，执行完就要清空。
   computationObservers.forEach(observer => observer.end && observer.end(appliedComputations, cachedTriggerSources))

@@ -33,7 +33,6 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
   }
 
   const {source, node: optionListNode} = useLayer((sourceRef) => {
-
     return (
       <optionList
         inline
@@ -58,7 +57,7 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
           </optionItem>
         ))}
       </optionList>)
-  }, {
+    }, {
       getContainerRect,
     })
 
@@ -78,6 +77,22 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
       {optionListNode}
     </container>
   )
+
+  // return (
+  //   <container block flex-display-inline>
+  //     <Input
+  //       layout:inline
+  //       layout:inline-max-width="100%"
+  //       ref={source}
+  //       onFocus={onInputFocus}
+  //       focused={focused}
+  //       onBlur={() => false}
+  //       value={refComputed(() => renderValue(value))}
+  //     >
+  //     </Input>
+  //     {optionListNode}
+  //   </container>
+  // )
 }
 
 Select.propTypes = {
@@ -100,21 +115,21 @@ Select.propTypes = {
   }),
 }
 
-Select.Style = (fragments) => {
-  fragments.optionItem.elements.optionItem.style(({ value, option, match}) => {
-    const equal = match(value, option)
-
-    return {
-      background: equal?
-        scen().inverted().active().bgColor() :
-        scen().active().bgColor(),
-      color: equal ? scen().interactable().active().inverted().color() : scen().color(),
-      cursor: 'pointer',
-    }
-  })
-
-  fragments.root.elements.optionList.style(layerStyle)
-}
+// Select.Style = (fragments) => {
+//   fragments.optionItem.elements.optionItem.style(({ value, option, match}) => {
+//     const equal = match(value, option)
+//
+//     return {
+//       background: equal?
+//         scen().inverted().active().bgColor() :
+//         scen().active().bgColor(),
+//       color: equal ? scen().interactable().active().inverted().color() : scen().color(),
+//       cursor: 'pointer',
+//     }
+//   })
+//
+//   fragments.root.elements.optionList.style(layerStyle)
+// }
 
 
 // TODO Select 的搜索 feature & 动态 option feature

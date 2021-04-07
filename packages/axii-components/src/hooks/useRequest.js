@@ -1,14 +1,16 @@
 import axios  from 'axios'
-import { ref, debounceComputed } from 'axii'
-
+import { ref, debounceComputed, watch, traverse } from 'axii'
 
 export function createUseRequest(instance, { createReactiveData = () => ({}), processResponse = () => {}, processError = () => {} } = {}) {
-	return function useRequest(inputConfig, { manual } = {}) {
+	return function useRequest(inputConfig, { manual, deps } = {}) {
 
-		const config = typeof inputConfig === 'string' ? { url: inputConfig } : inputConfig
-
-		const CancelToken = axios.CancelToken;
-		const source = CancelToken.source();
+		let doRequest
+		if (typeof inputConfig === 'function') {
+			doRequest = inputConfig
+		} else {
+			const config = typeof inputConfig === 'string' ? { url: inputConfig } : inputConfig
+			doRequest = () => instance(Object.assign({}, config, argv))
+		}
 
 		const data = ref()
 		const error = ref()
@@ -24,22 +26,25 @@ export function createUseRequest(instance, { createReactiveData = () => ({}), pr
 			...useData
 		}
 
-		function run(argv = {}) {
+		let runId = 0
+		function run(...argv) {
+			const currentRunId = ++runId
+
 			loading.value = true
 			error.value = null
 			status.value = undefined
 
-			instance(Object.assign({}, config, argv), {
-				cancelToken: source.token
-			}).then(response => {
+			doRequest(...argv).then(response => {
+				if (currentRunId !== runId) return
 				debounceComputed(() => {
 					data.value = response.data
 					status.value = response.status
-
 					processResponse(values, response)
 				})
-
 			}).catch((error) => {
+				if (currentRunId !== runId) return
+
+				console.error(error)
 				debounceComputed(() => {
 					data.value = undefined
 
@@ -61,20 +66,21 @@ export function createUseRequest(instance, { createReactiveData = () => ({}), pr
 					processError(values, error)
 				})
 			}).finally(() => {
+				if (currentRunId !== runId) return
+
 				loading.value = false
 			})
 		}
 
-		function cancel(message) {
-			source.cancel(message)
-		}
 
 		if (!manual) run()
+		if (deps) {
+			watch(() => deps.forEach(dep => traverse(dep)), run)
+		}
 
 		return {
 			...values,
 			run,
-			cancel,
 		}
 	}
 }

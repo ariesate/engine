@@ -72,6 +72,7 @@ export default data;
 
   // TODO 因为 node click 的事件不是由我们的组件自己决定发出的，所以没发写在自己组件里面，并传相应的值，只能写在这里。
   const onCellClick = ({cell, e}) => {
+    console.log("cell click")
     if (cell.isNode()) {
       if (cell.getAxiiProps) {
         selectedItemRef.value = entities.find(e => e.id === cell.id)
@@ -98,8 +99,36 @@ export default data;
     })
   }
 
-  const onEdgeConnect = ({ edge }) => {
-    console.log("connected", edge.getTarget(), edge.getSource())
+  const onEdgeConnect = ({ edge, ...rest }) => {
+    const target = edge.getTarget()
+    const source = edge.getSource()
+    if (!target || !source) {
+      console.warn('target or source is null', target, source)
+      return
+    }
+
+    const [sourceField, sourcePortSide] = source.port.split('|')
+    const [targetField, targetPortSide] = target.port.split('|')
+
+    relations.push({
+      id: edge.id,
+      name: 'newRelation',
+      type: '1:1',
+      source: {
+        entity: source.cell,
+        field: sourceField
+      },
+      target: {
+        entity: target.cell,
+        field: targetField
+      },
+      view: {
+        sourcePortSide,
+        targetPortSide,
+      }
+    })
+
+    console.log("connected", edge.getSource())
   }
 
   const onEdgeDelete = ({ edge }) => {

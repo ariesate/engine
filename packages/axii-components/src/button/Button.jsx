@@ -1,3 +1,4 @@
+/**@jsx createElement */
 import { propTypes, createElement, ref, createComponent } from 'axii'
 import scen from "../pattern";
 

@@ -17,7 +17,7 @@ import scen from '../pattern'
  * 或者有个规划位置的作为 base。
  */
 
-export function Input({value, onChange, children, placeholder}, fragments) {
+export function Input({value, onChange, children, placeholder, ...rest}, fragments) {
 	const prefixLikeProps = {
 		'flex-display-inline': true,
 		'flex-align-items-center': true,
@@ -42,11 +42,12 @@ export function Input({value, onChange, children, placeholder}, fragments) {
 
 
   return (
-    <container block flex-display-inline block-border-width-1px flex-align-items-stretch>
+    <container inline flex-display-inline block-border-width-1px flex-align-items-stretch>
       {prefixVnode}
-      <middle inline flex-display-inline flex-align-items-stretch inline-max-width="100%">
+      <middle inline flex-display-inline flex-grow-1 flex-align-items-stretch inline-max-width="100%">
         {beforeVnode}
         <input
+					flex-grow-1
           inline
           inline-border-width-0
 					inline-max-width="100%"
@@ -56,6 +57,7 @@ export function Input({value, onChange, children, placeholder}, fragments) {
           value={value}
           onInput={onChange}
 					placeholder={placeholder}
+					{...rest}
         />
         {afterVnode}
       </middle>

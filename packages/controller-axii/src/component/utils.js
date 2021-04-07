@@ -1,4 +1,5 @@
-import { normalizeLeaf, VNode } from '../index'
+import VNode from '@ariesate/are/VNode'
+import { normalizeLeaf } from '../createElement'
 import createFlatChildrenProxy from '../createFlatChildrenProxy'
 import { isComponentVnode } from '../controller'
 import { invariant } from '../util'
@@ -242,6 +243,26 @@ export function hasComputedAttr(rulesToSearch) {
   return rulesToSearch.some((rule) => {
     return Object.values(rule).some(v => typeof v === 'function')
   })
+}
+
+
+export function createWalker() {
+  const visited = new WeakSet()
+  return function walkVnodes(vnodes, handle) {
+    vnodes.forEach((vnode) => {
+      if (visited.has(vnode)) throw new Error('infinite loop detected')
+      const runChildren = (children) => walkVnodes(children, handle)
+      if (vnode) visited.add(vnode)
+
+      if (handle) {
+        // 这里面由 handle 自己决定要不要 runChildren
+        handle(runChildren, vnode, vnodes)
+      } else {
+        runChildren(vnode.children, handle)
+      }
+
+    })
+  }
 }
 
 

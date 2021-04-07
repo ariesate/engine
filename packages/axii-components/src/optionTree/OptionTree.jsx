@@ -44,8 +44,8 @@ function renderOptionList(options, openedIds, index, props, fragments) {
 
 // TODO 有 openedIds 就显示 openedIds。没有就显示 value 的。
 // TODO 异步加载数据?
-export function Cascader(props, fragments) {
-	const {value, options, renderValue, onFocus, focused, openedIds} = props
+export function OptionTree(props, fragments) {
+	const {options, focused, openedIds} = props
 
 	const optionsIndexedById = computed(() => {
 		const result = {}
@@ -67,6 +67,7 @@ export function Cascader(props, fragments) {
 
 	const optionContainerRef = useRef()
 
+	// TODO 指定打开方式是跟顶部对其还是怎样
 	const getContainerRect = ({top, left, height}) => {
 		return {
 			top: height + top,
@@ -74,59 +75,31 @@ export function Cascader(props, fragments) {
 		}
 	}
 
-	const onInputFocus = () => {
-		// CAUTION 这里 onFocus() 的写法，不传参很重要，这样 callback 系统补齐的默认参数顺序才正确
-		onFocus()
-		// 在 nextTick 中 focus calendar 是因为在当前是在 onFocus 事件中，focus 到别的 element 上没用。用 e.preventDefault 也不行
-		nextTick(() => optionContainerRef.current.focus())
-	}
-
-	const {source, node: optionContainerNode} = useLayer((sourceRef) => {
-		// 每次 blur，都把 openedIds 清空。
-		return (
-			<optionContainer
-				inline
-				flex-display
-				tabindex={-1}
-				onFocusOut={() => props.onBlur()}
-				inline-display-none={refComputed(() => !focused.value)}
-				style={{background: "#fff", zIndex: 99}}
-				ref={optionContainerRef}
-			>
-
-				{fragments.optionList({ items: options })(
-					() => renderOptionList(options, openedIds, 0, props, fragments)
-				)}
-
-				{() => openedIds.map((id, index) =>
-						fragments.optionsList({ items: optionsIndexedById[id]})(
-							() => renderOptionList(optionsIndexedById[id].children, openedIds, index + 1, props, fragments)
-						)
-					)
-				}
-			</optionContainer>)
-	}, {
-		getContainerRect,
-	})
-
 	return (
-		<>
-			<selectInput
-				inline
-				use={Input}
-				ref={source}
-				onFocus={onInputFocus}
-				focused={focused}
-				onBlur={() => false}
-				value={refComputed(() => renderValue(value))}
-			>
-			</selectInput>
-			{optionContainerNode}
-		</>
+		<optionContainer
+			inline
+			flex-display
+			tabindex={-1}
+			onFocusOut={() => props.onBlur()}
+			style={{background: "#fff", zIndex: 99}}
+			ref={optionContainerRef}
+		>
+
+			{fragments.optionList({ items: options })(
+				() => renderOptionList(options, openedIds, 0, props, fragments)
+			)}
+
+			{() => openedIds.map((id, index) =>
+				fragments.optionsList({ items: optionsIndexedById[id]})(
+					() => renderOptionList(optionsIndexedById[id].children, openedIds, index + 1, props, fragments)
+				)
+			)
+			}
+		</optionContainer>
 	)
 }
 
-Cascader.propTypes = {
+OptionTree.propTypes = {
 	value: propTypes.object.default(() => ref([])),
 	options: propTypes.object.default(() => reactive([])),
 	focused: propTypes.bool.default(() => ref(false)),
@@ -165,7 +138,7 @@ Cascader.propTypes = {
 	})
 }
 
-Cascader.Style = (fragments) => {
+OptionTree.Style = (fragments) => {
 	fragments.optionItem.elements.optionItem.style(({ openedIds, value, option, match}) => {
 		const opened = openedIds.includes(option.id)
 
@@ -179,4 +152,4 @@ Cascader.Style = (fragments) => {
 	})
 }
 
-export default createComponent(Cascader)
+export default createComponent(OptionTree)

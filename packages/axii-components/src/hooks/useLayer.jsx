@@ -61,8 +61,6 @@ export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), 
   </portal>, portalRoot)
 
 
-
-
   return {
     source: inputSourceRef ? undefined : (ref) => {
       // TODO 为什么要 nextick。因为立即 sourceRef 是 reactive，一但挂载，马上就会出发 style 重新计算。

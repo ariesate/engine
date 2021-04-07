@@ -7,7 +7,6 @@ import {
   ref
 } from 'axii';
 import * as icons from '@ant-design/icons-svg'
-import { renderIconDefinitionToSVGElement } from '@ant-design/icons-svg/es/helpers';
 
 function createAXIIElement({tag, attrs, children = []}) {
   return createElement(tag, { ...attrs, isSVG: true }, children.map(createAXIIElement))

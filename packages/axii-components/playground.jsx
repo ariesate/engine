@@ -18,11 +18,10 @@ const renderEmptyContent = (name) => {
 function ExampleCode() {
   const codeContainerRef = useRef()
 
-  useViewEffect(() => {
+  useViewEffect(async () => {
     if ( component) {
-      import(`./playground/${component}.jsx`)
+      await import(`./playground/${component}.jsx`)
 
-      // const promise = import(`./playground-assets/${component}.jst?raw`)
       // TODO 因为 vite 不支持 dynamic assets 所以不得已只能这样写.
       const promise = import(`./playground-assets/${component}.jsx`)
       promise.then((contentModule) => {

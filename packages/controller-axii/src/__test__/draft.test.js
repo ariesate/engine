@@ -8,7 +8,7 @@ describe('draft', () => {
       return `${base.value}-computed`
     })
 
-    const drafted = draft(computed)
+    const { draftValue: drafted, displayValue } = draft(computed)
 
     expect(computed.value).toBe('base-computed')
     expect(drafted.value).toBe('base-computed')
@@ -16,57 +16,57 @@ describe('draft', () => {
     drafted.value = 'draft change'
     expect(base.value).toBe('base')
     expect(computed.value).toBe('base-computed')
-    expect(getDisplayValue(drafted).value).toBe('draft change')
+    expect(displayValue.value).toBe('draft change')
 
     base.value = 'base2'
     expect(base.value).toBe('base2')
     expect(computed.value).toBe('base2-computed')
-    expect(getDisplayValue(drafted).value).toBe('base2-computed')
+    expect(displayValue.value).toBe('base2-computed')
   })
 
   test('draft of ref', () => {
     const base = ref('base')
-    const drafted = draft(base)
+    const { draftValue: drafted, displayValue } = draft(base)
 
     expect(base.value).toBe('base')
-    expect(getDisplayValue(drafted).value).toBe('base')
+    expect(displayValue.value).toBe('base')
 
     drafted.value = 'draft'
     expect(base.value).toBe('base')
-    expect(getDisplayValue(drafted).value).toBe('draft')
+    expect(displayValue.value).toBe('draft')
 
     base.value = 'base2'
     expect(base.value).toBe('base2')
-    expect(getDisplayValue(drafted).value).toBe('base2')
+    expect(displayValue.value).toBe('base2')
   })
 
   test('draft of array reactive', () => {
     const base = reactive([1, 2, 3, 4])
-    const drafted = draft(base)
+    const { draftValue: drafted, displayValue } = draft(base)
 
     expect(base).toEqual(expect.arrayContaining([1, 2, 3, 4]))
-    expect(getDisplayValue(drafted)).toEqual(expect.arrayContaining([1, 2, 3, 4]))
+    expect(displayValue).toEqual(expect.arrayContaining([1, 2, 3, 4]))
 
     drafted.push(5)
     expect(base).toEqual(expect.arrayContaining([1, 2, 3, 4]))
-    expect(getDisplayValue(drafted)).toEqual(expect.arrayContaining([1, 2, 3, 4, 5]))
+    expect(displayValue).toEqual(expect.arrayContaining([1, 2, 3, 4, 5]))
 
     base.push(6)
     expect(base).toEqual(expect.arrayContaining([1, 2, 3, 4, 6]))
-    expect(getDisplayValue(drafted)).toEqual(expect.arrayContaining([1, 2, 3, 4, 6]))
+    expect(displayValue).toEqual(expect.arrayContaining([1, 2, 3, 4, 6]))
   })
 
   test('draft should not sync if value is not changed', () => {
     const base = ref('base')
-    const drafted = draft(base)
+    const { draftValue: drafted, displayValue } = draft(base)
 
     drafted.value = 'draft'
     expect(base.value).toBe('base')
-    expect(getDisplayValue(drafted).value).toBe('draft')
+    expect(displayValue.value).toBe('draft')
 
     base.value = 'base'
     expect(base.value).toBe('base')
-    expect(getDisplayValue(drafted).value).toBe('draft')
+    expect(displayValue.value).toBe('draft')
   })
 
   test('draft with complex type', () => {
@@ -87,7 +87,7 @@ describe('draft', () => {
     })
 
     draft.handle(A, cloneA)
-    const drafted = draft(base)
+    const { draftValue: drafted, displayValue } = draft(base)
     expect(drafted.a !== base.a).toBe(true)
   })
 })

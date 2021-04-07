@@ -5,6 +5,7 @@ import {activeEvent, getCurrentWorkingCnode, reactiveToOwnerScope} from "../rend
 import {applyPatches, produce} from "../produce";
 import { replaceVnodeComputedAndWatchReactive } from './VirtualComponent'
 import watch from "../watch";
+import {isComponentVnode, layoutManager} from "./index";
 
 /**
  * ComponentNode
@@ -67,7 +68,13 @@ export default class ComponentNode {
 		// 1. 回收 render 中间产生的所有 computed。包括 watch token，其实也是 computed。
 		this.clearComputed()
 		// 2. 清理 didMount 中产生的 viewEffect
-		this.effectClearHandles.forEach((clearEffect) => clearEffect && clearEffect())
+		this.effectClearHandles.forEach((clearEffect) => {
+			if (clearEffect instanceof Promise) {
+				clearEffect.then(resultFn => resultFn())
+			} else {
+				clearEffect()
+			}
+		})
 	}
 	// AXII lifeCycle: willUpdate。
 	willUpdate() {
@@ -92,8 +99,12 @@ export default class ComponentNode {
 			 *   2.1 我们是不 watch vnodeComputed 的。vnodeComputed 里面变化由相应的 Virtual Component 负责(实际上是 vnodeComputed 自己内部处理)。
 			 *   2.2 但是这个它是在我们的作用域里创建的，并且在用户概念里它也是属于这个组件，因此要负责销毁他。
 			 */
+			const renderResult = this.type(createInjectedProps(this), this.ref)
+			// 我们允许外部传递 layout:xxx 的属性进来，在这里要 patch 到 result 上，才能被正确 replace 掉
+			processLayoutAttributes(this, renderResult)
+
 			return replaceVnodeComputedAndWatchReactive(
-				this.type(createInjectedProps(this), this.ref),
+				renderResult,
 				(patchNode) => this.reportChangedVnode(patchNode, this),
 				this
 				)
@@ -141,6 +152,24 @@ export default class ComponentNode {
 
 	}
 }
+
+
+function processLayoutAttributes(cnode, result) {
+	if (!cnode.type.isVirtual) {
+		// 2. 普通组件
+		const [layoutPropsWithoutNamespace, layoutPropsWithNamespace] = layoutManager.processLayoutProps(cnode.props)
+
+		// 把 cnode 上面的 layout props 穿透到渲染出来后的第一层上。如果第一层还是组件，那么还要穿透。
+		if (layoutPropsWithoutNamespace) {
+			if(isComponentVnode(result)) {
+				result.attributes = Object.assign({}, result.attributes, layoutPropsWithNamespace)
+			} else {
+				result.attributes = Object.assign({}, result.attributes, layoutPropsWithoutNamespace)
+			}
+		}
+	}
+}
+
 
 function createInjectedProps(cnode) {
 	const { props, localProps } = cnode

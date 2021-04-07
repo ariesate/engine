@@ -36,9 +36,12 @@ export function createCreateElement(normalizeLeaf = defaultNormalizeLeaf) {
     node.attributes = attributes || {}
     // CAUTION 如果有 use，那么用 use。这样在写 vnode 的时候看起来像自定义组件。符合用户心智。
     node.type = node.attributes.use || name
+    // CAUTION 一定要删掉，不要随便往 attribute 上挂载函数。会容易被当成 refComputed。
+    delete node.attributes.use
     if (typeof name === 'string') {
       node.name = name
     }
+
 
     if (node.attributes.ref !== undefined) {
       node.ref = node.attributes.ref

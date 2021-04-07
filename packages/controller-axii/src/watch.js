@@ -3,16 +3,16 @@ import { TYPE } from './reactive/effect';
 
 
 
-export default function watch(computation, callback) {
+export default function watch(computation, callback, runAtOnce) {
   let result
   let isFirstRun = true
   const token = createComputed((lastValue, watchAnyMutation) => {
     if (isFirstRun) {
       result = computation(watchAnyMutation)
       isFirstRun = false
+      if (runAtOnce) callback()
     } else {
       computation(watchAnyMutation)
-      // TODO 是不是要考虑 queueMicroTask ？？？需要从整体再设计各种 callback 的触发时机。
       callback()
     }
   }, TYPE.TOKEN)
@@ -33,7 +33,7 @@ export function traverse(obj) {
   }
 }
 
-export function watchReactive(data, callback) {
-  const [_, token] = watch(() => traverse(data), callback)
+export function watchReactive(data, callback, runAtOnce) {
+  const [_, token] = watch(() => traverse(data), callback, runAtOnce)
   return () => destroyComputed(token)
 }
