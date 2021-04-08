@@ -1,6 +1,6 @@
 {
   "name": "mdx-axii",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Axii implementation for MDX",
   "repository": "@ariesate/mdx-axii",
   "author": "sskyy <skyking_H@hotmail.com>",
@@ -8,18 +8,18 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/index.umd.js",
-  "module": "./dist/index.es.js",
+  "main": "./dist/mdx-axii.umd.js",
+  "module": "./dist/mdx-axii.es.js",
   "exports": {
     ".": {
-      "import": "./dist/index.es.js",
-      "require": "./dist/index.umd.js"
+      "import": "./dist/mdx-axii.es.js",
+      "require": "./dist/mdx-axii.umd.js"
     }
   },
   "keywords": [
     "mdx",
     "markdown",
-    "react",
+    "axii",
     "jsx",
     "remark",
     "mdxast"

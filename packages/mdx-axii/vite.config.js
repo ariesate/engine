@@ -8,7 +8,6 @@ export default {
   build: {
     lib: {
       entry: makePath('./src/index.js'),
-      name: 'index'
     },
     rollupOptions: {
       external: ['axii'],
