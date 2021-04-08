@@ -53,7 +53,7 @@ import Fragment from '@ariesate/are/Fragment'
 import { UNIT_PAINT } from '@ariesate/are/constant'
 import { shallowCloneElement } from '../index.js'
 import { reverseWalkCnodes } from '../common'
-import { filter, mapValues, shallowEqual, nextTick } from '../util'
+import { filter, mapValues, shallowEqual, nextTask } from '../util'
 import {
 	isRef,
 } from '../reactive';
@@ -242,14 +242,15 @@ export default function createAxiiController(rootElement) {
 
 		cnode.reportChange = reportChangedCnode
 		cnode.reportChangedVnode = reportChangedVnode
-		return cnode.render()
+		const result = cnode.render()
+		return result
 	}
 
 	let sessionSideEffects = null
 	// 用来处理 session 中产生的 effect 的
 	function deferStartEffectSession(sessionSideEffectsToRun = []) {
 		if (sessionSideEffectsToRun.length === 0) return
-		nextTick(() => {
+		nextTask(() => {
 			scheduler.startUpdateSession(() => {
 				sessionSideEffectsToRun.forEach(effect => effect())
 			})

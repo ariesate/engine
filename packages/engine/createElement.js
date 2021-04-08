@@ -1,4 +1,5 @@
 import VNode from './VNode'
+import {invariant} from "./util";
 
 // 会进行递归的 normalize
 export function defaultNormalizeLeaf(rawChild) {
@@ -70,6 +71,7 @@ export function createCreateElement(normalizeLeaf = defaultNormalizeLeaf) {
 
     let childrenToAttach = rawChildren
     if (node.attributes.children !== undefined) {
+      invariant(childrenToAttach.length === 0, 'can not createElement with both children and prop.children')
       childrenToAttach = node.attributes.children
       delete node.attributes.children
     }

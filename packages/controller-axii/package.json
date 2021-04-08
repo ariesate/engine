@@ -1,6 +1,6 @@
 {
   "name": "axii",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "author": "ariesate@outlook.com",
@@ -31,6 +31,8 @@
     "@babel/plugin-transform-react-jsx": "^7.10.4",
     "@babel/preset-env": "^7.11.5",
     "@babel/preset-react": "^7.10.4",
+    "@mdx-js/mdx": "^2.0.0-next.9",
+    "@prefresh/vite": "^2.2.0",
     "@testing-library/jest-dom": "^5.11.4",
     "babel-core": "^7.0.0-bridge.0",
     "babel-jest": "^26.3.0",
@@ -42,7 +44,8 @@
     "jquery": "^3.5.1",
     "jsdom": "^16.4.0",
     "lodash": "^4.17.20",
-    "pretty-data": "^0.40.0"
+    "pretty-data": "^0.40.0",
+    "vite": "^2.1.5"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -68,6 +71,7 @@
     ]
   },
   "scripts": {
+    "start": "vite",
     "test": "jest",
     "coverage": "jest --coverage"
   }

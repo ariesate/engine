@@ -8,7 +8,7 @@ import {
   render,
 } from '../index';
 import $ from 'jquery'
-import {nextTick} from "../util";
+import {nextTask} from "../util";
 
 describe('sideEffects', () => {
 
@@ -22,10 +22,10 @@ describe('sideEffects', () => {
     const root = document.createElement('div')
     const controller = render(<App/>, root)
 
-    nextTick(() => {
+    nextTask(() => {
       expect(el.current).partialMatchDOM(<div>test</div>)
       controller.destroy()
-      nextTick(() => {
+      nextTask(() => {
         expect(el.current).toBe(null)
         done()
       })
@@ -48,11 +48,11 @@ describe('sideEffects', () => {
     const root = document.createElement('div')
     const controller = render(<App/>, root)
 
-    nextTick(() => {
+    nextTask(() => {
       expect(flag).toBe(1)
       controller.destroy()
 
-      nextTick(() => {
+      nextTask(() => {
         expect(flag).toBe(2)
         done()
       })
@@ -72,7 +72,7 @@ describe('sideEffects', () => {
     const root = document.createElement('div')
     const controller = render(<App/>, root)
 
-    nextTick(() => {
+    nextTask(() => {
       expect(el.current).partialMatchDOM(<div>0</div>)
       flag.value = 1
       expect(el.current).partialMatchDOM(<div>1</div>)

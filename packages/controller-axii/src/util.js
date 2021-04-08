@@ -460,6 +460,10 @@ export function createObjectIdContainer() {
   }
 }
 
-export function nextTick(callback) {
+export function nextTask(callback) {
   setTimeout(callback, 0)
+}
+
+export function nextJob(callback) {
+  Promise.resolve(this).then(callback)
 }
