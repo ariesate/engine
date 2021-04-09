@@ -31,10 +31,14 @@ export default {
     __DEV__: true
   },
   build: {
-    lib: {
-      entry: makePath('./src/index.js'),
-      name: 'axiiComponents'
+    rollupOptions: {
+      input: {
+        main: makePath('index.html'),
+        playground: makePath( 'playground.html')
+      }
     },
-    outDir: 'dist'
-  }
+    outDir: 'site'
+  },
+  base: '/axii-component-site/',
+  assetsInclude: [/\.jst/]
 }

@@ -1,8 +1,7 @@
 {
   "name": "@ariesate/are-components",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
-  "main": "index.js",
   "dependencies": {
     "@ant-design/colors": "^5.0.1",
     "@ant-design/icons-svg": "^4.1.0",
@@ -19,31 +18,39 @@
     "tui-image-editor": "^3.14.0",
     "x-data-spreadsheet": "^1.1.8"
   },
+  "peerDependencies": {
+    "axii": "^1.0.3"
+  },
   "type": "module",
   "devDependencies": {
-    "@babel/core": "^7.11.6",
-    "@babel/plugin-proposal-class-properties": "^7.10.4",
-    "@babel/plugin-proposal-export-default-from": "^7.10.4",
-    "@babel/plugin-transform-react-jsx": "^`7.10.4",
-    "@babel/preset-env": "^7.11.5",
-    "babel-loader": "^8.1.0",
-    "babel-plugin-set-display-name": "^1.1.2",
-    "css-loader": "^4.3.0",
+    "command-line-args": "^5.1.1",
     "fast-json-patch": "^3.0.0-1",
     "less": "^3.12.2",
     "lodash": "^4.17.20",
-    "style-loader": "^1.2.1",
     "vite": "^2.0.5"
   },
   "scripts": {
     "entry": "node ./scripts/generateIndexEntry.js",
-    "start": "npm run entry && node ./scripts/copyPlaygroundAsString.js && vite --force",
+    "start": "npm run entry && node ./scripts/copyPlaygroundAsString.js && vite --force --config vite.site.config.js",
     "build": "npm run entry && node ./scripts/copyPlaygroundAsString.js && vite build",
-    "preview": "vite preview",
+    "publish:patch": "npm run build && node ./scripts/publish.js --patch",
+    "publish:minor": "npm run build && node ./scripts/publish.js --minor",
+    "preview": "vite preview --config vite.site.config.js",
     "deploy": "./deploy.sh"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/axii.umd.js",
+  "module": "./dist/axii.es.js",
+  "exports": {
+    ".": {
+      "import": "./dist/axii.es.js",
+      "require": "./dist/axii.umd.js"
+    }
   },
   "author": "sskyy",
   "license": "MIT"
