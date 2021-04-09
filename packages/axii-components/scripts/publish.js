@@ -20,14 +20,16 @@ const options = commandLineArgs(optionDefinitions, { partial: true })
 const versionType = options.major ? 'major' : (options.minor ? 'minor' : 'patch')
 
 try {
-  console.log(`npm version ${versionType}`)
-  await exec(`npm version ${versionType}`)
   console.log(`npm run build`)
   await exec(`npm run build`)
-
+  console.log(`npm version ${versionType}`)
+  await exec(`npm version ${versionType}`)
   const { version } = await loadJSON(path.join(process.cwd(), './package.json'))
+  console.log(`git add -A`)
   await exec(`git add .`)
+  console.log(`git commit -m "version: axii ${version}"`)
   await exec(`git commit -m "version: axii ${version}"`)
+  console.log('npm publish ./')
   await exec('npm publish ./')
   console.log(`published: ${version}`)
 } catch (e) {
