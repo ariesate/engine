@@ -1,6 +1,6 @@
 {
-  "name": "@ariesate/are-components",
-  "version": "1.0.1",
+  "name": "axii-components",
+  "version": "1.0.4",
   "description": "",
   "dependencies": {
     "@ant-design/colors": "^5.0.1",
@@ -33,8 +33,8 @@
     "entry": "node ./scripts/generateIndexEntry.js",
     "start": "npm run entry && node ./scripts/copyPlaygroundAsString.js && vite --force --config vite.site.config.js",
     "build": "npm run entry && node ./scripts/copyPlaygroundAsString.js && vite build",
-    "publish:patch": "npm run build && node ./scripts/publish.js --patch",
-    "publish:minor": "npm run build && node ./scripts/publish.js --minor",
+    "publish:patch": "node ./scripts/publish.js --patch",
+    "publish:minor": "node ./scripts/publish.js --minor",
     "preview": "vite preview --config vite.site.config.js",
     "deploy": "./deploy.sh"
   },
@@ -44,12 +44,12 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/axii.umd.js",
-  "module": "./dist/axii.es.js",
+  "main": "./dist/axii-components.umd.js",
+  "module": "./dist/axii-components.es.js",
   "exports": {
     ".": {
-      "import": "./dist/axii.es.js",
-      "require": "./dist/axii.umd.js"
+      "import": "./dist/axii-components.es.js",
+      "require": "./dist/axii-components.umd.js"
     }
   },
   "author": "sskyy",
