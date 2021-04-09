@@ -87,5 +87,10 @@ export function createContextmenu(
   }
 }
 
-export default createContextmenu()
+const defaultContextmenu = createContextmenu()
+defaultContextmenu.createContextmenu = createContextmenu
+
+export default defaultContextmenu
+
+
 

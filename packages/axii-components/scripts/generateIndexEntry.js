@@ -11,7 +11,7 @@ function capitalize(str) {
 }
 
 
-const commandLikeComponents = ['message']
+const commandLikeComponents = ['message', 'contextmenu']
 
 const SRC_PATH = makePath('../src')
 const HOOKS_DIR_NAME = 'hooks'
