@@ -35,6 +35,14 @@ export default {
       entry: makePath('./src/index.js'),
       name: 'axiiComponents'
     },
-    outDir: 'dist'
+    outDir: 'dist',
+    rollupOptions: {
+      external: ['axii'],
+      output: {
+        globals: {
+          axii: 'Axii'
+        }
+      }
+    }
   }
 }
