@@ -22,11 +22,11 @@ const exportStr = dirNames.map(name => `export { default as ${capitalize(name)} 
 
 // 还要增加 hooks
 const hooksDirFileNames = await readdir(path.join(SRC_PATH, HOOKS_DIR_NAME))
-const hooksFileNames = hooksDirFileNames.filter(name => /^use\w/.test(name))
-exportStr.push(...hooksFileNames.map(name => `export { default as ${name.replace(/\.jsx?$/, '')} } from "./${HOOKS_DIR_NAME}/${name}"`))
+// const hooksFileNames = hooksDirFileNames.filter(name => /^use\w/.test(name))
+exportStr.push(...hooksDirFileNames.map(name => `export { default as ${name.replace(/\.jsx?$/, '')} } from "./${HOOKS_DIR_NAME}/${name}"`))
 
 // 增加 message 等命令式组件
-exportStr.push(...commandLikeComponents.map(name => `export { default as ${capitalize(name)} } from "./${name}/${name}.jsx"`))
+exportStr.push(...commandLikeComponents.map(name => `export { default as ${name} } from "./${name}/${name}.jsx"`))
 exportStr.push('import "./style/global.less"')
 
 await writeFile(path.join(SRC_PATH, './index.js'), exportStr.join('\n'))
