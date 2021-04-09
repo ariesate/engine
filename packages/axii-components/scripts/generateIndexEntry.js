@@ -27,5 +27,6 @@ exportStr.push(...hooksFileNames.map(name => `export { default as ${name.replace
 
 // 增加 message 等命令式组件
 exportStr.push(...commandLikeComponents.map(name => `export { default as ${capitalize(name)} } from "./${name}/${name}.jsx"`))
+exportStr.push('import "./style/global.less"')
 
 await writeFile(path.join(SRC_PATH, './index.js'), exportStr.join('\n'))
