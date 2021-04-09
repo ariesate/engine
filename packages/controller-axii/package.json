@@ -11,10 +11,6 @@
     "immer": "^7.0.8"
   },
   "devDependencies": {
-    "@mdx-js/mdx": "^2.0.0-next.9",
-    "@prefresh/vite": "^2.2.0",
-    "@testing-library/jest-dom": "^5.11.4",
-    "codemirror": "^5.60.0",
     "command-line-args": "^5.1.1",
     "jest": "^26.4.2",
     "jquery": "^3.5.1",
@@ -47,13 +43,14 @@
     ]
   },
   "scripts": {
-    "site": "vite --config vite.site.config.js",
     "build": "vite build",
-    "build:site": "vite build --config vite.site.config.js",
-    "publish:patch": "node ./scripts/publish.js -- --patch",
-    "publish:minor": "node ./scripts/publish.js -- --minor",
+    "publish:patch": "node ./scripts/publish.js --patch",
+    "publish:minor": "node ./scripts/publish.js --minor",
     "test": "jest",
     "coverage": "jest --coverage"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "dist"
