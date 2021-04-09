@@ -1,22 +1,16 @@
 {
-  "name": "@ariesate/are-x6",
-  "version": "1.0.0",
+  "name": "axii-x6",
+  "version": "1.0.1",
   "description": "",
-  "main": "index.js",
   "dependencies": {
     "@antv/x6": "^1.12.14",
+    "axii-components": "^1.0.15",
     "axios": "^0.21.1",
     "copy-text-to-clipboard": "^2.2.0",
     "lodash-es": "^4.17.20"
   },
   "devDependencies": {
-    "@babel/core": "^7.11.6",
-    "@babel/plugin-proposal-class-properties": "^7.10.4",
-    "@babel/plugin-proposal-export-default-from": "^7.10.4",
-    "@babel/plugin-transform-react-jsx": "^7.10.4",
-    "@babel/preset-env": "^7.11.5",
-    "babel-loader": "^8.1.0",
-    "babel-plugin-set-display-name": "^1.1.2",
+    "command-line-args": "^5.1.1",
     "css-loader": "^4.3.0",
     "fast-json-patch": "^3.0.0-1",
     "less": "^3.12.2",
@@ -24,8 +18,29 @@
     "style-loader": "^1.2.1",
     "vite": "^2.0.0-beta.65"
   },
+  "peerDependencies": {
+    "axii": "^1.0.3"
+  },
   "scripts": {
-    "start": "vite --force"
+    "start": "vite --force",
+    "build": "vite build",
+    "publish:patch": "node ./scripts/publish.js --patch",
+    "publish:minor": "node ./scripts/publish.js --minor"
+  },
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/axii-x6.umd.js",
+  "module": "./dist/axii-x6.es.js",
+  "exports": {
+    ".": {
+      "import": "./dist/axii-x6.es.js",
+      "require": "./dist/axii-x6.umd.js"
+    }
   },
   "author": "sskyy",
   "license": "MIT"

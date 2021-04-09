@@ -7,11 +7,7 @@ import {
   createComponent,
   computed,
 } from 'axii'
-import Input from 'axii-components/input/input.jsx'
-import Select from 'axii-components/select/Select.jsx'
-import Button from 'axii-components/button/Button.jsx'
-import Icon from 'axii-components/icon/Icon.jsx'
-import Checkbox from 'axii-components/checkbox/Checkbox.jsx'
+import { Input, Select, Button, Icon, Checkbox } from 'axii-components'
 
 /**
  * node 是个 x6 对象，还是要和 axii 中的数据同步，这种情况怎么处理？

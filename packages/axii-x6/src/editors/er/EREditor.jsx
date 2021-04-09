@@ -9,8 +9,9 @@ import {
   useImperativeHandle,
   useRef,
   toRaw,
-  computed,
+  debounceComputed,
 } from 'axii'
+import { message, Split } from 'axii-components'
 import copyTextToClipboard from 'copy-text-to-clipboard'
 import '../../reset.less'
 import '../../global.css'
@@ -22,10 +23,6 @@ import AxiiNode from "../../components/AxiiNode";
 import createERGraph from './createERGraph'
 import ConfigPanel from './components/ConfigPanel'
 import ToolBar from './components/ToolBar'
-import message from 'axii-components/message/message'
-import { debounceComputed } from "axii";
-import Split from "axii-components/split/Split";
-import "axii-components/style/global.less";
 
 const createId = createUniqueIdGenerator()
 

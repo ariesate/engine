@@ -10,7 +10,7 @@ import {
   toRaw,
   computed,
 } from 'axii'
-import Icon from 'axii-components/icon/Icon.jsx'
+import {Icon} from 'axii-components'
 
 export default function ToolBar({ commands }) {
   return (

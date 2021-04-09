@@ -3,21 +3,15 @@ import {
   createElement,
   createComponent,
   useViewEffect,
-  delegateLeaves,
   propTypes,
   ref,
   reactive,
-  useRef,
   watch,
   traverse,
   computed,
   delegateLeaf,
 } from 'axii'
-import Select from 'axii-components/select/Select'
-// import OriginInput from 'axii-components/input/Input'
-import Input from 'axii-components/input/Input'
-import useElementPosition from 'axii-components/hooks/useElementPosition'
-import createMannualTrigger from 'axii-components/hooks/mannualTrigger'
+import {useElementPosition, mannualTrigger as createManualTrigger } from 'axii-components'
 import Port from './Port'
 import { PORT_JOINT } from "./EREditor";
 
@@ -117,7 +111,7 @@ function Entity({ entity, onChange }) {
   const { fields } = entity
 
   const entityPosition = reactive({})
-  const positionTrigger = createMannualTrigger()
+  const positionTrigger = createManualTrigger()
   const {ref: entityRef} = useElementPosition(entityPosition, positionTrigger)
 
   useViewEffect(() => {
