@@ -23,6 +23,8 @@
   "author": "sskyy",
   "license": "MIT",
   "dependencies": {
+    "axii": "^1.0.3",
+    "axii-components": "^1.0.14",
     "normalize.css": "^8.0.1"
   }
 }

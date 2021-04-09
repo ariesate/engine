@@ -5,7 +5,7 @@ import {
   refComputed,
   computed,
 } from 'axii'
-import Input from './Input'
+import TodoInput from './TodoInput'
 import Todo from './Todo'
 import Filter from './Filter'
 
@@ -60,7 +60,7 @@ export function App() {
     <div>
       <div>这个 todoMVC 是用来演示 Axii 的基本组件结构、reactive data 的实现的。</div>
       <div>说明：输入完按回车能提交</div>
-      <Input onAddSubmit={onAddSubmit} />
+      <TodoInput onAddSubmit={onAddSubmit} />
       {() => {
         return visibleTodos.map(todo => {
           return <Todo key={todo.id} item={todo} onDelete={onDelete} />

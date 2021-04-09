@@ -6,6 +6,9 @@ set -e
 # build
 npm run build
 
+# cname
+cp ./CNAME ./site/CNAME
+
 # navigate into the build output directory
 cd site
 

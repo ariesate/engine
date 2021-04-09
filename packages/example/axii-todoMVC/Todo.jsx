@@ -8,6 +8,8 @@ import { createElement,
   getDisplayValue
 } from 'axii'
 
+import { Button } from 'axii-components'
+
 /**
  * 1. 当个组件的 vnode 更新和 data
  * 2. 传入的 data 更新的时候组件也要更新。
@@ -30,8 +32,8 @@ export default function Todo({ item, draftValue, editing, onDraftValueChange, on
       {() => editing.value ? <input value={getDisplayValue(draftValue)} onInput={onDraftValueChange} onKeyDown={onKeyDown} /> : <span>{item.content}</span>}
     </info>
     <operations>
-      {() => editing.value ? null : <button onClick={onSetEditing}>edit</button>}
-      {() => editing.value ? null : <button onClick={() => onDelete()}>delete</button>}
+      {() => editing.value ? null : <Button onClick={onSetEditing}>edit</Button>}
+      {() => editing.value ? null : <Button danger onClick={() => onDelete()}>delete</Button>}
     </operations>
     </todo>
 }

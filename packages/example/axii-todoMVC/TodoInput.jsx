@@ -1,23 +1,22 @@
 /* @jsx createElement */
 import { createElement, ref, propTypes } from 'axii'
+import { Input } from 'axii-components'
 
-// 参数声明就是 state
-export default function Input({ content, onAddSubmit, onTextChange }) {
+export default function TodoInput({ content, onAddSubmit, onTextChange }) {
   const onKeyDown = (e) => {
     if (e.keyCode === 13) {
       onAddSubmit()
     }
   }
 
-
   return (
     <div>
-      <input value={content} onInput={onTextChange} onKeyDown={onKeyDown}/>
+      <Input value={content} onInput={onTextChange} onKeyDown={onKeyDown}/>
     </div>
   )
 }
 
-Input.propTypes = {
+TodoInput.propTypes = {
   onAddSubmit: propTypes.callback.default(() => (draftProps ) => {
       // 这是内部组件要做的事。
     draftProps.content.value = ''
