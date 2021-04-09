@@ -42,6 +42,7 @@ export * from './draft'
 
 
 export function render(vnode, domElement, ...controllerArgv) {
+  domElement.innerHTML = ''
   const controller = createAxiiController(domElement, ...controllerArgv)
 
   const view = createDOMView(controller.viewInterfaces, domElement, controller.interceptViewActions)

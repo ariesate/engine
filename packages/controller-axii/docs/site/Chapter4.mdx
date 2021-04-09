@@ -1,7 +1,7 @@
-/** @jsx createElement */
-import { createElement, ref, computed, reactive } from 'axii'
+import LayoutStyle from "./example/LayoutStyle.jsx";
+import LayoutStyleStr from "./example/LayoutStyle.jsx?raw";
+import Code from './components/Code.jsx'
 
-export const text = `
 ## layout 样式
 
 layout 样式指的是"盒子"大小、位置相关的样式。例如 display/width/height。
@@ -20,20 +20,5 @@ flex-justify-content-space-between
 
 只要提供一个 boolean 值，就可以动态控制是否需要该 layout attribute。
 flex-justify-content-space-between={true}
-`
 
-export function Code() {
-  return (
-    <todoList block block-width="100%">
-      <todoItem block flex-display flex-justify-content="space-between">
-        <name>swimming</name>
-        <action>delete</action>
-      </todoItem>
-      <todoItem block flex-display flex-justify-content-space-between>
-        <name>swimming</name>
-        <action>delete</action>
-      </todoItem>
-    </todoList>
-  )
-}
-
+<Code instance={<LayoutStyle/>} code={LayoutStyleStr}/>

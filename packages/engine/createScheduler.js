@@ -15,7 +15,6 @@
  *
  * getSnapshotBeforeUpdate() 在 digest 的 unit 之前，不能再 setState(正好也不能，因为 lock 了)。
  */
-import {walkCnodes} from './common'
 import { each, invariant } from './util'
 import {
   SESSION_INITIAL,
@@ -57,7 +56,7 @@ export default function createScheduler(painter, view, supervisor) {
                 cnodeTrackingTree.track(toRepaintCnode)
                 vnodeTrackingMap.delete(toRepaintCnode)
               })
-              walkCnodes(Object.values(toDispose), toDisposeCnode => {
+              each(toDispose, toDisposeCnode => {
                 cnodeTrackingTree.dispose(toDisposeCnode, true)
                 vnodeTrackingMap.delete(toDisposeCnode)
               })
@@ -79,6 +78,7 @@ export default function createScheduler(painter, view, supervisor) {
             changedVnodes.forEach(changedVnode => {
               supervisor.unit(SESSION_UPDATE, UNIT_PARTIAL_UPDATE_DIGEST, cnode, () => {
                 // 第一参数表示根据什么去更新，可能会被外面劫持。所以最后还补了一个参数，外部可以动第一个，但不要动最后一个。
+                // CAUTION 可能由于 cnode 的变化，已经不存在了
                 view.updateElement(changedVnode, cnode, changedVnode)
               })
             })

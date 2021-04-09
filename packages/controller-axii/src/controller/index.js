@@ -406,10 +406,9 @@ export default function createAxiiController(rootElement) {
 				},
 				updateElement: (vnode, cnode) => {
 					// update 的时候可能会更新 form element 的引用。
-					// TODO 大问题，可能会出现当前的 element 已经被卸载，element ref 不存在了的情况！！！！！！
-					//  还是要整理视图和 reactive 数据联动的问题！！！
+					// CAUTION 可能会出现因为上层 vnode 变化，而导致当前的 element 已经被卸载的情况。例如根据数据 map 出来的情况。
 					const updatedElement = composedUpdateElement(vnode, cnode)
-					if (isFormElement(updatedElement) && 'value' in vnode.attributes) {
+					if (updatedElement && isFormElement(updatedElement) && 'value' in vnode.attributes) {
 						formElementToBindingValue.set(updatedElement, vnode.attributes.value)
 					}
 				},

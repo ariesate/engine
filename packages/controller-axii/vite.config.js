@@ -1,7 +1,4 @@
 import path from 'path'
-import mdx from 'vite-plugin-mdx'
-import prefresh from '@prefresh/vite'
-
 
 function makePath(relativePath) {
   return path.join(path.dirname(import.meta.url.replace('file:', '')), relativePath)
@@ -14,13 +11,6 @@ export default {
     jsxFactory: 'createElement',
     jsxFragment: 'Fragment',
   },
-  plugins: [
-    mdx({}, {
-      inject: `import {createElement, Fragment} from "axii";`,
-      package: 'mdx-axii'
-    }),
-    prefresh()
-  ],
   resolve: {
     alias: [
       {find: 'axii', replacement: path.resolve(PACKAGE_ROOT_PATH, './controller-axii/src')},
@@ -36,11 +26,9 @@ export default {
     __DEV__: true
   },
   build: {
-    rollupOptions: {
-      input: {
-        index: makePath('index.html'),
-      }
-    }
-  },
-  base: '/axii/'
+    lib: {
+      entry: makePath('./src/index.js'),
+      name: 'axii',
+    },
+  }
 }

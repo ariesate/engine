@@ -50,7 +50,9 @@ export default function createDOMView(
 		// 这里参数尽量和 createElement 保持一致，这样外界可以用同一个 interceptor 来处理
 		updateElement: (vnode, cnode) => {
 			const patchNode = cnode.view.patchNodesQuickRefById[vnode.id]
-			invariant(patchNode, `can not find patchNode from vnode ${vnode.id}`)
+			// CAUTION 可能会出现 vnode 因为 cnode 的变化而已经卸载的情况，例如从数组 map 出来的情况。
+			if (!patchNode) return null
+
 			updateElement(vnode, patchNode.element, invoke)
 			return patchNode.element
 		},

@@ -72,7 +72,7 @@ function Tabs({ children, activeKey, onChangeActiveKey }, fragments) {
         {fragments.tabContents()(() => {
           return flattenedChildren.map(child => {
             const hidden = refComputed(() => child.props.tabKey !== visibleKey.value)
-            return <tabContent block block-visible-none={hidden}>{child.children}</tabContent>
+            return <tabContent block block-visible-none={hidden} key={child.props.tabKey}>{child.children}</tabContent>
           })
         })}
       </tabContents>
