@@ -21,8 +21,7 @@ const versionType = options.major ? 'majon' : (options.minor ? 'minor' : 'patch'
 
 await exec(`npm version ${versionType}`)
 await exec(`npm run build`)
-console.log(loadJSON(path.join(process.cwd(), './package.json')))
-const { version } = loadJSON(path.join(process.cwd(), './package.json'))
+const { version } = await loadJSON(path.join(process.cwd(), './package.json'))
 await exec(`git add .`)
 await exec(`git commit -m "version: axii ${version}"`)
 await exec('npm publish ./ --access public')
