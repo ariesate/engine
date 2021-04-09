@@ -1,6 +1,7 @@
 /** @jsx createElement */
 import { createElement, useImperativeHandle, reactive, ref, useRef, createComponent, useViewEffect } from 'axii'
 import Editorjs from '@editorjs/editorjs'
+import imageEditorPlugin from "./imageEditorPlugin";
 
 function EditorjsComponent({ref: parentRef, data, ...options}) {
   const editorId = `editorjs-${Date.now()}-${Math.random().toFixed(7).slice(2)}`
@@ -36,6 +37,7 @@ EditorjsComponent.Style = (fragments) => {
 
 EditorjsComponent.forwardRef = true
 
+const StyledEditorjsComponent = createComponent(EditorjsComponent)
+StyledEditorjsComponent.imageEditorPlugin = imageEditorPlugin
 
-
-export default createComponent(EditorjsComponent)
+export default StyledEditorjsComponent
