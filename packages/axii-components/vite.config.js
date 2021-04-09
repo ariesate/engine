@@ -38,7 +38,7 @@ export default {
     outDir: 'dist',
     rollupOptions: {
       entry: {
-        style: makePath('./src/style/global.less')
+        global: makePath('./src/style/global.less')
       },
       external: ['axii'],
       output: {
