@@ -54,7 +54,7 @@ function Site() {
     </landing>
     <chapters block block-max-width-800px block-margin-left-auto block-margin-right-auto>
       {chapters.map((Chapter, i) => {
-        return <chapter block block-margin-bottom-50px block-padding-bottom-50px id={`chapter${i+1}`}>
+        return <chapter block block-margin-bottom-50px block-padding-bottom-50px id={`chapter${i}`}>
           <Chapter />
         </chapter>
       })}

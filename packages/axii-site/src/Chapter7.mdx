@@ -1,4 +1,10 @@
-## feature based(experimental)
+import FeatureBasedInput from "./example/FeatureBasedInput.jsx";
+import FeatureBasedInputStr from "./example/FeatureBasedInput.jsx?raw";
+import ExtendInput from "./example/ExtendInput.jsx";
+import ExtendInputStr from "./example/ExtendInput.jsx?raw";
+import Code from './components/Code.jsx'
+
+# 扩展和覆写组件
 
 可以将代码能力按照 feature 而不是结构分离。
 feature 可以声明自己的数据、事件、样式，修改原始结构。
@@ -8,4 +14,12 @@ Feature 可控制的行为：
  - 样式
  - fragment 渲染结果
  - 注册节点事件回调
+
+将组件的逻辑按照 Feature 来划分，可以减轻逻辑的复杂的程度，并且渐进地扩展组件。
+
+<Code instance={<FeatureBasedInput />} code={FeatureBasedInputStr}/>
+
+对使用者来说，如果需要的功能组件不支持，可以自己写 feature 进行动态扩展或者覆写。
+
+<Code instance={<ExtendInput />} code={ExtendInputStr}/>
 

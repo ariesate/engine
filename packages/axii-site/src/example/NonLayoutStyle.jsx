@@ -5,8 +5,7 @@ function Component({ onFocus, onBlur}) {
 }
 
 Component.Style = (fragments) => {
-    fragments.root.elements.box.style(({focused}) => {
-    console.log(focused.value)
+  fragments.root.elements.box.style(({focused}) => {
     return {
       borderStyle: 'solid',
       borderWidth: 1,
