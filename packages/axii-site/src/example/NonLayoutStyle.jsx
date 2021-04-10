@@ -1,16 +1,17 @@
 import { createElement, ref, createComponent, propTypes } from 'axii'
 
-function Component() {
-  return <input />
+function Component({ onFocus, onBlur}) {
+  return <box use="input" onFocus={onFocus} onBlur={onBlur}/>
 }
 
 Component.Style = (fragments) => {
-  const rootElements = fragments.root.elements
-  rootElements.input.style(({focused}) => {
+    fragments.root.elements.box.style(({focused}) => {
+    console.log(focused.value)
     return {
       borderStyle: 'solid',
       borderWidth: 1,
-      borderColor: focused.value ? 'black': 'blue'
+      outline: 'none',
+      borderColor: focused.value ? 'blue': 'black'
     }
   })
 }

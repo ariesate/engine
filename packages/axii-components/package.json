@@ -33,6 +33,7 @@
     "entry": "node ./scripts/generateIndexEntry.js",
     "start": "npm run entry && node ./scripts/copyPlaygroundAsString.js && vite --force --config vite.site.config.js",
     "build": "npm run entry && node ./scripts/copyPlaygroundAsString.js && vite build",
+    "build:site": "vite build --config vite.site.config.js",
     "publish:patch": "node ./scripts/publish.js --patch",
     "publish:minor": "node ./scripts/publish.js --minor",
     "preview": "vite preview --config vite.site.config.js",

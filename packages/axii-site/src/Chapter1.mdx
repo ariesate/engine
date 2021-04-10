@@ -1,16 +1,13 @@
 import Basic from './example/Basic.jsx'
 import basicCode from './example/Basic.jsx?raw'
 import Code from './components/Code.jsx'
+import Tips from './components/Tips.jsx'
 
-
-# AXII 组件基本概念
-## 使用 Reactive Data。
+# 使用 Reactive Data 写组件
  - 使用 `ref` 来创建 string/number/boolean 等非对象数据。对于不需要深度监听的对象数据，也可以使用 ref。
  - ref 创建的数据要使用 .value 来取值和修改。绑定到 form 组件上时不需要使用 .value。 
  - 使用 computed 创建计算数据。计算数据会自动监听内部依赖的数据，并进行更新。
 
-## AXII 实现了局部更新
-视图的每个节点只当自己绑定的 reactive 数据变化时才会局部变化。
-如果没有外部引起的变化，那么组件函数只会执行一次。 
-
 <Code instance={<Basic />} code={basicCode}/>
+
+<Tips content="AXII 实现了局部更新。这意味着视图的每个节点只当自己绑定的 reactive 数据变化时才会局部变化。如果没有外部引起的变化，那么组件函数只会执行一次。" />
