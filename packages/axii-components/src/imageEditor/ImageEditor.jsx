@@ -132,15 +132,17 @@ function ImageEditor({iconSize, ref: parentRef, data}) {
         loadPromise = editorRef.loadImageFromURL(data)
       } else if (data instanceof File){
         loadPromise = editorRef.loadImageFromFile(data)
-      } else {
+      } else if(data.data){
         // inline data base64
         const file = dataURLtoFile(data.data, data.name)
         loadPromise = editorRef.loadImageFromFile(file)
       }
-      const {newWidth, newHeight} = await loadPromise
-      containerWidth.value = newWidth
-      containerHeight.value = newHeight
-      editorRef.clearUndoStack();
+      if (loadPromise) {
+        const {newWidth, newHeight} = await loadPromise
+        containerWidth.value = newWidth
+        containerHeight.value = newHeight
+        editorRef.clearUndoStack();
+      }
     }
   })
 

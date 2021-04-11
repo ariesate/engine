@@ -40,6 +40,5 @@ export default {
         index: makePath('index.html'),
       }
     }
-  },
-  base: '/axii-site/'
+  }
 }
