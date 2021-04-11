@@ -1,9 +1,6 @@
 /** @jsx createElement */
 /** @jsxFrag Fragment */
-import { render, ref, reactive, refComputed, createElement, Fragment, useRef } from 'axii'
-import layerStyle  from '../style/layer'
-import scen, { colors } from "../pattern";
-import {debounceComputed} from "../../../controller-axii/src/reactive";
+import { render, ref, refComputed, createElement, debounceComputed, useRef } from 'axii'
 
 function defaultCreateContainer() {
   const portalRoot = document.createElement('div')

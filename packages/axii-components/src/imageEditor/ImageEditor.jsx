@@ -1,8 +1,7 @@
 /** @jsx createElement */
-import { createElement, createComponent, propTypes, ref, reactive, computed, useRef, useImperativeHandle, useViewEffect } from 'axii'
+import { createElement, createComponent, propTypes, ref, refComputed, reactive, computed, useRef, useImperativeHandle, useViewEffect } from 'axii'
 import Icon from '../iconPark/IconPark.jsx'
 import ToastImageEditor from 'tui-image-editor'
-import {refComputed} from "../../../controller-axii/src/reactive";
 
 const rImageType = /data:(image\/.+);base64,/;
 
@@ -148,7 +147,6 @@ function ImageEditor({iconSize, ref: parentRef, data}) {
 
   const onFileChange = async (event) => {
     file = event.target.files[0];
-    console.log(file)
     const {newWidth, newHeight} = await editorRef.loadImageFromFile(file)
     containerWidth.value = newWidth
     containerHeight.value = newHeight
@@ -159,7 +157,6 @@ function ImageEditor({iconSize, ref: parentRef, data}) {
   const currentAction = ref(null)
 
   const startAction = (action) => {
-    console.log("start action", action)
     if (action.apply) {
       applyMenuHide.value = false
       currentAction.value = action
@@ -179,6 +176,8 @@ function ImageEditor({iconSize, ref: parentRef, data}) {
     applyMenuHide.value = true
     currentAction.value = null
   }
+
+
 
   return <container inline>
     <filePicker block flex-display block-display-none={refComputed(() => containerWidth.value !== 0)} inline-height-100px inline-width-100px flex-justify-content-center flex-align-items-center>
