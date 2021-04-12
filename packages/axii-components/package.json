@@ -1,6 +1,6 @@
 {
   "name": "axii-components",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "",
   "dependencies": {
     "@ant-design/colors": "^5.0.1",
@@ -30,9 +30,13 @@
     "vite": "^2.0.5"
   },
   "scripts": {
-    "entry": "node ./scripts/generateIndexEntry.js",
-    "start": "npm run entry && node ./scripts/copyPlaygroundAsString.js && vite --force --config vite.site.config.js",
-    "build": "npm run entry && node ./scripts/copyPlaygroundAsString.js && vite build",
+    "gen:entry": "node ./scripts/generateIndexEntry.js",
+    "gen:icon": "node ./scripts/generateIconEntry.js",
+    "gen": "npm run gen:icon && npm run gen:entry",
+    "start": "npm run entry && node ./scripts/copyPlaygroundAsString.js && vite --config vite.site.config.js",
+    "local": "npm run entry && node ./scripts/copyPlaygroundAsString.js && vite --config vite.site.local.config.js",
+    "dev": "./link.sh && npm run entry && node ./scripts/copyPlaygroundAsString.js && vite --config vite.site.config.js",
+    "build": "npm run gen && node ./scripts/copyPlaygroundAsString.js && vite build",
     "build:site": "vite build --config vite.site.config.js",
     "publish:patch": "node ./scripts/publish.js --patch",
     "publish:minor": "node ./scripts/publish.js --minor",

@@ -1,5 +1,5 @@
 import { reactive, useRef, debounceComputed } from 'axii'
-import createTrigger from "./mannualTrigger";
+import createTrigger from "./manualTrigger";
 
 /**
  * element position 无法通过任何事件来实时监听，所以有两种模式：
