@@ -1,14 +1,15 @@
 {
   "name": "axii-components",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "",
   "dependencies": {
     "@ant-design/colors": "^5.0.1",
-    "@ant-design/icons-svg": "^4.1.0",
     "@editorjs/editorjs": "^2.19.3",
-    "@icon-park/svg": "^1.3.1",
+    "axii-icons": "^1.0.1",
     "axios": "^0.20.0",
     "codeflask": "^1.4.1",
+    "esbuild": "^0.11.9",
+    "esbuild-plugin-less": "^1.0.5",
     "history": "^5.0.0",
     "moment": "^2.28.0",
     "normalize.css": "^8.0.1",
@@ -29,12 +30,11 @@
     "lodash": "^4.17.20",
     "vite": "^2.0.5"
   },
+  "sideEffects": false,
   "scripts": {
-    "gen:entry": "node ./scripts/generateIndexEntry.js",
-    "gen:icon": "node ./scripts/generateIconEntry.js",
-    "gen": "npm run gen:icon && npm run gen:entry",
-    "start": "npm run entry && node ./scripts/copyPlaygroundAsString.js && vite --config vite.site.config.js",
-    "local": "npm run entry && node ./scripts/copyPlaygroundAsString.js && vite --config vite.site.local.config.js",
+    "gen": "node ./scripts/generateIndexEntry.js",
+    "start": "npm run gen && node ./scripts/copyPlaygroundAsString.js && vite --config vite.site.config.js",
+    "local": "npm run gen && node ./scripts/copyPlaygroundAsString.js && vite --config vite.site.local.config.js",
     "dev": "./link.sh && npm run entry && node ./scripts/copyPlaygroundAsString.js && vite --config vite.site.config.js",
     "build": "npm run gen && node ./scripts/copyPlaygroundAsString.js && vite build",
     "build:site": "vite build --config vite.site.config.js",
@@ -49,13 +49,12 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/axii-components.umd.js",
-  "module": "./dist/axii-components.es.js",
+  "module": "./dist/components/index.js",
   "exports": {
     ".": {
-      "import": "./dist/axii-components.es.js",
-      "require": "./dist/axii-components.umd.js"
-    }
+      "import": "./dist/components/index.js"
+    },
+    "./dist/": "./dist/"
   },
   "author": "sskyy",
   "license": "MIT"

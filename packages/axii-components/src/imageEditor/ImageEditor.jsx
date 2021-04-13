@@ -1,6 +1,12 @@
 /** @jsx createElement */
-import { createElement, createComponent, propTypes, ref, refComputed, reactive, computed, useRef, useImperativeHandle, useViewEffect } from 'axii'
-import Icon from '../iconPark/IconPark.jsx'
+import { createElement, createComponent, propTypes, ref, refComputed, useRef, useImperativeHandle, useViewEffect } from 'axii'
+import LeftOneIcon from 'axii-icons/LeftOne.js'
+import RightOneIcon from 'axii-icons/RightOne.js'
+import PicIcon from 'axii-icons/Pic.js'
+import CloseSmallIcon from 'axii-icons/CloseSmall.js'
+import CheckSmallIcon from 'axii-icons/CheckSmall.js'
+import CuttingIcon from 'axii-icons/Cutting.js'
+import RotatingForwardIcon from 'axii-icons/Rotation.js'
 import ToastImageEditor from 'tui-image-editor'
 
 const rImageType = /data:(image\/.+);base64,/;
@@ -52,7 +58,7 @@ function dataURLtoFile(dataurl, filename) {
 
 
 const actions = [{
-  icon: 'Cutting',
+  icon: CuttingIcon,
   start: (editor) => {
     editor.startDrawingMode('CROPPER')
   },
@@ -64,7 +70,7 @@ const actions = [{
   },
   needResize: true
 }, {
-  icon: 'RotatingForward',
+  icon: RotatingForwardIcon,
   start: (editor) => {
     editor.stopDrawingMode();
   },
@@ -74,8 +80,8 @@ const actions = [{
   renderPanel(editor, {iconSize}) {
     return (
       <div>
-        <Icon type="LeftOne" size={iconSize} onClick={() => editor.rotate(90)}/>
-        <Icon type="RightOne" size={iconSize}  onClick={() => editor.rotate(-90)}/>
+        <LeftOneIcon size={iconSize} onClick={() => editor.rotate(90)}/>
+        <RightOneIcon size={iconSize}  onClick={() => editor.rotate(-90)}/>
       </div>
     )
   },
@@ -89,16 +95,13 @@ const actions = [{
 function ImageEditor({iconSize, ref: parentRef, data}) {
   let editorRef
   let file
+  const containerRef = useRef()
   const containerWidth = ref(0)
   const containerHeight = ref(0)
 
   const containerContext = {
     width: containerWidth,
     height: containerHeight,
-  }
-
-  const containerRef = (el) => {
-    editorRef = new ToastImageEditor(el,{})
   }
 
   const instruments = {
@@ -123,6 +126,7 @@ function ImageEditor({iconSize, ref: parentRef, data}) {
   }
 
   useViewEffect(async () => {
+    editorRef = new ToastImageEditor(containerRef.current,{})
     // 有外部传入的初始值
     if (data) {
       // TODO base64 是不是也可以？？？
@@ -181,7 +185,7 @@ function ImageEditor({iconSize, ref: parentRef, data}) {
 
   return <container inline>
     <filePicker block flex-display block-display-none={refComputed(() => containerWidth.value !== 0)} inline-height-100px inline-width-100px flex-justify-content-center flex-align-items-center>
-      <addPic use={Icon} type='Pic' size={5} fill="#bebebe"/>
+      <addPic use={PicIcon} size={5} fill="#bebebe"/>
       <input type="file" onChange={onFileChange}/>
     </filePicker>
     <div ref={containerRef} block block-width={containerWidth} block-height={containerHeight}/>
@@ -191,13 +195,13 @@ function ImageEditor({iconSize, ref: parentRef, data}) {
       }}
     </div>
     <div block block-display-none={applyMenuHide}>
-      <Icon type="CloseSmall" size={iconSize} onClick={cancelAction}/>
-      <Icon type="CheckSmall" size={iconSize} onClick={applyAction}/>
+      <CloseSmallIcon size={iconSize} onClick={cancelAction}/>
+      <CheckSmallIcon size={iconSize} onClick={applyAction}/>
     </div>
     <div block flex-display flex-justify-content-center block-display-none={refComputed(() => (containerWidth.value === 0) || currentAction.value !== null)}>
       {actions.map(action => {
         return (
-          <Icon type={action.icon} size={iconSize} onClick={() => startAction(action)}/>
+          <actionIcon use={action.icon} size={iconSize} onClick={() => startAction(action)}/>
         )
       })}
     </div>

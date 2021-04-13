@@ -1,5 +1,5 @@
 /**@jsx createElement */
-import { propTypes, createElement, ref, createComponent, useViewEffect, useImperativeHandle } from 'axii'
+import { createElement, useViewEffect, useImperativeHandle } from 'axii'
 import XSpreadsheet from 'x-data-spreadsheet'
 import {uuid} from "../util";
 
@@ -15,7 +15,8 @@ export default function Spreadsheet({ data, ref:parentRef }) {
     }))
   }
 
-  useViewEffect(() => {
+  useViewEffect(async () => {
+
     spreadsheet = new XSpreadsheet(`#${id}`, {
       view: {
         height: () => 500,

@@ -10,7 +10,8 @@ import {
 	reactive,
 	tryToRaw,
 } from 'axii';
-import Icon from '../iconPark/IconPark.jsx'
+import DownIcon from 'axii-icons/Down.js'
+import RightIcon from 'axii-icons/Right.js'
 import scen from '../pattern'
 
 /**
@@ -38,7 +39,7 @@ function renderItem(item, level, actions, fragments, parents = []) {
 				flex-display
 				flex-align-items-center
 				onClick={() => item.expand ? onFold(item, parents) : onOpen(item, parents)}>
-				{() => hasChildren.value ? (item.expand ? <Icon type="Down"/> : <Icon type="Right"/>): null}
+				{() => hasChildren.value ? (item.expand ? <DownIcon/> : <RightIcon/>): null}
 			</expand>
 			<name block flex-grow-1 onClick={() => onSetActive(item, parents)}>{item.title}</name>
 		</item>

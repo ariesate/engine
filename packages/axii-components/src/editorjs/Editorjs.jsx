@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, useImperativeHandle, reactive, ref, useRef, createComponent, useViewEffect } from 'axii'
+import { createElement, useImperativeHandle, createComponent, useViewEffect } from 'axii'
 import Editorjs from '@editorjs/editorjs'
 import imageEditorPlugin from "./imageEditorPlugin";
 

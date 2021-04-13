@@ -11,7 +11,10 @@ import {
   createRef,
 } from 'axii'
 import { uuid } from "../util";
-import IconPark from '../iconPark/IconPark.jsx'
+import LeftIcon from 'axii-icons/Left.js'
+import CloseIcon from 'axii-icons/Close.js'
+import PlusCrossIcon from 'axii-icons/PlusCross.js'
+import RightIcon from 'axii-icons/Right.js'
 import scen from '../pattern'
 
 /**
@@ -33,6 +36,7 @@ function TabStrip({ items, activeKey, onChangeActiveKey, onClose, onAdd }, fragm
 
   const scrollRight = () => {
     headerRef.current.scrollLeft += headerRef.current.clientWidth
+
   }
 
   return (
@@ -44,7 +48,7 @@ function TabStrip({ items, activeKey, onChangeActiveKey, onClose, onAdd }, fragm
         flex-display
       >
         <tabHeaderScrollLeft inline flex-grow-0 flex-display flex-align-items-center inline-display-none={headerNotOverflow} onClick={scrollLeft}>
-          <IconPark type="Left" />
+          <LeftIcon type="Left" />
         </tabHeaderScrollLeft>
         <tabHeaders
           block
@@ -70,15 +74,15 @@ function TabStrip({ items, activeKey, onChangeActiveKey, onClose, onAdd }, fragm
                   <tabHeaderValue>
                     {child.value}
                   </tabHeaderValue>
-                  <IconPark type="Close" onClick={() => onClose(child.key)} layout:inline layout:inline-margin-left-10px/>
+                  <CloseIcon onClick={() => onClose(child.key)} layout:inline layout:inline-margin-left-10px/>
                 </tabHeader>
               )
             )
           })}
-          <IconPark type="PlusCross" onClick={onAdd} size={1.2}/>
+          <PlusCrossIcon  onClick={onAdd} size={1.2}/>
         </tabHeaders>
         <tabHeaderScrollRight inline  flex-grow-0 flex-display flex-align-items-center inline-display-none={headerNotOverflow} onClick={scrollRight}>
-          <IconPark type="Right" />
+          <RightIcon />
         </tabHeaderScrollRight>
       </tabHeadersContainer>
     </container>

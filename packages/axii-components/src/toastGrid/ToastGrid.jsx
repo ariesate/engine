@@ -1,5 +1,5 @@
 /**@jsx createElement */
-import { propTypes, createElement, ref, createComponent, useRef, useViewEffect, useImperativeHandle } from 'axii'
+import { createElement, useRef, useViewEffect, useImperativeHandle } from 'axii'
 import Grid from 'tui-grid'
 import {uuid} from "../util";
 import 'tui-grid/dist/tui-grid.css'
@@ -17,7 +17,8 @@ export default function ToastGrid({ ref:parentRef, ...options }) {
     }))
   }
 
-  useViewEffect(() => {
+
+  useViewEffect(async () => {
     grid = new Grid({ el: containerRef.current, ...options} )
     Grid.applyTheme('striped')
   })

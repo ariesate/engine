@@ -11,7 +11,8 @@ import {
   createRef,
   flattenChildren
 } from 'axii'
-import Icon from '../icon/Icon'
+import LeftIcon from 'axii-icons/Left.js'
+import RightIcon from 'axii-icons/Right.js'
 import scen from '../pattern'
 
 /**
@@ -53,7 +54,7 @@ function Tabs({ children, activeKey, onChangeActiveKey }, fragments) {
         flex-display
       >
         <tabHeaderScrollLeft inline flex-grow-0 flex-display flex-align-items-center inline-display-none={headerNotOverflow} onClick={scrollLeft}>
-          <Icon type="left" />
+          <LeftIcon/>
         </tabHeaderScrollLeft>
         <tabHeaders block block-white-space-nowrap block-overflow-x-hidden flex-grow-1 ref={headerRef}>
           {fragments.tabHeaders({visibleKey})(() => {
@@ -65,7 +66,7 @@ function Tabs({ children, activeKey, onChangeActiveKey }, fragments) {
           })}
         </tabHeaders>
         <tabHeaderScrollRight inline  flex-grow-0 flex-display flex-align-items-center inline-display-none={headerNotOverflow} onClick={scrollRight}>
-          <Icon type="right" />
+          <RightIcon />
         </tabHeaderScrollRight>
       </tabHeadersContainer>
       <tabContents block>
