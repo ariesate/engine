@@ -16,6 +16,7 @@
     "vite": "^2.1.5",
     "vite-plugin-mdx-extended": "^3.3.3"
   },
+  "sideEffects": false,
   "jest": {
     "moduleFileExtensions": [
       "js",

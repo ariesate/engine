@@ -1,12 +1,12 @@
 {
   "name": "axii-components",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "description": "",
   "dependencies": {
     "@ant-design/colors": "^5.0.1",
     "@editorjs/editorjs": "^2.19.3",
     "axii-icons": "^1.0.1",
-    "axios": "^0.20.0",
+    "axios": "^0.21.1",
     "codeflask": "^1.4.1",
     "esbuild": "^0.11.9",
     "esbuild-plugin-less": "^1.0.5",
@@ -17,7 +17,7 @@
     "querystringify": "^2.2.0",
     "tui-grid": "^4.16.1",
     "tui-image-editor": "^3.14.0",
-    "x-data-spreadsheet": "^1.1.8"
+    "x-data-spreadsheet": "^1.0.27"
   },
   "peerDependencies": {
     "axii": "^1.0.3"
@@ -25,10 +25,11 @@
   "type": "module",
   "devDependencies": {
     "command-line-args": "^5.1.1",
+    "editorjs-table": "^1.4.10",
     "fast-json-patch": "^3.0.0-1",
     "less": "^3.12.2",
     "lodash": "^4.17.20",
-    "vite": "^2.0.5"
+    "vite": "^2.1.5"
   },
   "sideEffects": false,
   "scripts": {
@@ -36,7 +37,7 @@
     "start": "npm run gen && node ./scripts/copyPlaygroundAsString.js && vite --config vite.site.config.js",
     "local": "npm run gen && node ./scripts/copyPlaygroundAsString.js && vite --config vite.site.local.config.js",
     "dev": "./link.sh && npm run entry && node ./scripts/copyPlaygroundAsString.js && vite --config vite.site.config.js",
-    "build": "npm run gen && node ./scripts/copyPlaygroundAsString.js && vite build",
+    "build": "npm run gen && node ./scripts/copyPlaygroundAsString.js && node ./scripts/build.js",
     "build:site": "vite build --config vite.site.config.js",
     "publish:patch": "node ./scripts/publish.js --patch",
     "publish:minor": "node ./scripts/publish.js --minor",

@@ -1,12 +1,12 @@
 /** @jsx createElement */
 import { createElement, createComponent, propTypes, ref, refComputed, useRef, useImperativeHandle, useViewEffect } from 'axii'
-import LeftOneIcon from 'axii-icons/LeftOne.js'
-import RightOneIcon from 'axii-icons/RightOne.js'
-import PicIcon from 'axii-icons/Pic.js'
-import CloseSmallIcon from 'axii-icons/CloseSmall.js'
-import CheckSmallIcon from 'axii-icons/CheckSmall.js'
-import CuttingIcon from 'axii-icons/Cutting.js'
-import RotatingForwardIcon from 'axii-icons/Rotation.js'
+import LeftOneIcon from 'axii-icons/LeftOne'
+import RightOneIcon from 'axii-icons/RightOne'
+import PicIcon from 'axii-icons/Pic'
+import CloseSmallIcon from 'axii-icons/CloseSmall'
+import CheckSmallIcon from 'axii-icons/CheckSmall'
+import CuttingIcon from 'axii-icons/Cutting'
+import RotatingForwardIcon from 'axii-icons/RotatingForward'
 import ToastImageEditor from 'tui-image-editor'
 
 const rImageType = /data:(image\/.+);base64,/;

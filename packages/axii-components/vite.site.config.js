@@ -25,7 +25,7 @@ export default {
     }
   },
 	optimizeDeps: {
-  	include: ['axios', '@ant-design/icons-svg/es/helpers']
+  	include: ['axios']
 	},
   define: {
     __DEV__: true

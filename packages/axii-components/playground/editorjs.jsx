@@ -2,7 +2,6 @@
 import { createElement, render, reactive, ref, useRef } from 'axii'
 import Editorjs from '../src/editorjs/Editorjs.jsx'
 import Button from '../src/button/Button.jsx'
-import imageEditorPlugin from '../src/editorjs/imageEditorPlugin.jsx'
 
 function App() {
   const editorRef = useRef()
@@ -18,8 +17,11 @@ function App() {
   }
 
   const tools = {
+    table: {
+      class: Editorjs.TablePlugin,
+    },
     image: {
-      class: imageEditorPlugin,
+      class: Editorjs.ImageEditorPlugin,
       config: {
         collectResource
       }

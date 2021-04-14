@@ -23,6 +23,7 @@ export default {
   resolve: {
     alias: [
       {find: '@ariesate/are', replacement: path.resolve(PACKAGE_ROOT_PATH, './engine')},
+      {find: 'axii-components', replacement: path.resolve(PACKAGE_ROOT_PATH, './axii-components/src')},
     ]
   },
   css: {
