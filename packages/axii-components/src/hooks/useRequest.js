@@ -1,18 +1,20 @@
 import axios  from 'axios'
 import { ref, debounceComputed, watch, traverse } from 'axii'
 
-export function createUseRequest(instance, { createReactiveData = () => ({}), processResponse = () => {}, processError = () => {} } = {}) {
-	return function useRequest(inputConfig, { manual, deps } = {}) {
+export function createUseRequest(instance) {
+	return function useRequest(inputConfig, { manual, deps, processData = {}, createReactiveData = () => {}, processResponse = () => {}, processError = () => {} } = {}) {
 
 		let doRequest
 		if (typeof inputConfig === 'function') {
 			doRequest = inputConfig
 		} else {
 			const config = typeof inputConfig === 'string' ? { url: inputConfig } : inputConfig
-			doRequest = () => instance(Object.assign({}, config, argv))
+			doRequest = (argv) => instance(Object.assign({}, config, argv))
 		}
 
-		const data = ref()
+		const { create = () => ref(), receive = (data, responseData) => data.value = responseData } = processData
+
+		const data = create()
 		const error = ref()
 		const status = ref()
 		const loading = ref()
@@ -37,7 +39,7 @@ export function createUseRequest(instance, { createReactiveData = () => ({}), pr
 			doRequest(...argv).then(response => {
 				if (currentRunId !== runId) return
 				debounceComputed(() => {
-					data.value = response.data
+					receive(data, response.data)
 					status.value = response.status
 					processResponse(values, response)
 				})
@@ -46,7 +48,7 @@ export function createUseRequest(instance, { createReactiveData = () => ({}), pr
 
 				console.error(error)
 				debounceComputed(() => {
-					data.value = undefined
+					receive(data, undefined)
 
 					if (error.response) {
 						// The request was made and the server responded with a status code

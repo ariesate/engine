@@ -27,3 +27,4 @@ lib
 typings
 coverage
 .next
+package-lock.json

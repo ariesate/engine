@@ -1,6 +1,6 @@
 {
   "name": "axii-components",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "description": "",
   "dependencies": {
     "@ant-design/colors": "^5.0.1",
@@ -27,7 +27,7 @@
     "command-line-args": "^5.1.1",
     "editorjs-table": "^1.4.10",
     "fast-json-patch": "^3.0.0-1",
-    "less": "^3.12.2",
+    "less": "^3.13.1",
     "lodash": "^4.17.20",
     "vite": "^2.1.5"
   },
