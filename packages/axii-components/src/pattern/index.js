@@ -1,5 +1,5 @@
 import { Scenario, createRange, matrixMatch } from 'axii'
-import * as antColors from '@ant-design/colors';
+import { generate, presetPalettes } from '@ant-design/colors';
 
 /**
  * 规划该组件库的 Pattern
@@ -47,19 +47,21 @@ import * as antColors from '@ant-design/colors';
 /***************
  * CONSTANTS
  **************/
-const colorNames = ['red', 'volcano', 'gold', 'yellow', 'lime', 'green', 'cyan', 'blue', 'geekblue', 'purple', 'magenta', 'grey']
 export const colors = {}
-colorNames.forEach(name => {
-  colors[name] = createRange(antColors[name], 5)
+Object.keys(presetPalettes).forEach(name => {
+  colors[name] = createRange(presetPalettes[name], 5)
 })
+colors.axii = createRange(generate('#0052CC'), 5)
+colors.red = createRange(generate('#dd3306'), 5)
 colors.black = createRange(['#666', '#555', '#444', '#333', '#222', '#111', '#000'], 3)
 colors.white = createRange(['#fff'], 0)
 colors.gray = createRange(['#efefef', '#eeeeee', '#cecece', '#cccccc', '#bbbbbb'], 2)
 
+
 const fontSizes = createRange([12, 14, 16, 20, 24, 30, 38, 46, 56, 68], 1)
 const spaceValues = createRange([4, 8, 12, 20, 32, 48, 80, 128], 1)
 
-const PRIMARY_COLOR = 'geekblue'
+const PRIMARY_COLOR = 'axii'
 
 /***************
  * Index
@@ -130,11 +132,11 @@ const valueRules = {
     const matrix = [
       [undefined, undefined, undefined, 'transparent'],
       [undefined, INDEX.active.active, undefined, colors.white()],
-      [INDEX.inverted, undefined, undefined, colors[color]()],
-      [INDEX.inverted, INDEX.active.inactive, undefined, colors[color](-3)],
-      [INDEX.inverted, INDEX.active.active, undefined, colors[color]()],
-      [INDEX.inverted, undefined, INDEX.interact, colors[color](-1)],
-      [INDEX.inverted, INDEX.active.active, INDEX.interact, colors[color](-1)],
+      [INDEX.inverted, undefined, undefined, colors[color](+ offset)],
+      [INDEX.inverted, INDEX.active.inactive, undefined, colors[color](-3 + offset)],
+      [INDEX.inverted, INDEX.active.active, undefined, colors[color](offset)],
+      [INDEX.inverted, undefined, INDEX.interact, colors[color](-1 + offset)],
+      [INDEX.inverted, INDEX.active.active, INDEX.interact, colors[color](-1 + offset)],
     ]
 
     return matrixMatch([inverted, active, interact], matrix)
@@ -155,8 +157,7 @@ const valueRules = {
     return matrixMatch([size], matrix)
   },
   lineHeight({ size }, offset = 0) {
-    const fontSize = valueRules.fontSize({ size }, offset)
-    return fontSize + 8
+    return (size === undefined ? 2 : (size === 1 ? 1.5 : 2.5)) + offset
   },
   weight({ stressed }) {
     return stressed ? 'bold' : undefined

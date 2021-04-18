@@ -6,7 +6,7 @@ import { createElement, render, reactive, ref, refComputed } from 'axii'
 import Menu from './src/menu/Menu'
 import useLocation from "./src/hooks/useLocation";
 import Split from './src/split/Split'
-import './src/style/global.less'
+// import './src/style/global.less'
 import scen from './src/pattern'
 const location = useLocation()
 

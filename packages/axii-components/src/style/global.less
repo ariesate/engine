@@ -7,7 +7,6 @@
 // alert info backgrounds.
 
 @disabled-color: fade(#000, 25%);
-@normal-color: #d9d9d9;
 @white: #fff;
 @black: #000;
 
@@ -16,8 +15,6 @@
 
 // Background color for `<body>`
 @body-background: #fff;
-// Base background color for most components
-@component-background: #fff;
 @font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
 'Noto Color Emoji';
@@ -25,57 +22,17 @@
 @text-color: fade(@black, 85%);
 @text-color-secondary: fade(@black, 45%);
 @text-color-inverse: @white;
-@icon-color: inherit;
-@icon-color-hover: fade(@black, 75%);
 @heading-color: fade(@black, 85%);
-@text-color-dark: fade(@white, 85%);
-@text-color-secondary-dark: fade(@white, 65%);
 @text-selection-bg: @primary-color;
 @font-variant-base: tabular-nums;
 @font-feature-settings-base: 'tnum';
 @font-size-base: 14px;
 @font-size-lg: @font-size-base + 2px;
 @font-size-sm: 12px;
-@heading-1-size: ceil(@font-size-base * 2.71);
-@heading-2-size: ceil(@font-size-base * 2.14);
-@heading-3-size: ceil(@font-size-base * 1.71);
-@heading-4-size: ceil(@font-size-base * 1.42);
-@heading-5-size: ceil(@font-size-base * 1.14);
 // https://github.com/ant-design/ant-design/issues/20210
 @line-height-base: 1.5715;
 @border-radius-base: 2px;
 @border-radius-sm: @border-radius-base;
-
-// vertical paddings
-@padding-lg: 24px; // containers
-@padding-md: 16px; // small containers and buttons
-@padding-sm: 12px; // Form controls and items
-@padding-xs: 8px; // small items
-@padding-xss: 4px; // more small
-
-// vertical padding for all form controls
-@control-padding-horizontal: @padding-sm;
-@control-padding-horizontal-sm: @padding-xs;
-
-// vertical margins
-@margin-lg: 24px; // containers
-@margin-md: 16px; // small containers and buttons
-@margin-sm: 12px; // Form controls and items
-@margin-xs: 8px; // small items
-@margin-xss: 4px; // more small
-
-// height rules
-@height-base: 32px;
-@height-lg: 40px;
-@height-sm: 24px;
-
-// The background colors for active and hover states for things like
-// list items or table cells.
-@item-active-bg: @primary-color;
-@item-hover-bg: #f5f5f5;
-
-// ICONFONT
-@iconfont-css-prefix: anticon;
 
 // LINK
 @link-color: @primary-color;
@@ -85,8 +42,6 @@
 @link-hover-decoration: none;
 @link-focus-decoration: none;
 @link-focus-outline: 0;
-
-
 
 
 // HTML & Body reset

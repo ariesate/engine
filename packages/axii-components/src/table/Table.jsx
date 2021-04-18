@@ -79,7 +79,7 @@ export function Table( { data, pagination, columns }, fragments) {
                 {fragments.cells({row})(() => {
                   const cells = []
                   walkLeaf(columns, (column) => {
-                    cells.push(fragments.cell({ column })(() => <td inline inline-display="table-cell"  inline-border-width-1px >{row[column.dataIndex]}</td>))
+                    cells.push(fragments.cell({ column })(() => <td inline inline-display="table-cell" inline-border-width-1px>{row[column.dataIndex]}</td>))
                   })
                   return cells
                 })}

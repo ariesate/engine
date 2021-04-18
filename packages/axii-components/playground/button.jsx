@@ -5,11 +5,19 @@ import Button from '../src/button/Button.jsx'
 function App() {
 	return (
 		<div>
-			<Button>normal</Button>
-			<Button primary>primary</Button>
-			<Button danger>danger</Button>
-			<Button primary disabled>primary disabled</Button>
-			<Button danger disabled>danger disabled</Button>
+			<div>
+				<Button>normal</Button>
+				<Button primary>primary</Button>
+				<Button danger>danger</Button>
+				<Button primary disabled>primary disabled</Button>
+				<Button danger disabled>danger disabled</Button>
+			</div>
+			<div>
+				<Button primary size="large">primary big</Button>
+			</div>
+			<div>
+				<Button primary size="small">primary small</Button>
+			</div>
 		</div>
 	)
 }

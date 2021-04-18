@@ -53,7 +53,7 @@ export function Input({value, onChange, children, placeholder, ...rest}, fragmen
 					inline-max-width="100%"
 					inline-box-sizing="border-box"
           inline-font-size={scen().fontSize()}
-          inline-padding={`${scen().spacing(-1)}px ${scen().spacing()}px `}
+          inline-padding={`${scen().spacing()}px ${scen().spacing()}px `}
           value={value}
           onInput={onChange}
 					placeholder={placeholder}
