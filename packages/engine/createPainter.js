@@ -519,7 +519,7 @@ export default function createPainter(renderer, isComponentVnode = defaultIsComp
   const generateCnodeId = createUniqueIdGenerator('com')
 
   function createCnode(vnode, parent) {
-    const cnode = new ComponentNode()
+    const cnode = new ComponentNode(vnode.type)
 
     warn(!(vnode.ref  && !vnode.type.forwardRef), `${vnode.type.displayName || vnode.type.name } do not accept ref, but you passed ref prop to it.`)
     Object.assign(cnode, {

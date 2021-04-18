@@ -1,6 +1,10 @@
 import { each } from '../util'
 import { IS_NON_DIMENSIONAL, IS_ATTR_NUMBER } from '../constant'
 
+export function normalizeStyleValue(k, v) {
+  return (typeof v === 'number' && !IS_NON_DIMENSIONAL.test(k) && !IS_ATTR_NUMBER.test(k)) ? (`${v}px`) : v
+}
+
 /** Attempt to set a DOM property to the given value.
  *  IE & FF throw for certain property-value combinations.
  */
@@ -16,7 +20,6 @@ function setProperty(node, name, value) {
 
 function eventProxy(e) {
   const listener = this._listeners[e.type]
-  console.log("calling", e.type)
   return Array.isArray(listener) ? listener.forEach(l => l(e)) : listener(e)
 }
 
@@ -37,13 +40,13 @@ export function setAttribute(node, name, value, isSvg) {
         if (value[k] === undefined) {
           node.style[k] = ''
         } else {
-          node.style[k] = (typeof v === 'number' && !IS_NON_DIMENSIONAL.test(k) && !IS_ATTR_NUMBER.test(k)) ? (`${v}px`) : v
+          node.style[k] = normalizeStyleValue(k, v)
         }
       })
     }
   } else if (name === 'dangerouslySetInnerHTML') {
     if (value) node.innerHTML = value.__html || ''
-  } else if (name[0] === 'o' && name[1] === 'n') {
+  } else if (/^on/.test(name)) {
     const useCapture = name !== (name = name.replace(/Capture$/, ''))
     name = name.toLowerCase().substring(2)
     if (value) {
@@ -74,13 +77,14 @@ export function setAttribute(node, name, value, isSvg) {
 
 function setAttributes(attributes, element, isSVG, invoke) {
   each(attributes, (attribute, name) => {
-    if (/^on[A-Z]/.test(name) && typeof attribute === 'function') {
-      setAttribute(element, name, (...argv) => invoke(attribute, ...argv), isSVG)
+    if (/^on[A-Z]/.test(name) && (typeof attribute === 'function' || Array.isArray(attribute))) {
+      const callbacks = Array.isArray(attribute) ? attribute : [attribute]
+      setAttribute(element, name, callbacks.map(callback => (...argv) => invoke(callback, ...argv)), isSVG)
     } else if (name === 'style' || name==='dangerouslySetInnerHTML' || !/^_+/.test(name) && !(typeof attribute === 'object')){
       // 不允许 _ 开头的私有attribute，不允许 attribute 为数组或者对象。除非是 style。
       setAttribute(element, name, attribute, isSVG)
     } else {
-      console.warn(`invalid attribute: ${name}, value: ${attribute}`)
+      console.warn(`invalid attribute: ${name}, value: ${typeof attribute}, ${attribute}`)
     }
   })
 }
