@@ -7,6 +7,8 @@ import { replaceVnodeComputedAndWatchReactive } from './VirtualComponent'
 import watch from "../watch";
 import {isComponentVnode, layoutManager} from "./index";
 
+const seenTypes = new WeakSet()
+
 /**
  * ComponentNode
  * 这个对象最终会传个 painter 作为创建 cnode 的依据。
@@ -16,7 +18,7 @@ import {isComponentVnode, layoutManager} from "./index";
  * 除了 ajax，现在绘图的工具也可能出现，还有 web worker。
  */
 export default class ComponentNode {
-	constructor() {
+	constructor(type) {
 		this.localProps = {}
 		// render 过程中创造的 reactive prop/reactive vnode 收集在这里，之后要回收。
 		this.computed = []
@@ -28,6 +30,13 @@ export default class ComponentNode {
 		this.parent = null
 		// key: context 对象. value: 创建时的 defaultValue 或者 Provider value 中提供的
 		this.contexts = new Map()
+		// sideEffect 组件级别的 sideEffect，不只是实例级别的。
+		if (!seenTypes.has(type)) {
+			if (type.sideEffect) {
+				type.sideEffect()
+			}
+			seenTypes.add(type)
+		}
 	}
 
 	clearComputed()  {

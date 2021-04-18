@@ -10,10 +10,10 @@ export default function watch(computation, callback, runAtOnce) {
     if (isFirstRun) {
       result = computation(watchAnyMutation)
       isFirstRun = false
-      if (runAtOnce) callback()
+      if (runAtOnce) callback(result)
     } else {
       computation(watchAnyMutation)
-      callback()
+      callback(result)
     }
   }, TYPE.TOKEN)
   return [result, token]

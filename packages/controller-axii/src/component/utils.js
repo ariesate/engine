@@ -2,7 +2,7 @@ import VNode from '@ariesate/are/VNode'
 import { normalizeLeaf } from '../createElement'
 import createFlatChildrenProxy from '../createFlatChildrenProxy'
 import { isComponentVnode } from '../controller'
-import { invariant } from '../util'
+import { invariant, mapValues } from '../util'
 import { isRef } from '../reactive'
 import { createFragmentActionReceiver } from './fragment'
 
@@ -87,24 +87,36 @@ export class FragmentDynamic {
 
 function createElementProxy() {
   const styles = []
+  const pseudoClassStyles = []
   const listeners = {}
   const instruments = {
     getStyle() { return styles },
+    getPseudoClassStyle() { return pseudoClassStyles },
     getListeners() { return listeners }
   }
   return new Proxy({}, {
     get(target, key) {
       if (instruments[key]) return (...argv) => instruments[key](target, ...argv)
 
-      return (value) => {
-        if (key === 'style') {
-          styles.push(value)
-        } else if (typeof value === 'function'){
+      if (key === 'style') {
+        return value => styles.push(value)
+      } else if (key === 'match') {
+        return new Proxy({}, {
+          get(target, pseudoClass) {
+            return {
+              style(rules) {
+                pseudoClassStyles.push({name: pseudoClass, rules})
+              }
+            }
+          }
+        })
+      } else if (/^on/.test(key.toString())){
+        return value => {
           if (!listeners[key]) listeners[key] = []
           listeners[key].push(value)
-        } else {
-          throw new Error(`unknown action: key: ${key} value: ${value}`)
         }
+      } else {
+        throw new Error(`unknown action: key: ${key} value: ${value}`)
       }
     }
   })
@@ -345,4 +357,55 @@ export function compose(methods) {
   return (...argv) => {
     last(...argv, compose(methods.slice(0, methods.length - 1)))
   }
+}
+
+export function createStylesheet(attributes = {}) {
+  const styleTag = document.createElement('style');
+  styleTag.type = 'text/css';
+  Object.entries(attributes).forEach(([attrName, attrValue]) => {
+    styleTag.setAttribute(`data-${attrName}`, attrValue);
+  })
+
+  return styleTag
+}
+
+export const IS_NON_DIMENSIONAL = /acit|ex(?:s|g|n|p|$)|rph|ows|mnc|ntw|ine[ch]|zoo|^ord/i
+function withCamelCase(last, current) {
+  return last.concat(current,
+    /-/.test(current) ?
+      current.replace(/(.+)-([a-z])(.+)/, (match, first, letter, rest) => {
+        return `${first}${letter.toUpperCase()}${rest}`
+      }) :
+      []
+  )
+}
+
+export const IS_ATTR_NUMBER = new RegExp(`^(${[
+  'flex',
+  'flex-grow',
+  'flex-shrink',
+  'line-height',
+  'z-index'
+].reduce(withCamelCase, []).join('|')})$`, 'i')
+
+export function normalizeStyleValue(k, v) {
+  return (typeof v === 'number' && !IS_NON_DIMENSIONAL.test(k) && !IS_ATTR_NUMBER.test(k)) ? (`${v}px`) : v
+}
+
+
+export function isDynamicObject(obj) {
+  return obj && (typeof obj === 'function' || Object.values(obj).some(v => typeof v === 'function'))
+}
+
+export function computeDynamicObject(obj, ...argv) {
+  return (typeof obj === 'function') ? obj(...argv) : mapValues(obj, (v) => v(...argv))
+}
+
+
+export function appendRule(stylesheet, className, name, rules) {
+  const rulesStr = Object.entries(rules).map(([k, v]) => {
+    return `${k}: ${normalizeStyleValue(k, v)} !important`
+  }).join(';')
+  // TODO 驼峰转 - 写法
+  stylesheet.sheet.insertRule(`.${className}:${name} {${rulesStr}}`)
 }

@@ -1,15 +1,19 @@
-import { invariant, mapValues } from '../util'
+import { invariant, mapValues, createUniqueIdGenerator } from '../util'
 import { isRef, refComputed } from '../reactive'
 import vnodeComputed, {isVnodeComputed} from '../vnodeComputed'
-import { stopReplaceFunction } from "../createElement";
 import {
   createDefaultMatch,
   createActionCollectorContainer,
   createNamedChildrenSlotProxy,
   walkVnodes,
-  FragmentDynamic, createWalker,
+  FragmentDynamic,
+  createStylesheet,
+  normalizeStyleValue,
+  isDynamicObject,
+  computeDynamicObject, appendRule
 } from './utils'
-import { Fragment, normalizeLeaf, VNode } from '../index';
+import { Fragment, normalizeLeaf, VNode, watch } from '../index';
+
 
 function filterActiveFeatures(features, props) {
   return features.filter(Feature => {
@@ -75,6 +79,8 @@ function filterActiveFeatures(features, props) {
  */
 export const ROOT_FRAGMENT_NAME = 'root'
 
+const generateComponentId = createUniqueIdGenerator()
+
 /**
  * createComponent 的实现：
  * 1. 创建一个 fragmentsProxyContainer，通过 fragmentsProxyContainer.derive 为每个 feature 分配一个 fragmentsProxy，
@@ -97,7 +103,7 @@ export const ROOT_FRAGMENT_NAME = 'root'
  * fragment 要确保每次自己被调用时，都会去把已经注册的 modify 等执行一遍。
  */
 export default function createComponent(Base, featureDefs=[]) {
-
+  const generateInstanceId = createUniqueIdGenerator()
   // 虽然 Base 不需要收集，但要享受 methods 等注入修改，所以把 base 也伪装陈给一个 Feature，
   const BaseAsFeature = function() {}
   BaseAsFeature.match = () => true
@@ -115,8 +121,12 @@ export default function createComponent(Base, featureDefs=[]) {
     return last
   }, [])
 
+  // sideEffects，目前只有 css
+  const componentId = generateComponentId()
+  const stylesheet = createStylesheet()
 
   function Component({ children, listeners, overwrite = [], ref, ...restProps }, upperRef) {
+    const instanceId = generateInstanceId()
     // 如果用户自己声明了 Base.forwardRef，就会收到第二参数，自己能处理 ref，否则系统自动将 ref 挂载到第一层级。
     const selfHandleRef = Base.forwardRef ? upperRef : undefined
     // 1. 先统一处理一下 props, 其中 children 要考虑 slot 的情况。
@@ -148,12 +158,11 @@ export default function createComponent(Base, featureDefs=[]) {
     // 渲染过程中 actionCollector 会自动 invoke 所有的 feature actions。
     const baseActionCollector = actionCollectorContainer.derive(BaseAsFeature)
 
-
     // 得到一个叫做 root 的 FragmentDynamic 对象。
     const rootFragment = baseActionCollector[ROOT_FRAGMENT_NAME](processedProps)(() => Base(processedProps, baseActionCollector, selfHandleRef))
     // CAUTION base 是 nonReactive 的，因为如果数据引用变了，会自动从上面刷新。注意这里会印象到后面的 ref 处理。
     rootFragment.nonReactive = true
-    const result = renderFragments(rootFragment, processedProps, selfHandleRef, actionCollectorContainer, processedProps, Base.useNamedChildrenSlot, baseActionCollector)
+    const result = renderFragments(rootFragment, processedProps, selfHandleRef, actionCollectorContainer, processedProps, Base.useNamedChildrenSlot, baseActionCollector, { stylesheet, componentId, instanceId })
 
     // 6. TODO 自动 forward ref， 如果有 forwardRef 说明组件自己处理。在这里处理还是在 Base 里？？？
     if (ref && !Base.forwardRef) {
@@ -194,13 +203,19 @@ export default function createComponent(Base, featureDefs=[]) {
   // 8. 允许通过 extend 快速增加 feature
   Component.extend = (...features) => createComponent(Base, featureDefs.concat(features))
 
+  // 9. sideEffect，Axii 第一次 render 时候应该处理
+  Component.id = componentId
+  Component.stylesheet = stylesheet
+  Component.sideEffect = () => {
+    const head = document.head || document.getElementsByTagName('head')[0]
+    head.appendChild(stylesheet);
+  }
 
   return Component
 }
 
 
-export const GLOBAL_NAME = 'global'
-// const walkVnodes = createWalker()
+
 /**
  * renderFragments 的实现
  * 1. 在 Base render 的时候，fragments 并没有被 render，只是作为一个 vnode 节点放在了结果里面，这里才开始 render。
@@ -212,7 +227,10 @@ export const GLOBAL_NAME = 'global'
  * 因此刷新时机就是在 render 中依赖的对象的刷新时机。
  *
  */
-function renderFragments(fragment, props, selfHandleRef, actionCollectorContainer, upperArgv, useNamedChildrenSlot, baseActionCollector) {
+export const GLOBAL_NAME = 'global'
+const staticClassNamesByComponentId = {}
+function renderFragments(fragment, props, selfHandleRef, actionCollectorContainer, upperArgv, useNamedChildrenSlot, baseActionCollector, misc) {
+  const { stylesheet, instanceId, componentId } = misc
   /**
    * 整个流程是后续遍历。做四件事。
    * 0。 渲染当前节点
@@ -278,8 +296,6 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
      * 3. 如果遇到 fragment，就递归渲染。
      */
     //
-
-
     // TODO 这里可以改善一下性能，先取出所有有定义的 elements，再在遍历中去匹配，而不是每个节点都试探去取一次。
     walkVnodes(renderResultToWalk, (walkChildren, originVnode, vnodes) => {
       if (!originVnode) return
@@ -302,7 +318,7 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
           // 如果是我们伪造的 fragment，只是为了在 vnodeComputed 重新计算时正确执行，那么就要在 extend 上记录上，因为还要复用 style 和 listener。
           subFragmentToRender.extend = fragment.name
         }
-        vnodes[vnodes.indexOf(originVnode)] = renderFragments(subFragmentToRender, props, selfHandleRef, actionCollectorContainer, commonArgv, useNamedChildrenSlot, baseActionCollector)
+        vnodes[vnodes.indexOf(originVnode)] = renderFragments(subFragmentToRender, props, selfHandleRef, actionCollectorContainer, commonArgv, useNamedChildrenSlot, baseActionCollector, misc)
         return
       }
 
@@ -312,7 +328,10 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
 
       const originStyle = originVnode.attributes.style || {}
       const isOriginStyleRef = isRef(originStyle)
+      const originClassName = originVnode.attributes.className || ''
+      const isOriginClassNameRef = isRef(originClassName)
       const matchedStyles = []
+      const matchedPseudoClassStyles = []
       const listenersByEventName = {}
 
       const sourceFragmentName = fragment.extend || fragment.name
@@ -322,6 +341,9 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
           ...collector[GLOBAL_NAME].elements[originVnode.name].getStyle(),
           ...collector[sourceFragmentName].elements[originVnode.name].getStyle()
         )
+
+        // TODO 收集 PseudoClassNames
+        matchedPseudoClassStyles.push(...collector[sourceFragmentName].elements[originVnode.name].getPseudoClassStyle())
 
         // 收集 listeners
         Object.entries(collector[sourceFragmentName].elements[originVnode.name].getListeners()).forEach(([eventName, listeners ]) => {
@@ -333,11 +355,15 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
       // 挂载 样式
       // TODO 未来考虑将"静态的"样式生成 css rule 来防止元素上 style 爆炸。
       if (matchedStyles.length) {
-        let shouldStyleBeReactive = isOriginStyleRef || matchedStyles.some(s => typeof s === 'function')
+        let shouldStyleBeReactive = isOriginStyleRef || matchedStyles.some(s => isDynamicObject(s))
         const getNextStyle = () => {
-
           const partialStyle = Object.assign({}, ...matchedStyles.map(style => {
-            return typeof style === 'function' ? style(commonArgv) : style
+            // 支持对象中局部有函数的情况,
+            return (typeof style === 'function') ?
+              style(commonArgv) :
+              mapValues(style, (rule, name) => {
+                return typeof rule === 'function' ? rule(commonArgv, name) : rule
+              })
           }))
 
           return Object.assign({}, isOriginStyleRef ? originStyle.value : originStyle, partialStyle)
@@ -346,20 +372,50 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
         originVnode.attributes.style = shouldStyleBeReactive ? refComputed(getNextStyle) : getNextStyle()
       }
 
+      // 伪类
+      if (matchedPseudoClassStyles.length) {
+        let shouldClassNameBeReactive = isOriginClassNameRef
+        const makeClassName = (instanceId, pseudoName) => `${instanceId}-${pseudoName}`
+
+        const getNextClassName = () => {
+          const classNames = matchedPseudoClassStyles.map(({ name, rules }) => {
+            return makeClassName(isDynamicObject(rules) ? instanceId : componentId, name)
+          }).join(' ')
+          return originClassName.value? `${originClassName.value} ${classNames}` : classNames
+        }
+
+        matchedPseudoClassStyles.forEach(({ name, rules }) => {
+          const className = makeClassName(isDynamicObject(rules) ? instanceId : componentId, name)
+          if (isDynamicObject(rules)) {
+            // 动态的，每个组件实例都要单独的 class，因为传入的参数可能不一样，并且需要 watch，动态修改规则
+            // watch 参数变化，修改规则
+            watch(() => computeDynamicObject(rules, commonArgv), (computedRules) => {
+              // TODO 如何修改？目前只会继续插入
+              console.log(className, name, computedRules)
+              appendRule(stylesheet, className, name, computedRules)
+            }, true)
+          } else {
+            // 静态的，应该只要 inject once，之后的复用就行了
+            if (!staticClassNamesByComponentId[componentId]) staticClassNamesByComponentId[componentId] = new Set()
+            if (!staticClassNamesByComponentId[componentId].has(name)) {
+              appendRule(stylesheet, className, name, rules)
+            }
+          }
+        })
+
+        originVnode.attributes.className = shouldClassNameBeReactive ? refComputed(getNextClassName) : getNextClassName()
+      }
+
+      // TODO 伪元素
+
       // 挂载监听事件
       if (Object.keys(listenersByEventName).length ){
         Object.entries(listenersByEventName).forEach(([eventName, listeners]) => {
           const originListener =  originVnode.attributes[eventName]
-          originVnode.attributes[eventName] = (...argv) => {
-            if (originListener) originListener(...argv)
-            listeners.forEach(listener => {
-              // 注意补足当前作用域下所有可用的 variable 作为参数。
-              listener(...argv, commonArgv)
-            })
-          }
+          // 这样写就能支持 originListener 为 undefined | function | [function] 。
+          originVnode.attributes[eventName] = ([]).concat(originListener || [], ...listeners.map(listener => (...argv) => listener(...argv, commonArgv)))
         })
       }
-
       // 5. 开始执行 replace slot。replaceSlot 内部必须保证不要再穿透 vnodeComputed。
       // CAUTION slot children 并没有区分 fragments.
       if(useNamedChildrenSlot && originVnode.attributes.slot && props.children[originVnode.name]) {
