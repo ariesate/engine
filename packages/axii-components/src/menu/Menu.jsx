@@ -68,7 +68,6 @@ Menu.propTypes = {
 }
 
 Menu.Style = (fragments) => {
-
 	fragments.item.elements.expand.style({
 		width: 20,
 		userSelect: 'none',
@@ -79,8 +78,9 @@ Menu.Style = (fragments) => {
 		const currentPath = parents.concat(item)
 		const isActive = activeItemKeyPath.value.length && (currentPath.length === activeItemKeyPath.value.length) && activeItemKeyPath.value.every((p, i) => p === currentPath[i]?.key)
 		return {
+			padding: scen().spacing(),
 			paddingLeft: scen().spacing(2) * level,
-			borderRight : isActive ? `4px ${scen().interactable().active().color()} solid` : undefined,
+			borderLeft : isActive ? `4px ${scen().interactable().active().color()} solid` : undefined,
 			background: isActive ? scen().interactable().active().color(-5) : 'transparent',
 			userSelect: 'none',
 			cursor: 'pointer'

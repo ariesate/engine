@@ -46,7 +46,10 @@ exportStr.push(...commandLikeComponents.map(name => `export { default as ${name}
 // const iconFileNames = await readdir(path.join(SRC_PATH, ICON_DIR_NAME))
 // exportStr.push(...iconFileNames.map(name => `export { default as ${getFileName(name)}Icon } from "./${ICON_DIR_NAME}/${name}";`))
 
-// style
+// pattern
+exportStr.push('export { default as pattern } from "./pattern"')
+
+// TODO 去掉 style
 exportStr.push('import "./style/global.less";')
 
 await writeFile(path.join(SRC_PATH, './index.js'), exportStr.join('\n'))

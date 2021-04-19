@@ -96,13 +96,15 @@ export function Table( { data, pagination, columns }, fragments) {
 export const thStyle = {
   borderColor: scen().separateColor(),
   borderStyle: 'solid',
-  background: scen().fieldColor()
+  background: scen().fieldColor(),
+  padding: scen().spacing()
 }
 
 export const tdStyle = {
   borderStyle: 'solid',
   borderColor: scen().separateColor(),
-  background: '#fff'
+  background: '#fff',
+  padding: scen().spacing()
 }
 
 Table.Style = (fragments) => {

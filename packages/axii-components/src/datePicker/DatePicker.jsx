@@ -13,6 +13,7 @@ import {nextTick} from '../util';
 import Input from '../input/Input'
 import Calendar from '../calendar/Calendar.jsx'
 import useLayer from '../hooks/useLayer.jsx'
+import scen from '../pattern/index.js'
 import moment from 'moment';
 
 export function DatePicker({focused, onFocus, onBlur, value, onChange, format,}) {
@@ -70,6 +71,12 @@ DatePicker.propTypes = {
     // 可以什么也不做，复用 calendar 的行为
   }),
   format: propTypes.string.default(() => ref('YYYY-MM-DD'))
+}
+
+DatePicker.Style = (fragments) => {
+  fragments.root.elements.calendarContainer.style({
+    boxShadow: scen().elevate().shadow()
+  })
 }
 
 export default createComponent(DatePicker)

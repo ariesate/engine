@@ -93,7 +93,6 @@ export function Cascader(props, fragments) {
 				style={{background: "#fff", zIndex: 99}}
 				ref={optionContainerRef}
 			>
-
 				{fragments.optionList({ items: options })(
 					() => renderOptionList(options, openedIds, 0, props, fragments)
 				)}
@@ -176,6 +175,10 @@ Cascader.Style = (fragments) => {
 			color: opened ? scen().interactable().active().inverted().color() : scen().color(),
 			cursor: 'pointer',
 		}
+	})
+
+	fragments.root.elements.optionContainer.style({
+		boxShadow: scen().elevate().shadow(0),
 	})
 }
 
