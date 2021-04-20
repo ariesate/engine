@@ -49,6 +49,7 @@ function Tabs({ children, activeKey, onChangeActiveKey }, fragments) {
     <container block>
       <tabHeadersContainer
         block
+        block-border-width-0
         block-border-bottom-width-1px
         ref={tabHeadersContainerRef}
         flex-display

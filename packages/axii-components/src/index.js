@@ -3,7 +3,6 @@ export { default as Calendar } from "./calendar/Calendar.jsx";
 export { default as Cascader } from "./cascader/Cascader.jsx";
 export { default as Checkbox } from "./checkbox/Checkbox.jsx";
 export { default as DatePicker } from "./datePicker/DatePicker.jsx";
-export { default as Dialog } from "./dialog/Dialog.jsx";
 export { default as Input } from "./input/Input.jsx";
 export { default as Menu } from "./menu/Menu.jsx";
 export { default as OptionTree } from "./optionTree/OptionTree.jsx";
