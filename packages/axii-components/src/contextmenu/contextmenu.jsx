@@ -27,14 +27,12 @@ export function createContextmenu(
   const container = createContainer()
   // CAUTION 不要用 reactive，因为这里的语义不适用，而且 content 可能会有 vnode 节点。会出现问题。
 
-  // const visible = refComputed(() => contents.length !== 0)
   const visible = ref(true)
   const menu = ref(null)
   const position = ref({})
   const containerRef = useRef()
 
   const containerStyle = refComputed(() => {
-    console.log(position.value)
     return {
       display: 'inline-block',
       position: 'fixed',

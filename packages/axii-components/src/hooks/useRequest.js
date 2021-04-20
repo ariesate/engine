@@ -36,7 +36,7 @@ export function createUseRequest(instance) {
 			error.value = null
 			status.value = undefined
 
-			doRequest(...argv).then(response => {
+			return doRequest(...argv).then(response => {
 				if (currentRunId !== runId) return
 				debounceComputed(() => {
 					receive(data, response.data)

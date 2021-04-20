@@ -25,6 +25,8 @@ function renderOptionList(options, openedIds, index, props, fragments) {
 						block
 						block-font-size={scen().fontSize()}
 						block-padding={`${scen().spacing(-1)}px ${scen().spacing()}px `}
+						flex-display
+						flex-justify-content-space-between
 						onClick={() => {
 							if (option.children && option.children.length !== 0) {
 								props.onOpen(option, index)
@@ -35,8 +37,13 @@ function renderOptionList(options, openedIds, index, props, fragments) {
 
 						}}
 					>
-						{option.name}
-						{(option.children && option.children.length!== 0) ? '>' : ''}
+						<optionItemName>
+							{option.name}
+						</optionItemName>
+
+							{(option.children && option.children.length!== 0) ? (
+								<optionItemIcon inline inline-margin-left-10px>></optionItemIcon>
+							) : null}
 					</optionItem>
 				))}
 			</optionList>)
@@ -45,7 +52,7 @@ function renderOptionList(options, openedIds, index, props, fragments) {
 // TODO 有 openedIds 就显示 openedIds。没有就显示 value 的。
 // TODO 异步加载数据?
 export function OptionTree(props, fragments) {
-	const {options, focused, openedIds} = props
+	const {options, openedIds} = props
 
 	const optionsIndexedById = computed(() => {
 		const result = {}
@@ -66,14 +73,6 @@ export function OptionTree(props, fragments) {
 
 
 	const optionContainerRef = useRef()
-
-	// TODO 指定打开方式是跟顶部对其还是怎样
-	const getContainerRect = ({top, left, height}) => {
-		return {
-			top: height + top,
-			left,
-		}
-	}
 
 	return (
 		<optionContainer

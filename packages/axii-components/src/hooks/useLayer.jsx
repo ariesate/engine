@@ -1,5 +1,5 @@
+/**@jsx createElement*/
 import {
-  useContext,
   refComputed,
   createPortal,
   createElement,
@@ -24,7 +24,9 @@ import { nextTick } from "../util";
 function defaultCreateContainer() {
   const portalRoot = document.createElement('div')
   document.body.appendChild(portalRoot)
-  return portalRoot
+  return [portalRoot, () => {
+    portalRoot.parentElement.removeChild(portalRoot)
+  }]
 }
 
 
@@ -34,7 +36,6 @@ export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), 
 
   // 因为我们提供给 nodeInPortal 的是 source.getBoundingClientRect 的位置，这个是相对于 page 的。所以这里用 fixed 定位。
   const style = refComputed(() => {
-
     const rect = sourceRef.current ? sourceRef.current.getBoundingClientRect() : {
       top: 0,
       left: 0,
@@ -53,18 +54,25 @@ export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), 
   })
 
   // TODO 变成规划的 root，要根据当前 useLayer 是从哪里发出的来决定放在哪个 div 里。
-  const portalRoot = createContainer()
+  const [portalRoot, detach] = createContainer()
 
-  // TODO 怎么回收 portal???
-  const node = createPortal(<portal style={style}>
+  const receivePortal = (el) => {
+    if (!el) {
+      // 回收 portal
+      detach()
+    }
+  }
+
+  // 通过 ref 来回收 portal element。
+  const node = createPortal(<portal style={style} ref={receivePortal}>
     {typeof nodeInPortal === 'function' ? nodeInPortal(sourceRef) : nodeInPortal}
   </portal>, portalRoot)
 
 
   return {
     source: inputSourceRef ? undefined : (ref) => {
-      // TODO 为什么要 nextick。因为立即 sourceRef 是 reactive，一但挂载，马上就会出发 style 重新计算。
-      // 而此时是处于 digestCallback 里，不允许触发。
+      // TODO 为什么要 nexttick。因为立即 sourceRef 是 reactive，一但挂载，马上就会出发 style 重新计算。
+      //  而此时是处于 digestCallback 里，不允许触发。
       nextTick(() => {
         sourceRef.current = ref
       })

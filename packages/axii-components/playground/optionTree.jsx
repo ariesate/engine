@@ -4,7 +4,7 @@ import OptionTree from '../src/optionTree/OptionTree.jsx'
 
 const options = reactive([{
 	id: '1',
-	name: 'test1',
+	name: 'test1-long',
 	children: [{
 		id: '2',
 		name: 'son1',
