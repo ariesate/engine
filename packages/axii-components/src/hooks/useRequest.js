@@ -29,33 +29,40 @@ export function createUseRequest(instance) {
 		}
 
 		let runId = 0
-		function run(...argv) {
+		async function run(...argv) {
 			const currentRunId = ++runId
 
 			loading.value = true
 			error.value = null
 			status.value = undefined
 
-			return doRequest(...argv).then(response => {
-				if (currentRunId !== runId) return
+			let response
+			let responseError
+			try {
+				response  = await doRequest(...argv)
+			}catch(e) {
+				responseError = e
+			}
+
+			if (currentRunId !== runId) return
+
+			if (!responseError) {
 				debounceComputed(() => {
 					receive(data, response.data)
 					status.value = response.status
 					processResponse(values, response)
 				})
-			}).catch((error) => {
-				if (currentRunId !== runId) return
-
-				console.error(error)
+			 } else {
+				console.error(responseError)
 				debounceComputed(() => {
 					receive(data, undefined)
 
-					if (error.response) {
+					if (responseError.response) {
 						// The request was made and the server responded with a status code
 						// that falls out of the range of 2xx
-						error.value = error.response.data
-						status.value = error.response.status
-					} else if (error.request) {
+						error.value = responseError.response.data
+						status.value = responseError.response.status
+					} else if (responseError.request) {
 						// The request was made but no response was received
 						// `error.request` is an instance of XMLHttpRequest in the browser and an instance of
 						// http.ClientRequest in node.js
@@ -65,15 +72,15 @@ export function createUseRequest(instance) {
 						error.value = 'client error'
 					}
 
-					processError(values, error)
+					processError(values, responseError)
 				})
-			}).finally(() => {
-				if (currentRunId !== runId) return
+			}
 
-				loading.value = false
-			})
+			loading.value = false
+
+			if (responseError) throw responseError
+			return data
 		}
-
 
 		if (!manual) run()
 		if (deps) {

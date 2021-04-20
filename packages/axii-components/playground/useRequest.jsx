@@ -5,7 +5,17 @@ import Table from '../src/table/Table'
 import useRequest from "../src/hooks/useRequest";
 
 function App() {
-	const {data, loading, error, run} = useRequest('https://api.apiopen.top/getWangYiNews')
+	const {data, loading} = useRequest({
+		url: 'https://api.apiopen.top/getWangYiNews',
+	}, {
+		processData: {
+			receive(data, responseData) {
+				data.value = responseData
+			}
+		}
+	})
+
+	const { error, loading: errorLoading } = useRequest('http://error')
 
 	const columns = [{
 		title: '标题',
@@ -15,14 +25,18 @@ function App() {
 		dataIndex : 'passtime'
 	}]
 
-	// TODO 单独更新 string 节点有问题？？？string 接在 string 后面就有问题！！！一个完整的没问题。
 	return (
 		<div>
 			<div>{() => loading.value ? 'loading': 'load complete'}</div>
 			<Table
 				columns={columns}
-				data={computed(() => (data.value? data.value.result : []))}
+				data={computed(() => {
+					console.log(data)
+					return (data.value? data.value.result : [])
+				})}
 			/>
+			<div>{ () => errorLoading.value ? 'error example loading' : 'error completed'} </div>
+			<div>{() => `error: ${JSON.stringify(error.value)}`}</div>
 		</div>
 	)
 }
