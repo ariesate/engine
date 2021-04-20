@@ -15,7 +15,10 @@ function defaultGetPosition() {
 }
 
 function defaultGetStyle() {
-	return layerStyle
+	return {
+		...layerStyle,
+		padding: scen().spacing()
+	}
 }
 
 function defaultGetLayoutStyle() {

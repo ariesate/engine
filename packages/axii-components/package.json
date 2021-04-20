@@ -1,6 +1,6 @@
 {
   "name": "axii-components",
-  "version": "1.0.26",
+  "version": "1.0.27",
   "description": "",
   "dependencies": {
     "@ant-design/colors": "^5.0.1",
