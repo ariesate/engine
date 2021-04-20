@@ -10,6 +10,7 @@ import {
 import Expandable from './Expandable'
 import Selectable from './Selectable'
 import StickyLayout from './StickyLayout'
+import CustomRender from './CustomRender'
 
 import scen from '../pattern'
 
@@ -117,6 +118,6 @@ Table.propTypes = {
   columns: propTypes.array.default(() => reactive([]))
 }
 
-export default createComponent(Table, [StickyLayout, Selectable, Expandable])
+export default createComponent(Table, [StickyLayout, Selectable, Expandable, CustomRender])
 
 

@@ -83,6 +83,13 @@ const columns = [
     width: 80,
     fixed: 'right',
   },
+  {
+    title: 'Action',
+    dataIndex: 'key',
+    render() {
+      return <button>delete</button>
+    }
+  },
 ];
 
 const data = [];
