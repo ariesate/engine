@@ -1,6 +1,7 @@
-import {createElement, ref, reactive} from 'axii'
+/** @jsx createElement */
+import {createElement, atom, reactive} from 'axii'
 export default function Code() {
-  const inputItem = ref('')
+  const inputItem = atom('')
   const items = reactive([])
 
   const setInputItem = (e) => inputItem.value = e.target.value

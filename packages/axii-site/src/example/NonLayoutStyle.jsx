@@ -1,4 +1,5 @@
-import { createElement, ref, createComponent, propTypes } from 'axii'
+/** @jsx createElement */
+import { createElement, atom, createComponent, propTypes } from 'axii'
 
 function Component({ onFocus, onBlur}) {
   return <container>
@@ -27,7 +28,7 @@ Component.Style = (fragments) => {
 }
 
 Component.Style.propTypes = {
-  focused: propTypes.bool.default(() => ref(false)),
+  focused: propTypes.bool.default(() => atom(false)),
   onFocus: propTypes.callback.default(() => ({focused}) => focused.value = true),
   onBlur: propTypes.callback.default(() => ({focused}) => focused.value = false)
 }

@@ -9,7 +9,7 @@
     "@mdx-js/mdx": "^2.0.0-next.9",
     "@prefresh/vite": "^2.2.0",
     "@testing-library/jest-dom": "^5.11.4",
-    "axii": "^1.0.4",
+    "axii": "^1.0.5",
     "codemirror": "^5.60.0",
     "command-line-args": "^5.1.1",
     "mdx-axii": "^2.0.1",

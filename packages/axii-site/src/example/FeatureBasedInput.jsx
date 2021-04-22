@@ -1,12 +1,12 @@
 /** @jsx createElement */
-import { createElement, createComponent, ref, propTypes } from 'axii'
+import { createElement, createComponent, atom, propTypes } from 'axii'
 
 function Input({ value, onChange}) {
   return <input value={value} onInput={onChange}/>
 }
 
 Input.propTypes = {
-  value: propTypes.string.default(() => ref('')),
+  value: propTypes.string.default(() => atom('')),
   onChange: propTypes.callback.default(() => ({value}, props, e) => {
     value.value = e.target.value
   })
@@ -30,7 +30,7 @@ function InputStyle(fragments) {
 }
 
 InputStyle.propTypes = {
-  focused: propTypes.string.default(() => ref(false)),
+  focused: propTypes.string.default(() => atom(false)),
   onFocus: propTypes.callback.default(() => ({focused}) => focused.value = true),
   onBlur: propTypes.callback.default(() => ({focused}) => focused.value = false),
 }

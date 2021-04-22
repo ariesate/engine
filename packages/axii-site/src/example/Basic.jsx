@@ -1,8 +1,9 @@
-import { createElement, ref, computed } from 'axii'
+/** @jsx createElement */
+import { createElement, atom, computed } from 'axii'
 
 export default function Basic() {
-  const firstName = ref('')
-  const lastName = ref('')
+  const firstName = atom('')
+  const lastName = atom('')
   const fullName = computed(() => {
     if (!firstName.value && !lastName.value) return 'please enter your name'
     return `${firstName.value}-${lastName.value}`

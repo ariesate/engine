@@ -1,9 +1,9 @@
 /** @jsx createElement */
-import { createElement, ref } from 'axii'
+import { createElement, atom } from 'axii'
 import Input from './Input.jsx'
 
 export default function InputDemo() {
-  const value = ref('')
+  const value = atom('')
   return (
     <container>
       <Input value={value}/>
