@@ -1,12 +1,12 @@
-const { ref, refComputed, debounceComputed } = require('../reactive/index.js')
+const { atom, atomComputed, debounceComputed } = require('../reactive/index.js')
 const batchOperation = require('../batchOperation').default
 
 describe('performance test', () => {
   test('batch operation on ref', () => {
 
-    const base = ref(1)
+    const base = atom(1)
     let computedTimes = 0
-    const next = refComputed(() => {
+    const next = atomComputed(() => {
       computedTimes++
       return base.value
     })
@@ -28,10 +28,10 @@ describe('performance test', () => {
 
   test('debounce computed', () => {
     // 多个 source 进行操作，会合并其中的 computed。
-    const base1 = ref(1)
-    const base2 = ref(1)
+    const base1 = atom(1)
+    const base2 = atom(1)
     let computedTimes = 0
-    const next = refComputed(() => {
+    const next = atomComputed(() => {
       computedTimes++
       return base1.value + base2.value
     })
@@ -54,20 +54,20 @@ describe('performance test', () => {
   })
 
   test('debounce with more complex dep', () => {
-    const base1 = ref(1)
-    const base2 = ref(1)
+    const base1 = atom(1)
+    const base2 = atom(1)
 
-    const computed2 = refComputed(() => {
+    const computed2 = atomComputed(() => {
       return base2.value + 1
     })
 
-    const computed22 = refComputed(() => {
+    const computed22 = atomComputed(() => {
       return computed2.value + 1
     })
 
 
     let computedTimes = 0
-    const next = refComputed(() => {
+    const next = atomComputed(() => {
       computedTimes++
       return base1.value + computed22.value
     })
@@ -90,8 +90,8 @@ describe('performance test', () => {
   test('debounce with more unstable dep', () => {
     // TODO 还要构造更复杂的情况才行
     let renderOrder = []
-    const base1 = ref(1)
-    const computed1 = refComputed(function c1() {
+    const base1 = atom(1)
+    const computed1 = atomComputed(function c1() {
       // 当 base1.value ===2 时就会新增依赖 computed2，这时候自己的 level 会变高。
       // 进而引起 computed 11 的 level 也变高，使得 computed11 的计算要放到最后。
       renderOrder.push('computed1')
@@ -102,17 +102,17 @@ describe('performance test', () => {
       }
 
     })
-    const computed11 = refComputed(function c11() {
+    const computed11 = atomComputed(function c11() {
       renderOrder.push('computed11')
       return computed1.value + 1
     })
 
-    const base2 = ref(1)
-    const computed2 = refComputed(function c2() {
+    const base2 = atom(1)
+    const computed2 = atomComputed(function c2() {
       renderOrder.push('computed2')
       return base2.value + 1
     })
-    const computed22 = refComputed(function c22() {
+    const computed22 = atomComputed(function c22() {
       renderOrder.push('computed22')
       return computed2.value + 1
     })

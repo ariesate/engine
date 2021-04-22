@@ -3,7 +3,7 @@ import {
   createElement,
   Fragment,
   useRef,
-  ref,
+  atom,
   useViewEffect,
   render,
 } from '../index';
@@ -61,7 +61,7 @@ describe('sideEffects', () => {
 
   test('repaint invoke ref', () => {
     const el = useRef()
-    const flag = ref(0)
+    const flag = atom(0)
 
     function App() {
       return <div>{

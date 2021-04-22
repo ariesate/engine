@@ -1,7 +1,14 @@
 import { createElement, ref, createComponent, propTypes } from 'axii'
 
 function Component({ onFocus, onBlur}) {
-  return <box use="input" onFocus={onFocus} onBlur={onBlur}/>
+  return <container>
+    <line block>
+      <box use="input" onFocus={onFocus} onBlur={onBlur}/>
+    </line>
+    <line block>
+      <textLink use="a" href="#">a link</textLink>
+    </line>
+  </container>
 }
 
 Component.Style = (fragments) => {
@@ -12,6 +19,10 @@ Component.Style = (fragments) => {
       outline: 'none',
       borderColor: focused.value ? 'blue': 'black'
     }
+  })
+
+  fragments.root.elements.textLink.match.hover.style({
+    color: 'green'
   })
 }
 

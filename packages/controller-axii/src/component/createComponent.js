@@ -1,5 +1,5 @@
 import { invariant, mapValues, createUniqueIdGenerator } from '../util'
-import { isRef, refComputed } from '../reactive'
+import { isAtom, atomComputed } from '../reactive'
 import vnodeComputed, {isVnodeComputed} from '../vnodeComputed'
 import {
   createDefaultMatch,
@@ -327,9 +327,9 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
       if (!originVnode instanceof VNode || typeof originVnode.type !== 'string') return
 
       const originStyle = originVnode.attributes.style || {}
-      const isOriginStyleRef = isRef(originStyle)
+      const isOriginStyleRef = isAtom(originStyle)
       const originClassName = originVnode.attributes.className || ''
-      const isOriginClassNameRef = isRef(originClassName)
+      const isOriginClassNameRef = isAtom(originClassName)
       const matchedStyles = []
       const matchedPseudoClassStyles = []
       const listenersByEventName = {}
@@ -369,7 +369,7 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
           return Object.assign({}, isOriginStyleRef ? originStyle.value : originStyle, partialStyle)
         }
 
-        originVnode.attributes.style = shouldStyleBeReactive ? refComputed(getNextStyle) : getNextStyle()
+        originVnode.attributes.style = shouldStyleBeReactive ? atomComputed(getNextStyle) : getNextStyle()
       }
 
       // 伪类
@@ -403,7 +403,7 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
           }
         })
 
-        originVnode.attributes.className = shouldClassNameBeReactive ? refComputed(getNextClassName) : getNextClassName()
+        originVnode.attributes.className = shouldClassNameBeReactive ? atomComputed(getNextClassName) : getNextClassName()
       }
 
       // TODO 伪元素

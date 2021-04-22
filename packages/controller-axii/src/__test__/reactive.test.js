@@ -1,10 +1,10 @@
-const { ref, reactive, refComputed, computed } = require('../reactive/index.js')
+const { atom, reactive, atomComputed, computed } = require('../reactive/index.js')
 
 describe('basic reactive', () => {
 
-  test('ref & refComputed', () => {
-    const base = ref(1)
-    const computed = refComputed(() => {
+  test('ref & atomComputed', () => {
+    const base = atom(1)
+    const computed = atomComputed(() => {
       return base.value + 1
     })
 
@@ -17,8 +17,8 @@ describe('basic reactive', () => {
   })
 
   test('ref & computed', () => {
-    const base = ref(1)
-    const base2 = ref(1)
+    const base = atom(1)
+    const base2 = atom(1)
 
     const computedValue = computed(() => {
       return {
@@ -38,8 +38,8 @@ describe('basic reactive', () => {
   })
 
   test('ref & array computed', () => {
-    const base = ref(1)
-    const base2 = ref(1)
+    const base = atom(1)
+    const base2 = atom(1)
 
     const computedValue = computed(() => {
       return [base.value + base2.value, base.value - base2.value]
@@ -55,13 +55,13 @@ describe('basic reactive', () => {
     expect(computedValue[1]).toBe(-1)
   })
 
-  test('object reactive & refComputed', () => {
+  test('object reactive & atomComputed', () => {
     const base = reactive({
       firstName: 'john',
       secondName: 'doe'
     })
 
-    const computedValue = refComputed(() => {
+    const computedValue = atomComputed(() => {
       return `${base.firstName}-${base.secondName}`
     })
 
@@ -72,10 +72,10 @@ describe('basic reactive', () => {
     expect(computedValue.value).toBe('jim-doe')
   })
 
-  test('array reactive & refComputed', () => {
+  test('array reactive & atomComputed', () => {
     const base = reactive([1, 2,3,4])
 
-    const computedValue = refComputed(() => {
+    const computedValue = atomComputed(() => {
       return base.reduce((last, current) => last + current)
     })
 
@@ -94,7 +94,7 @@ describe('basic reactive', () => {
       secondName: 'doe'
     })
 
-    const computedValue = refComputed(() => {
+    const computedValue = atomComputed(() => {
       return base.nickname || `${base.firstName}-${base.secondName}`
     })
 
@@ -116,7 +116,7 @@ describe('basic reactive', () => {
       }
     })
 
-    const computedValue = refComputed(() => {
+    const computedValue = atomComputed(() => {
       return `${base.admin.firstName}-${base.admin.secondName}&${base.member.firstName}-${base.member.secondName}`
     })
 
@@ -128,11 +128,11 @@ describe('basic reactive', () => {
   })
 
   test('chain computed', () => {
-    const first = ref('tim')
-    const computedValue = refComputed(() => {
+    const first = atom('tim')
+    const computedValue = atomComputed(() => {
       return `${first.value}-no`
     })
-    const computedValue2 = refComputed(() => {
+    const computedValue2 = atomComputed(() => {
       return `${computedValue.value}-yes`
     })
 
@@ -143,9 +143,9 @@ describe('basic reactive', () => {
   })
 
   test('multiple dep', () => {
-    const base1 = ref('john')
-    const base2 = ref('wayne')
-    const computedValue = refComputed(() => {
+    const base1 = atom('john')
+    const base2 = atom('wayne')
+    const computedValue = atomComputed(() => {
       return `${base1.value}-${base2.value}`
     })
 
@@ -159,9 +159,9 @@ describe('basic reactive', () => {
   })
 
   test('conditional dep', () => {
-    const base1 = ref('john')
-    const base2 = ref('wayne')
-    const computedValue = refComputed(() => {
+    const base1 = atom('john')
+    const base2 = atom('wayne')
+    const computedValue = atomComputed(() => {
       if (base1.value !== 'tom') return `yes`
       return `${base2.value}-no`
     })
@@ -176,13 +176,13 @@ describe('basic reactive', () => {
   })
 
   test('computed inside computed should be destroyed', () => {
-    const base1 = ref(1)
-    const base2 = ref(1)
+    const base1 = atom(1)
+    const base2 = atom(1)
     let innerRun = 0
-    const computedValue1 = refComputed(( ) => {
+    const computedValue1 = atomComputed(( ) => {
       return {
         num : base1.value+1,
-        inner: refComputed(() => {
+        inner: atomComputed(() => {
           innerRun ++
           return base2.value + 1
         })

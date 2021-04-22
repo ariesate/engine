@@ -1,7 +1,7 @@
-import { refComputed } from './reactive'
+import { atomComputed } from './reactive'
 
 export default function vnodeComputed(computation) {
-	const result = refComputed(computation)
+	const result = atomComputed(computation)
 
 	result.isVnodeComputed = true
 	result.displayName = computation.displayName || computation.name

@@ -1,4 +1,4 @@
-import { ref } from './index'
+import { atom } from './index'
 import { invariant } from './util';
 
 /**
@@ -12,7 +12,7 @@ import { invariant } from './util';
 const ReactiveValues = {
   clientWidth() {
 
-    const value = ref(0)
+    const value = atom(0)
     const observer = new ResizeObserver(([entry]) => {
        value.value = entry.target.clientWidth
     })
@@ -28,7 +28,7 @@ const ReactiveValues = {
   },
   scrollWidth() {
 
-    const value = ref(0)
+    const value = atom(0)
     const observer = new ResizeObserver(([entry]) => {
       value.value = entry.target.scrollWidth
     })

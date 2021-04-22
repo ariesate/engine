@@ -27,7 +27,7 @@ export default function delegateLeaf(parent) {
         // 生一个 refLike 对象
         fieldCaches[key] = {
           _id: Math.random(),
-          _isRef: true,
+          _isAtom: true,
           _isLeafRef: true,
           // 伪造 ref，需要提供这个 raw 来创造 draft，不要通过 value，因为读 value 在 ref 中是会被 track 的。
           get raw() {

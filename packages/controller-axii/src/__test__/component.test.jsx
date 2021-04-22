@@ -1,5 +1,5 @@
 const { propTypes, render, createElement } = require('../index')
-const { ref } = require('../reactive/index.js')
+const { atom } = require('../reactive/index.js')
 import $ from 'jquery'
 
 describe('component', () => {
@@ -9,7 +9,7 @@ describe('component', () => {
     }
 
     App.propTypes = {
-      name: propTypes.string.default(() => ref('john')),
+      name: propTypes.string.default(() => atom('john')),
       onChange: propTypes.callback.default(() => ({ name }) => {
         name.value = `${name.value}1`
       })
@@ -31,7 +31,7 @@ describe('component', () => {
     }
 
     App.propTypes = {
-      name: propTypes.string.default(() => ref('john')),
+      name: propTypes.string.default(() => atom('john')),
       onChange: propTypes.callback.default(() => ({ name }) => {
         name.value = `${name.value}1`
       })
@@ -58,7 +58,7 @@ describe('component', () => {
     }
 
     App.propTypes = {
-      name: propTypes.string.default(() => ref('john')),
+      name: propTypes.string.default(() => atom('john')),
       onChange: propTypes.callback.default(() => ({ name }) => {
         name.value = `${name.value}1`
       })
@@ -84,14 +84,14 @@ describe('component', () => {
     }
 
     App.propTypes = {
-      name: propTypes.string.default(() => ref('john')),
+      name: propTypes.string.default(() => atom('john')),
       onChange: propTypes.callback.default(() => ({ name }) => {
         name.value = `${name.value}1`
       })
     }
 
     const root = document.createElement('div')
-    const userName = ref('tom')
+    const userName = atom('tom')
 
     render(<App name={userName}/>, root)
 
@@ -116,7 +116,7 @@ describe('component', () => {
     }
 
     App.propTypes = {
-      name: propTypes.string.default(() => ref('john')),
+      name: propTypes.string.default(() => atom('john')),
       onChange: propTypes.callback.default(() => ({ name }) => {
         name.value = `${name.value}1`
       })

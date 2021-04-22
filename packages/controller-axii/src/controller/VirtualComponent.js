@@ -1,6 +1,6 @@
 // CAUTION 为了写得更加便捷，我们允许用户直接写个 function 节点，自动转成 vnodeComputed。
 // 这也让我们直接放弃了 render props
-import {isReactiveLike, isRef} from "../reactive";
+import {isReactiveLike, isAtom} from "../reactive";
 import {invariant, isComponentVnode, createElement, normalizeLeaf} from "../index";
 import watch, {traverse} from "../watch";
 import {walkRawVnodes} from "../common";
@@ -108,9 +108,9 @@ export function replaceVnodeComputedAndWatchReactive(renderResult, collectChange
 		if (hasRefAttributes(vnode) || isReactiveLike(vnode.attributes?.style)) {
 			watchReactiveAttributesVnode(vnode, currentPath, collectChangePatchNode, cnode)
 			return [false]
-		} else if (isRef(vnode) || (typeof vnode === 'function') ) {
+		} else if (isAtom(vnode) || (typeof vnode === 'function') ) {
 			// CAUTION 严格模式也是 ref/vnodeComputed 才替换成真的 VirtualComponent。否则是 refLike。直接取 value 就可以了。
-			const replaceVnode = (isRef(vnode, true) || (typeof vnode === 'function')) ?
+			const replaceVnode = (isAtom(vnode, true) || (typeof vnode === 'function')) ?
 				createVirtualCnodeForComputedVnodeOrText(vnode, cnode, currentPath) :
 				normalizeLeaf(vnode.value)
 			return [true, replaceVnode]
@@ -121,6 +121,6 @@ export function replaceVnodeComputedAndWatchReactive(renderResult, collectChange
 }
 
 function hasRefAttributes(vnode) {
-	return vnode.attributes && Object.values(vnode.attributes).some(attr => isRef(attr))
+	return vnode.attributes && Object.values(vnode.attributes).some(attr => isAtom(attr))
 }
 

@@ -1,7 +1,7 @@
-import { ref, isRef, reactive, debounceComputed } from './reactive';
+import { atom, isAtom, reactive, debounceComputed } from './reactive';
 
 function patchData(data, next) {
-  if (isRef(data)) {
+  if (isAtom(data)) {
     data.value = next
   } else if (Array.isArray(next)) {
     debounceComputed(() => {
@@ -28,11 +28,11 @@ function patchData(data, next) {
 
 // 随便用什么 service，我只是桥接数据
 export default function serviceReactive(service, { autoRun, dataType = 'ref'} = {}) {
-  const loading = ref(false)
-  const error = ref()
+  const loading = atom(false)
+  const error = atom()
 
   // TODO 更好的设计
-  const data = dataType === 'ref' ? ref() : ( dataType === 'array' ? reactive([]) : reactive({}))
+  const data = dataType === 'ref' ? atom() : ( dataType === 'array' ? reactive([]) : reactive({}))
 
   // TODO 提供 cancel
   const run = (runtimeParams) => {

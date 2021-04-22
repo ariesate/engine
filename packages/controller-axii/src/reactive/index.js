@@ -46,14 +46,13 @@
  * 变量 $ 开头，就自动 reactive
  * < $ > 存在，其中就自动 reactive。
  */
-import {collectSource, isReactive, isRef, toRaw as internalToRaw} from './reactive'
+import {collectSource, isReactive, isAtom, toRaw as internalToRaw} from './reactive'
 
 import { invariant } from '../util';
-import { isRef as internalIsRef } from './reactive'
-export { reactive, ref, isRef, isReactive, refLike } from './reactive'
+export { reactive, atom, isAtom, isReactive, atomLike } from './reactive'
 export { default as delegateLeaf, delegateLeaves } from './delegateLeaf'
 export {
-  refComputed,
+  atomComputed,
   createComputed,
   destroyComputed,
   startScope,
@@ -78,12 +77,12 @@ export const computed = (computation, shallow) => createComputed(computation, un
  * helpers
  *************/
 export function isReactiveLike(obj) {
-  return isReactive(obj) || isRef(obj)
+  return isReactive(obj) || isAtom(obj)
 }
 
 export function toRaw(obj, unwrap) {
   if (isReactive(obj)) return internalToRaw(obj)
-  if (isRef(obj)) return unwrap ? obj.raw : { value: obj.raw }
+  if (isAtom(obj)) return unwrap ? obj.raw : { value: obj.raw }
   invariant(false, 'obj is not reactiveLike')
 }
 

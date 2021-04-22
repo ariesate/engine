@@ -1,4 +1,4 @@
-import { reactive, toRaw, isRef } from './reactive'
+import { reactive, toRaw, isAtom } from './reactive'
 import { TrackOpTypes, TriggerOpTypes } from './operations'
 import { track, trigger, ITERATE_KEY, debounceComputed } from './effect'
 import { isObject, hasOwn, isSymbol, hasChanged } from './util'
@@ -34,7 +34,7 @@ function createGetter(isReadonly = false, shallow = false) {
       return res
     }
     //TODO 如果是 ref 为什么要直接 return res.value????
-    if (isRef(res)) {
+    if (isAtom(res)) {
       return res.value
     }
 

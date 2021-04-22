@@ -82,27 +82,27 @@ export function toRaw(observed) {
  * ref
  **************************/
 
-export function isRef(r, strict){
+export function isAtom(r, strict){
   if (!r) return false
-  return strict ? r._isRef === true : (r._isRef === true || r._isRefLike === true)
+  return strict ? r._isAtom === true : (r._isAtom === true || r._isAtomLike === true)
 }
 
-// 用于伪造 refLike 的数据，可以通过 isRef 的校验
+// 用于伪造 atomLike 的数据，可以通过 isAtom 的校验
 // 框架里面需要保持数据格式一致，例如组件既可以接受 ref，也可以接受固定值，所以有这个需求。
-export function refLike(value) {
+export function atomLike(value) {
   return {
-    _isRefLike: true,
+    _isAtomLike: true,
     value
   }
 }
 
-export function ref(raw, isComputed) {
-  if (isRef(raw)) {
+export function atom(raw, isComputed) {
+  if (isAtom(raw)) {
     return raw
   }
   // CAUTION  取消了 convert。
   const r = {
-    _isRef: true,
+    _isAtom: true,
     get value() {
       track(r, TrackOpTypes.GET, 'value')
       return raw
@@ -126,20 +126,20 @@ export function ref(raw, isComputed) {
   return r
 }
 
-export function toRefs( object) {
+export function toAtoms(object) {
   if (__DEV__ && !isReactive(object)) {
     console.warn(`toRefs() expects a reactive object but received a plain one.`)
   }
   const ret= {}
   for (const key in object) {
-    ret[key] = toProxyRef(object, key)
+    ret[key] = toProxyAtom(object, key)
   }
   return ret
 }
 
-function toProxyRef(object, key) {
+function toProxyAtom(object, key) {
   return {
-    _isRef: true,
+    _isAtom: true,
     get value() {
       return object[key]
     },

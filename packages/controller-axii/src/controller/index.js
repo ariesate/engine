@@ -55,7 +55,7 @@ import { shallowCloneElement } from '../index.js'
 import { reverseWalkCnodes } from '../common'
 import { filter, mapValues, shallowEqual, nextTask } from '../util'
 import {
-	isRef,
+	isAtom,
 } from '../reactive';
 import {withCurrentWorkingCnode, activeEvent} from '../renderContext'
 import LayoutManager from '../LayoutManager'
@@ -374,7 +374,7 @@ export default function createAxiiController(rootElement) {
 							// 2. 始终保持和 reactive value 一致。
 							if (bindingValue !== undefined) {
 								// 即可以绑定 ref 也可以绑定一个固定的值。
-								e.target.value = isRef(bindingValue) ? bindingValue.value : bindingValue
+								e.target.value = isAtom(bindingValue) ? bindingValue.value : bindingValue
 							}
 						}
 					})
@@ -441,7 +441,7 @@ function composeInterceptors(createBaseResult, interceptors, method) {
 function translateRefAttributes(injectedVnode) {
 	injectedVnode.attributes = injectedVnode.attributes ?
 		mapValues(injectedVnode.attributes, (attribute) => {
-			return isRef(attribute) ? attribute.value : attribute
+			return isAtom(attribute) ? attribute.value : attribute
 		}) :
 		injectedVnode.attributes
 }

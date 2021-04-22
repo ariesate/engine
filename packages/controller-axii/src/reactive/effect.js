@@ -8,7 +8,7 @@ import {
   isCollectionLike
 } from './util';
 import {invariant, tryToRaw} from '../util';
-import { isRef, reactive, ref, toRaw } from './reactive';
+import { isAtom, reactive, atom, toRaw } from './reactive';
 import { TrackOpTypes, TriggerOpTypes } from './operations'
 import { isReactiveLike } from './index';
 
@@ -75,7 +75,7 @@ export function isComputed(obj) {
   return payload && payload.computation
 }
 
-export function refComputed(computation) {
+export function atomComputed(computation) {
   return createComputed(computation, TYPE.REF)
 }
 
@@ -93,7 +93,7 @@ class ComputedToken {}
 export function createComputed(computation, type, shallow) {
   invariant(typeof computation === 'function', 'computation must be a function')
 
-  computation.computed = type ? (type === TYPE.REF ? ref(undefined, true) : new ComputedToken()) : undefined
+  computation.computed = type ? (type === TYPE.REF ? atom(undefined, true) : new ComputedToken()) : undefined
   computation.indeps = new Set()
   computation.levelChildren = new Set()
   computation.level = 0
@@ -179,7 +179,7 @@ function applyComputation() {
 
   // 第一创建的时候，如果用户没有指定类型，那么就要让框架来根据类型自动创建
   if (computation.computed === undefined) {
-    computation.computed = (Array.isArray(nextValue) || isPlainObject(nextValue)) ? reactive(nextValue, true) : ref(nextValue, true)
+    computation.computed = (Array.isArray(nextValue) || isPlainObject(nextValue)) ? reactive(nextValue, true) : atom(nextValue, true)
   } else if(!isToken) {
     // 未来可能提供能力让 computed token 可以销毁自己。所以这里的 isToken 变量要在前面定义，否则到这里的时候 computation 已经被清理得差不多了
     if (computation.type === TYPE.REF || computation.shallow) {
@@ -656,7 +656,7 @@ function triggerUnchangedInScope(source, scopeId) {
  * 也可以认为目前没有看到 computed 依赖造成的性能消耗问题很大的情况。
  */
 export function replace(source, nextSourceValue) {
-  if (isRef(source)) {
+  if (isAtom(source)) {
     source.value = nextSourceValue
   } else if (Array.isArray(source)){
     source.splice(0, source.length, ...nextSourceValue)
@@ -689,9 +689,9 @@ function replaceObjectLikeValue(source, nextKey, nextValue) {
  * TODO 还需要进一步允许性能优化，比如对象上可以标记"时间戳"，直接通过时间戳来判断是否要进行深度 patch。
  */
 export function deepPatch(source, nextSourceValue) {
-  invariant(isRef(source) || typeEqual(source, nextSourceValue), 'computed should always return same type')
+  invariant(isAtom(source) || typeEqual(source, nextSourceValue), 'computed should always return same type')
 
-  if (isRef(source)) {
+  if (isAtom(source)) {
     source.value = nextSourceValue
   } else if (Array.isArray(source)){
     // 先删掉多的
@@ -875,7 +875,7 @@ export function getIndepTree(computation, handle, seen = new WeakMap(), refRaw= 
   computation.indeps.forEach(({ indep, key }) => {
     // tryToRaw 对 ref 会创建新对象，因此要自己记录一下
     let rawObject
-    if (isRef(indep)) {
+    if (isAtom(indep)) {
       if (!refRaw.has(indep)) refRaw.set(indep, tryToRaw(indep))
       rawObject = refRaw.get(indep)
     } else {

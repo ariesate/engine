@@ -1,4 +1,4 @@
-const { ref } = require('../reactive/index.js')
+const { atom } = require('../reactive/index.js')
 const toReactive = require('../toReactive').default
 
 describe('toReactive test', () => {
@@ -6,7 +6,7 @@ describe('toReactive test', () => {
   test('toReactive', () => {
     const target = toReactive({})
 
-    const base = ref(1)
+    const base = atom(1)
     target.name = base
 
     expect(target.name).toBe(1)

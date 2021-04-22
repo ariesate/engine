@@ -1,4 +1,4 @@
-import { isReactiveLike, destroyComputed, toRaw, isRef } from './reactive';
+import { isReactiveLike, destroyComputed, toRaw, isAtom } from './reactive';
 import { getFromMap } from './util';
 import watch from './watch';
 
@@ -6,7 +6,7 @@ const objToReactiveMap = new WeakMap()
 const objToWatchTokens = new WeakMap()
 
 function getPureRaw(obj) {
-  return isRef(obj) ? toRaw(obj).value : toRaw(obj)
+  return isAtom(obj) ? toRaw(obj).value : toRaw(obj)
 }
 
 /**

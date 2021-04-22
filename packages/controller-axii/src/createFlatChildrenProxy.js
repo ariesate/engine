@@ -1,4 +1,4 @@
-import { isRef } from './reactive';
+import { isAtom } from './reactive';
 
 /**
  * 对 children 的使用一定在 vnodeComputed 或者其他 computed 里面。
@@ -13,7 +13,7 @@ function getChildrenFromArrayType(input) {
   // CAUTION 如果是函数，直接执行就是，目前看起来也没有必要做缓存。去读 children 中的内容的情况并不常见。
   const vnode = (typeof input  === 'function') ? input() : input
 
-  if (isRef(vnode)) {
+  if (isAtom(vnode)) {
     return Array.isArray(vnode.value) ? vnode.value : undefined
   }
 

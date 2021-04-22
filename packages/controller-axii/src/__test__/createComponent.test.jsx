@@ -1,5 +1,5 @@
 /** @jsxFrag Fragment */
-import { createElement, render, ref } from '../index';
+import { createElement, render, atom } from '../index';
 import createComponent from '../component/createComponent'
 import $ from 'jquery'
 
@@ -25,7 +25,7 @@ describe('Style test', () => {
 
   test('dynamic style', () => {
 
-    const base = ref(1)
+    const base = atom(1)
 
     function Base() {
       return <container />

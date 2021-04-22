@@ -3,7 +3,7 @@ import { normalizeLeaf } from '../createElement'
 import createFlatChildrenProxy from '../createFlatChildrenProxy'
 import { isComponentVnode } from '../controller'
 import { invariant, mapValues } from '../util'
-import { isRef } from '../reactive'
+import { isAtom } from '../reactive'
 import { createFragmentActionReceiver } from './fragment'
 
 
@@ -312,7 +312,7 @@ export function packChildren(name, children) {
 export function createNamedChildrenSlotProxy(slots) {
   return new Proxy(slots, {
     get(target, key) {
-      return isRef(target[key]) ? target[key].value : target[key]
+      return isAtom(target[key]) ? target[key].value : target[key]
     }
   })
 }

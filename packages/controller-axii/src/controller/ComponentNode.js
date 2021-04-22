@@ -1,4 +1,4 @@
-import {destroyComputed, isReactiveLike, refLike, collectReactive, setDisplayName, getComputation} from "../reactive";
+import {destroyComputed, isReactiveLike, atomLike, collectReactive, setDisplayName, getComputation} from "../reactive";
 import {filter, invariant, mapValues, tryToRaw} from "../util";
 import propTypes from "../propTypes";
 import {activeEvent, getCurrentWorkingCnode, reactiveToOwnerScope} from "../renderContext";
@@ -199,7 +199,7 @@ function createInjectedProps(cnode) {
 			// 对值对象中的简单类型，"数字、文字、bool"，还要包装成 ref 的形式。
 			// 对传入固定值(非 reactive 值)，比如 bool/number 等的 prop 进行包装，兼容 reactive 格式。
 			// 后面 patch 的时候会判断，对于非 reactive 的值，都当做是固定值，不进行 patch
-			fixedProps[propName] = isNaivePropType(propType) ? refLike(props[propName]) : props[propName]
+			fixedProps[propName] = isNaivePropType(propType) ? atomLike(props[propName]) : props[propName]
 			if (isReactiveLike(fixedProps[propName])) setDisplayName(fixedProps[propName])
 		}
 	})

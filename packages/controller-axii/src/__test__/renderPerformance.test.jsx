@@ -2,10 +2,10 @@
 import {
   createElement,
   render,
-  ref,
+  atom,
   Fragment,
   reactive,
-  refComputed,
+  atomComputed,
   delegateLeaf,
   propTypes,
 } from '../index';

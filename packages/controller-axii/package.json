@@ -11,7 +11,10 @@
     "immer": "^7.0.8"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^5.11.10",
     "command-line-args": "^5.1.1",
+    "esbuild": "^0.9.7",
+    "esbuild-jest": "^0.5.0",
     "jest": "^26.4.2",
     "jquery": "^3.5.1",
     "jsdom": "^16.4.0",
@@ -33,10 +36,14 @@
     ],
     "moduleNameMapper": {
       "\\.(css|less)$": "<rootDir>/src/__mocks__/styleMock.js",
-      "\\.(gif|ttf|eot|svg)$": "<rootDir>/src/__mocks__/fileMock.js"
+      "\\.(gif|ttf|eot|svg)$": "<rootDir>/src/__mocks__/fileMock.js",
+      "@ariesate/are/(.*)": "<rootDir>/../engine/$1"
     },
     "transform": {
-      "^.+\\.[t|j]sx?$": "babel-jest"
+      "^.+\\.[t|j]sx?$": ["esbuild-jest", {
+        "jsxFactory": "createElement",
+        "jsxFragment": "Fragment"
+      }]
     },
     "setupFilesAfterEnv": [
       "./jest.setup.js"

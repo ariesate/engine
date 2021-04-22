@@ -1,4 +1,4 @@
-import {createComputed, isReactiveLike, isRef, destroyComputed} from './reactive';
+import {createComputed, isReactiveLike, isAtom, destroyComputed} from './reactive';
 import { TYPE } from './reactive/effect';
 
 
@@ -22,7 +22,7 @@ export default function watch(computation, callback, runAtOnce) {
 export function traverse(obj) {
   if (!isReactiveLike(obj)) return
 
-  if (isRef(obj)) return obj.value
+  if (isAtom(obj)) return obj.value
 
   // 这个写法对数组和对象都支持
   for(let i in obj) {

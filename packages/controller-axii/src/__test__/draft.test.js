@@ -1,10 +1,10 @@
-import { ref, refComputed, reactive } from '../reactive';
+import { atom, atomComputed, reactive } from '../reactive';
 import { draft, getDisplayValue } from '../draft'
 
 describe('draft', () => {
   test('draft of computed', () => {
-    const base = ref('base')
-    const computed = refComputed(() => {
+    const base = atom('base')
+    const computed = atomComputed(() => {
       return `${base.value}-computed`
     })
 
@@ -25,7 +25,7 @@ describe('draft', () => {
   })
 
   test('draft of ref', () => {
-    const base = ref('base')
+    const base = atom('base')
     const { draftValue: drafted, displayValue } = draft(base)
 
     expect(base.value).toBe('base')
@@ -57,7 +57,7 @@ describe('draft', () => {
   })
 
   test('draft should not sync if value is not changed', () => {
-    const base = ref('base')
+    const base = atom('base')
     const { draftValue: drafted, displayValue } = draft(base)
 
     drafted.value = 'draft'

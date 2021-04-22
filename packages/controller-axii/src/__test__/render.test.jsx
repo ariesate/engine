@@ -3,9 +3,9 @@ import {
   createElement,
   Fragment,
   render,
-  ref,
+  atom,
   reactive,
-  refComputed,
+  atomComputed,
   delegateLeaf
 } from '../index';
 import $ from 'jquery'
@@ -15,7 +15,7 @@ const {  } = require('../reactive/index.js')
 describe('basic render', () => {
 
   test('reactive text', () => {
-    const name = ref('tim')
+    const name = atom('tim')
     let rendered = 0
 
     function App() {
@@ -38,12 +38,12 @@ describe('basic render', () => {
 
   test('reactive props', () => {
 
-    const base = ref(1)
+    const base = atom(1)
     let rendered = 0
 
     function App() {
       rendered += 1
-      const style = refComputed(() => {
+      const style = atomComputed(() => {
         return {
           color: base.value === 1 ? 'red' : 'blue'
         }
@@ -174,7 +174,7 @@ describe('complex vnodeComputed', () => {
 
   // TODO vnodeComputed 返回 fragment 之后，就不更新视图了！！！！
   test('single vnodeComputed', () => {
-    const base = ref(1)
+    const base = atom(1)
     let rendered = 0
     let computedCalled = 0
     function App() {
@@ -220,7 +220,7 @@ describe('complex vnodeComputed', () => {
       return <div>child</div>
     }
 
-    const base = ref(1)
+    const base = atom(1)
     let rendered = 0
     function App() {
       rendered +=1
@@ -264,14 +264,14 @@ describe('complex vnodeComputed', () => {
   })
 
   test('side effect computed should be destroyed', () => {
-    const base = ref(1)
+    const base = atom(1)
     let rendered = 0
     let innerComputedCalled = 0
     function App() {
       rendered +=1
       return <div>
         {() => {
-          const innerComputed = refComputed(() => {
+          const innerComputed = atomComputed(() => {
             innerComputedCalled += 1
             return base.value + 1
           })
@@ -312,8 +312,8 @@ describe('complex vnodeComputed', () => {
 
   test('reactive props inside vnodeComputed', () => {
 
-    const base1 = ref(1)
-    const base2 = ref(1)
+    const base1 = atom(1)
+    const base2 = atom(1)
     let computedCalled = 0
 
     function App() {
@@ -322,7 +322,7 @@ describe('complex vnodeComputed', () => {
           computedCalled += 1
           if (base1.value > 10) return null
 
-          const style = refComputed(() => {
+          const style = atomComputed(() => {
             return {
               color: base2.value === 1 ? 'red' : 'blue'
             }
