@@ -1,4 +1,4 @@
-import {createElement, render, createComponent} from 'axii'
+import {createElement, render, createComponent, version} from 'axii'
 import './index.css'
 import Chapter0 from './src/Chapter0.mdx'
 import Chapter1 from './src/Chapter1.mdx'
@@ -19,9 +19,6 @@ const chapters = [
   Chapter6,
   Chapter7,
 ]
-
-const version = '1.0.5'
-
 
 function Site() {
   return <container block block-height="100%" block-width="100%" block-overflow-y-scroll>
