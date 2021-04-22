@@ -4,9 +4,9 @@ import {
   createElement,
   propTypes,
   createComponent,
-  refComputed,
+  atomComputed,
   useRef,
-  ref,
+  atom,
   Fragment,
 } from 'axii'
 import {nextTick} from '../util';
@@ -38,7 +38,7 @@ export function DatePicker({focused, onFocus, onBlur, value, onChange, format,})
       inline
       tabindex={-1}
       onFocusOut={() => onBlur()}
-      inline-display-none={refComputed(() => !focused.value)}
+      inline-display-none={atomComputed(() => !focused.value)}
       style={{background: "#fff", zIndex: 99999}}
       ref={calendarRef}
     >
@@ -54,23 +54,23 @@ export function DatePicker({focused, onFocus, onBlur, value, onChange, format,})
       onFocus={onInputFocus}
       focused={focused}
       onBlur={() => false}
-      value={refComputed(() => value.value.format(format.value))}
+      value={atomComputed(() => value.value.format(format.value))}
     />
     {calendar}
   </>
 }
 
 DatePicker.propTypes = {
-  focused: propTypes.bool.default(() => ref(false)),
+  focused: propTypes.bool.default(() => atom(false)),
   onFocus: propTypes.callback.default(() => ({focused}) => focused.value = true),
   onBlur: propTypes.callback.default(() => ({focused}) => {
     focused.value = false
   }),
-  value: propTypes.object.default(() => ref(moment())),
+  value: propTypes.object.default(() => atom(moment())),
   onChange: propTypes.callback.default(() => ({year, month, date}, {value}) => {
     // 可以什么也不做，复用 calendar 的行为
   }),
-  format: propTypes.string.default(() => ref('YYYY-MM-DD'))
+  format: propTypes.string.default(() => atom('YYYY-MM-DD'))
 }
 
 DatePicker.Style = (fragments) => {

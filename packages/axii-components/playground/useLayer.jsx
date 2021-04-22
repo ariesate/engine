@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, render, reactive, refComputed, ref } from 'axii'
+import { createElement, render, reactive, atomComputed, ref } from 'axii'
 import useLayer from '../src/hooks/useLayer.jsx'
 
 function App() {
@@ -7,7 +7,7 @@ function App() {
   const visible = ref(false)
 
 
-  const style = refComputed(() => ({
+  const style = atomComputed(() => ({
     left: 0,
     top: 0,
     height: document.body.offsetHeight,

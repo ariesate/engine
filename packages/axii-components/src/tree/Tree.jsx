@@ -6,7 +6,7 @@ import {
 	Fragment,
 	ref,
 	createComponent,
-	refComputed,
+	atomComputed,
 	vnodeComputed,
 } from 'axii';
 import Checkbox from "../checkbox/Checkbox";

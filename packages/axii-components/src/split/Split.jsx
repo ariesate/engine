@@ -1,7 +1,7 @@
 /** @jsx createElement */
 import {
   createElement,
-  ref,
+  atom,
   computed,
   useRef,
   propTypes,
@@ -160,10 +160,10 @@ export default function Split({ children, gutterSize, asideSize, vertical, onCha
 }
 
 Split.propTypes = {
-  vertical: propTypes.string.default(() => ref(false)),
-  gutterSize: propTypes.number.default(() => ref(10)),
+  vertical: propTypes.string.default(() => atom(false)),
+  gutterSize: propTypes.number.default(() => atom(10)),
   asideLeft: propTypes.number.default(() => false),
-  asideSize: propTypes.number.default(() => ref(350)),
+  asideSize: propTypes.number.default(() => atom(350)),
   onChange: propTypes.callback.default(() => (nextAsideSize, { asideSize }) => {
     asideSize.value = nextAsideSize
   }),

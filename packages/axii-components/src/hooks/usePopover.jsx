@@ -1,11 +1,11 @@
 /** @jsx createElement */
-import { createElement, render, reactive, refComputed, ref } from 'axii'
+import { createElement, render, reactive, atomComputed, atom } from 'axii'
 import useLayer from './useLayer.jsx'
 import layerStyle  from '../style/layer'
 
 export default function usePopover(content, position = 'bottom', align='left') {
 
-	const visible = ref(false)
+	const visible = atom(false)
 
 	const getContainerRect = ({top, left, height, width}) => {
 		const positionStyle = position === 'bottom' ? { top: height + top } :
@@ -24,7 +24,7 @@ export default function usePopover(content, position = 'bottom', align='left') {
 		}
 	}
 
-	const style = refComputed(() => ({
+	const style = atomComputed(() => ({
 		display: visible.value ? 'block' : 'none',
 		whiteSpace: 'nowrap',
 		...layerStyle

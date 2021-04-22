@@ -5,9 +5,9 @@ import {
   createComponent,
   useRef,
   propTypes,
-  ref,
-  refComputed,
-  Fragment,
+  atom,
+  atomComputed,
+  reactive
 } from 'axii'
 import useLayer from "../hooks/useLayer";
 import {nextTick} from "../util";
@@ -35,8 +35,8 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
     return (
       <optionList
         inline
-        inline-display-none={refComputed(() => !focused.value)}
-        inline-min-width={refComputed(() => `${sourceRef.value ? sourceRef.value.offsetWidth : 0}px`)}
+        inline-display-none={atomComputed(() => !focused.value)}
+        inline-min-width={atomComputed(() => `${sourceRef.value ? sourceRef.value.offsetWidth : 0}px`)}
         tabindex={-1}
         onFocusOut={() => onBlur()}
         style={{background: "#fff", zIndex: 99}}
@@ -70,7 +70,7 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
         onFocus={onInputFocus}
         focused={focused}
         onBlur={() => false}
-        value={refComputed(() => renderValue(value))}
+        value={atomComputed(() => renderValue(value))}
       >
       </selectInput>
       {optionListNode}
@@ -79,9 +79,9 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
 }
 
 Select.propTypes = {
-  value: propTypes.object.default(() => ref(undefined)),
+  value: propTypes.object.default(() => atom(undefined)),
   options: propTypes.object.default(() => reactive([])),
-  focused: propTypes.bool.default(() => ref(false)),
+  focused: propTypes.bool.default(() => atom(false)),
   onFocus: propTypes.callback.default(() => ({focused}) => focused.value = true),
   onBlur: propTypes.callback.default(() => ({focused}) => {
     focused.value = false

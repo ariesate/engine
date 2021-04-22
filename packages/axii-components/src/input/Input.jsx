@@ -4,9 +4,9 @@ import {
 	propTypes,
 	createElement,
 	Fragment,
-	ref,
+	atom,
 	createComponent,
-	refComputed,
+	atomComputed,
 	vnodeComputed,
 } from 'axii';
 import scen from '../pattern'
@@ -70,8 +70,8 @@ export function Input({value, onChange, children, placeholder, ...rest}, fragmen
 Input.useNamedChildrenSlot = true
 
 Input.propTypes = {
-	value: propTypes.string.default(() => ref('')),
-	placeholder: propTypes.string.default(() => ref('')),
+	value: propTypes.string.default(() => atom('')),
+	placeholder: propTypes.string.default(() => atom('')),
 	// onChange 这个函数会由系统自动补足三个参数： draftProps, props, event
 	// 所以当我们直接把这个参数传到事件上时，不用冗余去写成 (e) => onChange(e.target.value)
 	// 外部也同样推荐这种模式。
@@ -133,7 +133,7 @@ Input.Style = (fragments) => {
 }
 
 Input.Style.propTypes = {
-	focused: propTypes.bool.default(() => ref(false)),
+	focused: propTypes.bool.default(() => atom(false)),
 	onFocus: propTypes.callback.default(() => ({focused}) => focused.value = true),
 	onBlur: propTypes.callback.default(() => ({focused}) => focused.value = false)
 }

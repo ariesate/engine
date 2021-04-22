@@ -6,8 +6,8 @@ import {
   Fragment,
   vnodeComputed,
   createComponent,
-  refComputed,
-  ref,
+  atomComputed,
+  atom,
   createRef,
   flattenChildren
 } from 'axii'
@@ -22,7 +22,7 @@ import scen from '../pattern'
 function Tabs({ children, activeKey, onChangeActiveKey }, fragments) {
   const flattenedChildren = flattenChildren(children)
 
-  const visibleKey = refComputed(() => {
+  const visibleKey = atomComputed(() => {
     if (activeKey.value && flattenedChildren.some((child) => child.props.tabKey === activeKey.value)) {
       return activeKey.value
     } else {
@@ -33,7 +33,7 @@ function Tabs({ children, activeKey, onChangeActiveKey }, fragments) {
   const headerRef = createRef()
   const tabHeadersContainerRef = createRef()
 
-  const headerNotOverflow = refComputed(() => {
+  const headerNotOverflow = atomComputed(() => {
     return !(headerRef.scrollWidth.value > tabHeadersContainerRef.clientWidth.value)
   })
 
@@ -73,7 +73,7 @@ function Tabs({ children, activeKey, onChangeActiveKey }, fragments) {
       <tabContents block>
         {fragments.tabContents()(() => {
           return flattenedChildren.map(child => {
-            const hidden = refComputed(() => child.props.tabKey !== visibleKey.value)
+            const hidden = atomComputed(() => child.props.tabKey !== visibleKey.value)
             return <tabContent block block-visible-none={hidden} key={child.props.tabKey}>{child.children}</tabContent>
           })
         })}
@@ -85,7 +85,7 @@ function Tabs({ children, activeKey, onChangeActiveKey }, fragments) {
 Tabs.TabPane = function() {}
 
 Tabs.propTypes = {
-  activeKey: propTypes.string.default(() => ref()),
+  activeKey: propTypes.string.default(() => atom()),
   onChangeActiveKey: propTypes.callback.default(() => (key, { activeKey }) => {
     activeKey.value = key
   })

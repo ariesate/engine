@@ -5,7 +5,7 @@ import {
   propTypes,
   reactive,
   createComponent,
-  ref
+  atom
 } from 'axii'
 import Expandable from './Expandable'
 import Selectable from './Selectable'
@@ -43,7 +43,7 @@ function countExpandedColumns(columns) {
 }
 
 export function Table( { data, pagination, columns }, fragments) {
-  const columnCount = ref(countExpandedColumns(columns))
+  const columnCount = atom(countExpandedColumns(columns))
   return (
     <table inline block-display-table table-border-spacing-0 table-border-collapse-collapse>
       <thead>

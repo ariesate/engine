@@ -1,6 +1,6 @@
 /** @jsx createElement */
 /** @jsxFrag Fragment */
-import { render, ref, refComputed, createElement, debounceComputed, useRef } from 'axii'
+import { render, atom, atomComputed, createElement, debounceComputed, useRef } from 'axii'
 
 function defaultCreateContainer() {
   const portalRoot = document.createElement('div')
@@ -27,12 +27,12 @@ export function createContextmenu(
   const container = createContainer()
   // CAUTION 不要用 reactive，因为这里的语义不适用，而且 content 可能会有 vnode 节点。会出现问题。
 
-  const visible = ref(true)
-  const menu = ref(null)
-  const position = ref({})
+  const visible = atom(true)
+  const menu = atom(null)
+  const position = atom({})
   const containerRef = useRef()
 
-  const containerStyle = refComputed(() => {
+  const containerStyle = atomComputed(() => {
     return {
       display: 'inline-block',
       position: 'fixed',

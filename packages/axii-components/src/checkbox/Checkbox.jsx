@@ -4,9 +4,9 @@ import {
   propTypes,
   createElement,
   Fragment,
-  ref,
+  atom,
   createComponent,
-  refComputed,
+  atomComputed,
   vnodeComputed,
 } from 'axii';
 import scen from '../pattern'
@@ -27,8 +27,8 @@ export function Checkbox({ value, disabled, onChange, children }) {
 
 
 Checkbox.propTypes = {
-  value: propTypes.bool.default(() => ref(false)),
-  disabled: propTypes.bool.default(() => ref(false)),
+  value: propTypes.bool.default(() => atom(false)),
+  disabled: propTypes.bool.default(() => atom(false)),
   onChange: propTypes.callback.default(() => ({ value }) => {
     value.value = !value.value
   })
@@ -44,7 +44,7 @@ Checkbox.Style = (fragments) => {
 }
 
 Checkbox.Style.propTypes = {
-  focused: propTypes.bool.default(() => ref(false)),
+  focused: propTypes.bool.default(() => atom(false)),
   onChangeFocus: propTypes.callback.default(() => (nextFocused, { focused }) => focused.value = nextFocused)
 }
 

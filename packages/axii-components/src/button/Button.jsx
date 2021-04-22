@@ -1,5 +1,5 @@
 /**@jsx createElement */
-import { propTypes, createElement, ref, createComponent, computed } from 'axii'
+import { propTypes, createElement, atom, createComponent, computed } from 'axii'
 import scen from "../pattern";
 
 export function Button({ children, size, onClick, disabled }) {
@@ -19,7 +19,7 @@ export function Button({ children, size, onClick, disabled }) {
 
 Button.propTypes = {
 	onClick: propTypes.function,
-	disabled: propTypes.bool.default(() => ref(false)),
+	disabled: propTypes.bool.default(() => atom(false)),
 }
 
 Button.Style = (fragments) => {
@@ -59,9 +59,9 @@ Button.Style = (fragments) => {
 }
 
 Button.Style.propTypes = {
-	size: propTypes.string.default(() => ref(undefined)),
-	danger: propTypes.bool.default(() => ref(false)),
-	primary: propTypes.bool.default(() => ref(false)),
+	size: propTypes.string.default(() => atom(undefined)),
+	danger: propTypes.bool.default(() => atom(false)),
+	primary: propTypes.bool.default(() => atom(false)),
 }
 
 export default createComponent(Button)

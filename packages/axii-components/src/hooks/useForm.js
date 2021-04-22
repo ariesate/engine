@@ -2,10 +2,10 @@ import {
   propTypes,
   createElement,
   Fragment,
-  ref,
+  atom,
   reactive,
   createComponent,
-  refComputed,
+  atomComputed,
   computed,
   createSmartProp,
   delegateLeaf,
@@ -14,7 +14,7 @@ import {
   debounceComputed,
   shallowEqual,
   replace,
-  isRef
+  isAtom
 } from 'axii';
 import { chain, hasConflict, mapValues } from '../util';
 /**
@@ -67,13 +67,13 @@ function dirtyCheckPlugin({ getInitialValues = () => ({}), isEqual = {} }, value
     },
     createField: (fieldName) => {
       return {
-        changed: refComputed(() => {
+        changed: atomComputed(() => {
           return !equalFn(fieldName, initialValues[fieldName], values[fieldName])
         })
       }
     },
     output: {
-      isChanged: refComputed(() => {
+      isChanged: atomComputed(() => {
         return Object.entries(initialValues).some(([valueName, initialValue])=> !equalFn(valueName, initialValue, values[valueName]))
       })
     }
@@ -114,7 +114,7 @@ function validationPlugin({ scheme }, values) {
 
   const tryToValidate = (changedFieldName, { value: nextValue }, { value }, ruleNames = [], callFromManual = false) => {
     // CAUTION 这里修改了一下格式，因为验证函数没有必要知晓 ref 的格式
-    const nextRawValue = isRef(value) ? nextValue.value : nextValue
+    const nextRawValue = isAtom(value) ? nextValue.value : nextValue
     const rulesOfField = scheme[changedFieldName]
     if (!rulesOfField) return
 
@@ -194,18 +194,18 @@ function validationPlugin({ scheme }, values) {
         }),
         validateStatus: validationStatusByFieldName[fieldName],
         // 语法糖，validateStatus 其实已经可以判断
-        isValidating: refComputed(() => {
+        isValidating: atomComputed(() => {
           return Object.values(validationStatusByFieldName[fieldName]).some(status => status === VALIDATION_STATUS_PENDING)
         }),
         validate,
-        isValid: refComputed(() => {
+        isValid: atomComputed(() => {
           return Object.values(validationResultByFieldName[fieldName]).every(passed => passed === true)
         }),
       }
     },
     output: {
       // 有一个是 error，整体就是 false。此外，有一个 undefined，就是 undefined。最后没有 error 也没有 undefined 才是 valid。
-      isValid: refComputed(() => {
+      isValid: atomComputed(() => {
         let hasUndefined = false
         // TODO 潜在的性能问题，准备解决。可能要从 debouncedComputed 考虑
         console.log(Object.keys(validationResultByFieldName))
@@ -220,7 +220,7 @@ function validationPlugin({ scheme }, values) {
         // 如果没有 error，那么就看有没有 undefined。
         return hasUndefined ? undefined : true
       }),
-      hasError: refComputed(() => {
+      hasError: atomComputed(() => {
         // 虽然前面确保了只要有没 pass， 就一定有 error，但是这里是用 validationResultByRuleName 还是更保险。
         return Object.values(errorsByFieldName).some((errorsByRules) => {
           return Object.values(errorsByRules).some(errors => errors.length)
@@ -302,8 +302,8 @@ export const SUBMIT_STATUS_PENDING = 'pending'
 export const SUBMIT_STATUS_ERROR = 'error'
 export const SUBMIT_STATUS_SUCCESS = 'success'
 function submitPlugin({ submit }, values) {
-  const submitStatus = ref(SUBMIT_STATUS_NONE)
-  const isSubmitting = refComputed(() => submitStatus.value === SUBMIT_STATUS_PENDING)
+  const submitStatus = atom(SUBMIT_STATUS_NONE)
+  const isSubmitting = atomComputed(() => submitStatus.value === SUBMIT_STATUS_PENDING)
   return {
     output: {
       submit() {

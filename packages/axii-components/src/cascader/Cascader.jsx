@@ -5,8 +5,8 @@ import {
 	createComponent,
 	useRef,
 	propTypes,
-	ref,
-	refComputed,
+	atom,
+	atomComputed,
 	computed,
 	reactive,
 	Fragment,
@@ -89,7 +89,7 @@ export function Cascader(props, fragments) {
 				flex-display
 				tabindex={-1}
 				onFocusOut={() => props.onBlur()}
-				inline-display-none={refComputed(() => !focused.value)}
+				inline-display-none={atomComputed(() => !focused.value)}
 				style={{background: "#fff", zIndex: 99}}
 				ref={optionContainerRef}
 			>
@@ -117,7 +117,7 @@ export function Cascader(props, fragments) {
 				onFocus={onInputFocus}
 				focused={focused}
 				onBlur={() => false}
-				value={refComputed(() => renderValue(value))}
+				value={atomComputed(() => renderValue(value))}
 			>
 			</selectInput>
 			{optionContainerNode}
@@ -126,9 +126,9 @@ export function Cascader(props, fragments) {
 }
 
 Cascader.propTypes = {
-	value: propTypes.object.default(() => ref([])),
+	value: propTypes.object.default(() => atom([])),
 	options: propTypes.object.default(() => reactive([])),
-	focused: propTypes.bool.default(() => ref(false)),
+	focused: propTypes.bool.default(() => atom(false)),
 	onFocus: propTypes.callback.default(() => ({focused}) => focused.value = true),
 	onBlur: propTypes.callback.default(() => ({focused, openedIds}) => {
 		openedIds.splice(0)

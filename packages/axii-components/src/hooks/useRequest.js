@@ -1,5 +1,5 @@
 import axios  from 'axios'
-import { ref, debounceComputed, watch, traverse } from 'axii'
+import { atom, debounceComputed, watch, traverse } from 'axii'
 
 export function createUseRequest(instance) {
 	return function useRequest(inputConfig, { manual, deps, processData = {}, createReactiveData = () => {}, processResponse = () => {}, processError = () => {} } = {}) {
@@ -12,12 +12,12 @@ export function createUseRequest(instance) {
 			doRequest = (argv) => instance(Object.assign({}, config, argv))
 		}
 
-		const { create = () => ref(), receive = (data, responseData) => data.value = responseData } = processData
+		const { create = () => atom(), receive = (data, responseData) => data.value = responseData } = processData
 
 		const data = create()
-		const error = ref()
-		const status = ref()
-		const loading = ref()
+		const error = atom()
+		const status = atom()
+		const loading = atom()
 		const useData = createReactiveData()
 
 		const values = {

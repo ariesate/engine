@@ -1,6 +1,6 @@
 import {
   createElement,
-  ref,
+  atom,
   createComponent,
   propTypes
 } from 'axii'
@@ -114,8 +114,8 @@ export function Calendar({ value, current, onSelect, onSelectNextMonth, onSelect
 }
 
 Calendar.propTypes = {
-  value: propTypes.object.default(() => ref(moment())),
-  current: propTypes.object.default(({ value }) => ref(moment(value))),
+  value: propTypes.object.default(() => atom(moment())),
+  current: propTypes.object.default(({ value }) => atom(moment(value))),
   onSelectNextMonth: propTypes.callback.default(() => ({ current }) => {
     current.value = moment(current.value).add(1, 'month')
   }),

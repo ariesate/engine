@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, render, reactive, refComputed } from 'axii'
+import { createElement, render, reactive, atomComputed } from 'axii'
 import Input from '../src/input/Input.jsx'
 import useForm, { simpleScheme } from '../src/hooks/useForm.js'
 

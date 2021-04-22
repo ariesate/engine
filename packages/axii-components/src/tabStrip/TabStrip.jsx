@@ -6,8 +6,8 @@ import {
   reactive,
   Fragment,
   createComponent,
-  refComputed,
-  ref,
+  atomComputed,
+  atom,
   createRef,
 } from 'axii'
 import { uuid } from "../util";
@@ -26,7 +26,7 @@ function TabStrip({ items, activeKey, onChangeActiveKey, onClose, onAdd }, fragm
   const headerRef = createRef()
   const tabHeadersContainerRef = createRef()
 
-  const headerNotOverflow = refComputed(() => {
+  const headerNotOverflow = atomComputed(() => {
     return !(headerRef.scrollWidth.value > tabHeadersContainerRef.clientWidth.value)
   })
 
@@ -90,7 +90,7 @@ function TabStrip({ items, activeKey, onChangeActiveKey, onClose, onAdd }, fragm
 }
 
 TabStrip.propTypes = {
-  activeKey: propTypes.string.default(() => ref()),
+  activeKey: propTypes.string.default(() => atom()),
   items: propTypes.array.default(() => reactive([])),
   onChangeActiveKey: propTypes.callback.default(() => (key, { activeKey }) => {
     activeKey.value = key
@@ -102,8 +102,8 @@ TabStrip.propTypes = {
     const index = items.findIndex(i => i.key === key)
     items.splice(index, 1)
   }),
-  closable: propTypes.callback.default(() => ref(false)),
-  addable: propTypes.callback.default(() => ref(false))
+  closable: propTypes.callback.default(() => atom(false)),
+  addable: propTypes.callback.default(() => atom(false))
 }
 
 

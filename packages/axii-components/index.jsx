@@ -2,11 +2,11 @@
  * CAUTION vite 现在不支持直接加载非名为 index 的 jsx 文件。所以只能先占用这个名字。
  * 理论上用 playground.jsx 会更好。
  */
-import { createElement, render, reactive, ref, refComputed } from 'axii'
+/**@jsx createElement*/
+import { createElement, render, atom, atomComputed } from 'axii'
 import Menu from './src/menu/Menu'
 import useLocation from "./src/hooks/useLocation";
 import Split from './src/split/Split'
-// import './src/style/global.less'
 import scen from './src/pattern'
 const location = useLocation()
 
@@ -114,7 +114,7 @@ const MenuWithDisabledStyle = Menu.extend(function disabledStyle(fragments) {
 
 
 function Choose() {
-  const current = ref(location.query.component)
+  const current = atom(location.query.component)
 
   const onChange = (next) => {
     current.value = next
@@ -124,10 +124,6 @@ function Choose() {
   window.getCurrent = () => current
 
   window.onChange = onChange
-
-  const currentComputed = refComputed(() => {
-    return current.value
-  })
 
 
   return (

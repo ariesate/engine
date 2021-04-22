@@ -4,9 +4,9 @@ import {
 	propTypes,
 	createElement,
 	Fragment,
-	ref,
+	atom,
 	createComponent,
-	refComputed,
+	atomComputed,
 	reactive,
 	tryToRaw,
 } from 'axii';
@@ -27,7 +27,7 @@ import scen from '../pattern'
 
 function renderItem(item, level, actions, fragments, parents = []) {
 	const { onFold, onOpen, onSetActive } = actions
-	const hasChildren = refComputed(() => item.children !== undefined)
+	const hasChildren = atomComputed(() => item.children !== undefined)
 	return <>
 		<item
 			block
@@ -64,7 +64,7 @@ Menu.propTypes = {
 	onFold: propTypes.callback.default(() => (item) => item.expand = false),
 	onOpen: propTypes.callback.default(() => (item) => item.expand = true),
 	onSetActive: propTypes.callback.default(() => (item, parents, { activeItemKeyPath }) => activeItemKeyPath.value = parents.concat(item).map(i => i.key)),
-	activeItemKeyPath: propTypes.string.default(() => ref([]))
+	activeItemKeyPath: propTypes.string.default(() => atom([]))
 }
 
 Menu.Style = (fragments) => {

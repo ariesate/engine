@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, render, refComputed, ref, computed, propTypes, createComponent } from 'axii'
+import { createElement, render, atomComputed, atom, computed, propTypes, createComponent } from 'axii'
 import scen from "../pattern";
 
 /**
@@ -39,14 +39,14 @@ function smartRange(pageCount, currentPage, siblingCount) {
 }
 
 // CAUTION offset 是从 0 开始的, 这里要求 offset/limit 都是 ref。但 service 传递的不是 ref。可能有点认知问题。
-// CAUTION lastStablePageCount 需要用到上一次的值，这就不能保持一致性了！！！！需要最佳实践。
-export function useInfinitePageHelper(offset, limit, currentDataLength, total = ref(Infinity), siblingCount = Pagination.propTypes.siblingCount.createDefaultValue()) {
+// CAUTION lastStablePageCount 需要用到上一次的值，这就不能保持一致性了!需要最佳实践。
+export function useInfinitePageHelper(offset, limit, currentDataLength, total = atom(Infinity), siblingCount = Pagination.propTypes.siblingCount.createDefaultValue()) {
 	// 如果 total 不是 Infinity
-	const currentPage = refComputed(() => {
+	const currentPage = atomComputed(() => {
 		return Math.ceil((offset.value + 1)/limit.value)
 	})
 
-	const lastStablePageCount = refComputed((prevLastStablePageCount) => {
+	const lastStablePageCount = atomComputed((prevLastStablePageCount) => {
 		if (total.value !== Infinity) return Math.ceil(total.value/limit.value)
 		// Infinite 下，碰到了结尾，自动生成当前的 pageCount
 
@@ -67,7 +67,7 @@ export function useInfinitePageHelper(offset, limit, currentDataLength, total = 
 		}
 	})
 
-	const pageCount = refComputed(() => {
+	const pageCount = atomComputed(() => {
 		const startShrink = (currentPage.value < siblingCount.value + 1) ?
 			(siblingCount.value + 1 - currentPage.value) :
 			0
@@ -85,13 +85,13 @@ export function useInfinitePageHelper(offset, limit, currentDataLength, total = 
 
 export function Pagination({siblingCount, pageCount, currentPage, onChange, onQuickChange}, fragments) {
 
-	const start = refComputed(() => {
+	const start = atomComputed(() => {
 		// 有可能尾部不够了显示足够的 siblingCount 了。那么补到前面。
 		const endShrink = (pageCount.value - currentPage.value < siblingCount.value) ? siblingCount.value - (pageCount.value - currentPage.value) :0
 		return Math.max(currentPage.value - siblingCount.value - endShrink, 1)
 	})
 
-	const end = refComputed(() => {
+	const end = atomComputed(() => {
 		const startShrink = (currentPage.value < siblingCount.value + 1) ?
 			(siblingCount.value + 1 - currentPage.value) :
 			0
@@ -129,7 +129,7 @@ export function Pagination({siblingCount, pageCount, currentPage, onChange, onQu
 			>{'<'}</previousOne>
 			<previousList
 				{...commonLayout}
-				inline-display-none={refComputed(() => !(start.value > 2))}
+				inline-display-none={atomComputed(() => !(start.value > 2))}
 				onClick={() => onQuickChange(false)}
 			>
 				{'<<'}
@@ -144,7 +144,7 @@ export function Pagination({siblingCount, pageCount, currentPage, onChange, onQu
 			)}
 			<nextList
 				{...commonLayout}
-				inline-display-none={refComputed(() => !(pageCount.value > end.value + 1 ))}
+				inline-display-none={atomComputed(() => !(pageCount.value > end.value + 1 ))}
 				onClick={() => onQuickChange(true)}
 			>
 				{'>>'}
@@ -158,9 +158,9 @@ export function Pagination({siblingCount, pageCount, currentPage, onChange, onQu
 }
 
 Pagination.propTypes = {
-	siblingCount: propTypes.number.default(() => ref(2)),
-	pageCount: propTypes.number.default(() => ref(Infinity)),
-	currentPage: propTypes.number.default(() => ref(1)),
+	siblingCount: propTypes.number.default(() => atom(2)),
+	pageCount: propTypes.number.default(() => atom(Infinity)),
+	currentPage: propTypes.number.default(() => atom(1)),
 	onChange: propTypes.callback.default(() => (pageIndex, { currentPage}) => currentPage.value = pageIndex),
 	// 快速
 	onQuickChange: propTypes.callback.default(() => (next, { currentPage, siblingCount, pageCount}) => {

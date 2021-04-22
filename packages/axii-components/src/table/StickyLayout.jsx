@@ -3,7 +3,7 @@
 import {
   propTypes,
   createElement,
-  ref,
+  atom,
   reactive,
   computed
 } from 'axii'
@@ -77,7 +77,7 @@ export default function FeatureStickyLayout(fragments) {
 }
 
 FeatureStickyLayout.propTypes = {
-  fixHeader: propTypes.bool.default(() => ref(false)),
+  fixHeader: propTypes.bool.default(() => atom(false)),
   scroll: propTypes.object.default(() => reactive({})),
 }
 

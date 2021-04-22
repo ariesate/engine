@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, createComponent, propTypes, ref, refComputed, useRef, useImperativeHandle, useViewEffect } from 'axii'
+import { createElement, createComponent, propTypes, atom, atomComputed, useRef, useImperativeHandle, useViewEffect } from 'axii'
 import LeftOneIcon from 'axii-icons/LeftOne'
 import RightOneIcon from 'axii-icons/RightOne'
 import PicIcon from 'axii-icons/Pic'
@@ -96,8 +96,8 @@ function ImageEditor({iconSize, ref: parentRef, data}) {
   let editorRef
   let file
   const containerRef = useRef()
-  const containerWidth = ref(0)
-  const containerHeight = ref(0)
+  const containerWidth = atom(0)
+  const containerHeight = atom(0)
 
   const containerContext = {
     width: containerWidth,
@@ -157,8 +157,8 @@ function ImageEditor({iconSize, ref: parentRef, data}) {
     editorRef.clearUndoStack();
   }
 
-  const applyMenuHide = ref(true)
-  const currentAction = ref(null)
+  const applyMenuHide = atom(true)
+  const currentAction = atom(null)
 
   const startAction = (action) => {
     if (action.apply) {
@@ -184,7 +184,7 @@ function ImageEditor({iconSize, ref: parentRef, data}) {
 
 
   return <container inline>
-    <filePicker block flex-display block-display-none={refComputed(() => containerWidth.value !== 0)} inline-height-100px inline-width-100px flex-justify-content-center flex-align-items-center>
+    <filePicker block flex-display block-display-none={atomComputed(() => containerWidth.value !== 0)} inline-height-100px inline-width-100px flex-justify-content-center flex-align-items-center>
       <addPic use={PicIcon} size={5} fill="#bebebe"/>
       <input type="file" onChange={onFileChange}/>
     </filePicker>
@@ -198,7 +198,7 @@ function ImageEditor({iconSize, ref: parentRef, data}) {
       <CloseSmallIcon size={iconSize} onClick={cancelAction}/>
       <CheckSmallIcon size={iconSize} onClick={applyAction}/>
     </div>
-    <div block flex-display flex-justify-content-center block-display-none={refComputed(() => (containerWidth.value === 0) || currentAction.value !== null)}>
+    <div block flex-display flex-justify-content-center block-display-none={atomComputed(() => (containerWidth.value === 0) || currentAction.value !== null)}>
       {actions.map(action => {
         return (
           <actionIcon use={action.icon} size={iconSize} onClick={() => startAction(action)}/>
@@ -225,7 +225,7 @@ ImageEditor.Style = (fragments) => {
 }
 
 ImageEditor.propTypes = {
-  iconSize: propTypes.number.default(() => ref(2))
+  iconSize: propTypes.number.default(() => atom(2))
 }
 
 ImageEditor.forwardRef = true

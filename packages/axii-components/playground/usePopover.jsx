@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, render, reactive, refComputed, ref } from 'axii'
+import { createElement, render, reactive, atomComputed, ref } from 'axii'
 import usePopover from '../src/hooks/usePopover.jsx'
 import Menu from "../src/menu/Menu";
 

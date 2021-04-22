@@ -5,7 +5,8 @@
   "dependencies": {
     "@ant-design/colors": "^5.0.1",
     "@editorjs/editorjs": "^2.19.3",
-    "axii-icons": "^1.0.1",
+    "axii-components": "^1.0.29",
+    "axii-icons": "^1.0.2",
     "axios": "^0.21.1",
     "codeflask": "^1.4.1",
     "esbuild": "^0.11.9",
@@ -20,7 +21,7 @@
     "x-data-spreadsheet": "^1.0.27"
   },
   "peerDependencies": {
-    "axii": "^1.0.4"
+    "axii": "^1.0.5"
   },
   "type": "module",
   "devDependencies": {

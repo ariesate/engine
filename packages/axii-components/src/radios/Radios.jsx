@@ -3,11 +3,9 @@
 import {
   createElement,
   createComponent,
-  useRef,
+  reactive,
   propTypes,
-  ref,
-  refComputed,
-  Fragment,
+  atom,
 } from 'axii'
 import useLayer from "../hooks/useLayer";
 import {nextTick} from "../util";
@@ -33,7 +31,7 @@ export function Radios({value, options, onChange, renderOption, match }, fragmen
 }
 
 Radios.propTypes = {
-  value: propTypes.object.default(() => ref(undefined)),
+  value: propTypes.object.default(() => atom(undefined)),
   options: propTypes.object.default(() => reactive([])),
   match: propTypes.function.default(() => (value, option) => {
     return value.value ? value.value === option : false

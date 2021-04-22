@@ -5,8 +5,8 @@ import {
 	createComponent,
 	useRef,
 	propTypes,
-	ref,
-	refComputed,
+	atom,
+	atomComputed,
 	computed,
 	reactive,
 	Fragment,
@@ -99,9 +99,9 @@ export function OptionTree(props, fragments) {
 }
 
 OptionTree.propTypes = {
-	value: propTypes.object.default(() => ref([])),
+	value: propTypes.object.default(() => atom([])),
 	options: propTypes.object.default(() => reactive([])),
-	focused: propTypes.bool.default(() => ref(false)),
+	focused: propTypes.bool.default(() => atom(false)),
 	onFocus: propTypes.callback.default(() => ({focused}) => focused.value = true),
 	onBlur: propTypes.callback.default(() => ({focused, openedIds}) => {
 		openedIds.splice(0)

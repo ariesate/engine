@@ -1,6 +1,6 @@
 /**@jsx createElement*/
 import {
-  refComputed,
+  atomComputed,
   createPortal,
   createElement,
   ref,
@@ -35,7 +35,7 @@ export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), 
   const sourceRef = inputSourceRef || reactive({})
 
   // 因为我们提供给 nodeInPortal 的是 source.getBoundingClientRect 的位置，这个是相对于 page 的。所以这里用 fixed 定位。
-  const style = refComputed(() => {
+  const style = atomComputed(() => {
     const rect = sourceRef.current ? sourceRef.current.getBoundingClientRect() : {
       top: 0,
       left: 0,

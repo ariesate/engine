@@ -1,6 +1,6 @@
 /** @jsx createElement */
 /** @jsxFrag Fragment */
-import { render, ref, reactive, refComputed, createElement, Fragment } from 'axii'
+import { render, atom, reactive, atomComputed, createElement, Fragment } from 'axii'
 import layerStyle  from '../style/layer'
 import scen, { colors } from "../pattern";
 
@@ -49,11 +49,11 @@ export function createMessage(
 
 	const container = createContainer()
 	// CAUTION 不要用 reactive，因为这里的语义不适用，而且 content 可能会有 vnode 节点。会出现问题。
-	const contents = ref([])
-	// const visible = refComputed(() => contents.length !== 0)
-	const visible = ref(true)
+	const contents = atom([])
+	// const visible = atomComputed(() => contents.length !== 0)
+	const visible = atom(true)
 
-	const containerStyle = refComputed(() => {
+	const containerStyle = atomComputed(() => {
 		return {
 			display: visible.value ? 'block' : 'none',
 			position: 'fixed',
@@ -73,7 +73,7 @@ export function createMessage(
 		justifyContent: 'center',
 	}
 
-	const style = refComputed(() => {
+	const style = atomComputed(() => {
 		const positionStyle = getPosition(container.getBoundingClientRect())
 		const otherStyle = getStyle()
 		const layoutStyle = getLayoutStyle()
