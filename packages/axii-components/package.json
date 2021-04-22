@@ -21,7 +21,7 @@
     "x-data-spreadsheet": "^1.0.27"
   },
   "peerDependencies": {
-    "axii": "^1.0.5"
+    "axii": "^1.0.7"
   },
   "type": "module",
   "devDependencies": {
