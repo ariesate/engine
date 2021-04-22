@@ -1,0 +1,19 @@
+{
+  "name": "my-axii-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.jsx",
+  "devDependencies": {
+    "vite": "^2.1.5"
+  },
+  "scripts": {
+    "start": "vite",
+    "local": "vite --config ./vite.local.config.js"
+  },
+  "author": "sskyy",
+  "license": "MIT",
+  "dependencies": {
+    "axii": "^1.0.5",
+    "axii-components": "^1.0.14"
+  }
+}
