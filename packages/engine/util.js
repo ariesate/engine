@@ -389,3 +389,7 @@ export function invariant(condition, format, a, b, c, d, e, f) {
   throw error
 }
 
+export function nextJob(fn) {
+  Promise.resolve().then(fn)
+}
+

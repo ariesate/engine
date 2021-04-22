@@ -1,4 +1,4 @@
-import { each } from '../util'
+import {each, nextJob} from '../util'
 import { IS_NON_DIMENSIONAL, IS_ATTR_NUMBER } from '../constant'
 
 export function normalizeStyleValue(k, v) {
@@ -20,7 +20,14 @@ function setProperty(node, name, value) {
 
 function eventProxy(e) {
   const listener = this._listeners[e.type]
-  return Array.isArray(listener) ? listener.forEach(l => l(e)) : listener(e)
+  /**@jsx 只有 focus event 是延迟处理的，这是因为 digest 时候的 removeChild 也会触发 focus event，这就使得更新不稳定了*/
+  if (e instanceof FocusEvent) {
+    nextJob(() => {
+      Array.isArray(listener) ? listener.forEach(l => l(e)) : listener(e)
+    })
+  } else {
+    Array.isArray(listener) ? listener.forEach(l => l(e)) : listener(e)
+  }
 }
 
 export function setAttribute(node, name, value, isSvg) {
