@@ -1,4 +1,4 @@
-import { createElement, render, reactive, ref, computed, propTypes } from 'axii'
+import { createElement, render, reactive, computed, propTypes } from 'axii'
 
 /**
  * 1. 当个组件的 vnode 更新和 data

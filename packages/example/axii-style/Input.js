@@ -1,4 +1,5 @@
-import { createElement, render, reactiveExpression, reactive, ref, computed, propTypes } from 'axii'
+/**@jsx createElement*/
+import { createElement, atom, propTypes } from 'axii'
 
 // 参数声明就是 state
 export default function Input({ content, onAddSubmit, onTextChange }) {
@@ -26,5 +27,5 @@ export default function Input({ content, onAddSubmit, onTextChange }) {
 Input.propTypes = {
   onAddSubmit: propTypes.func,
   onTextChange: propTypes.func,
-  content: propTypes.object.default(() => ref('draft')),
+  content: propTypes.object.default(() => atom('draft')),
 }

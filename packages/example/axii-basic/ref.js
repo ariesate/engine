@@ -1,14 +1,11 @@
+/**@jsx createElement*/
 import {
   render,
-  reactive,
-  ref,
-  refComputed,
-  computed,
-  createElement,
-  derive,
+  atom,
   propTypes,
   useImperativeHandle,
-  createRef
+  createRef,
+  createElement
 } from 'axii'
 
 function FullName({ fullName, onChange }, ref) {
@@ -22,7 +19,7 @@ function FullName({ fullName, onChange }, ref) {
 }
 
 FullName.propTypes = {
-  fullName: propTypes.string.default(() => ref('')),
+  fullName: propTypes.string.default(() => atom('')),
   onChange: propTypes.func
 }
 

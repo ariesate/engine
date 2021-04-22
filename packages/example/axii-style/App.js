@@ -1,4 +1,5 @@
-import { createElement, render, reactive, ref, arrayComputed, vnodeComputed, propTypes, derive } from 'axii'
+/**@jsx createElement*/
+import { createElement, render, reactive, atom, arrayComputed, vnodeComputed, propTypes, derive } from 'axii'
 import Input from './Input'
 import Todo from './Todo'
 import Filter from './Filter'
@@ -40,7 +41,7 @@ function FullName({ fullName, onChange }) {
 }
 
 FullName.propTypes = {
-  fullName: propTypes.string.default(() => ref('')),
+  fullName: propTypes.string.default(() => atom('')),
   onChange: propTypes.func
 }
 
@@ -48,7 +49,7 @@ FullName.propTypes = {
 
 export function App() {
   const todos = reactive([{ content: 'coding', type: 'active'}])
-  const todoType = ref('active')
+  const todoType = atom('active')
   // const showTodos = computed(() => todos.filter(({ type }) => type === todoType.value ) )
 
   const onAddSubmit = (nextProps, prevProps) => {
@@ -74,7 +75,7 @@ export function App() {
     fullName.value = 'wayne-ad'
   }
 
-  const fullName = ref('john-titor')
+  const fullName = atom('john-titor')
 
 
   return (

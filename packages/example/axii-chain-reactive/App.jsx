@@ -1,5 +1,5 @@
 /* @jsx createElement */
-import { createElement, computed, reactive, ref,  refComputed } from 'axii'
+import { createElement, computed, reactive, atom,  atomComputed } from 'axii'
 import { makeLinkMatrix, isLineNotConflict, insertIntoOrderedArray, indexBy, getRandomLinks, getRandomViews, randomAddView, randomAddLink} from './util'
 /**
  * 1. 当个组件的 vnode 更新和 data
@@ -11,13 +11,13 @@ import { makeLinkMatrix, isLineNotConflict, insertIntoOrderedArray, indexBy, get
 
 const View = ({ view, rowIndex, colIndex, width, height, gap, sources}) => {
 
-  const shouldHighlight = refComputed(() => {
+  const shouldHighlight = atomComputed(() => {
     return sources.some((source) => {
       return source.selected
     })
   })
 
-  const style = refComputed(function createStyleComputed() {
+  const style = atomComputed(function createStyleComputed() {
 
     const next = {
       display:'inline-block',
@@ -101,9 +101,9 @@ function Link({targetPosition, sourcePosition, reverse, width: widthRef, gap: ga
 
 export function App() {
 
-  const height = ref(160)
-  const width = ref(80)
-  const gap = ref(60)
+  const height = atom(160)
+  const width = atom(80)
+  const gap = atom(60)
 
   // views links 分开存
   const views =  reactive(getRandomViews(4, 5, 5))

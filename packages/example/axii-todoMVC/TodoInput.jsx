@@ -1,5 +1,5 @@
 /* @jsx createElement */
-import { createElement, ref, propTypes } from 'axii'
+import { createElement, atom, propTypes } from 'axii'
 import { Input } from 'axii-components'
 
 export default function TodoInput({ content, onAddSubmit, onTextChange }) {
@@ -24,5 +24,5 @@ TodoInput.propTypes = {
   onTextChange: propTypes.callback.default(() => (draftProps, props, e) => {
     draftProps.content.value = e.target.value
   }),
-  content: propTypes.string.default(() => ref('draft')),
+  content: propTypes.string.default(() => atom('draft')),
 }

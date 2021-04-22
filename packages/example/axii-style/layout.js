@@ -1,8 +1,8 @@
-import {render, reactive, ref, refComputed, createElement, derive, propTypes, watch } from 'axii'
-import { draft } from '../../controller-axii/src/draft';
+/**@jsx createElement*/
+import {render, atom, createElement, watch } from 'axii'
 
 function App() {
-  const reactiveShouldNotDisplay = ref(true)
+  const reactiveShouldNotDisplay = atom(true)
 
   setTimeout(() => {
     reactiveShouldNotDisplay.value = false

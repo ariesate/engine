@@ -1,14 +1,14 @@
-import {render, reactive, ref, refComputed, computed, subscribe, createElement, derive, propTypes } from 'axii'
-import { draft } from '../../controller-axii/src/draft';
+/**@jsx createElement*/
+import {render, draft, atom, atomComputed, computed, subscribe, createElement, derive, propTypes } from 'axii'
 
 function FullName({ fullName, onChange }) {
   const { firstName, secondName } = derive(() => {
     const splitArr =  computed(() => /-/.test(fullName.value) ? fullName.value.split('-') : [fullName.value, ''])
     return {
-      firstName: refComputed(() => {
+      firstName: atomComputed(() => {
         return splitArr[0]
       }),
-      secondName: refComputed(() => splitArr[1]),
+      secondName: atomComputed(() => splitArr[1]),
     }
   }, {
       fullName: ({firstName, secondName}) => `${firstName.value}-${secondName.value}`
@@ -32,15 +32,15 @@ function FullName({ fullName, onChange }) {
 }
 
 FullName.propTypes = {
-  fullName: propTypes.string.default(() => ref('')),
+  fullName: propTypes.string.default(() => atom('')),
   onChange: propTypes.func
 }
 
 
 function App() {
-  const firstName = ref('john')
-  const secondName = ref('wayne')
-  const fullName = refComputed(() => {
+  const firstName = atom('john')
+  const secondName = atom('wayne')
+  const fullName = atomComputed(() => {
     console.log('fullname changed')
     return `${firstName.value}-${secondName.value}`
   })

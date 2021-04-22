@@ -1,20 +1,13 @@
+/**@jsx createElement*/
 import {
-  render,
-  reactive,
-  ref,
-  refComputed,
   createElement,
-  derive,
-  propTypes,
-  watch,
-  StyleEnum,
-  StyleRule
+  render,
+  atom,
 } from 'axii'
-import { draft } from '../../controller-axii/src/draft';
 
 
 function App() {
-  const reactiveShouldNotDisplay = ref(true)
+  const reactiveShouldNotDisplay = atom(true)
 
   return (
     <root block>

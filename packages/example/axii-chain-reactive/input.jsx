@@ -1,15 +1,16 @@
-import { createElement, render, reactive, ref } from 'axii'
+/**@jsx createElement*/
+import { createElement, render, atom } from 'axii'
 import Input from './input/Input.jsx'
 import 'normalize.css'
 
-const refPrefix = ref('prefix')
+const refPrefix = atom('prefix')
 
 const slots = {
   prefix() {
     return refPrefix
   },
-  before: ref('test'),
-  suffix: ref('suffix')
+  before: atom('test'),
+  suffix: atom('suffix')
 }
 
 setTimeout(() => {

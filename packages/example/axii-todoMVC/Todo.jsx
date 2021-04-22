@@ -1,14 +1,12 @@
 /* @jsx createElement */
 import { createElement,
-  ref,
-  refComputed,
+  atom,
+  atomComputed,
   propTypes,
   draft,
-  computed,
-  getDisplayValue
 } from 'axii'
 
-import { Button } from 'axii-components'
+import { Button, Input } from 'axii-components'
 
 /**
  * 1. 当个组件的 vnode 更新和 data
@@ -16,20 +14,22 @@ import { Button } from 'axii-components'
  * 3. render props 要能正确更新
  *
  */
-export default function Todo({ item, draftValue, editing, onDraftValueChange, onDelete, onSetEditing, onChangeComplete, onEditComplete }) {
+export default function Todo({ item, editing, onDelete, onSetEditing, onChangeComplete, onEditComplete }) {
 
   const onKeyDown = (e) => {
     if (e.keyCode === 13) {
-      onEditComplete()
+      onEditComplete(draftTodo.draftValue.value)
     }
   }
 
-  const completed = refComputed(() => item.type === 'completed')
+  const completed = atomComputed(() => item.type === 'completed')
+
+  const draftTodo = draft(atomComputed(() => item.content ))
 
   return <todo block block-display-flex flex-justify-content-space-between block-width-500px>
     <info>
       {() => editing.value ? null : <input type="checkbox" checked={completed} onChange={onChangeComplete}/>}
-      {() => editing.value ? <input value={getDisplayValue(draftValue)} onInput={onDraftValueChange} onKeyDown={onKeyDown} /> : <span>{item.content}</span>}
+      {() => editing.value ? <Input value={draftTodo.draftValue} onKeyDown={onKeyDown} /> : <span>{item.content}</span>}
     </info>
     <operations>
       {() => editing.value ? null : <Button onClick={onSetEditing}>edit</Button>}
@@ -47,15 +47,9 @@ Todo.propTypes = {
     item.type = item.type === 'completed' ? 'uncompleted' : 'completed'
   }),
   item: propTypes.object,
-  draftValue: propTypes.string.default(({ item }) => {
-    return draft(computed(() => item.content ))
-  }),
-  onDraftValueChange: propTypes.callback.default(() => ({ draftValue }, props, e) => {
-    return draftValue.value = e.target.value
-  }),
-  onEditComplete: propTypes.callback.default(() => ({ item, draftValue, editing }) => {
-    item.content = draftValue.value
+  onEditComplete: propTypes.callback.default(() => (nextValue, { item, editing }) => {
+    item.content = nextValue
     editing.value = false
   }),
-  editing: propTypes.bool.default(() => ref(false))
+  editing: propTypes.bool.default(() => atom(false))
 }

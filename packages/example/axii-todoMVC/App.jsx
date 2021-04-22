@@ -1,8 +1,9 @@
+/**@jsx createElement*/
 import {
   createElement,
   reactive,
-  ref,
-  refComputed,
+  atom,
+  atomComputed,
   computed,
 } from 'axii'
 import TodoInput from './TodoInput'
@@ -34,7 +35,7 @@ function randomTodos() {
 
 export function App() {
   const todos = reactive(randomTodos())
-  const todoType = ref(TODO_TYPES[1])
+  const todoType = atom(TODO_TYPES[1])
   const visibleTodos = computed(() => todos.filter((todo) => {
     return todoType.value === TODO_TYPES[0] ? true: (todo.type === todoType.value)
   }))
@@ -70,7 +71,7 @@ export function App() {
       {TODO_TYPES.map((type) => (
         <span key={type}>
           <input type="radio" name={type}
-           checked={refComputed(() => todoType.value ===type)}
+           checked={atomComputed(() => todoType.value ===type)}
            onClick={() => changeType(type)}
           />
           <label for={type}>{type}</label>

@@ -1,10 +1,8 @@
+/**@jsx createElement*/
 import {
   render,
-  reactive,
-  ref,
-  refComputed,
+  atom,
   createElement,
-  derive,
   propTypes,
   useImperativeHandle,
   createRef
@@ -21,7 +19,7 @@ function FullName({ fullName, onChange }, ref) {
 }
 
 FullName.propTypes = {
-  fullName: propTypes.string.default(() => ref('')),
+  fullName: propTypes.string.default(() => atom('')),
   onChange: propTypes.func
 }
 
