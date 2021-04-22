@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, ref, propTypes } from 'axii'
+import { createElement } from 'axii'
 import Input from './Input.jsx'
 
 
