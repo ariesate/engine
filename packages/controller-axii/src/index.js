@@ -39,7 +39,7 @@ export { flattenChildren } from './component/utils'
 export { default as Scenario, createRange, matrixMatch } from './Scenario'
 export { default as batchOperation } from './batchOperation'
 export * from './draft'
-
+export { version } from '../package.json'
 
 export function render(vnode, domElement, ...controllerArgv) {
   domElement.innerHTML = ''
