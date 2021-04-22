@@ -1,6 +1,6 @@
 {
   "name": "axii",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "",
   "author": "sskyy <skyking_H@hotmail.com>",
   "license": "MIT",
@@ -40,10 +40,13 @@
       "@ariesate/are/(.*)": "<rootDir>/../engine/$1"
     },
     "transform": {
-      "^.+\\.[t|j]sx?$": ["esbuild-jest", {
-        "jsxFactory": "createElement",
-        "jsxFragment": "Fragment"
-      }]
+      "^.+\\.[t|j]sx?$": [
+        "esbuild-jest",
+        {
+          "jsxFactory": "createElement",
+          "jsxFragment": "Fragment"
+        }
+      ]
     },
     "setupFilesAfterEnv": [
       "./jest.setup.js"
