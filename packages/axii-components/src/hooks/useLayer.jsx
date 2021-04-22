@@ -3,7 +3,6 @@ import {
   atomComputed,
   createPortal,
   createElement,
-  ref,
   reactive,
 } from 'axii'
 import { nextTick } from "../util";
