@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, render, reactive, ref } from 'axii'
+import { createElement, render, reactive, atom } from 'axii'
 import Menu from '../src/menu/Menu.jsx'
 
 const data = reactive([
@@ -28,7 +28,7 @@ const data = reactive([
   }
 ])
 
-const activeKey = ref('sub1')
+const activeKey = atom('sub1')
 
 
 

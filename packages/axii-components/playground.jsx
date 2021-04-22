@@ -1,4 +1,5 @@
-import { createElement, render, reactive, ref, useRef, useViewEffect  } from 'axii'
+/**@jsx createElement*/
+import { createElement, render, useRef, useViewEffect  } from 'axii'
 import queryString from 'querystringify';
 import CodeFlask from 'codeflask';
 import './src/style/global.less'

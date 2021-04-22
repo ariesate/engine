@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, render, reactive, ref } from 'axii'
+import { createElement, render, reactive, atom } from 'axii'
 import Select from '../src/select/Select.jsx'
 
 const options = reactive([{
@@ -10,7 +10,7 @@ const options = reactive([{
   name: 'jim'
 }])
 
-const value = ref()
+const value = atom()
 
 function App() {
   return <div>

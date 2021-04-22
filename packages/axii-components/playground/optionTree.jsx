@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, render, reactive, ref } from 'axii'
+import { createElement, render, reactive, atom } from 'axii'
 import OptionTree from '../src/optionTree/OptionTree.jsx'
 
 const options = reactive([{
@@ -31,7 +31,7 @@ const options = reactive([{
 	}]
 }])
 
-const value = ref()
+const value = atom()
 
 function App() {
 	return <div>

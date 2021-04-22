@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, render, reactive, ref, useRef } from 'axii'
+import { createElement, render, useRef } from 'axii'
 import Spreadsheet from '../src/spreadsheet/Spreadsheet.jsx'
 
 function App() {

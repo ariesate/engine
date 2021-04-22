@@ -1,15 +1,15 @@
 /** @jsx createElement */
-import { createElement, render, reactive, ref } from 'axii'
+import { createElement, render, atom } from 'axii'
 import Input from '../src/input/Input.jsx'
 
-const refPrefix = ref('prefix')
+const refPrefix = atom('prefix')
 
 const slots = {
   prefix() {
     return refPrefix
   },
-  before: ref('test'),
-  suffix: ref('suffix')
+  before: atom('test'),
+  suffix: atom('suffix')
 }
 
 setTimeout(() => {

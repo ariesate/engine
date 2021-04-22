@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, ref, render, debounceComputed } from 'axii'
+import { createElement, atom, render, debounceComputed } from 'axii'
 import Pagination, { useInfinitePageHelper } from "../src/pagination/Pagination";
 
 function App() {
@@ -7,7 +7,7 @@ function App() {
 		<div>
 			<div>
 				<div>common pagination</div>
-				<Pagination pageCount={ref(20)} />
+				<Pagination pageCount={atom(20)} />
 			</div>
 			<div>
 				<div>infinite pagination</div>
@@ -18,12 +18,12 @@ function App() {
 }
 
 function InfinitePagination() {
-	const offset = ref(0)
-	const limit = ref(10)
-	const currentLength = ref(10)
+	const offset = atom(0)
+	const limit = atom(10)
+	const currentLength = atom(10)
 	const pageProps = useInfinitePageHelper(offset, limit, currentLength)
 
-	const total = ref(73)
+	const total = atom(73)
 
 	const onPageChange = (pageIndex) => {
 		debounceComputed(() => {

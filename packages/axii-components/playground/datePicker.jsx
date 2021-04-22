@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, render, reactive, ref } from 'axii'
+import { createElement, render } from 'axii'
 import DatePicker from '../src/datePicker/DatePicker.jsx'
 
 render(<div>

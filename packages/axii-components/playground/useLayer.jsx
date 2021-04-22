@@ -1,10 +1,10 @@
 /** @jsx createElement */
-import { createElement, render, reactive, atomComputed, ref } from 'axii'
+import { createElement, render, reactive, atomComputed, atom } from 'axii'
 import useLayer from '../src/hooks/useLayer.jsx'
 
 function App() {
 
-  const visible = ref(false)
+  const visible = atom(false)
 
 
   const style = atomComputed(() => ({
@@ -19,15 +19,15 @@ function App() {
   }))
 
   const { node } = useLayer(<div style={style}>
-    <div>这是要居中显示的</div>
+    <div>show message in page center</div>
     <div>
-      <button onClick={() => visible.value = false}>关闭</button>
+      <button onClick={() => visible.value = false}>Close</button>
     </div>
   </div>)
 
   return (
     <div>
-      <button onClick={() => visible.value = true}>打开 modal</button>
+      <button onClick={() => visible.value = true}>open modal</button>
       {node}
     </div>
   )

@@ -1,10 +1,10 @@
 /** @jsx createElement */
-import { createElement, render, ref, createComponent } from 'axii'
+import { createElement, render, atom, createComponent } from 'axii'
 import Radios from '../src/radios/Radios.jsx'
 
 function App() {
 
-	const value = ref('red')
+	const value = atom('red')
 	const options = ['red', 'blue']
 
 	return <div>

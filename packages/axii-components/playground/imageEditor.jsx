@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, render, reactive, ref } from 'axii'
+import { createElement, render } from 'axii'
 import ImageEditor from '../src/imageEditor/ImageEditor.jsx'
 
 

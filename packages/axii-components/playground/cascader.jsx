@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, render, reactive, ref } from 'axii'
+import { createElement, render, reactive, atom } from 'axii'
 import Cascader from '../src/cascader/Cascader.jsx'
 
 const options = reactive([{
@@ -31,12 +31,11 @@ const options = reactive([{
 	}]
 }])
 
-const value = ref()
+const value = atom()
 
 function App() {
 	return <div>
 		<Cascader value={value} options={options}/>
-		{/*<div>{ () => `selected: ${value.value ? value.value.name : 'none'}`}</div>*/}
 	</div>
 }
 

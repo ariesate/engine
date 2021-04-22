@@ -1,4 +1,5 @@
-import { createElement, render, reactive, ref } from 'axii'
+/**@jsx createElement*/
+import { createElement, render, reactive } from 'axii'
 import TabStrip from '../src/tabStrip/TabStrip.jsx'
 
 const items = reactive([

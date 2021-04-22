@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, render, reactive, ref, useRef } from 'axii'
+import { createElement, render, useRef } from 'axii'
 import Editorjs from '../src/editorjs/Editorjs.jsx'
 import Button from '../src/button/Button.jsx'
 

@@ -1,4 +1,4 @@
-import { createElement, render, reactive, ref } from 'axii'
+import { createElement, render, reactive, atom } from 'axii'
 import Tabs from '../src/tabs/Tabs.jsx'
 
 
@@ -10,7 +10,7 @@ function BrowserLike() {
     'http://qq.com',
   ]
 
-  const activeKey = ref()
+  const activeKey = atom()
   const openedURLs = reactive([])
   const open = (url) => {
     if (!openedURLs.includes(url)) {
