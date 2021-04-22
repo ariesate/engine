@@ -391,7 +391,6 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
             // watch 参数变化，修改规则
             watch(() => computeDynamicObject(rules, commonArgv), (computedRules) => {
               // TODO 如何修改？目前只会继续插入
-              console.log(className, name, computedRules)
               appendRule(stylesheet, className, name, computedRules)
             }, true)
           } else {

@@ -65,4 +65,3 @@ export function render(vnode, domElement, ...controllerArgv) {
 
 // TODO 根据 _DEV_ 变量判断
 implementDevToolInterface()
-
