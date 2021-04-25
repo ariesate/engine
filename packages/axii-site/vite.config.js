@@ -1,6 +1,7 @@
 import path from 'path'
 import mdx from 'vite-plugin-mdx-extended'
 import prefresh from '@prefresh/vite'
+import autolinkHeadings from "rehype-autolink-headings";
 
 function makePath(relativePath) {
   return path.join(path.dirname(import.meta.url.replace('file:', '')), relativePath)
@@ -14,7 +15,9 @@ export default {
     jsxFragment: 'Fragment',
   },
   plugins: [
-    mdx.default({}, {
+    mdx.default({
+      rehypePlugins: [autolinkHeadings]
+    }, {
       inject: `import {createElement, Fragment} from "axii";`,
       package: 'mdx-axii'
     }),

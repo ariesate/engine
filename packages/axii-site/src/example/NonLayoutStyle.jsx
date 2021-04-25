@@ -22,6 +22,7 @@ Component.Style = (fragments) => {
     }
   })
 
+  // pseudo class
   fragments.root.elements.textLink.match.hover.style({
     color: 'green'
   })

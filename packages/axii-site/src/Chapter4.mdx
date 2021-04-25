@@ -7,27 +7,32 @@ import Tips from './components/Tips.jsx'
 
 # Layout 样式
 
-layout 样式指的是"盒子" **大小**、**位置** 相关的样式。例如 display/width/height。
-因为 layout 样式通常和结构有关。例如 display:flex 影响的是当前元素下的子元素位置。
+layout 样式指的是"盒子" **大小**、**位置** 相关的样式。例如 `display/width/height`。
+因为 layout 样式通常和结构有关。例如 `display:flex` 影响的是当前元素下的子元素位置。
 为了让我们写组、改动组件结构时更好地同步处理 layout 样式，我们为所有原生节点提供了 Layout Attribute。
 
 建议遵循以下来写更好的组件:
 
 1. 使用有语义的自定义标签名来替代原生标签名。
-2. 创建 text/inline/block 属性。注意，inline 实际上使用的是 display: inline-block，text 是 display: inline。
-3. 如果有更复杂的需求，可以用 flex-display 或者 自己定义的 display。
-4. 设置 width/height 或者相应 display 的属性。属性需要加上 block|inline 等前缀。
+2. 创建 `text/inline/block` 属性。注意，`inline` 实际上使用的是 `display: inline-block`，`text` 是 `display: inline`。
+3. 如果有更复杂的需求，可以用 `flex-display` 或者 自己定义的 display。
+4. 设置 `width/height` 或者相应 `display` 的属性。属性需要加上 `block|inline` 等前缀。
 
 <Tips
-  content={`layout attribute 提供"连写"的写法来更快地书写:
-flex-justify-content="space-between"
-flex-justify-content-space-between`}
+  content={<div>
+    <div>layout attribute 提供"连写"的写法来更快地书写:</div>
+    <div>flex-justify-content="space-between"</div>
+    <div>flex-justify-content-space-between</div>
+  </div>}
 />
 
 <Tips
-  layout:block layout:block-margin-top-10px
-  content={`只要提供一个 boolean 值，就可以动态控制是否需要该 layout attribute。
-flex-justify-content-space-between={true}`}
+  layout:block
+  layout:block-margin-top-10px
+  content={<div>
+    <div>只要提供一个 boolean 值，就可以动态控制是否需要该 layout attribute:</div>
+    <div>flex-justify-content-space-between={true}</div>
+  </div>}
 />
 
 <Code instance={<LayoutStyle/>} code={LayoutStyleStr}/>

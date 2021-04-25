@@ -1,34 +1,17 @@
-import { createElement, useViewEffect, useRef, createComponent } from 'axii'
-import CodeMirror from 'codemirror'
-import 'codemirror/mode/jsx/jsx.js'
-import baseCss from 'codemirror/lib/codemirror.css'
-import draculaCss from 'codemirror/theme/material.css'
+/**@jsx createElement*/
+import { createElement, createComponent } from 'axii'
 import './Code.css'
 
-
 function Code({code, instance}) {
-  const root = useRef()
-
-  useViewEffect(() => {
-    CodeMirror(root.current, {
-      value: code,
-      mode: 'jsx',
-      theme: "material",
-      readOnly: true,
-    });
-  })
-
   return (
     <container block block-margin-top-10px>
       <tag inline >Example</tag>
       <demo block block-padding-10px>
         {instance}
       </demo>
-      <codeContainer>
-        <div ref={root}>
-
-        </div>
-      </codeContainer>
+      <pre>
+        <code className="language-jsx">{code}</code>
+      </pre>
     </container>
   )
 }
@@ -49,6 +32,10 @@ Code.Style = (fragments) => {
   fragments.root.elements.demo.style({
     paddingTop: 40,
     border: '1px #cecece solid',
+    borderRadius: 4
+  })
+
+  fragments.root.elements.pre.style({
     borderRadius: 4
   })
 }

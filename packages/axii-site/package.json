@@ -10,9 +10,11 @@
     "@prefresh/vite": "^2.2.0",
     "@testing-library/jest-dom": "^5.11.4",
     "axii": "^1.0.7",
-    "codemirror": "^5.60.0",
+    "axii-icons": "^1.0.2",
     "command-line-args": "^5.1.1",
     "mdx-axii": "^2.0.1",
+    "prismjs": "^1.23.0",
+    "rehype-autolink-headings": "^5.0.1",
     "vite": "^2.1.5",
     "vite-plugin-mdx-extended": "^3.3.3"
   },
