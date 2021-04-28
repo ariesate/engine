@@ -1,10 +1,8 @@
 /** @jsx createElement */
 import {
   createElement,
-  render,
   reactive,
-  ref,
-  observeTrigger,
+  atom,
   useViewEffect,
   useImperativeHandle,
   useRef,
@@ -37,13 +35,12 @@ function getContainerSize() {
 export const PORT_JOINT = '|'
 
 export default function EREditor({ data: rawData, customFields, onChange, onSave }, editorRef) {
-  console.log(rawData, customFields)
 
   const { entities, relations } = reactive(rawData)
   const containerRef = useRef()
-  const graphRef = ref()
-  const selectedItemRef = ref()
-  const selectedTypeRef = ref('')
+  const graphRef = atom()
+  const selectedItemRef = atom()
+  const selectedTypeRef = atom('')
 
   if (editorRef) {
     useImperativeHandle(editorRef, () => ({
@@ -69,7 +66,6 @@ export default data;
 
   // TODO 因为 node click 的事件不是由我们的组件自己决定发出的，所以没发写在自己组件里面，并传相应的值，只能写在这里。
   const onCellClick = ({cell, e}) => {
-    console.log("cell click")
     if (cell.isNode()) {
       if (cell.getAxiiProps) {
         selectedItemRef.value = entities.find(e => e.id === cell.id)
@@ -249,7 +245,7 @@ export default data;
   })
 
   return (
-    <container>
+    <container block block-height="100%" style={{background: '#fff'}}>
       <Split layout:block layout:block-height="100%">
         <div block flex-display flex-direction-column block-height="100%">
           <div block flex-grow-0 className={styles.toolbar}>

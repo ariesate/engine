@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, useViewEffect, propTypes, ref, debounceComputed, reactive } from 'axii'
+import { createElement, useViewEffect, propTypes, atom, debounceComputed, reactive } from 'axii'
 import ConfigEntity from './ConfigEntity.jsx'
 import ConfigRelation from './ConfigRelation.jsx'
 import ConfigGrid from './ConfigGrid.jsx'
@@ -7,7 +7,6 @@ import styles from './index.less'
 
 
 export default function ConfigPanel({ graph, type, item, customFields }) {
-  console.log("rerender", item)
   return (
     <div className={styles.config}>
       {() => type.value === 'graph' ? <ConfigGrid graph={graph} /> : null}
@@ -18,8 +17,8 @@ export default function ConfigPanel({ graph, type, item, customFields }) {
 }
 
 ConfigPanel.propTypes = {
-  node: propTypes.object.default(() => ref()),
-  type: propTypes.object.default(() => ref('')),
+  node: propTypes.object.default(() => atom()),
+  type: propTypes.object.default(() => atom('')),
   item: propTypes.object.default(() => reactive({})),
   customFields: propTypes.object.default(() => reactive([])),
 }

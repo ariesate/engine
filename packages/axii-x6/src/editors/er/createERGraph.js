@@ -97,10 +97,10 @@ function initEvent(graph, container) {
   graph.on('node:change:attrs', ({ options , node, ...rest}) => {
     if (options.propertyPath === 'attrs/text/text') {
       // 重新调整
-      console.log(rest)
-      console.log(node.getBBox({ deep: true}))
-      console.log(node.getBBox({ deep: true}))
-      console.log(node)
+      // console.log(rest)
+      // console.log(node.getBBox({ deep: true}))
+      // console.log(node.getBBox({ deep: true}))
+      // console.log(node)
       node.fit()
 
       // TODO 按中心变大

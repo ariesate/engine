@@ -10,7 +10,6 @@ class AxiiShapeResizeObserver {
     this.targets = new Map()
     this.observer = new ResizeObserver(entries => {
       entries.forEach(e => {
-        console.log(e)
         const callback = this.targets.get(e.target)
         if (callback) callback()
       })
@@ -55,10 +54,10 @@ export class AxiiShapeView extends NodeView {
       this.controller = render(<ViewContext.Provider value={{graph, node}}>
         <Component {...node.getAxiiProps()}/>
       </ViewContext.Provider>, root)
-      console.log(root, root.scrollWidth, root.scrollHeight)
+      // console.log(root, root.scrollWidth, root.scrollHeight)
       // TODO 强行同步一下 size。x6 没有做这件事。 在 change 的时候也要同步 size 才行。resize observer。
       this.unobserve = globalAxiiShapeResizeObserver.observe(root.children[0], () => {
-        console.log({width: root.scrollWidth, height: root.scrollHeight})
+        // console.log({width: root.scrollWidth, height: root.scrollHeight})
         node.prop({ size: {width: root.scrollWidth, height: root.scrollHeight}})
       })
     }

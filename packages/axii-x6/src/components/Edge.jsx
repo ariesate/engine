@@ -2,14 +2,9 @@
 import {
   createElement,
   useViewEffect,
-  useRef,
-  createContext,
-  ref,
-  reactive,
   useContext,
   watch,
   traverse,
-  destroyComputed,
   toRaw
 } from 'axii'
 import {GraphContext} from "./Graph.jsx";

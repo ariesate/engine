@@ -1,13 +1,9 @@
 /** @jsx createElement */
 import {
   createElement,
-  useViewEffect,
   propTypes,
-  ref,
-  overwrite,
   reactive,
   delegateLeaf,
-  watch
 } from 'axii'
 import { Input, Select } from 'axii-components'
 
@@ -36,18 +32,23 @@ export default function ConfigRelation({relation, graph, customFields}) {
   const renderValue = value => value.value
 
   return (
-    <panel block>
-      <h3>名称</h3>
-      <Input value={delegateLeaf(relation).name}/>
-      <h3>类型</h3>
-      <Select
-        value={delegateLeaf(relation).type}
-        options={options}
-        match={match}
-        optionToValue={optionToValue}
-        renderOption={renderOption}
-        renderValue={renderValue}
-      />
+    <panel block block-margin-10px>
+      <panelBlock block block-margin-bottom-30px>
+        <blockTitle block block-margin-10px block-margin-left-0>名称</blockTitle>
+        <Input value={delegateLeaf(relation).name}/>
+      </panelBlock>
+      <panelBlock block block-margin-bottom-30px>
+        <blockTitle block block-margin-10px block-margin-left-0>类型</blockTitle>
+        <Select
+          value={delegateLeaf(relation).type}
+          options={options}
+          match={match}
+          optionToValue={optionToValue}
+          renderOption={renderOption}
+          renderValue={renderValue}
+        />
+      </panelBlock>
+
     </panel>
   )
 }

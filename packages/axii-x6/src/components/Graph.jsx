@@ -1,10 +1,10 @@
-import { createElement, useViewEffect, useRef, createContext, ref } from 'axii'
+import { createElement, useViewEffect, useRef, createContext, atom } from 'axii'
 
 export const GraphContext = createContext()
 
 export default function Graph({ children, createGraph, onClick }) {
   const containerRef = useRef()
-  const graphRef = ref()
+  const graphRef = atom()
 
   useViewEffect(() => {
     const graph = createGraph()

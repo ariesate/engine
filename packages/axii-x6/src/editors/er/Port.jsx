@@ -7,7 +7,6 @@ export default function Port({ group, id, args}) {
 
   useViewEffect(() => {
 
-    console.log(id, args)
     const port = viewContext.node.addPort({
       group,
       id,

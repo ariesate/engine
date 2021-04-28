@@ -5,21 +5,17 @@
   "dependencies": {
     "@antv/x6": "^1.12.14",
     "axii-components": "^1.0.15",
+    "axii-icons": "^1.0.2",
     "axios": "^0.21.1",
     "copy-text-to-clipboard": "^2.2.0",
     "lodash-es": "^4.17.20"
   },
   "devDependencies": {
-    "command-line-args": "^5.1.1",
-    "css-loader": "^4.3.0",
-    "fast-json-patch": "^3.0.0-1",
     "less": "^3.12.2",
-    "lodash": "^4.17.20",
-    "style-loader": "^1.2.1",
-    "vite": "^2.0.0-beta.65"
+    "vite": "^2.1.5"
   },
   "peerDependencies": {
-    "axii": "^1.0.3"
+    "axii": "^1.0.8"
   },
   "scripts": {
     "start": "vite --force",

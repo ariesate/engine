@@ -1,17 +1,10 @@
 /** @jsx createElement */
 import {
   createElement,
-  createComponent,
   useViewEffect,
-  delegateLeaves,
-  propTypes,
-  ref,
-  reactive,
-  useRef,
   watch,
   traverse,
   computed,
-  delegateLeaf,
 } from 'axii'
 
 import Edge from "../../components/Edge";

@@ -7,7 +7,7 @@ import {
   createComponent,
   computed,
 } from 'axii'
-import { Input, Select, Button, Icon, Checkbox } from 'axii-components'
+import { Input, Select, Button, Checkbox } from 'axii-components'
 
 /**
  * node 是个 x6 对象，还是要和 axii 中的数据同步，这种情况怎么处理？
@@ -25,7 +25,7 @@ import { Input, Select, Button, Icon, Checkbox } from 'axii-components'
  *  3. string|number size
  */
 
-function ConfigEntity({entity, graph, customFields}) {
+function ConfigEntity({entity, graph, customFields = []}) {
   const addField = () => {
     entity.fields.push({
       id: graph.createId(),
@@ -49,13 +49,13 @@ function ConfigEntity({entity, graph, customFields}) {
   const renderValue = value => value.value
 
   return (
-    <panel block>
+    <panel block block-margin-10px>
       <panelBlock block block-margin-bottom-30px>
-        <title block block-margin-10px block-margin-left-0>名称</title>
+        <blockTitle block block-margin-10px block-margin-left-0>名称</blockTitle>
         <Input value={delegateLeaf(entity).name}/>
       </panelBlock>
       <panelBlock block block-margin-bottom-30px>
-        <title block block-margin-10px block-margin-left-0>字段</title>
+        <blockTitle block block-margin-10px block-margin-left-0>字段</blockTitle>
         {() => entity.fields.map(field => {
           return (
             <filed block block-padding-bottom-10px>
@@ -81,14 +81,14 @@ function ConfigEntity({entity, graph, customFields}) {
               >
                 集合
               </Checkbox>
-              <Button onClick={() => removeField(field)}><Icon type="CloseCircle"/></Button>
+              <Button danger onClick={() => removeField(field)}>删除</Button>
             </filed>
           )
         })}
-        <Button onClick={addField}>新增字段</Button>
+        <Button primary onClick={addField}>新增字段</Button>
       </panelBlock>
       <panelBlock block block-margin-bottom-30px>
-        <title block block-margin-10px block-margin-left-0>通用</title>
+        <blockTitle block block-margin-10px block-margin-left-0>通用</blockTitle>
         <Checkbox
           layout:inline-width-100px
           layout:inline-margin-right-10px

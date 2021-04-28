@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, useViewEffect, propTypes, ref } from 'axii'
+import { createElement } from 'axii'
 
 
 
@@ -10,7 +10,7 @@ export default function ({ node }) {
 
   return (
     <div>
-      griddddd
+      No configuration on canvas.
     </div>
   )
 }

@@ -4,14 +4,13 @@ import {
   createComponent,
   useViewEffect,
   propTypes,
-  ref,
+  atom,
   reactive,
   watch,
   traverse,
   computed,
-  delegateLeaf,
 } from 'axii'
-import {useElementPosition, mannualTrigger as createManualTrigger } from 'axii-components'
+import {useElementPosition, manualTrigger as createManualTrigger } from 'axii-components'
 import Port from './Port'
 import { PORT_JOINT } from "./EREditor";
 
@@ -92,8 +91,8 @@ function RawField({ field, entityPosition, positionTrigger }) {
 }
 
 RawField.propTypes = {
-  name: propTypes.string.default(() => ref('')),
-  type: propTypes.string.default(() => ref('')),
+  name: propTypes.string.default(() => atom('')),
+  type: propTypes.string.default(() => atom('')),
 }
 
 RawField.Style = (fragments) => {

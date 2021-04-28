@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import {createElement, useViewEffect, propTypes, ref, overwrite, reactive, delegateLeaf} from 'axii'
+import {createElement, propTypes, reactive, delegateLeaf} from 'axii'
 import Input from 'axii-components/input/input.jsx'
 
 /**

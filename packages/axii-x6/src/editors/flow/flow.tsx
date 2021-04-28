@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, render, reactive, ref, refComputed, useViewEffect, useRef, toRaw } from 'axii'
+import { createElement, render, reactive, atom, refComputed, useViewEffect, useRef, toRaw } from 'axii'
 import copyTextToClipboard from 'copy-text-to-clipboard'
 import '../../reset.less'
 import '../../global.css'
@@ -25,8 +25,8 @@ export default function Editor() {
 
   const containerRef = useRef()
   const stencilRef = useRef()
-  const graphRef = ref()
-  const selectedNodeRef = ref()
+  const graphRef = atom()
+  const selectedNodeRef = atom()
 
   const copy = () => {
     // const { graph } = FlowGraph
@@ -43,7 +43,7 @@ export default function Editor() {
 
     const node = nodes.find(n => n.id = source.cell)
     const parallel = node.nextParallelBranches.find(parallel => parallel.id === source.port)
-    console.log(parallel, edge)
+    // console.log(parallel, edge)
     const branch = parallel.conditionBranches.find(b => b.id === edge.id)
     branch.target = { id: target.cell }
     // console.log(JSON.stringify(toRaw(nodes)), '\n', 4)
