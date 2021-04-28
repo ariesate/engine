@@ -208,7 +208,7 @@ function validationPlugin({ scheme }, values) {
       isValid: atomComputed(() => {
         let hasUndefined = false
         // TODO 潜在的性能问题，准备解决。可能要从 debouncedComputed 考虑
-        console.log(Object.keys(validationResultByFieldName))
+        // console.log(Object.keys(validationResultByFieldName))
         for( let resultByRules of Object.values(validationResultByFieldName)) {
           for (let ruleResult of Object.values(resultByRules)) {
             // 有任何错误直接返回
