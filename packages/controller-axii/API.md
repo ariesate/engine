@@ -1,13 +1,13 @@
 # API
 
 ## 数据
-### ref(any: any)/reactive(obj: array|object)
+### atom(any: any)/reactive(obj: array|object)
 
 这两个 API 是用来创建 reactive 类型的数据的，区别在于 `reactive()` 创建的数组或者对象可以实现深度监听，在使用的时也是按照正常的对象来读取和赋值。
 而 `ref()` 则主要是用来创建非对象类型的数据，例如 number/string/undefined 等。如果某些对象不想要深度监听，也可以使用 ref。在读取和赋值时都是使用 `.value` 。
 
 ```jsx
-import { reactive, ref } from 'axii'
+import { reactive, atom } from 'axii'
 const reactiveArray = reactive([])
 const reactiveString = ref('')
 
@@ -22,9 +22,9 @@ reactiveString.value = 'axii'
 console.log(reactiveString) // {value: 'axii'}
 ``` 
 
-### computed(computation: function)/refComputed/vnodeComputed(computation: function)
+### computed(computation: function)/atomComputed/vnodeComputed(computation: function)
 
-这三个 API 是用来创建"计算"数据的。当计算数据是要深度监听的对象或者普通值类型，使用 `computed`。当要创建"不需要深度监听的对象类型"时，使用 `refComputed`。
+这三个 API 是用来创建"计算"数据的。当计算数据是要深度监听的对象或者普通值类型，使用 `computed`。当要创建"不需要深度监听的对象类型"时，使用 `atomComputed`。
 `vnodeComputed` 是用来返回的 vnode 节点中标记动态结构的，因为 axii 会自动将函数节点包装成 vnodeComputed，所以一般不需要显式调用。
 
 ```jsx
@@ -40,9 +40,9 @@ console.log(computedArray) // [2]
 ```
 
 ### watch
-import { watch } from 'axii'
 这个 API 是用来处理一些副作用的，理论上在业务开发中*不应该直接使用*，应该将相应的场景再包装。参考 draft 的实现。
 ```jsx
+import { watch } from 'axii'
 watch(function readSource() {
     // 在这里读取要依赖的 reactive 对象
 }, function callback() {
@@ -50,14 +50,20 @@ watch(function readSource() {
 })
 ```
 
-### draft/getDisplayValue
+### watchReactive
+```jsx
+import { watchReactive } from 'axii'
+
+
+```
+
+### draft
 
 这个 API 是通过 watch 创造的用来处理业务中需要有"副本"的数据的，例如从 server 拿到数据后，在本地需要编辑，但又要能随时重置。
 通过 getDisplayValue，可以创造出一个显示最近一次修改的 reactive 数据。可以参考 todoMVC 中的例子。
 ```jsx
-const source = ref('origin')
-const draftValue = draft(source)
-const displayValue = getDisplayValue(draft)
+const source = atom('origin')
+const { draftValue, displayValue } = draft(source)
 
 console.log(draftValue.value) // origin
 console.log(displayValue.value) // origin
@@ -73,11 +79,11 @@ console.log(displayValue.value) // sourceChanged
 
 ## 将数据用在 vnode 节点中
 ### 将 reactive 数据直接用在 attribute 或者 children 中。
-注意，当使用 ref 创建的 reactive 用在 vnode 中时，不要去读 `.value`，axii 需要完整地对象来判断。
+注意，当使用 atom 创建的 reactive 用在 vnode 中时，不要去读 `.value`，axii 需要完整地对象来判断。
 ```jsx
-import {ref, computed} from 'axii'
+import {atom, computed} from 'axii'
 function App(){
-    const isOrigin = ref(true)
+    const isOrigin = atom(true)
     const reactiveStyle = computed(() => {
         return {
             color: isOrigin.value ? 'red' : 'blue'
@@ -123,7 +129,7 @@ render(<App />, document.getElementById('root'))
 
 ### delegateLeaf
 
-为了保持对象操作的一致性， reactive 不会把对象的叶子节点自动转成 ref。这也使得当我们希望把叶子节点的数据委托给其他组件来修改时，需要一个机制来保持修改的是原 reactive 对象。
+为了保持对象操作的一致性， reactive 不会把对象的叶子节点自动转成 atom。这也使得当我们希望把叶子节点的数据委托给其他组件来修改时，需要一个机制来保持修改的是原 reactive 对象。
 再不使用 delegateLeaf 之前，我们可以写成：
 
 ```jsx
@@ -164,8 +170,8 @@ function App() {
 
 ```jsx
 function App() {
-  const height= ref(200)
-  const hidden = ref(false)
+  const height= atom(200)
+  const hidden = atom(false)
   // layout attribute 支持三种写法:
   // 1. 快捷方式。将键值直接通过连接符写在一起。
   // 2. 正常 attribute 键值模式。支持值为 reactive 对象。
@@ -192,7 +198,7 @@ function Child({ onChangeContent, content }) {
 }
 
 Child.propTypes = {
-    content: propTypes.string.default(() => ref('nothing')),
+    content: propTypes.string.default(() => atom('nothing')),
     // 注意下面 default 的参数是"创建函数的函数"。
     onChangeContent: propTypes.callback.default(() => (draftProps, props, event) => {
         // 会补全三个参数：
@@ -204,7 +210,7 @@ Child.propTypes = {
 }
 
 function App() {
-    const content = ref('from App')
+    const content = atom('from App')
     // 当 Child 内部触发 onClick 调用 onChangeContent 后，content 的数据就发生变化了。
     return <Child content={content}/>
 }
