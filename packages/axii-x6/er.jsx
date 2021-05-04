@@ -3,7 +3,7 @@
  * 理论上用 playground.jsx 会更好。
  */
 /** @jsx createElement */
-import { createElement, render, reactive, ref, refComputed, useRef } from 'axii'
+import { createElement, render, useRef } from 'axii'
 import { debounce } from 'lodash-es'
 import Editor from './src/editors/er/EREditor'
 import localRawData from './src/editors/er/data'

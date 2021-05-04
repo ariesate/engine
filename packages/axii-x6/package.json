@@ -4,7 +4,7 @@
   "description": "",
   "dependencies": {
     "@antv/x6": "^1.12.14",
-    "axii-components": "^1.0.15",
+    "axii-components": "^1.0.32",
     "axii-icons": "^1.0.2",
     "axios": "^0.21.1",
     "copy-text-to-clipboard": "^2.2.0",

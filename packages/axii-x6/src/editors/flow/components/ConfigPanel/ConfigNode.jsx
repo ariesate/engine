@@ -1,6 +1,6 @@
 /** @jsx createElement */
 import {createElement, propTypes, reactive, delegateLeaf} from 'axii'
-import Input from 'axii-components/input/input.jsx'
+import { Input } from 'axii-components'
 
 /**
  * node 是个 x6 对象，还是要和 axii 中的数据同步，这种情况怎么处理？

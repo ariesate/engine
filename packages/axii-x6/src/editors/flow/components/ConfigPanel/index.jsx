@@ -1,7 +1,7 @@
 /** @jsx createElement */
 import { createElement, useViewEffect, propTypes, atom, debounceComputed } from 'axii'
-import ConfigNode from './ConfigNode.tsx'
-import ConfigGrid from './ConfigGrid.tsx'
+import ConfigNode from './ConfigNode.jsx'
+import ConfigGrid from './ConfigGrid.jsx'
 import styles from './index.less'
 
 

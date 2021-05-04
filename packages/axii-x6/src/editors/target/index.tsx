@@ -42,7 +42,7 @@
 // 需要生成的代码
 
 // TODO 1 等待的用户事件+往后遍历的响应逻辑
-system.on.userAction(function makeFriend() {
+// system.on.userAction(function makeFriend() {
   // TODO 1 判断到底是不是相应的 action
   // TODO 1.1 有分支的情况
 
@@ -54,7 +54,7 @@ system.on.userAction(function makeFriend() {
   // 有时候前者的变化会打破这种"归纳的规律"，所以应该能知晓，随时检查。
 
 
-})
+// })
 
 // TODO 2 系统变更事件：数据变化、系统调用等等
 // TODO 3 系统定时器等其他触发

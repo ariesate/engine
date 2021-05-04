@@ -3,7 +3,7 @@
  * 理论上用 playground.jsx 会更好。
  */
 /** @jsx createElement */
-import { createElement, render, reactive, ref, refComputed } from 'axii'
+import { createElement, render } from 'axii'
 import Editor from './src/editors/flow/flow'
 
 render(<Editor />, document.getElementById('root'))

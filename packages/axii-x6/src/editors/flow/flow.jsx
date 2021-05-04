@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, render, reactive, atom, refComputed, useViewEffect, useRef, toRaw } from 'axii'
+import { createElement, reactive, atom, useViewEffect, useRef } from 'axii'
 import copyTextToClipboard from 'copy-text-to-clipboard'
 import '../../reset.less'
 import '../../global.css'
@@ -61,6 +61,7 @@ export default function Editor() {
 
   useViewEffect(() => {
     const graph = createFlowGraph(containerRef.current, stencilRef.current, onAddNode)
+    // @ts-ignore
     graph.createId = createId
 
 
