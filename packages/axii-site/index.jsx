@@ -58,7 +58,7 @@ function Site() {
         <frameworkName block block-font-size-150px>Axii</frameworkName>
         <info block flex-display flex-justify-content-center flex-align-items-center>
           <frameworkVersion>{version}</frameworkVersion>
-          <frameworkGithub use="a" href="https://axii.js.org" inline inline-line-height-1 inline-margin-left-10px><Github /></frameworkGithub>
+          <frameworkGithub use="a" href="https://github.com/ariesate/engine/tree/master/packages/controller-axii" inline inline-line-height-1 inline-margin-left-10px><Github /></frameworkGithub>
         </info>
 
       </framework>
