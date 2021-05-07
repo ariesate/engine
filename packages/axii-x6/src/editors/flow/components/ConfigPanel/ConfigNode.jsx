@@ -1,6 +1,6 @@
 /** @jsx createElement */
-import {createElement, propTypes, reactive, delegateLeaf} from 'axii'
-import { Input } from 'axii-components'
+import {createElement, propTypes, reactive, delegateLeaf, createComponent} from 'axii'
+import { Input, Button } from 'axii-components'
 
 /**
  * node 是个 x6 对象，还是要和 axii 中的数据同步，这种情况怎么处理？
@@ -14,7 +14,7 @@ import { Input } from 'axii-components'
  *
  */
 
-export default function ConfigNode({node, graph}) {
+function ConfigNode({node, graph}) {
   const addNewConditionalBranch = (parallel) => {
     parallel.conditionBranches.push({
       name: '',
@@ -36,26 +36,39 @@ export default function ConfigNode({node, graph}) {
   }
 
   return (
-    <div>
-      <h3>名称</h3>
-      <Input value={delegateLeaf(node).name}/>
-      <h3>出口</h3>
-      {() => node.nextParallelBranches.map(parallel => {
-        return (
-          <div block block-padding-20px>
-            <h4>{parallel.name || parallel.id}</h4>
-            {parallel.conditionBranches.map(branch => {
-              return <div><Input value={delegateLeaf(branch).name}/></div>
-            })}
-            <a onClick={() => addNewConditionalBranch(parallel)}>新增分支</a>
-          </div>
-        )
-      })}
-      <a onClick={addParallelBranch}>新增出口</a>
-    </div>
+    <panel block>
+      <panelBlock block block-margin-bottom-30px>
+        <blockTitle block block-margin-10px block-margin-left-0>名称</blockTitle>
+        <Input value={delegateLeaf(node).name}/>
+      </panelBlock>
+      <panelBlock block block-margin-bottom-30px>
+        <blockTitle block block-margin-10px block-margin-left-0>并行出口</blockTitle>
+        {() => node.nextParallelBranches.map(parallel => {
+          return (
+            <branches block block-margin-bottom-10px border-bottom-width-1px block-padding-10px>
+              <Input value={delegateLeaf(parallel).name}/>
+              <div block block-margin-10px>分支</div>
+              {parallel.conditionBranches.map(branch => {
+                return <div block block-margin-10px><Input value={delegateLeaf(branch).name}/></div>
+              })}
+              <div block block-margin-10px><Button primary onClick={() => addNewConditionalBranch(parallel)}>新增分支</Button></div>
+            </branches>
+          )
+        })}
+        <Button onClick={addParallelBranch} primary>新增出口</Button>
+      </panelBlock>
+    </panel>
   )
 }
 
 ConfigNode.propTypes = {
   node: propTypes.object.default(() => reactive({}))
 }
+
+ConfigNode.Style = (fragments) => {
+  fragments.root.elements.branches.style({
+    border: '1px solid #999'
+  })
+}
+
+export default createComponent(ConfigNode)

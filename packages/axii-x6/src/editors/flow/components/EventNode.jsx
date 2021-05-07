@@ -15,28 +15,26 @@ import Port from '../../../components/Port'
  * nextNodes 是个数组，表示后面并行，应该是先并行，再分支。
  */
 export function EventNode({ node, onClick }) {
-  const ports = computed(() => {
-    return {
-      groups: {
-        in: {
-          position: 'top',
-          attrs: {
-            circle: {
-              magnet: true,
-            },
+  const ports = {
+    groups: {
+      in: {
+        position: 'top',
+        attrs: {
+          circle: {
+            magnet: true,
           },
         },
-        out: {
-          position: 'bottom',
-          attrs: {
-            circle: {
-              magnet: true,
-            },
+      },
+      out: {
+        position: 'bottom',
+        attrs: {
+          circle: {
+            magnet: true,
           },
-        }
+        },
       }
     }
-  })
+  }
 
   const onNodeClick = () => {
     onClick(node)
@@ -46,8 +44,8 @@ export function EventNode({ node, onClick }) {
     return {text: {text: node.name}}
   })
 
-  return <Node ports={ports} shape="event-node" attrs={attrs} id={node.id} position={node.position} onClick={onNodeClick}>
-    {() => node.nextParallelBranches.map(parallel => <Port group="out" id={parallel.id} key={parallel.id}/>)}
+  return <Node ports={ports} shape={node.shape || 'event-node'} attrs={attrs} id={node.id} position={node.view?.position} onClick={onNodeClick}>
+    {() => node.nextParallelBranches?.map(parallel => <Port group="out" id={parallel.id} key={parallel.id}/>)}
     <Port group="in" id="_in"/>
   </Node>
 }

@@ -1,12 +1,9 @@
-import { Graph, Addon, FunctionExt, Shape } from '@antv/x6'
+import { Graph, Addon, Shape } from '@antv/x6'
 import './flowShape'
 
-///////////////////
-export default function createFlowGraph(container, stencilContainer, onAddNode ) {
+export default function createFlowGraph(container, stencilContainer, {onAddNode, onSave} ) {
   const graph = new Graph({
     container,
-    width: 1000,
-    height: 800,
     grid: {
       size: 10,
       visible: true,
@@ -95,12 +92,18 @@ export default function createFlowGraph(container, stencilContainer, onAddNode )
     },
     keyboard: {
       enabled: true,
+      global: true,
+      format(key) {
+        return key
+          .replace(/\s/g, '')
+          .replace('cmd', 'command')
+      },
     },
   })
 
   const stencil = initStencil(graph, stencilContainer, onAddNode)
   initShape(graph, stencil)
-  initEvent(graph, container)
+  initEvent(graph, { onSave })
   return graph
 }
 
@@ -108,9 +111,7 @@ function initStencil(graph, stencilContainer, onAddNode) {
   const stencil = new Addon.Stencil({
     target: graph,
     stencilGraphWidth: 280,
-    search: { rect: true },
-    collapsable: true,
-    validateNode: viewNode => onAddNode(viewNode.position()),
+    validateNode: viewNode => onAddNode(viewNode, viewNode.position()),
     groups: [
       {
         name: 'basic',
@@ -125,15 +126,6 @@ function initStencil(graph, stencilContainer, onAddNode) {
           marginX: 60,
         },
         graphHeight: 260,
-      },
-      {
-        name: 'group',
-        title: '节点组',
-        graphHeight: 100,
-        layoutOptions: {
-          columns: 1,
-          marginX: 60,
-        },
       },
     ],
   })
@@ -203,12 +195,17 @@ function initShape(graph, stencil) {
   stencil.load([g1], 'group')
 }
 
-function initEvent(graph, container) {
+function initEvent(graph, {onSave}) {
   graph.bindKey('backspace', () => {
     const cells = graph.getSelectedCells()
     if (cells.length) {
       graph.removeCells(cells)
     }
+  })
+
+  graph.bindKey('command+s', (e) => {
+    console.log(1111, e)
+    onSave && onSave(e, graph)
   })
 
   // 监听 node 的文字大小改变

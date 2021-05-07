@@ -3,7 +3,7 @@
   "version": "1.0.2",
   "description": "",
   "dependencies": {
-    "@antv/x6": "^1.12.14",
+    "@antv/x6": "^1.20.0",
     "axii-components": "^1.0.32",
     "axii-icons": "^1.0.2",
     "axios": "^0.21.1",

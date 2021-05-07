@@ -165,9 +165,12 @@ export const BasicEdge = Graph.registerEdge('basic-edge', {
 export const ReuseNode = Graph.registerNode('reuse-node', baseRectConfig)
 
 export class NodeGroup extends Node {
-  private collapsed: boolean = true
+  constructor() {
+    super();
+    this.collapsed = true
+  }
 
-  protected postprocess() {
+  postprocess() {
     this.toggleCollapse(true)
   }
 
@@ -175,7 +178,7 @@ export class NodeGroup extends Node {
     return this.collapsed
   }
 
-  toggleCollapse(collapsed?: boolean) {
+  toggleCollapse(collapsed) {
     const target = collapsed == null ? !this.collapsed : collapsed
     if (target) {
       this.attr('buttonSign', { d: 'M 1 5 9 5 M 5 1 5 9' })

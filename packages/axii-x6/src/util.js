@@ -61,3 +61,7 @@ export function shallowEqual(objA, objB) {
 
   return true;
 }
+
+export function indexBy(arr, key) {
+  return arr.reduce((last, v, index) => ({ ...last, [key === undefined ? index : v[key]]: v }), {})
+}
