@@ -42,6 +42,7 @@ export default {
     rollupOptions: {
       input: {
         index: makePath('index.html'),
+        "index.zh-cn": makePath('index.zh-cn.html'),
       }
     }
   }
