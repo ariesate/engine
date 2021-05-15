@@ -8,7 +8,7 @@ import './playground/index.less'
 const { component } = queryString.parse(location.search)
 
 function Empty({ name }) {
-  return <div block block-height="100%" flex-display flex-align-items-center flex-justify-content-center>还没有 {name}，努点力吧。</div>
+  return <div block block-height="100%" flex-display flex-align-items-center flex-justify-content-center>{name} not implemented yet, you can help us.</div>
 }
 
 const renderEmptyContent = (name) => {
