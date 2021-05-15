@@ -4,11 +4,10 @@
   "description": "",
   "main": "index.jsx",
   "devDependencies": {
-    "vite": "^2.1.5"
+    "vite": "^2.2.1"
   },
   "scripts": {
-    "start": "vite",
-    "local": "vite --config ./vite.local.config.js"
+    "start": "vite"
   },
   "author": "sskyy",
   "license": "MIT",
