@@ -4,7 +4,7 @@
 set -e
 
 # build
-npm run build
+npm run build:site
 
 # navigate into the build output directory
 cd site
