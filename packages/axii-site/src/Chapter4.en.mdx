@@ -1,0 +1,43 @@
+import LayoutStyle from "./example/LayoutStyle.jsx";
+import LayoutStyleStr from "./example/LayoutStyle.jsx?raw";
+import LayoutStyleComponent from "./example/LayoutStyleComponent.jsx";
+import LayoutStyleComponentStr from "./example/LayoutStyleComponent.jsx?raw";
+import Code from './components/Code.jsx'
+import Tips from './components/Tips.jsx'
+
+# Layout Style
+
+Layout Style refers to **position** or **size** related style, such as `display`/`width`/`height`.
+
+Axii introduces a special attribute type called **Layout Attribute** to help user deal with layout style.
+Here are the guidelines of how to use Layout Attribute:
+
+1. Use semantic tag name instead of `div` or `span`.
+2. Use layout attribute `text`/`inline`/`block` to declare layout type. Axii will apply `display: inline` to `text` type and `display: inline-block` to `inline` type.
+3. Use `flex-display` or extend display by yourself to handle complex layout(Docs upcoming).
+4. Use box related attribute like `width`/`heigth` with layout type as prefix.
+
+<Tips
+  content={<div>
+    <div>You can use '-' to concat key and value. The following usage are equal:</div>
+    <div>flex-justify-content="space-between"</div>
+    <div>flex-justify-content-space-between</div>
+  </div>}
+/>
+
+<Tips
+  layout:block
+  layout:block-margin-top-10px
+  content={<div>
+    <div>Use boolean value(can be reactive data) to control attribute dynamically:</div>
+    <div>flex-justify-content-space-between={true}</div>
+  </div>}
+/>
+
+<Code instance={<LayoutStyle/>} code={LayoutStyleStr}/>
+
+## Pass Layout Attribute To Component
+
+Layout attribute can be passed to Component to control component box style. Simply add `layout:` namespace to attribute.
+
+<Code instance={<LayoutStyleComponent/>} code={LayoutStyleComponentStr}/>

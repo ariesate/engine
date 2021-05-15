@@ -2,15 +2,15 @@
 import {createElement, render, createComponent, version} from 'axii'
 import Github from 'axii-icons/Github.js'
 import './index.css'
-import Chapter0 from './src/Chapter0.en.mdx'
-import Chapter1 from './src/Chapter1.en.mdx'
-import Chapter2 from './src/Chapter2.en.mdx'
-import Chapter3 from './src/Chapter3.en.mdx'
-import Chapter4 from './src/Chapter4.en.mdx'
-import Chapter5 from './src/Chapter5.en.mdx'
-import Chapter6 from './src/Chapter6.en.mdx'
-import Chapter7 from './src/Chapter7.en.mdx'
-import QuickStart from './src/QuickStart.en.mdx'
+import Chapter0 from './src/Chapter0.mdx'
+import Chapter1 from './src/Chapter1.mdx'
+import Chapter2 from './src/Chapter2.mdx'
+import Chapter3 from './src/Chapter3.mdx'
+import Chapter4 from './src/Chapter4.mdx'
+import Chapter5 from './src/Chapter5.mdx'
+import Chapter6 from './src/Chapter6.mdx'
+import Chapter7 from './src/Chapter7.mdx'
+import QuickStart from './src/QuickStart.mdx'
 
 const chapters = [
   {id: 'chapter0', Chapter: Chapter0},
@@ -28,26 +28,26 @@ function Site() {
   return <container block block-height="100%" block-width="100%" block-overflow-y-scroll>
     <outline block block-position-fixed block-top-20px block-left-20px block-padding-20px>
       <part block>
-        <name block use="a" href="#chapter1">Basic Usage</name>
+        <name block use="a" href="#chapter1">Axii 基本用法</name>
         <children block block-margin-left-20px>
-          <name block use="a" href="#chapter1">Reactive Data</name>
-          <name block use="a" href="#chapter2">Dynamic Structure</name>
+          <name block use="a" href="#chapter1">使用 Reactive Data</name>
+          <name block use="a" href="#chapter2">组件中的动态结构</name>
         </children>
       </part>
       <part block>
-        <name block use="a" href="#chapter3">Create Better Component</name>
+        <name block use="a" href="#chapter3">创建更好的组件和组件库</name>
         <children block block-margin-left-20px>
-          <name block use="a" href="#chapter4">Layout Style</name>
-          <name block use="a" href="#chapter5">Non-Layout Style</name>
-          <name block use="a" href="#chapter6">State & Callback</name>
-          <name block use="a" href="#chapter7">Extending & Overwriting Component</name>
+          <name block use="a" href="#chapter4">布局样式</name>
+          <name block use="a" href="#chapter5">非布局样式</name>
+          <name block use="a" href="#chapter6">组件的数据与回调</name>
+          <name block use="a" href="#chapter7">扩展和覆写组件</name>
         </children>
       </part>
       <part block>
-        <name block use="a" href="#quick-start">Quick Start</name>
+        <name block use="a" href="#quick-start">快速开始</name>
         <children block block-margin-left-20px>
-          <name block use="a" href="#quick-start">Create Application</name>
-          <name block use="a" href="#quick-start">Component & Icon Library</name>
+          <name block use="a" href="#quick-start">创建应用</name>
+          <name block use="a" href="#quick-start">官方组件/图标库</name>
         </children>
       </part>
     </outline>
@@ -57,8 +57,9 @@ function Site() {
         <info block flex-display flex-justify-content-center flex-align-items-center>
           <frameworkVersion>{version}</frameworkVersion>
           <frameworkGithub use="a" href="https://github.com/ariesate/engine/tree/master/packages/controller-axii" inline inline-line-height-1 inline-margin-left-10px><Github /></frameworkGithub>
-          <frameworkTrans inline inline-margin-left-10px use="a" href="/index.zh-cn.html">中文</frameworkTrans>
+          <frameworkTrans inline inline-margin-left-10px use="a" href="/index.html">English</frameworkTrans>
         </info>
+
       </framework>
     </landing>
     <chapters block block-max-width-800px block-margin-left-auto block-margin-right-auto>

@@ -13,7 +13,7 @@ import Code from './components/Code.jsx'
  - 受控模式/委托修改模式/非受控模式
  - 动态阻止事件
 
-用户可以给组件传入函数 property，如果函数作为 event callback 挂在到事件上，那么调用时 Axii 会如果 event 作为参数。
+用户可以给组件传入函数 property，如果函数作为 event callback 挂载到事件上，那么调用时 Axii 会传入 event 作为参数。
 如果该函数 property 在 propType 中声明为 propTypes.callback。那么 Axii 会其增强一下功能：
  
  - 自动为 event callback 补充 3 个参数。

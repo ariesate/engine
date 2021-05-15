@@ -1,0 +1,22 @@
+import FeatureBasedInput from "./example/FeatureBasedInput.jsx";
+import FeatureBasedInputStr from "./example/FeatureBasedInput.jsx?raw";
+import ExtendInput from "./example/ExtendInput.jsx";
+import ExtendInputStr from "./example/ExtendInput.jsx?raw";
+import Code from './components/Code.jsx'
+import Tips from './components/Tips.jsx'
+
+# Extending & Overwriting Component
+
+Axii feature mechanism help you split component code by features, not structure.
+A feature can:
+ - Define its own state、event and style。
+ - Mutate component structure.
+ - Attach event callback to any element.
+
+<Code instance={<FeatureBasedInput />} code={FeatureBasedInputStr}/>
+
+User can use `Component.extend` to extend component by self, no extra support of developer needed.
+
+<Code instance={<ExtendInput />} code={ExtendInputStr}/>
+
+<Tips content={<div><span>For real-world example of feature mechanism, you can checkout </span><a href="https://github.com/ariesate/engine/blob/master/packages/axii-components/src/table">Table component</a>.</div>}/>

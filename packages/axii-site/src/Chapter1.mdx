@@ -4,7 +4,7 @@ import Code from './components/Code.jsx'
 import Tips from './components/Tips.jsx'
 
 # 使用 Reactive Data
- - 使用 `atom` 来创建 `string/number/boolean` 等非对象数据。对于不需要深度监听的对象数据，也可以使用 atom。
+ - 使用 `atom` 来创建 `string`/`number`/`boolean` 等非对象数据。对于不需要深度监听的对象数据，也可以使用 atom。
  - atom 创建的数据要使用 `.value` 来取值和修改。绑定到 form 组件上时不需要使用 `.value`。
  - 使用 `computed` 创建计算数据。计算数据会自动监听内部依赖的数据，并进行更新。
 

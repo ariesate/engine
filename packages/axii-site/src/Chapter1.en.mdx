@@ -1,0 +1,13 @@
+import Basic from './example/Basic.jsx'
+import basicCode from './example/Basic.jsx?raw'
+import Code from './components/Code.jsx'
+import Tips from './components/Tips.jsx'
+
+# Using Reactive Data
+ - Use `atom` to make non-object data like `string`/`number`/`boolean` reactive. Object which do not need deep watch can use it too.
+ - use `.value` to get and set value of data created by using `atom`. Don't use `.value` to bind data to element property.
+ - Use `computed` to create computed value.
+
+<Code instance={<Basic />} code={basicCode}/>
+
+<Tips content="Axii only update element which use a reactive data as children or property, which means component only render once if the references of component props is not changed." />

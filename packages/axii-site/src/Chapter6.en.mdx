@@ -1,0 +1,54 @@
+import Input from "./example/Input.jsx";
+import InputStr from "./example/Input.jsx?raw";
+import ControlledComponent from "./example/ControlledComponent.jsx";
+import ControlledComponentStr from "./example/ControlledComponent.jsx?raw";
+import UncontrolledComponent from "./example/UncontrolledComponent.jsx";
+import UncontrolledComponentStr from "./example/UncontrolledComponent.jsx?raw";
+import DelegateComponent from "./example/DelegateComponent.jsx";
+import DelegateComponentStr from "./example/DelegateComponent.jsx?raw";
+import Code from './components/Code.jsx'
+
+# Component Controlling
+
+Component created by using `createComponent` is enhanced with:
+
+ - Auto state manage modes support:
+  - controlled mode
+  - uncontrolled mode
+  - delegated mode
+ - Component default mutation prevention support
+
+Component event callback declared in proptypes is more powerful than simple function property. It allows you:
+
+ - Receiving 3 extra arguments:
+   - draftProps: the data you can mutate.
+   - props: the origin props object, do not mutate it.
+   - event: the event object.
+ - Preventing default event callback mutation by `return false`.
+ - Completely overwriting component callback by mark callback with `overwrite`.
+
+Component state managing have three modes differed by passing different type of data, See details below:
+
+## Base Example Component
+
+<Code instance={<Input />} code={InputStr} />
+
+## Controlled Mode
+
+Passing in non-reactive data makes component fully controlled by upper scope. Component default event callback will not mutate state.
+
+<Code instance={<ControlledComponent />} code={ControlledComponentStr} />
+
+## Uncontrolled Mode
+
+If no data passed in, component will create and mutate state according to proptypes.
+
+<Code instance={<UncontrolledComponent />} code={UncontrolledComponentStr} />
+
+## Delegated Mode
+
+If pass in reactive data, component will mutate it with event callback defined in proptypes.
+
+<Code instance={<DelegateComponent />} code={DelegateComponentStr} />
+
+
