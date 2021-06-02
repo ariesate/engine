@@ -29,7 +29,7 @@
     "editorjs-table": "^1.4.10",
     "fast-json-patch": "^3.0.0-1",
     "less": "^3.13.1",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "vite": "^2.1.5"
   },
   "sideEffects": false,

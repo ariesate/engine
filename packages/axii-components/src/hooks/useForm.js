@@ -487,4 +487,8 @@ function createUseForm(...plugins) {
   }
 }
 
-export default createUseForm(resetPlugin, dirtyCheckPlugin, validationPlugin, submitPlugin)
+const useForm = createUseForm(resetPlugin, dirtyCheckPlugin, validationPlugin, submitPlugin)
+useForm.simpleScheme = simpleScheme
+useForm.createUseForm = createUseForm
+
+export default useForm
