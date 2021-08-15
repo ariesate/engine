@@ -45,6 +45,7 @@ const availablePlayground = {
     'tabs', // x
     'calendar', // x
     'tree',  // 5
+    'mindTree',  // 5
     'optionTree',
     // 以上是常用必须的
     'collapse*',

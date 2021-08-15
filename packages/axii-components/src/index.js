@@ -5,6 +5,7 @@ export { default as Checkbox } from "./checkbox/Checkbox.jsx";
 export { default as DatePicker } from "./datePicker/DatePicker.jsx";
 export { default as Input } from "./input/Input.jsx";
 export { default as Menu } from "./menu/Menu.jsx";
+export { default as MindTree } from "./mindTree/MindTree.jsx";
 export { default as OptionTree } from "./optionTree/OptionTree.jsx";
 export { default as Pagination } from "./pagination/Pagination.jsx";
 export { default as Radios } from "./radios/Radios.jsx";
