@@ -467,3 +467,34 @@ export function nextTask(callback) {
 export function nextJob(callback) {
   Promise.resolve(this).then(callback)
 }
+
+export function createBufferedRef() {
+  const commands = []
+  return new Proxy({}, {
+    get(target, attr) {
+      if (attr === 'current') {
+        if (target._current) return target._current
+        // 如果还没有就调用了，那么缓存一下
+        return new Proxy({}, {
+          get(target, method) {
+            return (...argv) => {
+              commands.push({method, argv})
+            }
+          }
+        })
+      } else {
+        return target[attr]
+      }
+    },
+    set(target, attr, value) {
+      if (attr === 'current') {
+        target._current = value
+        const toExecute = commands.splice(0)
+        if (target._current) {
+          toExecute.forEach(c => target._current[c.method](...c.argv))
+        }
+      }
+      return true
+    }
+  })
+}
