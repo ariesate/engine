@@ -17,7 +17,7 @@ const optionDefinitions = [
 
 const options = commandLineArgs(optionDefinitions, { partial: true })
 
-const versionType = options.major ? 'majon' : (options.minor ? 'minor' : 'patch')
+const versionType = options.major ? 'major' : (options.minor ? 'minor' : 'patch')
 
 await exec(`npm version ${versionType}`)
 await exec(`npm run build`)
