@@ -7,5 +7,3 @@ const root = document.getElementById('root')
 
 render(<Editor data={localRawData} />, root)
 
-
-
