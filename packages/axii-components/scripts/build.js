@@ -1,5 +1,5 @@
 import { build } from 'vite'
-import { rmdir } from 'fs/promises'
+import { rm } from 'fs/promises'
 import commonConfig from '../vite.common.config.js'
 
 const input = {
@@ -10,7 +10,7 @@ const input = {
   toastGrid: './src/toastGrid/ToastGrid.jsx',
 }
 
-await rmdir(commonConfig.build.outDir, {recursive: true})
+await rm(commonConfig.build.outDir, {recursive: true, force: true})
 
 for( let entryName in input) {
   console.log('building:', entryName)
