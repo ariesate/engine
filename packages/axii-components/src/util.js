@@ -15,7 +15,7 @@ export function composeRef(...refReceivers) {
     refReceivers.forEach(receiver => {
       if (typeof receiver === 'object') {
         receiver.current = ref
-      } else {
+      } else if (typeof receiver === 'function'){
         receiver(ref)
       }
     })

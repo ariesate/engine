@@ -7,11 +7,7 @@ import {
   propTypes,
   atom,
 } from 'axii'
-import useLayer from "../hooks/useLayer";
-import {nextTick} from "../util";
-import Input from "../input/Input";
 import scen from "../pattern";
-import layerStyle from '../style/layer'
 
 export function Radios({value, options, onChange, renderOption, match }, fragments) {
 

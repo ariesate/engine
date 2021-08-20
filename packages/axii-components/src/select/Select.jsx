@@ -7,10 +7,11 @@ import {
   propTypes,
   atom,
   atomComputed,
-  reactive
+  reactive,
+  delegateLeaf, overwrite
 } from 'axii'
 import useLayer from "../hooks/useLayer";
-import {nextTick} from "../util";
+import {composeRef, nextTick} from "../util";
 import Input from "../input/Input";
 import scen from "../pattern";
 
@@ -116,7 +117,92 @@ Select.Style = (fragments) => {
   })
 }
 
-// TODO Select 的搜索 feature & 动态 option feature
+/**
+ * TODO 搜索模式。支持回车选中。
+ * 理论上回车的时候如果没有，或者blur 的时候没有，应该是什么样子？
+ *
+ */
+export function SearchableFeature(fragments) {
+  // TODO
+}
+
+SearchableFeature.propTypes = {
+  searchable :propTypes.object.default(() => atom(false)),
+  allOptions: propTypes.object.default(() => reactive([])),
+}
+
+/**
+ * 推荐模式
+ * 注意推荐模式和搜索模式心智完全不同。搜索模式中 value 不能超出 option 的范围，而推荐则是 value 以 input 为准。
+ */
+export function RecommendMode(fragments) {
+  // 1. 修改 input 的 value，使得可以输入，每次输入的时候更新 options
+  fragments.root.modify((result, { onFocus, onBlur, focused, inputToValue, onChange, options, onRenderOptionChange, onPressEnter }) => {
+
+    const inputNode = result.children[0]
+
+    const inputRef = useRef()
+    // 增加 ref， 后面 blur 的时候要用。
+    inputNode.ref = composeRef(inputNode.ref, inputRef)
+
+    const onInputChange = ({ value: inputValue }) => {
+      const nextValue = inputToValue(inputValue.value)
+      onChange(nextValue)
+      onRenderOptionChange(nextValue)
+    }
+
+    const onKeyDown = (e) => {
+      if (e.code === 'Enter') {
+        onPressEnter()
+        inputRef.current.blur()
+      }
+    }
+
+    Object.assign(inputNode.attributes, {
+      onFocus: () => onFocus(),
+      onChange: onInputChange,
+      // TODO 这里有个问题，如果 input 自己控制 Blur, 那么浮层上面的 onClick 就没法触发，因为 onBlur 发生在前面。浮层已经收起来了。
+      // 如果 input 不控制 blur，那么丢失焦点就没用了。先用 nextTick 强行解决一下
+      onKeyDown,
+      onBlur: overwrite(() => {
+        // TODO 这里还一定得是数值足够大 timeout 才行，得等 onClick 触发了，才能 blur。
+        setTimeout(() => {
+          if (focused.value) onBlur()
+        }, 50)
+      }),
+    })
+
+  })
+}
+
+RecommendMode.propTypes = {
+  allOptions: propTypes.object.default(() => reactive([])),
+  recommendMode : propTypes.bool.default(() => atom(false)),
+  delegateValue : propTypes.function.default(() => (value) => delegateLeaf(value).name),
+  inputToValue: propTypes.function.default(() => (v) => ({ name: v })),
+  filter: propTypes.function.default(() => (value, allOptions) => {
+    return allOptions.filter(o => {
+      const exp = new RegExp(`${value.name}`)
+      return exp.test(o.name)
+    })
+  }),
+  onRenderOptionChange: propTypes.callback.default(() =>(value, { options, filter, allOptions }) => {
+    options.splice(0, options.length, ...filter(value, allOptions))
+  }),
+  matchInputValue: propTypes.function.default(() => (value, option) => {
+    return value.value.name === option.name
+  }),
+  // TODO 理论上需要更容易的机制来透传对 Input 的控制。这里先快速实现一下。
+  onPressEnter: propTypes.callback.default(() =>({value, options, onBlur, onChange, matchInputValue}) => {
+    // 如果能匹配，就选中匹配的。
+    const matchedOption = options.find(option => matchInputValue(value, option))
+    if (matchedOption) onChange(matchedOption)
+
+    onBlur()
+  }),
+}
+
+
 // TODO Select 的多选 feature
 
-export default createComponent(Select)
+export default createComponent(Select, [SearchableFeature, RecommendMode])
