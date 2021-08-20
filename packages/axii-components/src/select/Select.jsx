@@ -8,14 +8,15 @@ import {
   atom,
   atomComputed,
   reactive,
-  delegateLeaf, overwrite
+  delegateLeaf,
+  overwrite,
 } from 'axii'
 import useLayer from "../hooks/useLayer";
 import {composeRef, nextTick} from "../util";
 import Input from "../input/Input";
 import scen from "../pattern";
 
-export function Select({value, options, onChange, renderOption, renderValue, onFocus, onBlur, focused}, fragments) {
+export function Select({value, options, onChange, renderOption, renderValue, onFocus, onBlur, focused, ref}, fragments) {
   const optionListRef = useRef()
 
   const onInputFocus = () => {
@@ -67,7 +68,7 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
         layout:inline
         layout:inline-max-width="100%"
         use={Input}
-        ref={source}
+        ref={composeRef(ref,  source)}
         onFocus={onInputFocus}
         focused={focused}
         onBlur={() => false}
@@ -117,6 +118,9 @@ Select.Style = (fragments) => {
   })
 }
 
+Select.forwardRef = true
+
+
 /**
  * TODO 搜索模式。支持回车选中。
  * 理论上回车的时候如果没有，或者blur 的时候没有，应该是什么样子？
@@ -140,7 +144,6 @@ export function RecommendMode(fragments) {
   fragments.root.modify((result, { onFocus, onBlur, focused, inputToValue, onChange, options, onRenderOptionChange, onPressEnter }) => {
 
     const inputNode = result.children[0]
-
     const inputRef = useRef()
     // 增加 ref， 后面 blur 的时候要用。
     inputNode.ref = composeRef(inputNode.ref, inputRef)

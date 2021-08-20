@@ -115,6 +115,7 @@ const renderItem = (item, parents) => {
     activeItemKeyPath.value = parents.concat(item).map(i => i.key)
     editing.value = true
     editingInputRef.current.focus()
+    editingInputRef.current.select()
   }
 
   const inputValue = atom(tryToRaw(item))
@@ -131,7 +132,7 @@ const renderItem = (item, parents) => {
 
   // TODO 我的数据结构是 reactive，但是接受的是 at1om，应该怎么处理？？？本质上是什么。基础部分基本上都是 atom，要不要自动适配？？？理论上应该自动适配。
   return <detail inline inline-max-width-300px onDblClick={setEditing}>
-    {() => (isCurrent.value && editing.value) ? <Select value={inputValue} allOptions={options} match={matchById} recommendMode onPressEnter={onPressEnter}/> : item.name}
+    {() => (isCurrent.value && editing.value) ? <Select ref={editingInputRef} value={inputValue} allOptions={options} match={matchById} recommendMode onPressEnter={onPressEnter}/> : item.name}
   </detail>
 }
 
