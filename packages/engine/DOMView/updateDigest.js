@@ -44,6 +44,7 @@ function handleRemainPatchNode(p, nextPatch, parentNode, prevSiblingNode, cnode,
 }
 
 function handleRemovePatchNode(p, toDestroy, view) {
+  // TODO 因为我们想要支持 digest 的合并，所以可能会出现还没挂载，就要写在的情况，这时候可能还没有 placeholder 等信息。
   if (view.isComponentVnode(p)) {
     // 如果是组件删除 利用 placeHolder 一次性删干净了
     // remove placeholder

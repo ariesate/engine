@@ -1,5 +1,6 @@
-const { default: createPainter }= require('../createPainter')
+/** @jsx createElement */
 const createElement = require('../createElement').default
+const { default: createPainter }= require('../createPainter')
 const createDOMView = require('../DOMView/createDOMView').default
 
 const {
@@ -31,6 +32,31 @@ describe('array', () => {
     painter = createPainter(renderer)
     rootElement = document.createElement('div')
     view = createDOMView({ invoke: () => {} }, rootElement)
+  })
+
+  test('replace item', () => {
+    let count = 0
+    const App = {
+      render() {
+        const array = count === 0 ?
+          [<span key={1}>1</span>, <span key={3}>3</span>] :
+          [<span key={2}>2</span>, <span key={3}>3</span>]
+        ++count
+        return <div>{array}</div>
+      }
+    }
+
+    const ctree = painter.createCnode(<App/>)
+    painter.paint(ctree)
+    view.initialDigest(ctree)
+
+    const refs = ctree.view.getRootElements()
+    expect(refs[0].outerHTML).toBe('<div><span>1</span><span>3</span></div>')
+
+    painter.repaint(ctree)
+    view.updateDigest(ctree)
+
+    expect(refs[0].outerHTML).toBe('<div><span>2</span><span>3</span></div>')
   })
 
   test('consecutive arrays', () => {

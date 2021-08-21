@@ -363,13 +363,8 @@ function createPatch(lastVnodes, nextVnodes, cnode, nextTransferKeyedVnodes, uti
 
     // Only insert/to_move/remain left now.
     // 2) If last vnode not exist anymore, we need to remove it.
-    // If the lastVnode was marked as `insert`,
-    // that means the real dom has not been inserted,
-    // so we just skip it.
     if (!vnodeKeys.includes(lastVnode.key)) {
-      if (action.type !== PATCH_ACTION_INSERT) {
-        handleRemovePatchNode(lastVnode, patch)
-      }
+      handleRemovePatchNode(lastVnode, patch)
       lastVnodesIndex += 1
       continue
     }

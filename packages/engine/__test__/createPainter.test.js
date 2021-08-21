@@ -1,5 +1,6 @@
-const { default: createPainter } = require('../createPainter')
+/** @jsx createElement */
 const createElement = require('../createElement').default
+const { default: createPainter } = require('../createPainter')
 const {
   PATCH_ACTION_INSERT,
   PATCH_ACTION_MOVE_FROM,
@@ -185,6 +186,7 @@ describe('repaint key diff', () => {
 
     const secondKeySpan = <span>2</span>
     secondKeySpan.action = { type: PATCH_ACTION_INSERT }
+    expect(diffResult.patch[0].children[0].children.length).toBe(2)
     expect(diffResult.patch[0].children[0].children[1]).toMatchObject(secondKeySpan)
   })
 
@@ -222,11 +224,11 @@ describe('repaint key diff', () => {
 
     const thirdKeySpan = <span>3</span>
     thirdKeySpan.action = { type: PATCH_ACTION_REMAIN}
-    debugger
+    expect(diffResult.patch[0].children[0].children.length).toBe(3)
     expect(diffResult.patch[0].children[0].children[2]).toMatchObject(thirdKeySpan)
   })
 
-  test('insert key in head', () => {
+  test('insert key at head', () => {
     let count = 0
     const App = {
       render() {
@@ -256,8 +258,40 @@ describe('repaint key diff', () => {
 
     const secondKeySpan = <span>2</span>
     secondKeySpan.action = { type: PATCH_ACTION_REMAIN}
+    expect(diffResult.patch[0].children[0].children.length).toBe(2)
     expect(diffResult.patch[0].children[0].children[1]).toMatchObject(secondKeySpan)
+  })
 
+  test('replace one at head', () => {
+    let count = 0
+    const App = {
+      render() {
+        const arr = count === 0 ?
+          [<span key={1}>1</span>] :
+          [<span key={2}>2</span>]
+
+        ++count
+        return <div>{arr}</div>
+      }
+    }
+
+    const ctree = painter.createCnode(<App/>)
+    painter.paint(ctree)
+    const diffResult = painter.repaint(ctree)
+
+    // 第一层
+    const firstLayerPatch = <div></div>
+    delete firstLayerPatch.children
+    firstLayerPatch.action = { type: PATCH_ACTION_REMAIN }
+    expect(diffResult.patch[0]).toMatchObject(firstLayerPatch)
+
+    // 第二层
+    const firstKeySpan = <span>2</span>
+    firstKeySpan.action = { type: PATCH_ACTION_INSERT}
+    expect(diffResult.patch[0].children[0].children.length).toBe(2)
+    expect(diffResult.patch[0].children[0].children[0].action.type).toBe('patch.remove')
+    expect(diffResult.patch[0].children[0].children[1].action.type).toBe('patch.insert')
+    expect(diffResult.patch[0].children[0].children[1]).toMatchObject(firstKeySpan)
   })
 
   // test('diff with null vnode', () => {
