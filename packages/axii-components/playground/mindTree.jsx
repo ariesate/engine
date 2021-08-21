@@ -26,28 +26,28 @@ const data = reactive([
     name: 'name1',
     id: 'name1',
     children: [
-      {
-        name: 'sub1',
-        id: 'sub1',
-        children : [{
-          name: 'sub1 of sub1',
-          id: '11',
-        }, {
-          name: 'sub2 of sub1',
-          id: '12',
-        }]
-      }
+      // {
+      //   name: 'sub1',
+      //   id: 'sub1',
+      //   children : [{
+      //     name: 'sub1 of sub1',
+      //     id: '11',
+      //   }, {
+      //     name: 'sub2 of sub1',
+      //     id: '12',
+      //   }]
+      // }
     ]
-  }, {
-    name: 'name2',
-    id: 'name2',
-    children: [{
-      name: 'sub1 of name2',
-      id: 'sub1 of name2'
-    }]
-  }, {
-    name: 'name3',
-    id: 'name3',
+  // }, {
+  //   name: 'name2',
+  //   id: 'name2',
+  //   children: [{
+  //     name: 'sub1 of name2',
+  //     id: 'sub1 of name2'
+  //   }]
+  // }, {
+  //   name: 'name3',
+  //   id: 'name3',
   }
 ])
 
@@ -74,6 +74,7 @@ const onKeyDown = (e) => {
     // press tab
     const newNode = {
       name: 'new',
+      isNew: true,
       id: Date.now()
     }
     if (item.children) {
@@ -84,18 +85,17 @@ const onKeyDown = (e) => {
     activeItemIdPath.value = activeItemIdPath.value.concat(newNode.id)
     editing.value = true
     editingInputRef.current.focus()
+    editingInputRef.current.select()
   } else if (e.code === 'Enter'){
     // 编辑
     e.preventDefault()
     e.stopPropagation()
-    if (editing.value) {
-      editing.value = false
-      containerRef.current.focus()
-    } else {
+    if (!editing.value) {
       // 不记录在这上面，改成 path 记录唯一的也可以，区别是什么？？利用 path 也可以。
       const parent = getByIdPath(data, activeItemIdPath.value.slice(0, activeItemIdPath.value.length -1))
       const newNode = {
         name: 'new',
+        isNew: true,
         id: Date.now()
       }
       parent.children.push(newNode)
@@ -121,10 +121,21 @@ const renderItem = (item, parents) => {
   const inputValue = atom(tryToRaw(item))
 
 
-  const onPressEnter = () => {
+  const onPressEnter = (_, __, e) => {
+    e.preventDefault()
+    e.stopPropagation()
     const parent = parents[parents.length -1]
     const index = parent.children.findIndex(i => i.id === item.id)
-    parent.children[index] = inputValue.value
+    if (inputValue.value.id) {
+      console.log("replacing", parent.children, index )
+      // parent.children[index] = inputValue.value
+      parent.children.splice(index, 1, inputValue.value)
+    } else {
+      parent.children[index].name = inputValue.value.name
+    }
+
+    editing.value = false
+    containerRef.current.focus()
   }
 
   // TODO 我的数据结构是 reactive，但是接受的是 at1om，应该怎么处理？？？本质上是什么。基础部分基本上都是 atom，要不要自动适配？？？理论上应该自动适配。

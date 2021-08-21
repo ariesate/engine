@@ -35,14 +35,13 @@ function renderItem(item, level, actions, render, fragments, parents = []) {
       block-border-width-1px
       flex-display
       flex-align-items-stretch
-      key={item.id}
     >
       <item
         block
         flex-display
         flex-align-items-center
       >
-        <name block flex-grow-1 onClick={() => onSetActive(item, parents)}>{render(item, parents)}</name>
+        <name block flex-grow-1 onClick={() => onSetActive(item, parents)}>{() => render(item, parents)}</name>
       </item>
 
         {function menuChildren() {
@@ -65,6 +64,7 @@ function renderItem(item, level, actions, render, fragments, parents = []) {
                     isFirst: childIndex === 0,
                     isLast: childIndex === item.children.length -1,
                   }
+                  console.log("renderchildren", child.id)
                   return (
                     <itemChildContainer
                       inline
