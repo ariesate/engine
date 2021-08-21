@@ -2,8 +2,8 @@
  * 返回一个可以把 leaf 变成类似于 ref 的 proxy。
  * 把 get/set/delete 都 delegate 到 parent 上。
  */
-import { isReactiveLike, toRaw } from './index';
-import {mapValues} from "../util";
+import { isReactiveLike, toRaw, replace } from './index';
+import {mapValues, tryToRaw} from "../util";
 
 const proxyCache = new WeakMap()
 const fieldCache = new WeakMap()
@@ -56,4 +56,26 @@ export default function delegateLeaf(parent) {
 
 export function delegateLeaves(obj) {
   return mapValues(obj, (value, key) => delegateLeaf(obj)[key])
+}
+
+export function asAtom(item, parent, key) {
+  return Object.defineProperty({
+    _isAtom: true,
+  }, 'value', {
+    get() {
+      return tryToRaw(item)
+    },
+    set(value) {
+      if (typeof value !== 'object') return false
+      console.log(value)
+      if (parent && key) {
+        parent[key] = value
+      } else {
+        console.log("replace", item, value)
+        replace(item, value)
+      }
+
+      return true
+    }
+  })
 }

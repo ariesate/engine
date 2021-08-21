@@ -38,7 +38,7 @@
  * Virtual Component：即 vnodeComputed 创造的节点，当自己内 computation 的依赖发生变化时，自己就要更新，这是主动更新。
  * 当父节点发生更新时，自己也要更新。父节点可能是 vnodeComputed 也可能是普通 Component。
  *
- * TODO 我们需要引擎提供的能力：
+ * 我们需要引擎提供的能力：
  * 1. 普通 Component 的更新，需要 diff 机制
  * 2. 任何节点的局部更新，
  * 2.1 即需要单点更新：适用于props 为 reactive 的节点。

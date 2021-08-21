@@ -50,7 +50,7 @@ import {collectSource, isReactive, isAtom, toRaw as internalToRaw} from './react
 
 import { invariant } from '../util';
 export { reactive, atom, isAtom, isReactive, atomLike } from './reactive'
-export { default as delegateLeaf, delegateLeaves } from './delegateLeaf'
+export { default as delegateLeaf, delegateLeaves, asAtom } from './delegateLeaf'
 export {
   atomComputed,
   createComputed,
