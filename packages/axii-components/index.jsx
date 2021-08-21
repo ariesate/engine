@@ -117,6 +117,10 @@ const MenuWithDisabledStyle = Menu.extend(function disabledStyle(fragments) {
 function Choose() {
   const current = atom(location.query.component)
 
+  const activeItemIdPath = atomComputed(() => {
+    return [current.value]
+  })
+
   const onChange = (next) => {
     current.value = next
     location.patchQuery({ component: next })
@@ -135,7 +139,7 @@ function Choose() {
           {() => Object.entries(availablePlayground).map(([category, items]) =>
             <div>
               <h2>{category}</h2>
-              <MenuWithDisabledStyle data={items.map(name => ({ title: name.replace('*', ''), disabled: /\*$/.test(name), key: name}))} activeKey={current} onSetActive={(item) => onChange(item.key)}/>
+              <MenuWithDisabledStyle data={items.map(name => ({ title: name.replace('*', ''), disabled: /\*$/.test(name), id: name}))} activeItemIdPath={activeItemIdPath} onSetActive={(item) => onChange(item.id)}/>
             </div>
           )}
         </div>

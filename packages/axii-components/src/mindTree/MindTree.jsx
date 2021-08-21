@@ -35,6 +35,7 @@ function renderItem(item, level, actions, render, fragments, parents = []) {
       block-border-width-1px
       flex-display
       flex-align-items-stretch
+      key={item.id}
     >
       <item
         block
@@ -69,6 +70,7 @@ function renderItem(item, level, actions, render, fragments, parents = []) {
                       inline
                       flex-display
                       flex-align-items-stretch
+                      key={child.id}
                     >
                       {fragments.itemPrefix(fragmentParams)(
                         <itemChildPrefix
@@ -107,7 +109,7 @@ function renderItem(item, level, actions, render, fragments, parents = []) {
   )
 }
 
-export function Menu({data, onFold, onOpen, onSetActive, render}, fragments) {
+export function MindTree({data, onFold, onOpen, onSetActive, render}, fragments) {
   return (<container block>
     {function rootMenuData() {
       return data.map(item => fragments.item({item, level: 0, parents: []})(renderItem(item, 0, {
@@ -119,25 +121,25 @@ export function Menu({data, onFold, onOpen, onSetActive, render}, fragments) {
   </container>)
 }
 
-Menu.propTypes = {
+MindTree.propTypes = {
   data: propTypes.object.default(() => reactive([])),
   onFold: propTypes.callback.default(() => (item) => item.collapsed = true),
   onOpen: propTypes.callback.default(() => (item) => item.collapsed = false),
-  onSetActive: propTypes.callback.default(() => (item, parents, {activeItemKeyPath}) => activeItemKeyPath.value = parents.concat(item).map(i => i.key)),
-  activeItemKeyPath: propTypes.string.default(() => atom([])),
+  onSetActive: propTypes.callback.default(() => (item, parents, {activeItemIdPath}) => activeItemIdPath.value = parents.concat(item).map(i => i.id)),
+  activeItemIdPath: propTypes.string.default(() => atom([])),
   render: propTypes.function.default(() => x => x.title)
 }
 
-Menu.Style = (fragments) => {
+MindTree.Style = (fragments) => {
   fragments.item.elements.expand.style({
     width: 20,
     userSelect: 'none',
     cursor: 'pointer'
   })
 
-  fragments.item.elements.name.style(({item, parents, activeItemKeyPath, level}) => {
+  fragments.item.elements.name.style(({item, parents, activeItemIdPath, level}) => {
     const currentPath = parents.concat(item)
-    const isActive = activeItemKeyPath.value.length && (currentPath.length === activeItemKeyPath.value.length) && activeItemKeyPath.value.every((p, i) => p === currentPath[i]?.key)
+    const isActive = activeItemIdPath.value.length && (currentPath.length === activeItemIdPath.value.length) && activeItemIdPath.value.every((p, i) => p === currentPath[i]?.id)
     return {
       padding: scen().spacing(),
       background: isActive ? scen().interactable().active().color(-5) : 'transparent',
@@ -179,5 +181,5 @@ Menu.Style = (fragments) => {
 }
 
 
-export default createComponent(Menu)
+export default createComponent(MindTree)
 

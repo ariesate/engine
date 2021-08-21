@@ -33,6 +33,7 @@ function renderItem(item, level, actions, fragments, parents = []) {
 			block
 			flex-display
 			flex-align-items-center
+			key={item.id}
 		>
 			<expand
 				inline
@@ -63,8 +64,8 @@ Menu.propTypes = {
 	data: propTypes.object.default(() => reactive([])),
 	onFold: propTypes.callback.default(() => (item) => item.expand = false),
 	onOpen: propTypes.callback.default(() => (item) => item.expand = true),
-	onSetActive: propTypes.callback.default(() => (item, parents, { activeItemKeyPath }) => activeItemKeyPath.value = parents.concat(item).map(i => i.key)),
-	activeItemKeyPath: propTypes.string.default(() => atom([]))
+	onSetActive: propTypes.callback.default(() => (item, parents, { activeItemIdPath }) => activeItemIdPath.value = parents.concat(item).map(i => i.id)),
+	activeItemIdPath: propTypes.string.default(() => atom([]))
 }
 
 Menu.Style = (fragments) => {
@@ -74,9 +75,9 @@ Menu.Style = (fragments) => {
 		cursor: 'pointer'
 	})
 
-	fragments.item.elements.item.style(({ item, parents, activeItemKeyPath, level }) => {
+	fragments.item.elements.item.style(({ item, parents, activeItemIdPath, level }) => {
 		const currentPath = parents.concat(item)
-		const isActive = activeItemKeyPath.value.length && (currentPath.length === activeItemKeyPath.value.length) && activeItemKeyPath.value.every((p, i) => p === currentPath[i]?.key)
+		const isActive = activeItemIdPath.value.length && (currentPath.length === activeItemIdPath.value.length) && activeItemIdPath.value.every((p, i) => p === currentPath[i]?.id)
 		return {
 			padding: scen().spacing(),
 			paddingLeft: scen().spacing(2) * level,
