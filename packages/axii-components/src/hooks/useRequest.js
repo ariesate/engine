@@ -1,5 +1,5 @@
 import axios  from 'axios'
-import { atom, debounceComputed, watch, traverse } from 'axii'
+import { atom, debounceComputed, watchOnce, destroyComputed, deferred } from 'axii'
 
 export function createUseRequest(instance) {
 	return function useRequest(inputConfig, options = {}) {
@@ -37,6 +37,7 @@ export function createUseRequest(instance) {
 		}
 
 		let runId = 0
+
 		async function run(...argv) {
 			const currentRunId = ++runId
 
@@ -50,12 +51,13 @@ export function createUseRequest(instance) {
 				if (manualRerun) {
 					response  = await doRequest(...argv)
 				} else {
-					let requestPromise
-					watch(() => {
-						requestPromise  = doRequest(...argv)
-					}, run)
-					// CAUTION 注意这里 await 要写到 watch 外面来。
-					response = await requestPromise
+					let promise
+					watchOnce(() => {
+						promise = doRequest(...argv)
+					}, () => {
+						deferred(() => run(...argv))
+					})
+					response = await promise
 				}
 			}catch(e) {
 				responseError = e
