@@ -55,6 +55,26 @@ describe('basic reactive', () => {
     expect(computedValue[1]).toBe(-1)
   })
 
+  test('array computed run times check', () => {
+    const data = atom()
+    let computedRunTimes = 0
+    const list = computed(() => {
+      computedRunTimes++
+      return data.value?.result || []
+    })
+
+    expect(computedRunTimes).toBe(1)
+
+    data.value = [{id: 1}]
+    expect(computedRunTimes).toBe(2)
+
+    data.value = [{id: 2}, {id: 3}]
+    expect(computedRunTimes).toBe(3)
+
+    data.value = [{id: 4}, {id: 5}, {id: 6}]
+    expect(computedRunTimes).toBe(4)
+  })
+
   test('object reactive & atomComputed', () => {
     const base = reactive({
       firstName: 'john',

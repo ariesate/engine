@@ -174,9 +174,9 @@ function applyComputation() {
   function watchAnyMutation(source) {
     track(toRaw(source), TrackOpTypes.ANY, ANY_KEY)
   }
-
+  startTracking()
   const nextValue = computation(tryToRaw(computation.computed), watchAnyMutation)
-
+  stopTracking()
   // 第一创建的时候，如果用户没有指定类型，那么就要让框架来根据类型自动创建
   if (computation.computed === undefined) {
     computation.computed = (Array.isArray(nextValue) || isPlainObject(nextValue)) ? reactive(nextValue, true) : atom(nextValue, true)
@@ -437,10 +437,16 @@ function isValidComputation(computation) {
  * 这时加入的 computation 就可能是和谋面的一样的，这时就能跳过了。
  */
 function scheduleToRun(computations, source) {
+  // 注意，因为对象形式的 computed 在更新的时候是使用的是 deepPatch，
+  const { computation: currentComputation } = computationStack[computationStack.length -1] || {}
   computations.forEach(c => {
+    if (currentComputation === c) {
+      console.warn(`recursive compute detected, something wrong with dep collector`)
+    }
+
     if (!isValidComputation(c)) {
       console.error(`invalid computation`, c)
-    } else if (!shouldSkipComputation(c) && !cachedComputations.includes(c)) {
+    } else if (currentComputation !== c && !shouldSkipComputation(c) && !cachedComputations.includes(c)) {
       insertIntoOrderedArray(cachedComputations, c, (a, b) => b.level < a.level)
     }
   })
@@ -492,14 +498,14 @@ export function debounceComputed(operation) {
  *
  *****************************************/
 
-let shouldTrack = true;
+let shouldTrack = false;
 
-export function pauseTracking() {
-  shouldTrack = false;
+export function startTracking() {
+  shouldTrack = true;
 }
 
-export function resumeTracking() {
-  shouldTrack = true;
+export function stopTracking() {
+  shouldTrack = false;
 }
 
 export function track(indep, type, key) {

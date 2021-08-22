@@ -460,13 +460,6 @@ export function createObjectIdContainer() {
   }
 }
 
-export function nextTask(callback) {
-  setTimeout(callback, 0)
-}
-
-export function nextJob(callback) {
-  Promise.resolve(this).then(callback)
-}
 
 export function createBufferedRef() {
   const commands = []
@@ -497,4 +490,22 @@ export function createBufferedRef() {
       return true
     }
   })
+}
+
+/**
+ * CAUTION TODO 理论上我们应该完整的对时序进行管理:
+ * 1. 提供 defer， 实现跳出当前栈的能力。主要是 watch 在用，因为 watch 是用 createComputed 实现的。
+ * 每次 deps 变化都会自动运行，我们的 watch callback 也是写在这个里面，所以 callback 里面的 deps 也会被监听。这就超出预期了，
+ * 触发再使用 stopTrack 强行阻止监听。用这种方式的话，如果 callback 里面还有要 track 的等，就又会需要用栈来实现 stopTrack，变得更复杂。
+ * 目前看来是用 defer 等简单，也能符合语义。
+ * TODO
+ * 2. nextTick 来跳出事件循环
+ * 3. nextPaint/nextDigest 来跳出当前的 session。
+ */
+export function deferred(fn) {
+  return Promise.resolve().then(() => fn())
+}
+
+export function nextTask(callback) {
+  setTimeout(callback, 0)
 }
