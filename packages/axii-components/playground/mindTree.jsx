@@ -127,7 +127,6 @@ const renderItem = (item, parents) => {
     const parent = parents[parents.length -1]
     const index = parent.children.findIndex(i => i.id === item.id)
     if (inputValue.value.id) {
-      console.log("replacing", parent.children, index )
       // parent.children[index] = inputValue.value
       parent.children.splice(index, 1, inputValue.value)
     } else {

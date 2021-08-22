@@ -190,4 +190,7 @@ Pagination.Style = (fragments) => {
 	fragments.pageItem.elements.pageItem.style(commonItem)
 }
 
-export default createComponent(Pagination)
+const PaginationWithFeature = createComponent(Pagination)
+PaginationWithFeature.useInfinitePageHelper = useInfinitePageHelper
+
+export default PaginationWithFeature
