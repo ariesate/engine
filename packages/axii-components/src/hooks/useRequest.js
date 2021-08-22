@@ -2,7 +2,19 @@ import axios  from 'axios'
 import { atom, debounceComputed, watch, traverse } from 'axii'
 
 export function createUseRequest(instance) {
-	return function useRequest(inputConfig, { manual, deps, processData = {}, createReactiveData = () => {}, processResponse = () => {}, processError = () => {} } = {}) {
+	return function useRequest(inputConfig, options = {}) {
+		const {
+			manual,
+			manualRerun,
+			processData = {},
+			data = atom(),
+			error = atom(),
+			status = atom(),
+			loading = atom(),
+			createReactiveData = () => {},
+			processResponse = () => {},
+			processError = () => {}
+		} = options
 
 		let doRequest
 		if (typeof inputConfig === 'function') {
@@ -14,10 +26,6 @@ export function createUseRequest(instance) {
 
 		const { create = () => atom(), receive = (data, responseData) => data.value = responseData } = processData
 
-		const data = create()
-		const error = atom()
-		const status = atom()
-		const loading = atom()
 		const useData = createReactiveData()
 
 		const values = {
@@ -39,7 +47,16 @@ export function createUseRequest(instance) {
 			let response
 			let responseError
 			try {
-				response  = await doRequest(...argv)
+				if (manualRerun) {
+					response  = await doRequest(...argv)
+				} else {
+					let requestPromise
+					watch(() => {
+						requestPromise  = doRequest(...argv)
+					}, run)
+					// CAUTION 注意这里 await 要写到 watch 外面来。
+					response = await requestPromise
+				}
 			}catch(e) {
 				responseError = e
 			}
@@ -83,9 +100,6 @@ export function createUseRequest(instance) {
 		}
 
 		if (!manual) run()
-		if (deps) {
-			watch(() => deps.forEach(dep => traverse(dep)), run)
-		}
 
 		return {
 			...values,

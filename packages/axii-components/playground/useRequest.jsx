@@ -1,21 +1,44 @@
 /** @jsx createElement */
-import { createElement, render, computed } from 'axii'
+import { createElement, render, computed, atom, atomComputed, debounceComputed } from 'axii'
+import axios from 'axios'
 import { createHashHistory } from 'history';
 import Table from '../src/table/Table'
+import Pagination from '../src/pagination/Pagination'
 import useRequest from "../src/hooks/useRequest";
 
 function App() {
-	const {data, loading} = useRequest({
-		url: 'https://api.apiopen.top/getWangYiNews',
+
+	const data = atom()
+	const limit = atom(10)
+
+	const currentLength = atomComputed(() => {
+		return data.value?.result.length || limit.value
+	})
+
+	const offset = atom(0)
+
+	const { currentPage, ...pageProps } = Pagination.useInfinitePageHelper(offset, limit, currentLength)
+
+	const {loading} = useRequest(() => {
+		return axios({
+			url: `https://api.apiopen.top/getWangYiNews?page=${currentPage.value}&count=${limit.value}`,
+		})
 	}, {
+		data,
 		processData: {
-			receive(data, responseData) {
-				data.value = responseData
+			receive(outData, responseData) {
+				outData.value = responseData
 			}
 		}
 	})
 
-	const { error, loading: errorLoading } = useRequest('http://error')
+	const onPageChange = (pageIndex) => {
+		debounceComputed(() => {
+			offset.value = (pageIndex - 1) * limit.value
+		})
+	}
+
+	// const { error, loading: errorLoading } = useRequest('http://error')
 
 	const columns = [{
 		title: '标题',
@@ -31,12 +54,13 @@ function App() {
 			<Table
 				columns={columns}
 				data={computed(() => {
-					console.log(data)
+					console.log(22222, data)
 					return (data.value? data.value.result : [])
 				})}
 			/>
-			<div>{ () => errorLoading.value ? 'error example loading' : 'error completed'} </div>
-			<div>{() => `error: ${JSON.stringify(error.value)}`}</div>
+			<Pagination currentPage={currentPage} {...pageProps} onChange={onPageChange}/>
+			{/*<div>{ () => errorLoading.value ? 'error example loading' : 'error completed'} </div>*/}
+			{/*<div>{() => `error: ${JSON.stringify(error.value)}`}</div>*/}
 		</div>
 	)
 }
