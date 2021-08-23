@@ -16,7 +16,7 @@ import {composeRef, nextTick} from "../util";
 import Input from "../input/Input";
 import scen from "../pattern";
 
-export function Select({value, options, onChange, renderOption, renderValue, onFocus, onBlur, focused, ref}, fragments) {
+export function Select({value, options, onChange, renderOption, onActiveOptionChange, activeOptionIndex, renderValue, onFocus, onBlur, focused, ref}, fragments) {
   const optionListRef = useRef()
 
   const onInputFocus = () => {
@@ -33,6 +33,24 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
     }
   }
 
+  const onKeyDown = (e) => {
+    if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.code)) return
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.code === 'ArrowDown') {
+      if (activeOptionIndex.value < options.length - 1) {
+        onActiveOptionChange(activeOptionIndex.value + 1)
+      }
+    } else if (e.code === 'ArrowUp'){
+      if (activeOptionIndex.value > -1) {
+        onActiveOptionChange(activeOptionIndex.value - 1)
+      }
+    } else if(e.code === 'Enter') {
+      onChange(options[activeOptionIndex.value])
+      onBlur()
+    }
+  }
+
   const {source, node: optionListNode} = useLayer((sourceRef) => {
     return (
       <optionList
@@ -40,11 +58,12 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
         inline-display-none={atomComputed(() => !focused.value)}
         inline-min-width={atomComputed(() => `${sourceRef.value ? sourceRef.value.offsetWidth : 0}px`)}
         tabindex={-1}
+        onKeyDown={onKeyDown}
         onFocusOut={() => onBlur()}
         style={{background: "#fff", zIndex: 99}}
         ref={optionListRef}
       >
-        {() => options.map(option => fragments.optionItem({ option })(
+        {() => options.map((option, index) => fragments.optionItem({ option, index })(
           <optionItem
             block
             block-font-size={scen().fontSize()}
@@ -83,12 +102,16 @@ export function Select({value, options, onChange, renderOption, renderValue, onF
 Select.propTypes = {
   value: propTypes.object.default(() => atom(undefined)),
   options: propTypes.object.default(() => reactive([])),
+  activeOptionIndex: propTypes.object.default(() => atom(-1)),
   focused: propTypes.bool.default(() => atom(false)),
-  onFocus: propTypes.callback.default(() => ({focused}) => focused.value = true),
-  onBlur: propTypes.callback.default(() => ({focused}) => {
-    focused.value = false
+  onFocus: propTypes.callback.default(() => ({focused, activeOptionIndex}) => {
+    focused.value = true
+    activeOptionIndex.value = -1
   }),
-
+  onBlur: propTypes.callback.default(() => ({focused, activeOptionIndex}) => {
+    focused.value = false
+    activeOptionIndex.value = -1
+  }),
   match: propTypes.function.default(() => (value, option) => {
     return value.value ? value.value.id === option.id : false
   }),
@@ -98,15 +121,19 @@ Select.propTypes = {
   onChange: propTypes.callback.default(() => (option, {value, optionToValue}) => {
     value.value = optionToValue(option)
   }),
+  onActiveOptionChange: propTypes.callback.default(() => (index, {activeOptionIndex}) => {
+    activeOptionIndex.value = index
+  }),
 }
 
 Select.Style = (fragments) => {
-  fragments.optionItem.elements.optionItem.style(({ value, option, match}) => {
+  fragments.optionItem.elements.optionItem.style(({ value, option, match, index, activeOptionIndex}) => {
     const equal = match(value, option)
+    const isActive = activeOptionIndex.value === index
 
     return {
-      background: equal?
-        scen().inverted().active().bgColor() :
+      background: (equal || isActive)?
+        scen().inverted().active().bgColor(isActive ? -2 : 0) :
         scen().active().bgColor(),
       color: equal ? scen().interactable().active().inverted().color() : scen().color(),
       cursor: 'pointer',
@@ -141,7 +168,7 @@ SearchableFeature.propTypes = {
  */
 export function RecommendMode(fragments) {
   // 1. 修改 input 的 value，使得可以输入，每次输入的时候更新 options
-  fragments.root.modify((result, { onFocus, onBlur, focused, inputToValue, onChange, options, onRenderOptionChange, onPressEnter }) => {
+  fragments.root.modify((result, { onFocus, onBlur, focused, activeOptionIndex, onActiveOptionChange, inputToValue, onChange, options, onRenderOptionChange, onPressEnter }) => {
 
     const inputNode = result.children[0]
     const inputRef = useRef()
@@ -158,10 +185,28 @@ export function RecommendMode(fragments) {
     // 增加 enter
     // TODO 增加上下键 navigate
     const onKeyDown = (e) => {
-      if (e.code === 'Enter') {
+
+      if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.code)) return
+      e.preventDefault()
+      e.stopPropagation()
+      if (e.code === 'ArrowDown') {
+        if (activeOptionIndex.value < options.length - 1) {
+          onActiveOptionChange(activeOptionIndex.value + 1)
+        }
+      } else if (e.code === 'ArrowUp'){
+        if (activeOptionIndex.value > -1) {
+          onActiveOptionChange(activeOptionIndex.value - 1)
+        }
+      } else if(e.code === 'Enter') {
         onPressEnter()
         inputRef.current.blur()
+        onBlur()
       }
+
+      // if (e.code === 'Enter') {
+      //   onPressEnter()
+      //   inputRef.current.blur()
+      // }
     }
 
     Object.assign(inputNode.attributes, {
@@ -174,6 +219,9 @@ export function RecommendMode(fragments) {
       onBlur: overwrite(() => {
         // TODO 这里还一定得是数值足够大 timeout 才行，得等 onClick 触发了，才能 blur。
         setTimeout(() => {
+          // 如果 focused.value 已经是 false, 说明是 click 了具体的选项，执行了 onBlur。
+          // 如果不是，说明是光标丢失，需要执行 blur。
+          // 这个判断我们得过一段时间才能真正确定是为什么 blur。
           if (focused.value) onBlur()
         }, 50)
       }),
@@ -182,9 +230,11 @@ export function RecommendMode(fragments) {
   })
 }
 
+RecommendMode.match = ({ recommendMode }) => recommendMode
+
 RecommendMode.propTypes = {
   allOptions: propTypes.object.default(() => reactive([])),
-  recommendMode : propTypes.bool.default(() => atom(false)),
+  recommendMode : propTypes.feature.default(() => false),
   delegateValue : propTypes.function.default(() => (value) => delegateLeaf(value).name),
   inputToValue: propTypes.function.default(() => (v) => ({ name: v })),
   filter: propTypes.function.default(() => (value, allOptions) => {
@@ -200,12 +250,14 @@ RecommendMode.propTypes = {
     return value.value.name === option.name
   }),
   // TODO 理论上需要更容易的机制来透传对 Input 的控制。这里先快速实现一下。
-  onPressEnter: propTypes.callback.default(() =>({value, options, onBlur, onChange, matchInputValue}) => {
-    // 如果能匹配，就选中匹配的。
-    const matchedOption = options.find(option => matchInputValue(value, option))
-    if (matchedOption) onChange(matchedOption)
-
-    onBlur()
+  onPressEnter: propTypes.callback.default(() =>({value, onBlur, onChange, matchInputValue, options, activeOptionIndex}) => {
+    if (options[activeOptionIndex.value]) {
+      onChange(options[activeOptionIndex.value])
+    } else {
+      // 如果能匹配，就选中匹配的。
+      const matchedOption = options.find(option => matchInputValue(value, option))
+      if (matchedOption) onChange(matchedOption)
+    }
   }),
 }
 

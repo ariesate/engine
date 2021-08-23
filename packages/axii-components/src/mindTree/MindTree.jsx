@@ -8,10 +8,7 @@ import {
   createComponent,
   atomComputed,
   reactive,
-  tryToRaw,
 } from 'axii';
-import ExpandIcon from 'axii-icons/Plus.js'
-import CollapseIcon from 'axii-icons/Minus.js'
 import scen from '../pattern'
 
 /**
@@ -27,8 +24,7 @@ import scen from '../pattern'
  */
 
 function renderItem(item, level, actions, render, fragments, parents = []) {
-  const {onFold, onOpen, onSetActive} = actions
-  const hasChildren = atomComputed(() => item.children !== undefined)
+  const {onSetActive} = actions
   return (
     <itemContainer
       block
@@ -64,7 +60,6 @@ function renderItem(item, level, actions, render, fragments, parents = []) {
                     isFirst: childIndex === 0,
                     isLast: childIndex === item.children.length -1,
                   }
-                  console.log("renderchildren", child.id)
                   return (
                     <itemChildContainer
                       inline
@@ -137,7 +132,7 @@ MindTree.Style = (fragments) => {
     cursor: 'pointer'
   })
 
-  fragments.item.elements.name.style(({item, parents, activeItemIdPath, level}) => {
+  fragments.item.elements.name.style(({item, parents, activeItemIdPath}) => {
     const currentPath = parents.concat(item)
     const isActive = activeItemIdPath.value.length && (currentPath.length === activeItemIdPath.value.length) && activeItemIdPath.value.every((p, i) => p === currentPath[i]?.id)
     return {
@@ -154,30 +149,25 @@ MindTree.Style = (fragments) => {
     }
   })
 
-  fragments.item.elements.itemSlash.style(({level}) => {
-    return {
-      background: '#000'
-    }
+  fragments.item.elements.itemSlash.style({
+    background: '#000'
   })
 
-  fragments.itemPrefix.elements.itemSlash.style(({level}) => {
-    return {
-      background: '#000'
-    }
+  fragments.itemPrefix.elements.itemSlash.style({
+    background: '#000'
   })
 
-  fragments.itemPrefix.elements.itemChildPrefixLineTop.style(({level, isFirst}) => {
+  fragments.itemPrefix.elements.itemChildPrefixLineTop.style(({isFirst}) => {
     return {
       background: isFirst ? 'transparent' : '#000'
     }
   })
 
-  fragments.itemPrefix.elements.itemChildPrefixLineBottom.style(({level, isLast}) => {
+  fragments.itemPrefix.elements.itemChildPrefixLineBottom.style(({isLast}) => {
     return {
       background: isLast ? 'transparent' : '#000'
     }
   })
-
 }
 
 

@@ -1,10 +1,9 @@
 /**@jsx createElement */
 import { createElement, useViewEffect, useImperativeHandle } from 'axii'
 import XSpreadsheet from 'x-data-spreadsheet'
-import {uuid} from "../util";
 
 export default function Spreadsheet({ data, ref:parentRef }) {
-  const id = uuid()
+  const id = 'spreadsheetroot'
   let spreadsheet
 
   if (parentRef) {

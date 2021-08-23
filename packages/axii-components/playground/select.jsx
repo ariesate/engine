@@ -34,7 +34,7 @@ function App() {
 
     <h3>Recommend Mode</h3>
     <Select value={inputValue} allOptions={options} recommendMode/>
-    <div>{ () => `selected: ${inputValue.value ? inputValue.value.name : 'none'}`}</div>
+    <div>{ () => `selected: ${inputValue.value?.name}; id: ${inputValue.value?.id}`}</div>
   </div>
 }
 

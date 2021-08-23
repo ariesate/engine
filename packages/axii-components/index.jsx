@@ -37,7 +37,7 @@ const availablePlayground = {
     'richText*', // 试用 quill
     'editorjs', // 试用 editorjs
     'imageEditor', // 试用 editorjs
-    'luckysheet', // 试用 editorjs
+    'spreadsheet', // 试用 editorjs
     'toastGrid', // 试用 editorjs
   ],
   Data: [
