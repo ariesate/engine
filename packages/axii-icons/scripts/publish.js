@@ -1,4 +1,3 @@
-import path from 'path'
 import commandLineArgs from 'command-line-args'
 import util from 'util'
 import childProcess from 'child_process'
