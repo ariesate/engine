@@ -10,7 +10,13 @@ function EditorjsComponent({ref: parentRef, data, ...options}) {
   let editorRef
 
   watchReactive(data, () => {
-    editorRef?.render && editorRef.render(data.value)
+    if (editorRef?.render) {
+      if (data.value) {
+        editorRef.render(data.value)
+      } else {
+        editorRef.clear()
+      }
+    }
   })
 
   useViewEffect(() => {
@@ -19,7 +25,7 @@ function EditorjsComponent({ref: parentRef, data, ...options}) {
       holder: editorId,
     })
     editorRef.isReady.then(() => {
-      editorRef.render(data.value)
+      data.value && editorRef.render(data.value)
     })
     return () => editorRef.destroy()
   })
