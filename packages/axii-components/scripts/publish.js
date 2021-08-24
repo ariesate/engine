@@ -25,6 +25,8 @@ try {
   console.log(`npm version ${versionType}`)
   await exec(`npm version ${versionType}`)
   const { version } = await loadJSON(path.join(process.cwd(), './package.json'))
+  await exec(`git add .`)
+  await exec(`git commit -m "version: axii-components ${version}"`)
   console.log('npm publish ./')
   await exec('npm publish ./')
   console.log(`published: ${version}`)
