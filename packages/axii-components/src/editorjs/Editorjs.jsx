@@ -10,12 +10,13 @@ function EditorjsComponent({ref: parentRef, data, ...options}) {
   let editorRef
 
   watchReactive(data, () => {
-    if (editorRef?.render) {
-      if (data.value) {
-        editorRef.render(data.value)
-      } else {
-        editorRef.clear()
-      }
+    if (data.value) {
+      editorRef?.render && editorRef.render(data.value)
+    } else {
+      // TODO 数据变化了，实时 clear 出问题，似乎是因为外部 display 的问题。
+      setTimeout(() => {
+        editorRef?.clear && editorRef.clear()
+      }, 1)
     }
   })
 
@@ -25,6 +26,7 @@ function EditorjsComponent({ref: parentRef, data, ...options}) {
       holder: editorId,
     })
     editorRef.isReady.then(() => {
+      console.log("ready render", data.value)
       data.value && editorRef.render(data.value)
     })
     return () => editorRef.destroy()
