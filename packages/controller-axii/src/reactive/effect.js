@@ -385,7 +385,7 @@ let inComputationDigestion = false
 let levelChangedComputations = []
 // 用来记录在一次 digestion 中发生了变化的 computation，
 const appliedComputations = new Set()
-const maxComputationCalls = 1000
+const maxComputationCalls = 10000
 let computationCalled = 0
 function digestComputations() {
   invariant(!inComputationDigestion, 'already in computation digestion')
@@ -560,8 +560,7 @@ export function trigger(source, type, key, extraInfo) {
     keys.forEach(({ computations }) => {
       computations.forEach(computation => computationsToRun.add(computation))
     });
-  }
-  else {
+  } else {
     // SET | ADD | DELETE 触发依赖于相应的 key 的 computation
     if (key) {
       const { computations } = getFromMap(keys, key, () => createKeyNode(source, key))

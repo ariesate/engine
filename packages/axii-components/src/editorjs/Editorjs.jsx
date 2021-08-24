@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, useImperativeHandle, createComponent, useViewEffect } from 'axii'
+import {createElement, useImperativeHandle, createComponent, useViewEffect, propTypes, atom, watchReactive} from 'axii'
 import Editorjs from '@editorjs/editorjs'
 import './Editorjs.less'
 import ImageEditorPlugin from './imageEditorPlugin';
@@ -8,11 +8,18 @@ import TablePlugin from 'editorjs-table'
 function EditorjsComponent({ref: parentRef, data, ...options}) {
   const editorId = `editorjs-${Date.now()}-${Math.random().toFixed(7).slice(2)}`
   let editorRef
+
+  watchReactive(data, () => {
+    editorRef?.render && editorRef.render(data.value)
+  })
+
   useViewEffect(() => {
     editorRef = new Editorjs({
       ...options,
       holder: editorId,
-      data
+    })
+    editorRef.isReady.then(() => {
+      editorRef.render(data.value)
     })
     return () => editorRef.destroy()
   })
@@ -28,6 +35,12 @@ function EditorjsComponent({ref: parentRef, data, ...options}) {
   return <editorContainer block >
     <editorRoot id={editorId} />
   </editorContainer>
+}
+
+EditorjsComponent.propTypes = {
+  // CAUTION TODO 为了性能我们不会实施将 data 和 editorjs 同步，这里 reactive 知识为了外部通过数据控制里面更新。
+  // 需要一个标记来说明 data 不能实时同步。
+  data: propTypes.object.default(() => atom({}))
 }
 
 EditorjsComponent.Style = (fragments) => {

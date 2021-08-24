@@ -119,6 +119,7 @@ Select.propTypes = {
   renderValue: propTypes.function.default(() => (value) => value.value ? value.value.name : ''),
   optionToValue: propTypes.function.default(() => (option) => Object.assign({}, option)),
   onChange: propTypes.callback.default(() => (option, {value, optionToValue}) => {
+
     value.value = optionToValue(option)
   }),
   onActiveOptionChange: propTypes.callback.default(() => (index, {activeOptionIndex}) => {
@@ -250,7 +251,7 @@ RecommendMode.propTypes = {
     return value.value.name === option.name
   }),
   // TODO 理论上需要更容易的机制来透传对 Input 的控制。这里先快速实现一下。
-  onPressEnter: propTypes.callback.default(() =>({value, onBlur, onChange, matchInputValue, options, activeOptionIndex}) => {
+  onPressEnter: propTypes.callback.default(() =>({value, onChange, matchInputValue, options, activeOptionIndex}) => {
     if (options[activeOptionIndex.value]) {
       onChange(options[activeOptionIndex.value])
     } else {

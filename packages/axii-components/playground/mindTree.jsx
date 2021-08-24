@@ -26,17 +26,17 @@ const data = reactive([
     name: 'name1',
     id: 'name1',
     children: [
-      // {
-      //   name: 'sub1',
-      //   id: 'sub1',
-      //   children : [{
-      //     name: 'sub1 of sub1',
-      //     id: '11',
-      //   }, {
-      //     name: 'sub2 of sub1',
-      //     id: '12',
-      //   }]
-      // }
+      {
+        name: 'sub1',
+        id: 'sub1',
+        children : [{
+          name: 'sub1 of sub1',
+          id: '11',
+        // }, {
+        //   name: 'sub2 of sub1',
+        //   id: '12',
+        }]
+      }
     ]
   // }, {
   //   name: 'name2',
@@ -130,7 +130,10 @@ const renderItem = (item, parents) => {
       // parent.children[index] = inputValue.value
       parent.children.splice(index, 1, inputValue.value)
     } else {
-      parent.children[index].name = inputValue.value.name
+      parent.children[index] = {
+        id: item.isNew? item.id : Date.now(),
+        name: inputValue.value.name
+      }
     }
 
     editing.value = false
