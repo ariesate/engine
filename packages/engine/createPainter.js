@@ -332,6 +332,8 @@ function createPatch(lastVnodes, nextVnodes, cnode, nextTransferKeyedVnodes, uti
     // Handle boundary conditions first.
     // 1) vnodes runs out.
     if (!(vnodesIndex < vnodesLen)) {
+      // If action.type is  PATCH_ACTION_INSERT, that means this node is not digested yet.
+      // Because all inserted node action type will be changed to  PATCH_ACTION_REMAIN after digestion.
       if (lastVnode.action === undefined || lastVnode.action.type !== PATCH_ACTION_INSERT) {
         handleRemovePatchNode(lastVnode, patch)
       }

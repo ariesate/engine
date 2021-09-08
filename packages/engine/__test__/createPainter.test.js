@@ -190,6 +190,44 @@ describe('repaint key diff', () => {
     expect(diffResult.patch[0].children[0].children[1]).toMatchObject(secondKeySpan)
   })
 
+  test('remove key at end', () => {
+    let count = 0
+    const App = {
+      render() {
+        const arr = count === 0 ?
+          [<span key={1}>1</span>, <span key={2}>2</span>] :
+          [<span key={1}>1</span>]
+
+
+        ++count
+        return <div>{arr}</div>
+      }
+    }
+
+    const ctree = painter.createCnode(<App/>)
+    painter.paint(ctree)
+    const diffResult = painter.repaint(ctree)
+
+    const arr = [<span>1</span>]
+    expect(ctree.ret[0]).toMatchObject(<div>{arr}</div>)
+
+    // 第一层
+    const firstLayerPatch = <div></div>
+    delete firstLayerPatch.children
+    firstLayerPatch.action = { type: PATCH_ACTION_REMAIN }
+    expect(diffResult.patch[0]).toMatchObject(firstLayerPatch)
+
+    // 第二层
+    const firstKeySpan = <span>1</span>
+    firstKeySpan.action = { type: PATCH_ACTION_REMAIN }
+    expect(diffResult.patch[0].children[0].children[0]).toMatchObject(firstKeySpan)
+
+    const secondKeySpan = {}
+    secondKeySpan.action = { type: PATCH_ACTION_REMOVE }
+    expect(diffResult.patch[0].children[0].children.length).toBe(2)
+    expect(diffResult.patch[0].children[0].children[1]).toMatchObject(secondKeySpan)
+  })
+
   test('insert key in middle', () => {
     let count = 0
     const App = {
@@ -228,6 +266,44 @@ describe('repaint key diff', () => {
     expect(diffResult.patch[0].children[0].children[2]).toMatchObject(thirdKeySpan)
   })
 
+  test('remove key in middle', () => {
+    let count = 0
+    const App = {
+      render() {
+        const arr = count === 0 ?
+          [<span key={1}>1</span>, <span key={2}>2</span>, <span key={3}>3</span>] :
+          [<span key={1}>1</span>, <span key={3}>3</span>]
+
+        ++count
+        return <div>{arr}</div>
+      }
+    }
+
+    const ctree = painter.createCnode(<App/>)
+    painter.paint(ctree)
+    const diffResult = painter.repaint(ctree)
+
+    // 第一层
+    const firstLayerPatch = <div></div>
+    delete firstLayerPatch.children
+    firstLayerPatch.action = { type: PATCH_ACTION_REMAIN }
+    expect(diffResult.patch[0]).toMatchObject(firstLayerPatch)
+
+    // 第二层
+    const firstKeySpan = <span>1</span>
+    firstKeySpan.action = { type: PATCH_ACTION_REMAIN }
+    expect(diffResult.patch[0].children[0].children[0]).toMatchObject(firstKeySpan)
+
+    const secondKeySpan = {}
+    secondKeySpan.action = { type: PATCH_ACTION_REMOVE }
+    expect(diffResult.patch[0].children[0].children[1]).toMatchObject(secondKeySpan)
+
+    const thirdKeySpan = <span>3</span>
+    thirdKeySpan.action = { type: PATCH_ACTION_REMAIN}
+    expect(diffResult.patch[0].children[0].children.length).toBe(3)
+    expect(diffResult.patch[0].children[0].children[2]).toMatchObject(thirdKeySpan)
+  })
+
   test('insert key at head', () => {
     let count = 0
     const App = {
@@ -254,6 +330,40 @@ describe('repaint key diff', () => {
     // 第二层
     const firstKeySpan = <span>1</span>
     firstKeySpan.action = { type: PATCH_ACTION_INSERT}
+    expect(diffResult.patch[0].children[0].children[0]).toMatchObject(firstKeySpan)
+
+    const secondKeySpan = <span>2</span>
+    secondKeySpan.action = { type: PATCH_ACTION_REMAIN}
+    expect(diffResult.patch[0].children[0].children.length).toBe(2)
+    expect(diffResult.patch[0].children[0].children[1]).toMatchObject(secondKeySpan)
+  })
+
+  test('remove key at head', () => {
+    let count = 0
+    const App = {
+      render() {
+        const arr = count === 0 ?
+          [<span key={1}>1</span>, <span key={2}>2</span>] :
+          [<span key={2}>2</span>]
+
+        ++count
+        return <div>{arr}</div>
+      }
+    }
+
+    const ctree = painter.createCnode(<App/>)
+    painter.paint(ctree)
+    const diffResult = painter.repaint(ctree)
+
+    // 第一层
+    const firstLayerPatch = <div></div>
+    delete firstLayerPatch.children
+    firstLayerPatch.action = { type: PATCH_ACTION_REMAIN }
+    expect(diffResult.patch[0]).toMatchObject(firstLayerPatch)
+
+    // 第二层
+    const firstKeySpan = {}
+    firstKeySpan.action = { type: PATCH_ACTION_REMOVE}
     expect(diffResult.patch[0].children[0].children[0]).toMatchObject(firstKeySpan)
 
     const secondKeySpan = <span>2</span>

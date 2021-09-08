@@ -4,7 +4,7 @@ import {
   resolveFirstLayerElements,
 } from '../common'
 import {
-  PATCH_ACTION_MOVE_FROM,
+  PATCH_ACTION_MOVE_FROM, PATCH_ACTION_REMAIN,
 } from '../constant'
 import { handleMoveFromPatchNode } from './updateDigest'
 import {isObject, invariant} from '../util'
@@ -113,6 +113,10 @@ function handleInitialVnodeChildren(vnodes, cnode, viewUtil, patch, parentNode) 
   // 2) vnode of array type
   // TODO 同类型、同key或者同没 key 的检测。
   vnodes.forEach((vnode, index) => {
+    // mark action type as PATCH_ACTION_REMAIN, so we know the node is digested.
+    if (!vnode.action) vnode.action = {}
+    vnode.action.type = PATCH_ACTION_REMAIN
+
     if (vnode.action && vnode.action.type === PATCH_ACTION_MOVE_FROM) {
       handleMoveFromPatchNode(vnode, patch, cnode, parentNode, viewUtil)
     } else {

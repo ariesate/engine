@@ -74,21 +74,20 @@ export function getVnodeNextIndex(vnode, parentPath) {
 
 export function resolveFirstLayerElements(vnodes, cnode) {
   return vnodes.reduce((result, vnode) => {
-    if (vnode.type === null) {
-      return result
-    } else if (vnode.type === String || typeof vnode.type === 'string') {
-      return [vnode.element]
+    let currentVnodeElements = []
+    if (vnode.type === String || typeof vnode.type === 'string') {
+      currentVnodeElements = [vnode.element]
     } else if (vnode.type === Array || vnode.type === Fragment) {
-      return vnode.children.reduce((elements, child) => {
+      currentVnodeElements = vnode.children.reduce((elements, child) => {
         return elements.concat(resolveFirstLayerElements([child], cnode))
       }, [])
-    } else {
+    } else if(vnode.type !== null){
       // CAUTION 剩余的类型，全部认为是组件
       const nextCnode = cnode.next[vnode.id]
       if (!nextCnode) throw new Error(`unknown vnode with path ${vnode.id}`)
-      return resolveFirstLayerElements(nextCnode.patch, nextCnode)
+      currentVnodeElements = resolveFirstLayerElements(nextCnode.patch, nextCnode)
     }
-    return result
+    return result.concat(currentVnodeElements)
   }, [])
 }
 
