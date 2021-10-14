@@ -34,7 +34,7 @@
     "gen": "node ./scripts/generateIndexEntry.js",
     "start": "npm run gen && node ./scripts/copyPlaygroundAsString.js && vite --config vite.site.config.js",
     "local": "npm run gen && node ./scripts/copyPlaygroundAsString.js && vite --config vite.site.local.config.js",
-    "dev": "./link.sh && npm run entry && node ./scripts/copyPlaygroundAsString.js && vite --config vite.site.config.js",
+    "dev": "./link.sh && npm run gen && node ./scripts/copyPlaygroundAsString.js && vite --config vite.site.config.js",
     "build": "npm run gen && node ./scripts/copyPlaygroundAsString.js && node ./scripts/build.js",
     "build:site": "vite build --config vite.site.config.js",
     "publish:patch": "node ./scripts/publish.js --patch",

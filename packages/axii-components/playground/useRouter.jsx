@@ -17,7 +17,7 @@ function App({ children }) {
 	return (
 		<div>
 			<div>App</div>
-			<Menu data={paths.map(path=> ({title: path, key: path}))} onSetActive={gotoNext}/>
+			<Menu data={paths.map(path=> ({title: path, id: path}))} onSetActive={gotoNext}/>
 			<div>children:</div>
 			{children}
 		</div>
@@ -35,7 +35,7 @@ function Child({ params }) {
 		<div>
 			<div>child</div>
 			<div>
-				<Menu data={ids.map(id=> ({title: id, key: id}))} onSetActive={gotoNext}/>
+				<Menu data={ids.map(id=> ({title: id, id}))} onSetActive={gotoNext}/>
 			</div>
 			<div>params: {() => JSON.stringify(params)}</div>
 		</div>
@@ -56,5 +56,9 @@ const app = useRouter([{
 	}]
 }], NotFound, location)
 
+location.goto('/app')
 
-render(app, document.getElementById('root'))
+render(<div>
+	<div>Do not run this example in iframe, or you may not see location change. </div>
+	{app}
+</div>, document.getElementById('root'))

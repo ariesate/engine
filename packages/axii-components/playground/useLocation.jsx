@@ -20,6 +20,7 @@ function App() {
 
   return (
     <div>
+      <div>Do not run this example in iframe, or you may not see location change. </div>
       <button onClick={randomSetQuery}>random set query</button>
       <button onClick={randomPatchQuery}>random patch query</button>
       <div>current location: {() => JSON.stringify(location.query)}</div>

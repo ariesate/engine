@@ -4,6 +4,7 @@
  */
 /**@jsx createElement*/
 import { createElement, render, atom, atomComputed } from 'axii'
+import Share from 'axii-icons/Share'
 import Menu from './src/menu/Menu'
 import useLocation from "./src/hooks/useLocation";
 import Split from './src/split/Split'
@@ -136,11 +137,29 @@ function Choose() {
       <Split asideLeft layout:block-height="100%">
         <div block block-height="100%" block-padding-left-10px block-padding-top-10px block-overflow-y-auto>
           <h1>AXII Components</h1>
-          {() => Object.entries(availablePlayground).map(([category, items]) =>
-            <div>
-              <h2>{category}</h2>
-              <MenuWithDisabledStyle data={items.map(name => ({ title: name.replace('*', ''), disabled: /\*$/.test(name), id: name}))} activeItemIdPath={activeItemIdPath} onSetActive={(item) => onChange(item.id)}/>
-            </div>
+          {() => Object.entries(availablePlayground).map(([category, items]) => {
+
+            const menuItems = items.map(name => ({
+              title: (
+                <componentItem>
+                  <componentItemName inline inline-margin-right-8px>{name.replace('*', '')}</componentItemName>
+                  <Share onClick={() => window.open(`./playground.html?component=${current.value}`)}/>
+                </componentItem>
+              ),
+              disabled: /\*$/.test(name),
+              id: name
+            }))
+
+            return (
+              <div>
+                <h2>{category}</h2>
+                <MenuWithDisabledStyle
+                  data={menuItems}
+                  activeItemIdPath={activeItemIdPath}
+                  onSetActive={(item) => onChange(item.id)}
+                />
+              </div>
+            )}
           )}
         </div>
         <div block block-height="100%">
