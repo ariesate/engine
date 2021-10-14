@@ -56,6 +56,15 @@ export default function useLocation(
 		query: callTypeTransformers(parse(history.location.search), typeTransformers)
 	})
 
+	history.listen((nextHistory) => {
+		debounceComputed(() => {
+			reactiveValues.pathname = history.location.pathname
+			reactiveValues.search = history.location.search
+			// 重新 parse 一遍
+			reactiveValues.query = callTypeTransformers(parse(history.location.search), typeTransformers)
+		})
+	})
+
 	return {
 		get pathname() {
 			return reactiveValues.pathname
@@ -90,12 +99,6 @@ export default function useLocation(
 		},
 		goto(url) {
 			history.push(url)
-			debounceComputed(() => {
-				reactiveValues.pathname = history.location.pathname
-				reactiveValues.search = history.location.search
-				// 重新 parse 一遍
-				reactiveValues.query = callTypeTransformers(parse(history.location.search), typeTransformers)
-			})
 		},
 	};
 }
