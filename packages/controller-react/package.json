@@ -6,7 +6,7 @@
   "author": "ariesate@outlook.com",
   "license": "MIT",
   "dependencies": {
-    "@ariesate/are" : "0.0.1"
+    "@ariesate/are" : "workspace:*"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0-beta.44",
