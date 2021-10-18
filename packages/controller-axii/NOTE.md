@@ -5,7 +5,8 @@
 ## 领域问题
 
 ### 系统中的事件顺序不能和显示的因果对应
-在 InputSelect 中碰到了一个问题，我们允许用户通过 onClick dropdown 中的选项来 blur，也可以允许 input 框自己 blur。input 框的 blur 
+
+在 InputSelect 中碰到了一个问题，我们允许用户通过 onClick dropdown 中的选项来 blur，也可以允许 input 框自己 blur。input 框的 blur
 是写在 input 事件上的，会使得下来菜单收起来。问题在于，如果用户是去点击下来踩点，也是先触发 onBlur，然后下拉框收起来了，点击不会触发，因为
 其实没有点击到。
 
