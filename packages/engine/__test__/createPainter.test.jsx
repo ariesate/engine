@@ -1,14 +1,14 @@
 /** @jsx createElement */
-const createElement = require('../createElement').default
-const { default: createPainter } = require('../createPainter')
-const {
+import createElement from '../createElement'
+import createPainter from '../createPainter'
+import {
   PATCH_ACTION_INSERT,
   PATCH_ACTION_MOVE_FROM,
   PATCH_ACTION_REMAIN,
   PATCH_ACTION_REMOVE,
   PATCH_ACTION_TO_MOVE,
   DEV_MAX_LOOP,
-} = require('../constant')
+} from '../constant'
 
 
 /*************

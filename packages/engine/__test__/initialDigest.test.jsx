@@ -1,15 +1,15 @@
-const { default: createPainter }= require('../createPainter')
-const createElement = require('../createElement').default
-const createDOMView = require('../DOMView/createDOMView').default
 
-const {
+import createElement from '../createElement'
+import createPainter from '../createPainter'
+import createDOMView from '../DOMView/createDOMView'
+import {
   PATCH_ACTION_INSERT,
   PATCH_ACTION_MOVE_FROM,
   PATCH_ACTION_REMAIN,
   PATCH_ACTION_REMOVE,
   PATCH_ACTION_TO_MOVE,
   DEV_MAX_LOOP,
-} = require('../constant')
+} from '../constant'
 
 describe('initialDigest', () => {
   let painter
