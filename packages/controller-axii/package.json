@@ -27,11 +27,11 @@
     "coverage": "jest --coverage"
   },
   "dependencies": {
-    "@ariesate/are": "workspace:*",
     "fast-json-patch": "^3.0.0-1",
     "immer": "^9.0.1"
   },
   "devDependencies": {
+    "@ariesate/are": "^0.0.2",
     "@jest/types": "^27.2.5",
     "@testing-library/jest-dom": "^5.11.10",
     "command-line-args": "^5.1.1",

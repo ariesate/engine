@@ -10,13 +10,13 @@
     "test": "jest"
   },
   "dependencies": {
-    "@ariesate/are": "workspace:*",
     "exist.js": "^0.3.0",
     "lodash": "^4.17.4",
     "mobx": "^3.3.1",
     "mobx-state-tree": "^1.0.1"
   },
   "devDependencies": {
+    "@ariesate/are": "^0.0.2",
     "@jest/types": "^27.2.5",
     "dom-serialize": "^2.2.1",
     "esbuild-jest": "^0.5.0",
