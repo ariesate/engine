@@ -1,0 +1,14 @@
+{
+  "name": "axii-icons-playground",
+  "private": "true",
+  "scripts": {
+    "start": "pnpm dev --filter \"axii-icons\" & vite"
+  },
+  "dependencies": {
+    "axii": "workspace:*",
+    "axii-icons": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "^2.6.10"
+  }
+}

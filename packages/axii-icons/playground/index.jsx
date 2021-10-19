@@ -1,6 +1,6 @@
 /**@jsx createElement */
 import { createElement, render  } from 'axii'
-import AddOne from './dist/HamburgerButton'
+import AddOne from 'axii-icons/AddOne'
 
 function App( ) {
   return <AddOne />
