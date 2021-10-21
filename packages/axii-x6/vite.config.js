@@ -1,33 +1,43 @@
-export default {
-  esbuild: {
-    jsxFactory: 'createElement',
-    jsxFragment: 'Fragment'
-  },
-  // alias: [
-  //   {find: 'axii-components', replacement: path.resolve(PACKAGE_ROOT_PATH, './axii-components/src')},
-  //   {find: 'axii', replacement: path.resolve(PACKAGE_ROOT_PATH, './controller-axii/src')},
-  //   {find: '@ariesate/are', replacement: path.resolve(PACKAGE_ROOT_PATH, './engine')},
-  // ],
-  css: {
-    preprocessorOptions: {
-      less: { javascriptEnabled: true }
-    }
-  },
-  build: {
-    lib: {
-      entry : './src/index.js',
-      name: 'axii-x6'
+import { defineConfig } from 'vite'
+
+/**
+ * @type {import('vite').UserConfig}
+ */
+const config = defineConfig(({ mode }) => {
+  const isDev = mode === 'development'
+  return {
+    esbuild: {
+      jsxFactory: 'createElement',
+      jsxFragment: 'Fragment'
     },
-    rollupOptions: {
-      external: ['axii'],
-      output: {
-        globals: {
-          axii: 'Axii'
+    css: {
+      preprocessorOptions: {
+        less: {
+          javascriptEnabled: true 
+        }
+      }
+    },
+    optimizeDeps: {
+      exclude: ['axii']
+    },
+    build: {
+      minify: !isDev,
+      watch: isDev,
+      sourcemap: isDev,
+      lib: {
+        entry : './src/index.js',
+        name: 'axii-x6'
+      },
+      rollupOptions: {
+        external: ['axii'],
+        output: {
+          globals: {
+            axii: 'Axii'
+          }
         }
       }
     }
-  },
-  define: {
-    __DEV__: true
   }
-}
+})
+
+export default config

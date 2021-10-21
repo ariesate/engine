@@ -5,9 +5,8 @@
 /** @jsx createElement */
 import { createElement, render, useRef } from 'axii'
 import { debounce } from 'lodash-es'
-import Editor from './src/editors/er/EREditor'
-import localRawData from './src/editors/er/data'
-
+import Editor from 'axii-x6/src/editors/er/EREditor'
+import localRawData from 'axii-x6/src/editors/er/data'
 
 /**
  *
@@ -51,6 +50,3 @@ if (isLocal) {
 
   vscode.postMessage({ type: 'ready' });
 }
-
-
-
