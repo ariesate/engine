@@ -28,4 +28,5 @@ export { default as useRouter } from "./hooks/useRouter.jsx";
 export { default as message } from "./message/message.jsx";
 export { default as contextmenu } from "./contextmenu/contextmenu.jsx";
 export { default as pattern } from "./pattern"
+export * as utils from "./util"
 import "./style/global.less";

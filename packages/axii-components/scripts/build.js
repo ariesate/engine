@@ -1,6 +1,8 @@
 import { build } from 'vite'
-import { rm } from 'fs/promises'
-import commonConfig from '../vite.common.config.js'
+import minimist from 'minimist'
+import baseConfig from '../vite.config.js'
+
+const { dev = false } = minimist(process.argv.slice(2))
 
 const input = {
   components: './src/index.js',
@@ -10,14 +12,15 @@ const input = {
   toastGrid: './src/toastGrid/ToastGrid.jsx',
 }
 
-await rm(commonConfig.build.outDir, {recursive: true, force: true})
-
 for( let entryName in input) {
   console.log('building:', entryName)
   await build({
-    ...commonConfig,
+    ...baseConfig,
     build: {
-      ...commonConfig.build,
+      ...baseConfig.build,
+      minify: !dev,
+      sourcemap: dev,
+      watch: dev,
       outDir: `dist/${entryName}`,
       lib: {
         entry: input[entryName],
@@ -25,7 +28,7 @@ for( let entryName in input) {
         formats: ['es']
       },
       rollupOptions: {
-        ...commonConfig.build.rollupOptions,
+        ...baseConfig.build.rollupOptions,
         output: {
           entryFileNames: 'index.js',
           format: 'es'
@@ -34,23 +37,3 @@ for( let entryName in input) {
     }
   })
 }
-//
-//
-// esbuild.build({
-//   entryPoints: [
-//     './src/index.js',
-//     './src/editorjs/Editorjs.jsx',
-//     './src/imageEditor/ImageEditor.jsx',
-//     './src/spreadsheet/Spreadsheet.jsx',
-//     './src/toastGrid/ToastGrid.jsx'
-//   ],
-//   bundle: true,
-//   format: 'esm',
-//   outdir: './dist',
-//   external: ['axii'],
-//   jsxFactory: 'createElement',
-//   jsxFragment: 'Fragment',
-//   plugins: [lessLoader({
-//     javascriptEnabled: true
-//   })],
-// })

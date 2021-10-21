@@ -195,12 +195,9 @@ const valueRules = {
 
 }
 
-
-
 /***************
  * export
  **************/
 export default function scen() {
   return new Scenario(INDEX, valueRules)
 }
-

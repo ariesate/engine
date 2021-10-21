@@ -1,0 +1,21 @@
+{
+  "name": "axii-components-playground",
+  "private": "true",
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "build": "pnpm build:site",
+    "build:lib": "pnpm build:dev --filter \"axii-components\"",
+    "build:site": "node scripts/buildDemoAssets & vite build",
+    "deploy": "./deploy.sh"
+  },
+  "dependencies": {
+    "axii": "workspace:*",
+    "axii-components": "workspace:*",
+    "axii-icons": "workspace:*",
+    "codeflask": "^1.4.1"
+  },
+  "devDependencies": {
+    "vite": "^2.6.10"
+  }
+}
