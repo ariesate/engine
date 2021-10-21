@@ -24,7 +24,8 @@
     "publish:patch": "node ./scripts/publish.js --patch",
     "publish:minor": "node ./scripts/publish.js --minor",
     "test": "jest",
-    "coverage": "jest --coverage"
+    "coverage": "jest --coverage",
+    "postinstall": "pnpm build"
   },
   "dependencies": {
     "fast-json-patch": "^3.0.0-1",
