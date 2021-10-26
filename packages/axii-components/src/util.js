@@ -70,3 +70,7 @@ export function createBufferedRef() {
     }
   })
 }
+
+export function isEmptyObject(value) {
+  return !Object.keys(value).length
+}
