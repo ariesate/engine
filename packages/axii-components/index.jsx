@@ -119,7 +119,7 @@ function Choose() {
   const current = atom(location.query.component)
 
   const activeItemIdPath = atomComputed(() => {
-    return [current.value]
+    return [current.value].filter(Boolean)
   })
 
   const onChange = (next) => {
@@ -147,7 +147,7 @@ function Choose() {
                 </componentItem>
               ),
               disabled: /\*$/.test(name),
-              id: name
+              key: name
             }))
 
             return (
@@ -156,7 +156,7 @@ function Choose() {
                 <MenuWithDisabledStyle
                   data={menuItems}
                   activeItemIdPath={activeItemIdPath}
-                  onSetActive={(item) => onChange(item.id)}
+                  onSetActive={(item) => onChange(item.key)}
                 />
               </div>
             )}
