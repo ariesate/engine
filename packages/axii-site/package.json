@@ -1,16 +1,20 @@
 {
   "name": "axii-site",
-  "version": "1.0.3",
-  "description": "",
+  "private": "true",
   "author": "sskyy <skyking_H@hotmail.com>",
-  "license": "MIT",
   "type": "module",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "deploy": "./deploy.sh"
+  },
   "dependencies": {
     "@mdx-js/mdx": "^2.0.0-next.9",
     "@prefresh/vite": "^2.2.0",
     "@testing-library/jest-dom": "^5.11.4",
-    "axii": "^1.0.7",
-    "axii-icons": "^1.0.2",
+    "axii": "workspace:^1.0.7",
+    "axii-components": "workspace:^1.3.12",
+    "axii-icons": "workspace:^1.0.2",
     "command-line-args": "^5.1.1",
     "mdx-axii": "^2.0.1",
     "prismjs": "^1.23.0",
@@ -18,42 +22,8 @@
     "vite": "^2.1.5",
     "vite-plugin-mdx-extended": "^3.3.3"
   },
-  "sideEffects": false,
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "jsx"
-    ],
-    "coverageReporters": [
-      "text"
-    ],
-    "moduleDirectories": [
-      "<rootDir>/src",
-      "<rootDir>/node_modules"
-    ],
-    "moduleNameMapper": {
-      "\\.(css|less)$": "<rootDir>/src/__mocks__/styleMock.js",
-      "\\.(gif|ttf|eot|svg)$": "<rootDir>/src/__mocks__/fileMock.js"
-    },
-    "transform": {
-      "^.+\\.[t|j]sx?$": "babel-jest"
-    },
-    "setupFilesAfterEnv": [
-      "./jest.setup.js"
-    ]
-  },
-  "scripts": {
-    "start": "vite",
-    "build": "vite build",
-    "deploy": "./deploy.sh"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "files": [
-    "site"
-  ],
   "devDependencies": {
+    "@ariesate/are": "workspace:^0.0.2",
     "jscodeshift": "^0.12.0"
   }
 }

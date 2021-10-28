@@ -21,6 +21,7 @@
   },
   "scripts": {
     "build": "vite build",
+    "build:dev": "vite build --mode=development",
     "publish:patch": "node ./scripts/publish.js --patch",
     "publish:minor": "node ./scripts/publish.js --minor",
     "test": "jest",
@@ -32,7 +33,7 @@
     "immer": "^9.0.1"
   },
   "devDependencies": {
-    "@ariesate/are": "^0.0.2",
+    "@ariesate/are": "workspace:*",
     "@jest/types": "^27.2.5",
     "@testing-library/jest-dom": "^5.11.10",
     "command-line-args": "^5.1.1",

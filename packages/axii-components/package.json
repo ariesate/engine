@@ -33,7 +33,7 @@
   "dependencies": {
     "@ant-design/colors": "^5.0.1",
     "@editorjs/editorjs": "^2.19.3",
-    "axii-icons": "^1.0.2",
+    "axii-icons": "workspace:^1.0.2",
     "axios": "^0.21.1",
     "editorjs-table": "^1.4.10",
     "history": "^5.0.0",
@@ -45,7 +45,7 @@
     "x-data-spreadsheet": "^1.1.9"
   },
   "devDependencies": {
-    "@ariesate/are": "^0.0.2",
+    "@ariesate/are": "workspace:*",
     "command-line-args": "^5.1.1",
     "less": "^3.13.1",
     "minimist": "^1.2.5",
@@ -53,6 +53,6 @@
     "vite": "^2.5.0"
   },
   "peerDependencies": {
-    "axii": "^1.1.4"
+    "axii": "workspace:^1.1.4"
   }
 }

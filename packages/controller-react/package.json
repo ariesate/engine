@@ -9,7 +9,7 @@
     "test": "jest --passWithNoTests"
   },
   "devDependencies": {
-    "@ariesate/are": "^0.0.2",
+    "@ariesate/are": "workspace:*",
     "jest": "^27.3.0"
   }
 }

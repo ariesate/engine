@@ -30,6 +30,6 @@
     "rmfr": "^2.0.0"
   },
   "peerDependencies": {
-    "axii": "^1.0.5"
+    "axii": "workspace:^1.0.5"
   }
 }

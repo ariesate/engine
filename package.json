@@ -1,6 +1,14 @@
 {
   "name": "@ariesate/engine-monorepo",
   "private": "true",
-  "author": "ariesate@outlook.com",
-  "license": "MIT"
+  "scripts": {
+    "preinstall": "node scripts/preinstall",
+    "reset": "pnpm -r exec -- rm -rf ./node_modules"
+  },
+  "devDependencies": {
+    "@ariesate/are": "workspace:*",
+    "axii": "workspace:*",
+    "axii-components": "workspace:*",
+    "axii-icons": "workspace:*"
+  }
 }

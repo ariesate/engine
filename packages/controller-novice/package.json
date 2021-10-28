@@ -16,7 +16,7 @@
     "mobx-state-tree": "^1.0.1"
   },
   "devDependencies": {
-    "@ariesate/are": "^0.0.2",
+    "@ariesate/are": "workspace:*",
     "@jest/types": "^27.2.5",
     "dom-serialize": "^2.2.1",
     "esbuild-jest": "^0.5.0",

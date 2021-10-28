@@ -16,8 +16,8 @@
   "author": "sskyy",
   "license": "MIT",
   "dependencies": {
-    "axii": "^1.0.5",
-    "axii-components": "^1.0.14",
+    "axii": "workspace:^1.0.5",
+    "axii-components": "workspace:^1.0.14",
     "normalize.css": "^8.0.1"
   }
 }
