@@ -1,4 +1,4 @@
-import { createBrowserHistory } from 'history';
+import { createBrowserHistory, parsePath } from 'history';
 import { reactive, debounceComputed, replace } from 'axii'
 import { isEmptyObject } from '../util';
 
@@ -97,7 +97,10 @@ export default function useLocation(
 			debounceComputed(() => Object.assign(reactiveValues.query, partial))
 		},
 		goto(url) {
-			history.push(url)
+			history.push({
+				search: undefined,
+				...parsePath(url)
+			})
 		},
 	};
 }
