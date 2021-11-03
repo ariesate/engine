@@ -56,7 +56,7 @@ export default function EREditor({ data: rawData, customFields, onChange, onSave
   const commands = {
     copy: () => {
       copyTextToClipboard(`
-const data = ${JSON.stringify({ entities: toRaw(entities), relations: toRaw(relations) }, null, 4)}; 
+const data = ${JSON.stringify({ entities: toRaw(entities), relations: toRaw(relations) }, null, 4)};
 export default data;
 `
       )
@@ -142,6 +142,13 @@ export default data;
       fields: []
     })
     return false
+  }
+
+  const onNodeDelete = ({ node }) => {
+    const index = entities.findIndex(e => e.id === node.id)
+    if (index > -1) {
+      entities.splice(index, 1)
+    }
   }
 
   const validateEdge = ({ edge, type, previous }) => {
@@ -230,6 +237,7 @@ export default data;
     graph.on('blank:dblclick', onAddNode)
     graph.on('edge:connected', onEdgeConnect)
     graph.on('edge:removed', onEdgeDelete)
+    graph.on('node:removed', onNodeDelete)
     graph.on('cell:click', onCellClick)
     graph.on('node:moved', onNodeMoved)
 
@@ -239,6 +247,7 @@ export default data;
       graph.off('blank:dblclick', onGraphClick)
       graph.off('edge:connected', onEdgeConnect)
       graph.off('edge:removed', onEdgeDelete)
+      graph.off('node:removed', onNodeDelete)
       graph.off('cell:click', onCellClick)
       graph.off('node:moved', onNodeMoved)
     }
