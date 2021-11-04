@@ -18,6 +18,7 @@ const ReactiveValues = {
     })
 
     function observe(target) {
+      if (!target) return
       observer.observe(target)
       return () => {
         observer.unobserve(target)
@@ -34,6 +35,7 @@ const ReactiveValues = {
     })
 
     function observe(target) {
+      if (!target) return
       observer.observe(target)
       return () => {
         observer.unobserve(target)
@@ -73,6 +75,7 @@ function createCreateRef(reactiveValues) {
       set(target, key, value, receiver) {
 
         invariant(key === 'current', `you are setting ${key}`)
+
         Reflect.set(target, 'current', value, receiver)
 
         cancelFns.forEach(cancel => cancel())
