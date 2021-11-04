@@ -68,7 +68,11 @@ export default class ComponentNode {
 		// viewEffects 里面允许创建 watch，同样会自动回收
 		this.collectReactive(() => {
 			this.viewEffects.forEach((effect) => {
-				this.effectClearHandles.push(effect())
+				const effectCallback = effect()
+				if (effectCallback) {
+					invariant(typeof effectCallback === 'function', 'effect callback must be a function')
+					this.effectClearHandles.push(effectCallback)
+				}
 			})
 		})
 	}
