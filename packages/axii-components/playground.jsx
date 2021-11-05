@@ -19,13 +19,12 @@ const renderEmptyContent = (name) => {
 function ExampleCode() {
   const codeContainerRef = useRef()
 
-  useViewEffect(async () => {
+  useViewEffect(() => {
     if ( component) {
-      await import(`./playground/${component}.jsx`)
-
-      // TODO 因为 vite 不支持 dynamic assets 所以不得已只能这样写.
-      const promise = import(`./playground-assets/${component}.jsx`)
-      promise.then((contentModule) => {
+      import(`./playground/${component}.jsx`).then(() => {
+        // TODO 因为 vite 不支持 dynamic assets 所以不得已只能这样写.
+        return import(`./playground-assets/${component}.jsx`)
+      }).then((contentModule) => {
         const flask = new CodeFlask(codeContainerRef.current, { language: 'js', readonly: true });
         flask.updateCode(decodeURIComponent(contentModule.content))
       }).catch(e => {
