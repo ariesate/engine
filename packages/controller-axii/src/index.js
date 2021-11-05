@@ -14,8 +14,9 @@ import createScheduler from '@ariesate/are/createScheduler'
 import createPainter from '@ariesate/are/createPainter'
 import createDOMView from '@ariesate/are/DOMView/createDOMView'
 import createAxiiController from './controller'
-import { tryToRaw } from "./util";
+import {invariant, tryToRaw} from "./util";
 import implementDevToolInterface from './devToolInterface'
+import { version } from '../package.json'
 
 export { default as createPortal } from '@ariesate/are/createPortal'
 export { default as Fragment } from '@ariesate/are/Fragment'
@@ -62,6 +63,10 @@ export function render(vnode, domElement, ...controllerArgv) {
 
   return controller
 }
+
+// conflict detection.
+invariant(window.AXII_VERSION === undefined, `multiple axii detected, current version ${version}`)
+window.AXII_VERSION = version
 
 // TODO 根据 _DEV_ 变量判断
 implementDevToolInterface()
