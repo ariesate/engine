@@ -12,7 +12,7 @@ export default {
   resolve: {
     alias: [
       {find: 'axii', replacement: path.resolve(PACKAGE_ROOT_PATH, './controller-axii/src')},
-      {find: /^axii-icons\/(\w+).js$/i, replacement: `${path.resolve(PACKAGE_ROOT_PATH, './axii-icons/src')}/$1.jsx`},
+      {find: /^axii-icons\/(\w+)(.js)?$/i, replacement: `${path.resolve(PACKAGE_ROOT_PATH, './axii-icons/src')}/$1.jsx`},
       {find: '@ariesate/are', replacement: path.resolve(PACKAGE_ROOT_PATH, './engine')},
     ]
   }
