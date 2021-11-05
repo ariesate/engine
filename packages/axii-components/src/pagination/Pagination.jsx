@@ -47,6 +47,7 @@ export function useInfinitePageHelper(offset, limit, currentDataLength, total = 
 	})
 
 	const lastStablePageCount = atomComputed((prevLastStablePageCount) => {
+		if (total.value === 0) return 1
 		if (total.value !== Infinity) return Math.ceil(total.value/limit.value)
 		// Infinite 下，碰到了结尾，自动生成当前的 pageCount
 
