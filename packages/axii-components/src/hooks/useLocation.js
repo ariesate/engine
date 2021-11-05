@@ -1,5 +1,6 @@
-import { createBrowserHistory } from 'history';
+import { createBrowserHistory, parsePath } from 'history';
 import { reactive, debounceComputed, replace } from 'axii'
+import { isEmptyObject } from '../util';
 
 export const TYPE_NUMBER = 'NUMBER';
 export const TYPE_BOOLEAN = 'BOOLEAN';
@@ -15,7 +16,9 @@ function defaultParseSearch(search) {
 }
 
 function defaultStringifySearch(query) {
-	return `?${Object.entries(query).map(([name, queryStr]) => `${name}=${queryStr}`).join('&')}`
+	return  !isEmptyObject(query) 
+		? `?${Object.entries(query).map(([name, queryStr]) => `${name}=${queryStr}`).join('&')}`
+		: ''
 }
 
 const defaultToString = (t) => t && t.toString();
@@ -56,6 +59,15 @@ export default function useLocation(
 		query: callTypeTransformers(parse(history.location.search), typeTransformers)
 	})
 
+	history.listen(() => {
+		debounceComputed(() => {
+			reactiveValues.pathname = history.location.pathname
+			reactiveValues.search = history.location.search
+			// 重新 parse 一遍
+			reactiveValues.query = callTypeTransformers(parse(history.location.search), typeTransformers)
+		})
+	})
+
 	return {
 		get pathname() {
 			return reactiveValues.pathname
@@ -69,7 +81,7 @@ export default function useLocation(
 		set query(next) {
 			history.push({
 				pathname: history.location.pathname,
-				query: callTypeTransformers(next, typeTransformers, true),
+				search: stringify(callTypeTransformers(next, typeTransformers, true)),
 			});
 
 			debounceComputed(() => replace(reactiveValues.query, next))
@@ -82,19 +94,12 @@ export default function useLocation(
 					...callTypeTransformers(partial, typeTransformers, true), // 可以用 undefined 来清除
 				}),
 			});
-			// console.log(stringify({
-			// 	...parse(history.location.search), // 原来的
-			// 	...callTypeTransformers(partial, typeTransformers, true), // 可以用 undefined 来清除
-			// }))
 			debounceComputed(() => Object.assign(reactiveValues.query, partial))
 		},
 		goto(url) {
-			history.push(url)
-			debounceComputed(() => {
-				reactiveValues.pathname = history.location.pathname
-				reactiveValues.search = history.location.search
-				// 重新 parse 一遍
-				reactiveValues.query = callTypeTransformers(parse(history.location.search), typeTransformers)
+			history.push({
+				search: undefined,
+				...parsePath(url)
 			})
 		},
 	};

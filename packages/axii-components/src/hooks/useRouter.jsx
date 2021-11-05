@@ -37,7 +37,7 @@ export default function useRouter(routes, NotFound, location = useLocation()) {
 		return result
 	}, true)
 
-	return <div>{() => renderMatchedComponent(matches, 0, NotFound)}</div>
+	return <>{() => renderMatchedComponent(matches, 0, NotFound)}</>
 
 }
 
