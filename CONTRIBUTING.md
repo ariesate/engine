@@ -29,7 +29,7 @@ pnpm run build:dev # 可选（但往往都需要），目的是让 axii-componen
 
 ```bash
 $ cd packages/axii-components/
-$ pnpm run publish # 或者使用 nr publish
+$ pnpm run release # 或者使用 nr release
   building....
 
   The current version in package.json is 1.3.16

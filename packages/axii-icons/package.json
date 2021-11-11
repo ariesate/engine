@@ -17,7 +17,7 @@
   "scripts": {
     "start": "pnpm start --filter \"axii-icons-playground\"",
     "build": "node ./scripts/build.js",
-    "publish": "pnpm run build && bump --commit \"release: axii-icons v%s\" --push && pnpm publish --no-git-checks",
+    "release": "pnpm run build && bump --commit \"release: axii-icons v%s\" --push && pnpm publish --no-git-checks",
     "postinstall": "pnpm build"
   },
   "dependencies": {
