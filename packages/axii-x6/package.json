@@ -22,7 +22,7 @@
     "start": "pnpm start --filter \"axii-x6-playground\"",
     "build": "vite build",
     "build:dev": "vite build --mode=development",
-    "publish": "pnpm run build && bump --commit \"release: axii-x6 v%s\" --push && npm publish",
+    "publish": "pnpm run build && bump --commit \"release: axii-x6 v%s\" --push && pnpm publish --no-git-checks",
     "postinstall": "pnpm run build"
   },
   "dependencies": {
