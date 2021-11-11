@@ -13,7 +13,7 @@ import { shallowEqual } from "../util";
 /**
  * nextNodes 是个数组，表示后面并行，应该是先并行，再分支。
  */
-export default function Edge({ source, target, attrs, labels, onChange, ...rest }) {
+export default function Edge({ source, target, attrs, labels, onChange, selected, ...rest }) {
   const graphRef = useContext(GraphContext)
 
   useViewEffect(() => {
@@ -36,10 +36,31 @@ export default function Edge({ source, target, attrs, labels, onChange, ...rest 
       ...rest
     })
 
-
     watch(() => traverse(attrs), () => {
       edge.setAttrs(toRaw(attrs), true)
-    })
+    });
+
+    watch(() => selected.value, () => {
+      let result = {
+        line: {
+          opacity: 1,
+        },
+        text: {
+          opacity: 1,
+        }
+      };
+      if (!selected.value) {
+        Object.assign(result, {
+          line: {
+            opacity: 0.2,
+          },
+          text: {
+            opacity: 0.2,
+          }
+        });  
+      }
+      edge.setAttrs(result);
+    });    
 
 
     // watch source
