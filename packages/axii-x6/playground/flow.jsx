@@ -4,6 +4,8 @@
  */
 /** @jsx createElement */
 import { createElement, render } from 'axii'
-import Editor from 'axii-x6/src/editors/flow/flow'
+
+// FIXME: 使用 'axii-x6' 引入模块
+import Editor from '../src/editors/flow/flow'
 
 render(<Editor />, document.getElementById('root'))

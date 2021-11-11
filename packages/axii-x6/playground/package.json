@@ -3,7 +3,7 @@
   "private": "true",
   "type": "module",
   "scripts": {
-    "start": "pnpm build:lib & vite",
+    "start": "vite",
     "build:lib": "pnpm build:dev --filter \"axii-x6\""
   },
   "devDependencies": {

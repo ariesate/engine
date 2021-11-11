@@ -22,8 +22,7 @@
     "start": "pnpm start --filter \"axii-x6-playground\"",
     "build": "vite build",
     "build:dev": "vite build --mode=development",
-    "publish:patch": "node ./scripts/publish.js --patch",
-    "publish:minor": "node ./scripts/publish.js --minor"
+    "publish": "pnpm run build && bump --commit \"release: axii-x6 v%s\" --push && npm publish"
   },
   "dependencies": {
     "@antv/x6": "^1.20.0",
@@ -34,6 +33,7 @@
     "lodash-es": "^4.17.20"
   },
   "devDependencies": {
+    "@jsdevtools/version-bump-prompt": "^6.1.0",
     "command-line-args": "^5.1.1",
     "less": "^3.12.2",
     "vite": "^2.1.5"

@@ -3,10 +3,12 @@
  * 理论上用 playground.jsx 会更好。
  */
 /** @jsx createElement */
-import { createElement, render, useRef } from 'axii'
-import { debounce } from 'lodash-es'
-import Editor from 'axii-x6/src/editors/er/EREditor'
-import localRawData from 'axii-x6/src/editors/er/data'
+import { createElement, render, useRef } from "axii";
+import { debounce } from "lodash-es";
+
+import { EREditor } from "axii-x6";
+// FIXME: 使用 'axii-x6' 或者其他更合适的方式引入数据
+import localRawData from "../src/editors/er/data";
 
 /**
  *
@@ -17,36 +19,42 @@ function ab2str(buf) {
   return String.fromCharCode.apply(null, new Uint16Array(buf));
 }
 
-const isLocal = window.acquireVsCodeApi === undefined
-const editorRef = useRef()
-const root = document.getElementById('root')
-
+const isLocal = window.acquireVsCodeApi === undefined;
+const editorRef = useRef();
+const root = document.getElementById("root");
 
 if (isLocal) {
-  render(<Editor data={localRawData} ref={editorRef} />, root)
+  render(<EREditor data={localRawData} ref={editorRef} />, root);
 } else {
-  const vscode = isLocal ? window: window.acquireVsCodeApi()
+  const vscode = isLocal ? window : window.acquireVsCodeApi();
   const onDataChange = debounce(() => {
-    vscode.postMessage({type: 'change'})
-  }, 100)
+    vscode.postMessage({ type: "change" });
+  }, 100);
 
-  window.addEventListener('message', async e => {
+  window.addEventListener("message", async (e) => {
     const { type, body, requestId } = e.data;
     switch (type) {
-      case 'init': {
-        console.log("init",body.value)
-        const rawData = JSON.parse(body.value)
-        render(<Editor data={rawData} ref={editorRef} onChange={onDataChange}/>, root)
+      case "init": {
+        console.log("init", body.value);
+        const rawData = JSON.parse(body.value);
+        render(
+          <EREditor data={rawData} ref={editorRef} onChange={onDataChange} />,
+          root
+        );
         return;
       }
-      case 'getFileData': {
+      case "getFileData": {
         // Get the image data for the canvas and post it back to the extension.
-        vscode.postMessage({ type: 'response', requestId, body: JSON.stringify(editorRef.current.getData(), null, 2)});
-        console.log("getFileData")
+        vscode.postMessage({
+          type: "response",
+          requestId,
+          body: JSON.stringify(editorRef.current.getData(), null, 2),
+        });
+        console.log("getFileData");
         return;
       }
     }
   });
 
-  vscode.postMessage({ type: 'ready' });
+  vscode.postMessage({ type: "ready" });
 }
