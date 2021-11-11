@@ -24,10 +24,9 @@
   "scripts": {
     "start": "pnpm start --filter \"axii-components-playground\"",
     "gen": "node ./scripts/generateIndexEntry.js",
-    "build:dev": "rimraf ./dist & pnpm gen & node scripts/build --dev",
-    "build": "rimraf ./dist & pnpm gen & node scripts/build",
-    "publish:patch": "node ./scripts/publish.js --patch",
-    "publish:minor": "node ./scripts/publish.js --minor",
+    "build:dev": "rimraf ./dist && pnpm gen & node scripts/build --dev",
+    "build": "rimraf ./dist && pnpm gen & node scripts/build",
+    "publish": "pnpm run build && bump --commit \"release: axii-components v%s\" --push && npm publish",
     "postinstall": "pnpm build"
   },
   "dependencies": {
@@ -46,6 +45,7 @@
   },
   "devDependencies": {
     "@ariesate/are": "workspace:*",
+    "@jsdevtools/version-bump-prompt": "^6.1.0",
     "command-line-args": "^5.1.1",
     "less": "^3.13.1",
     "minimist": "^1.2.5",
