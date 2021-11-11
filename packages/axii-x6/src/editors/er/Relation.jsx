@@ -10,11 +10,11 @@ import {
 import Edge from "../../components/Edge";
 import {PORT_JOINT} from "./EREditor";
 
-export default function Relation({ relation, onChange }) {
+export default function Relation({ relation, onChange, selected }) {
   useViewEffect(() => {
     if (onChange) {
       watch(() => traverse(relation), onChange)
-    }
+    }    
   })
 
   const source = computed(() => {
@@ -30,6 +30,6 @@ export default function Relation({ relation, onChange }) {
     }
   })
   const labels = computed(() => [`${relation.name}[${relation.type}]`])
-  return <Edge id={relation.id} labels={labels} source={source} target={target} key={relation.id} />
+  return <Edge id={relation.id} labels={labels} source={source} target={target} key={relation.id} selected={selected} />
 }
 

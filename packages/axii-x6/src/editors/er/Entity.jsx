@@ -9,11 +9,12 @@ import {
   watch,
   traverse,
   computed,
+  useContext,
 } from 'axii'
 import {useElementPosition, manualTrigger as createManualTrigger } from 'axii-components'
 import Port from './Port'
 import { PORT_JOINT } from "./EREditor";
-
+import ViewContext from '../../shape/context'
 
 /**
  * 字段的所有选项：
@@ -138,12 +139,45 @@ function Entity({ entity, onChange }) {
 
 Entity.Style = (fragments) => {
   const el = fragments.root.elements
-  el.entity.style({
-    background: '#fff',
-    borderColor: '#333',
-    borderStyle: 'solid',
-    overflow: 'visible',
-  })
+
+  const { node } = useContext(ViewContext);
+
+  el.entity.style(props => {
+    const result = {
+      background: '#fff',
+      borderColor: '#333',
+      borderStyle: 'solid',
+      overflow: 'visible',
+      opacity: 1,
+    };
+
+    const portAttrs = {
+      circle: {
+        opacity: 1,
+      }
+    };
+
+    // entity及下属的port都在Style中统一处理
+    if (!props.selected?.value) {
+      Object.assign(result, {
+        opacity: 0.2,
+      });
+      Object.assign(portAttrs.circle, {
+        opacity: 0.2,
+      })
+    }
+
+    node.getPorts().forEach(port => {
+      if (port.attrs?.circle?.opacity !== portAttrs.circle.opacity) {
+        // setPortProp会阻塞，使用Idle降低卡顿感
+        requestIdleCallback(() => {
+          node.setPortProp(port.id, { attrs: portAttrs })
+        });
+      }
+    });
+
+    return result;
+  });
 
   el.name.style({
     background: '#0060a0',
