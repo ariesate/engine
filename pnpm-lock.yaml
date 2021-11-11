@@ -173,6 +173,7 @@ importers:
     specifiers:
       '@ariesate/are': workspace:*
       '@jest/types': ^27.2.5
+      '@jsdevtools/version-bump-prompt': ^6.1.0
       '@testing-library/jest-dom': ^5.11.10
       command-line-args: ^5.1.1
       esbuild-jest: ^0.5.0
@@ -189,6 +190,7 @@ importers:
     devDependencies:
       '@ariesate/are': link:../engine
       '@jest/types': 27.2.5
+      '@jsdevtools/version-bump-prompt': 6.1.0
       '@testing-library/jest-dom': 5.14.1
       command-line-args: 5.2.0
       esbuild-jest: 0.5.0
