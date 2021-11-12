@@ -15,7 +15,7 @@
     ".": {
       "import": "./dist/components/index.js"
     },
-    "./": "./dist/",
+    "./": "./",
     "./imageEditor": "./dist/imageEditor/index.js",
     "./editorjs": "./dist/editorjs/index.js",
     "./spreadsheet": "./dist/spreadsheet/index.js",
