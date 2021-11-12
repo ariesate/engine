@@ -25,7 +25,7 @@
     "release": "pnpm run build && bump --commit \"release: axii v%s\" --push && pnpm publish --no-git-checks",
     "test": "jest",
     "coverage": "jest --coverage",
-    "postinstall": "pnpm build"
+    "prepare": "pnpm build"
   },
   "dependencies": {
     "fast-json-patch": "^3.0.0-1",
