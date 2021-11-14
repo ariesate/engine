@@ -14,9 +14,11 @@ import {
 import useLayer from "../hooks/useLayer";
 import {composeRef, nextTick} from "../util";
 import Input from "../input/Input";
+import Checkbox from '../checkbox/Checkbox';
 import scen from "../pattern";
+import { result } from 'axii/src/util';
 
-export function Select({value, options, onChange, renderOption, onActiveOptionChange, activeOptionIndex, renderValue, onFocus, onBlur, focused, ref}, fragments) {
+export function Select({value, options, onChange, renderOption, onActiveOptionChange, activeOptionIndex, renderValue, onFocus, onBlur, focused, ref, multi, match}, fragments) {
   const optionListRef = useRef()
 
   const onInputFocus = () => {
@@ -51,6 +53,12 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
     }
   }
 
+  // const checkedList = reactive(multi && value.length ? options.map((o) => match(value, o)) : [])
+  // const onCheck = (option, index) => {
+  //   onChange(option, !checkedList[index], index)
+  //   checkedList[index] = !checkedList[index]
+  // }
+
   const {source, node: optionListNode} = useLayer((sourceRef) => {
     return (
       <optionList
@@ -69,10 +77,15 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
             block-font-size={scen().fontSize()}
             block-padding={`${scen().spacing(-1)}px ${scen().spacing()}px `}
             onClick={() => {
-              onChange(option)
-              onBlur()
+              // if (multi) {
+              //   onCheck(option, index)
+              // } else {
+                onChange(option)
+                onBlur()
+              // }
             }}
           >
+            {multi ? <Checkbox value={checkedList[index]} onClick={() => onCheck(option, index)} /> : null}
             {renderOption(option)}
           </optionItem>
         ))}
@@ -119,7 +132,7 @@ Select.propTypes = {
   renderValue: propTypes.function.default(() => (value) => value.value ? value.value.name : ''),
   optionToValue: propTypes.function.default(() => (option) => Object.assign({}, option)),
   onChange: propTypes.callback.default(() => (option, {value, optionToValue}) => {
-
+    if (!optionToValue) return
     value.value = optionToValue(option)
   }),
   onActiveOptionChange: propTypes.callback.default(() => (index, {activeOptionIndex}) => {
@@ -147,7 +160,6 @@ Select.Style = (fragments) => {
 }
 
 Select.forwardRef = true
-
 
 /**
  * TODO 搜索模式。支持回车选中。
@@ -262,7 +274,23 @@ RecommendMode.propTypes = {
   }),
 }
 
-
 // TODO Select 的多选 feature
+export function MultipleMode(fragments) {
+  fragments.optionItem.modify(result, ({ onChange, match, options, value }) => {
+    const checkedList = reactive(value.length ? options.map((o) => match(value, o)) : [])
+    const onCheck = (option, index) => {
+      onChange(option, !checkedList[index], index)
+      checkedList[index] = !checkedList[index]
+    }
 
-export default createComponent(Select, [SearchableFeature, RecommendMode])
+    result.forEach((item, index) => {
+      item.onClick = (option) => {
+        onCheck(option, index)
+      }
+    })
+  })
+}
+
+MultipleMode.match = ({ multi }) => multi
+
+export default createComponent(Select, [SearchableFeature, RecommendMode, MultipleMode])
