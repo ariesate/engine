@@ -18,7 +18,7 @@
     "start": "pnpm start --filter \"axii-icons-playground\"",
     "build": "node ./scripts/build.js",
     "release": "pnpm run build && bump --commit \"release: axii-icons v%s\" --push && pnpm publish --no-git-checks",
-    "postinstall": "pnpm build"
+    "prepare": "pnpm build"
   },
   "dependencies": {
     "@icon-park/svg": "^1.3.1"

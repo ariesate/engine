@@ -15,7 +15,7 @@
     ".": {
       "import": "./dist/components/index.js"
     },
-    "./": "./dist/",
+    "./": "./",
     "./imageEditor": "./dist/imageEditor/index.js",
     "./editorjs": "./dist/editorjs/index.js",
     "./spreadsheet": "./dist/spreadsheet/index.js",
@@ -27,7 +27,7 @@
     "build:dev": "rimraf ./dist && pnpm gen & node scripts/build --dev",
     "build": "rimraf ./dist && pnpm gen & node scripts/build",
     "release": "pnpm run build && bump --commit \"release: axii-components v%s\" --push && pnpm publish --no-git-checks",
-    "postinstall": "pnpm build"
+    "prepare": "pnpm build"
   },
   "dependencies": {
     "@ant-design/colors": "^5.0.1",

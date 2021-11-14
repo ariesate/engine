@@ -1,6 +1,6 @@
 {
   "name": "axii-x6",
-  "version": "1.0.5",
+  "version": "1.0.7",
   "author": "sskyy <skyking_H@hotmail.com>",
   "license": "MIT",
   "type": "module",
@@ -22,8 +22,8 @@
     "start": "pnpm start --filter \"axii-x6-playground\"",
     "build": "vite build",
     "build:dev": "vite build --mode=development",
-    "release": "pnpm run build && bump --commit \"release: axii-x6 v%s\" --push && pnpm publish --no-git-checks",
-    "postinstall": "pnpm run build"
+    "release": "pnpm run build && pnpm publish --no-git-checks",
+    "prepare": "pnpm run build"
   },
   "dependencies": {
     "@antv/x6": "^1.20.0",
@@ -41,6 +41,6 @@
     "vite": "^2.1.5"
   },
   "peerDependencies": {
-    "axii": "workspace:^1.1.17"
+    "axii": "workspace:^1.1.7"
   }
 }
