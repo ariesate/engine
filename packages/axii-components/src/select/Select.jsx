@@ -16,9 +16,8 @@ import {composeRef, nextTick} from "../util";
 import Input from "../input/Input";
 import Checkbox from '../checkbox/Checkbox';
 import scen from "../pattern";
-import { result } from 'axii/src/util';
 
-export function Select({value, options, onChange, renderOption, onActiveOptionChange, activeOptionIndex, renderValue, onFocus, onBlur, focused, ref, multi, match}, fragments) {
+export function Select({value, options, onChange, renderOption, onActiveOptionChange, activeOptionIndex, renderValue, onFocus, onBlur, focused, ref}, fragments) {
   const optionListRef = useRef()
 
   const onInputFocus = () => {
@@ -53,12 +52,6 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
     }
   }
 
-  // const checkedList = reactive(multi && value.length ? options.map((o) => match(value, o)) : [])
-  // const onCheck = (option, index) => {
-  //   onChange(option, !checkedList[index], index)
-  //   checkedList[index] = !checkedList[index]
-  // }
-
   const {source, node: optionListNode} = useLayer((sourceRef) => {
     return (
       <optionList
@@ -76,16 +69,11 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
             block
             block-font-size={scen().fontSize()}
             block-padding={`${scen().spacing(-1)}px ${scen().spacing()}px `}
-            onClick={() => {
-              // if (multi) {
-              //   onCheck(option, index)
-              // } else {
+            onClick={(option, index) => {
                 onChange(option)
                 onBlur()
-              // }
             }}
           >
-            {multi ? <Checkbox value={checkedList[index]} onClick={() => onCheck(option, index)} /> : null}
             {renderOption(option)}
           </optionItem>
         ))}
@@ -276,19 +264,22 @@ RecommendMode.propTypes = {
 
 // TODO Select 的多选 feature
 export function MultipleMode(fragments) {
-  fragments.optionItem.modify(result, ({ onChange, match, options, value }) => {
-    const checkedList = reactive(value.length ? options.map((o) => match(value, o)) : [])
-    const onCheck = (option, index) => {
-      onChange(option, !checkedList[index], index)
-      checkedList[index] = !checkedList[index]
+  fragments.optionItem.modify((item, { onChange, match, value, option, index }) => {
+    const checked = atom(match(value, option))
+    console.log(checked.value)
+    const onClick = (option, index) => {
+      checked.value = !checked.value
+      onChange(option, checked.value, index)
     }
+    item.attributes.onClick = () => onClick(option, index)
+    item.children.unshift(<Checkbox value={checked} />)
 
-    result.forEach((item, index) => {
-      item.onClick = (option) => {
-        onCheck(option, index)
-      }
-    })
+    return item
   })
+}
+
+MultipleMode.propTypes = {
+  multi : propTypes.feature.default(() => false),
 }
 
 MultipleMode.match = ({ multi }) => multi
