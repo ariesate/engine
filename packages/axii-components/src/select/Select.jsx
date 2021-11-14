@@ -69,9 +69,9 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
             block
             block-font-size={scen().fontSize()}
             block-padding={`${scen().spacing(-1)}px ${scen().spacing()}px `}
-            onClick={(option, index) => {
-                onChange(option)
-                onBlur()
+            onClick={() => {
+              onChange(option)
+              onBlur()
             }}
           >
             {renderOption(option)}
