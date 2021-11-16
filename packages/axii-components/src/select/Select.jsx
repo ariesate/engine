@@ -17,7 +17,6 @@ import Input from "../input/Input";
 import Checkbox from '../checkbox/Checkbox';
 import scen from "../pattern";
 import Down from 'axii-icons/Down';
-import Up from 'axii-icons/Up';
 
 export function Select({value, options, onChange, renderOption, onActiveOptionChange, activeOptionIndex, renderValue, onFocus, onBlur, focused, ref}, fragments) {
   const optionListRef = useRef()
@@ -97,9 +96,7 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
         value={atomComputed(() => renderValue(value))}
       >
         {{
-          after: (props) => {
-            return props.focused.value ? <Up/> : <Down />;            
-          }
+          after: <Down />
         }}
       </selectInput>
       {optionListNode}
