@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "jsx": "react",
+    "jsxFactory": "createElement",
+    "downlevelIteration": true,
+    "esModuleInterop": true
+  },
+  "include": ["src"]
+}

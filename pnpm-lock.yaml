@@ -142,9 +142,12 @@ importers:
       axios: ^0.21.1
       command-line-args: ^5.1.1
       copy-text-to-clipboard: ^2.2.0
+      eventemitter3: ^4.0.7
       less: ^3.12.2
+      lodash: ^4.17.4
       lodash-es: ^4.17.20
       npm-run-all: ^4.1.5
+      typescript: ^4.5.2
       vite: ^2.1.5
     dependencies:
       '@antv/x6': 1.28.1
@@ -152,26 +155,16 @@ importers:
       axii-icons: link:../axii-icons
       axios: 0.21.4
       copy-text-to-clipboard: 2.2.0
+      eventemitter3: 4.0.7
+      lodash: 4.17.21
       lodash-es: 4.17.21
+      typescript: 4.5.2
     devDependencies:
       '@jsdevtools/version-bump-prompt': 6.1.0
       command-line-args: 5.2.0
       less: 3.13.1
       npm-run-all: 4.1.5
       vite: 2.6.13_less@3.13.1
-
-  packages/axii-x6/playground:
-    specifiers:
-      axii: workspace:*
-      axii-components: workspace:*
-      axii-x6: workspace:*
-      vite: ^2.6.10
-    dependencies:
-      axii: link:../../controller-axii
-      axii-components: link:../../axii-components
-      axii-x6: link:..
-    devDependencies:
-      vite: 2.6.13
 
   packages/controller-axii:
     specifiers:
@@ -4585,7 +4578,6 @@ packages:
 
   /eventemitter3/4.0.7:
     resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
-    dev: true
 
   /events/3.3.0:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
@@ -10055,6 +10047,12 @@ packages:
   /typedarray/0.0.6:
     resolution: {integrity: sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=}
     dev: true
+
+  /typescript/4.5.2:
+    resolution: {integrity: sha512-5BlMof9H1yGt0P8/WF+wPNw6GfctgGjXp5hkblpyT+8rkASSmkUKMXrxR0Xg8ThVCi/JnHQiKXeBaEwCeQwMFw==}
+    engines: {node: '>=4.2.0'}
+    hasBin: true
+    dev: false
 
   /typical/4.0.0:
     resolution: {integrity: sha512-VAH4IvQ7BDFYglMd7BPRDfLgxZZX4O4TFcRDA6EN5X7erNJJq+McIEp8np9aVtxrCJ6qx4GTYVfOWNjcqwZgRw==}
