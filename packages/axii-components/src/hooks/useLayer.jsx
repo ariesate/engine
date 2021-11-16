@@ -24,6 +24,7 @@ function defaultCreateContainer() {
   const portalRoot = document.createElement('div')
   document.body.appendChild(portalRoot)
   return [portalRoot, () => {
+    if (!portalRoot?.parentElement) return
     portalRoot.parentElement.removeChild(portalRoot)
   }]
 }
