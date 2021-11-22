@@ -6,16 +6,78 @@ import { createElement, render, useRef } from "axii";
 import { DEFAULT_SHAPE } from '../../Node';
 
 export const Register = {
-  register(nodeConfig) {
-
-  },
   htmlComponentMap: new Map(),
   registerHTMLComponent(name, func) {
     if (!this.htmlComponentMap.get(name)) {
       this.htmlComponentMap.set(name, func);
       X6Graph.registerHTMLComponent(name, func);
     }
-  }
+  },
+  registerHTMLComponentRender({ dm, myNode, myPort }) {
+    return (node) => {
+      const wrap = document.createElement('div')
+      const nodeConfig = dm.findNode(node.id);
+      
+      const Cpt = myNode.getComponent(nodeConfig);
+
+      window.fff = nodeConfig.fields;
+      
+      render(<Cpt {...nodeConfig} topState={myNode.topState} />, wrap);
+
+      setTimeout(() => {
+        const { width, height } = (wrap.children[0].getBoundingClientRect());
+        node.setProp({ width, height });
+        myNode.setSize({ width, height });      
+
+        const portConfig = myPort.getPortConfig(nodeConfig);
+
+        const ports = {
+          groups: new Array(portConfig.counts).fill('p').map((idPre, index) => {
+            const position = portConfig.positions[index];
+            return {
+              [`${idPre}${index}`]: {
+                position: [position.x, position.y],
+                attrs: {
+                  fo: {
+                    width: portConfig.size[0],
+                    height: portConfig.size[1],
+                    magnet: true,
+                  }
+                }
+              }
+            };
+          }).reduce((p, n) => Object.assign(p, n), {}),
+          items: new Array(portConfig.counts).fill('p').map((idPre, index) => {
+            return {
+              id: `${idPre}${index}`,
+              magnet: true,
+              group: `${idPre}${index}`,
+            };
+          }),
+        };
+        node.setProp({ ports });
+
+      }, 50);
+
+      return wrap;
+    }
+  },
+  registerPortRender({ dm }) {
+    return args => {
+      const node = args.node;
+      const originNode = dm.findNode(node.id);
+      const nodeComponent = dm.getShapeComponent(originNode.shape);
+  
+      const selectors = args.contentSelectors
+      const container = selectors && selectors.foContent
+      if (container) {
+        const portInst = nodeComponent[1];
+        const Cpt = portInst.getComponent(originNode);
+        console.log('nodeComponent.topState: ', portInst.topState);
+        render(createElement(Cpt, { ...originNode, topState: portInst.topState }), container);
+      }  
+    }
+  },
 };
 
 export const Graph = {
@@ -27,25 +89,23 @@ export const Graph = {
   },
 
   init(container, dm, config) {
-    const graph = createFlowGraph(container, dm, config);
+    const graph = createFlowGraph(container, {
+      ...config, 
+      onPortRendered: Register.registerPortRender({
+        dm,
+      }),
+    });
         
     const allShapeComponents = dm.getAllShapeComponents();
 
-    allShapeComponents.forEach(([myNode]) => {
+    allShapeComponents.forEach(([myNode, myPort]) => {
       const registerKey = this.getHtmlKey(myNode.shape);
 
-      Register.registerHTMLComponent(registerKey, (node) => {
-        const wrap = document.createElement('div')
-        
-        const Cpt = myNode.getComponent();
-
-        const nodeConfig = dm.findNode(node.id);
-        window.fff = nodeConfig.fields;
-        
-        render(<Cpt name={nodeConfig.name} fields={nodeConfig.fields} />, wrap);
-  
-        return wrap;
-      });  
+      Register.registerHTMLComponent(registerKey, Register.registerHTMLComponentRender({
+        myNode,
+        myPort,
+        dm,
+      }));  
     });
 
     this.graph = graph;
@@ -56,6 +116,7 @@ export const Graph = {
 
     const nodeConfigView = nodeConfig.view;
     delete nodeConfig.view;
+
     const node = lodash.merge({
       ...nodeConfigView,
     }, nodeConfig, {
@@ -68,6 +129,7 @@ export const Graph = {
         },
       },
       html: htmlKey,
+      ports: {},      
     });
 
     const x6NodeInstance = this.graph.addNode(node);

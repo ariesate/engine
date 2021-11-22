@@ -33,21 +33,31 @@ interface ILayout {
   Other: Axii.Component;
 }
 
+export interface ITopState {
+  [key: string]: any;
+}
+
 // -------
 export abstract class K6Node {
+  topState: ITopState;
   abstract shape: INodeShape;
   bbox: IBBox = { x: 10, y: 10 };
 
   ports: K6Port[] = [];
 
+  size: number[] = [0, 0];
+
   constructor () {
 
   }
 
-  abstract getComponent(data?: INodeViewProps): Axii.Component;
+  setSize(args: { width:number, height:number }) {
+    console.log('args: ', args);
+    this.size = [args.width, args.height];
+  }
 
-  Node: Axii.Component;
- }
+  abstract getComponent(data?: INodeViewProps): Axii.Component;
+}
 export const DEFAULT_SHAPE = 'enitity-shape';
 export class K6NodeChild extends K6Node {
   shape = DEFAULT_SHAPE;

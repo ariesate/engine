@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "module": "esnext",
     "jsx": "react",
     "jsxFactory": "createElement",
     "downlevelIteration": true

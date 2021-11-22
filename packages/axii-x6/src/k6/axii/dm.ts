@@ -13,16 +13,27 @@ type Group = [typeof K6NodeChild, typeof K6PortChild, typeof K6EdgeChild];
 
 type ShapeComponent = [K6Node, K6Port, K6Edge];
 
+interface ITopState {
+  [key: string]: any;
+}
+
 class DataManager {
   nodes: IDataNode[] = [];
   nodeShapeComponentMap: Map<string, ShapeComponent> = new Map();
+  topState: ITopState | null = null;
   constructor() {
+  }
+  readState(obj: object) {
+    this.topState = reactive(obj);
   }
   readNodesData(nodes: IDataNode[]) {
     this.nodes = reactive(nodes);
   }
   findNode(id: string) {
-    return this.nodes.find(n => n.id === id);
+    const n = this.nodes.find(n => n.id === id);
+    return {
+      ...n,
+    };
   }
   readComponents(groups: Group[]) {
     groups.forEach(group => {
@@ -32,6 +43,12 @@ class DataManager {
       const portComponent = new PortCls(nodeComponent);
       const edgeComponent = new EdgeCls(nodeComponent);
 
+      [
+        nodeComponent,
+        portComponent,
+        edgeComponent,
+      ].forEach(c => c.topState = this.topState);
+      
       this.nodeShapeComponentMap.set(nodeComponent.shape, [
         nodeComponent,
         portComponent,
@@ -45,6 +62,7 @@ class DataManager {
       ...this.nodeShapeComponentMap.values(),
     ];
   }
+  
 
   getShapeComponent(shapeName: string): ShapeComponent {
     let sc = this.nodeShapeComponentMap.get(shapeName);

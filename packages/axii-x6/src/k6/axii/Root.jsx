@@ -17,7 +17,8 @@ function Root({ children }) {
 
   return (
     <RootContext.Provider value={{
-      groups,
+      groups: [],
+      states: [],
     }}>
       <root>
         {() => children}

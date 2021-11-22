@@ -25,17 +25,80 @@ export class EntityEdge extends K6Edge {
 }
 
 export class EntityPort extends K6Port {
-  constructor(node) {
-    super(node);
+  constructor(k6Node) {
+    super(k6Node);
   }
-  getComponent(index) {
-     
-    function PortRender() {
+  getPortConfig(nodeConfig) {
+    const counts = nodeConfig.fields.reduce((num, obj) => {
+      return num + (obj.type === 'rel' ? 2 : 0);
+    }, 0);
+
+    console.log('this.contextNode: ', this.contextNode.size);
+
+    const refX = -10;
+
+    const positions = nodeConfig.fields.map((obj, index) => {
+      if (obj.type === 'rel') {
+        return [
+          {
+            x: refX,
+            y: index * 40 + 50,
+          },
+          {
+            x: this.contextNode.size[0] + refX,
+            y: index * 40 + 50,
+          }
+        ];
+      }
+      return null
+    }).filter(Boolean).flat();
+
+    return {
+      counts,
+      size: [20, 20],
+      positions,
+    };
+  }
+  getComponent(nodeConfig) {
+
+
+    const PortRender = () => {
+      const ttt = computed(() => {
+        return this.topState.selectItemId === nodeConfig.id ? 'green': 'yellow';
+      });
+
       return (
-        <port>          
+        <port block onMouseOver={() => console.log('mouse over')} >
         </port>
       );
     }
+    PortRender.Style = (frag) => {
+      const genStyle = (a = {}) => ({
+        width: '16px',
+        height: '16px',
+        backgroundColor: 'red',
+        borderRadius: '50%',
+        ...a,
+      });
+      frag.root.elements.port.style(props => {
+        const s = genStyle();
+        const s2 = props.topState.selectItemId === nodeConfig.id ? 'green': 'yellow';
+        
+        s.backgroundColor = s2;
+
+        return s;
+      });
+
+      // watch(() => this.topState.selectItemId, () => {
+      //   const color = this.topState.selectItemId === nodeConfig.id ? 'green': 'yellow';
+      //   console.log('this.topState.selectItemId === nodeConfig.id: ', color, this.topState.selectItemId, nodeConfig.id);
+      //   const s = ps({
+      //     backgroundColor: color,
+      //   });
+      //   console.log('s: ', s);
+      //   frag.root.elements.port.style(s);
+      // });
+    };
 
     return createComponent(PortRender);
   }
@@ -70,7 +133,7 @@ export class EntityNode extends K6Node {
     
     const Field = createComponent(RawField)    
 
-    function EntityRender({ name, fields }) {
+    const EntityRender = ({ name, fields, id }) => {
 
       const entityPosition = reactive({})
       const positionTrigger = createManualTrigger();
@@ -81,10 +144,16 @@ export class EntityNode extends K6Node {
         return () => {
           positionTrigger.destroy()
         }
-      })
-    
+      });
+
+      const clickOnEntity = () => {
+        console.log('id: ', id);
+        this.topState.selectItemId = id;
+      };
+
       return (
         <entity 
+          onClick={() => clickOnEntity()}
           inline
           ref={entityRef}>
           <name block block-padding-4px>{name}</name>
@@ -106,3 +175,7 @@ export class EntityNode extends K6Node {
     return createComponent(EntityRender);
   }
 }
+
+export const topState = () => ({
+  selectItemId: '',
+});
