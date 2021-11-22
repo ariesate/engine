@@ -2,12 +2,20 @@ import {
   reactive,
 } from 'axii';
 
-import { IBBox, IX6Cell, IX6Node } from '../basicTypes';
+import { IBBox, IX6Cell, IX6Node, IX6Ddge } from '../basicTypes';
 import { K6Edge, K6EdgeChild } from '../Edge';
 import { K6Node, K6NodeChild } from '../Node';
 import { K6Port, K6PortChild } from '../Port';
 
-type IDataNode = IX6Node;
+type IDataNode = IX6Node & {
+  edges: IEdgeData[];
+};
+type IEdgeData = IX6Ddge & {
+  view:{
+    sourcePortSide: 'right' | 'left';
+    targetPortSide: 'left' | 'right';
+  }
+};
 
 type Group = [typeof K6NodeChild, typeof K6PortChild, typeof K6EdgeChild];
 
@@ -27,7 +35,27 @@ class DataManager {
     this.data = reactive(obj);
   }
   readNodesData(nodes: IDataNode[]) {
-    this.nodes = reactive(nodes);
+    this.nodes = reactive(nodes.map(n => ({
+      ...n,
+      edges: [],
+    })));
+  }
+  readEdgesData(edges: IEdgeData[]) {
+    this.nodes.forEach(node => {
+      const id = node.id;
+      edges.forEach(edge => {
+        const cell = edge.source.cell || edge.source.entity;
+        if (cell === id) {
+          node.edges.push(edge);
+        }
+      });
+    });
+  }
+  addNode(n: IDataNode) {
+    this.nodes.push({
+      ...n,
+      edges: [],
+    });
   }
   findNode(id: string) {
     const n = this.nodes.find(n => n.id === id);

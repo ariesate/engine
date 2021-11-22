@@ -73,3 +73,18 @@ export interface IBBox {
   width?: number;
   height?: number;
 }
+
+export interface IX6Ddge {
+  id: string;
+  name: string;
+  type: string;
+  source: { 
+    cell: string;
+    port: string;
+    [key: string]: string;
+  };
+  target: { 
+    cell: string;
+    port: string;
+  };
+}

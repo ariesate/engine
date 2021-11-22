@@ -11,39 +11,43 @@ import {
 import { RootContext } from './Root';
 import * as x6 from './x6';
 import DM from './dm';
+import { watch } from 'less';
 
-function Graph({ data }) {
+function Graph({ data }, ref) {
+  console.log('ref: ', ref);
   const rootContext = useContext(RootContext);
   const { nodes, edges } = reactive(data);
   const graphRef = useRef();
+  const dm = new DM();
 
+  ref.current = {
+    addNode(n) {
+      dm.addNode(n);
+      x6.Graph.addNode(n);
+    },
+  };
   // 确保已经register完成
-  console.log('rootContext.groups:', rootContext.groups.length);
   if (rootContext.groups.length === 0) {
     console.warn('register node is null');
   }
 
   useViewEffect(() => {
 
-    const dm = new DM();
     dm.readState(rootContext.states[0]);
     dm.readNodesData(nodes);
+    dm.readEdgesData(edges);
     dm.readComponents(rootContext.groups);
 
     // 初始化
     x6.Graph.init(graphRef.current, dm);
 
-    nodes.forEach(node => {
-      // const transedNode = x6.Connect.transformNode(node, targetGroup);
-      const shapeComponent = dm.getShapeComponent(node.shape);
-
-      x6.Graph.addNode(node, shapeComponent);      
-    });
+    x6.Graph.renderNodes(nodes);
   });
 
   return (
     <graph block ref={graphRef}></graph>
   );
 }
+Graph.forwardRef = true;
 
-export default createComponent(Graph);
+export default (Graph);
