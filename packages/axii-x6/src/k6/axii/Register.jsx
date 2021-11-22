@@ -7,16 +7,32 @@ import {
 
 import { RootContext } from './Root';
 
-function Register({ node, port, edge }) {
-  const { groups } = useContext(RootContext);
+function Register({ node, port, edge, data }) {
+  const { groups, states } = useContext(RootContext);
 
-  const g = [node, port, edge];
-  groups.push(g);
+  const unEffect = [];
+  if (node) {
+    const g = [node, port, edge];
+    groups.push(g);
+
+    unEffect.push(() => {
+      const i = groups.indexOf(g);
+      groups.splice(i, 1);
+    });
+  }
+
+  if (data) {
+    const s = data();
+    states.push(s);  
+    unEffect.push(() => {
+      const i2 = states.indexOf(s);
+      states.splice(i2, 1);
+    });
+  }
 
   useViewEffect(() => {
     return () => {
-      const i = groups.indexOf(g);
-      groups.splice(i, 1);
+      unEffect(fn => fn());
     };
   });
 

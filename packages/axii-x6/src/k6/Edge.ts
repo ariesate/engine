@@ -1,8 +1,9 @@
 import { X6Edge } from "./basicTypes";
-import { K6Node } from './Node';
+import { ITopState, K6Node } from './Node';
 
 
 export abstract class K6Edge {
+  topState: ITopState;
   constructor (public target: K6Node) {
   }
 	// 同上，边线也通常是更简单的线，是否必要用Component渲染，或者默认模式

@@ -1,7 +1,8 @@
+import { createElement,render } from 'axii';
 import { Graph, Addon, FunctionExt, Shape } from '@antv/x6'
-
+import dm from '../dm';
 ///////////////////
-export function createFlowGraph(container, dm, {connectingValidate = {}, width = 1000, height = 800} = {}) {
+export function createFlowGraph(container, {connectingValidate = {}, width = 1000, height = 800, onPortRendered} = {}) {
   const graph = new Graph({
     container,
     width,
@@ -22,10 +23,7 @@ export function createFlowGraph(container, dm, {connectingValidate = {}, width =
         },
       ],
     },
-    onPortRendered(args) {
-      const node = args.node;
-      console.log('node: ', node);
-    },
+    onPortRendered: onPortRendered,
     // selecting: {
     //   enabled: true,
     //   multiple: true,

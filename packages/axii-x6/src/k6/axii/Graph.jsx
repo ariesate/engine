@@ -26,7 +26,7 @@ function Graph({ data }) {
   useViewEffect(() => {
 
     const dm = new DM();
-
+    dm.readState(rootContext.states[0]);
     dm.readNodesData(nodes);
     dm.readComponents(rootContext.groups);
 
