@@ -22,7 +22,7 @@ export const Register = {
 
       window.fff = nodeConfig.fields;
       
-      render(<Cpt {...nodeConfig} topState={myNode.topState} />, wrap);
+      render(<Cpt {...nodeConfig} data={myNode.data} />, wrap);
 
       setTimeout(() => {
         const { width, height } = (wrap.children[0].getBoundingClientRect());
@@ -72,8 +72,8 @@ export const Register = {
       if (container) {
         const portInst = nodeComponent[1];
         const Cpt = portInst.getComponent(originNode);
-        console.log('nodeComponent.topState: ', portInst.topState);
-        render(createElement(Cpt, { ...originNode, topState: portInst.topState }), container);
+        console.log('nodeComponent.data: ', portInst.data);
+        render(createElement(Cpt, { ...originNode, data: portInst.data }), container);
       }  
     }
   },

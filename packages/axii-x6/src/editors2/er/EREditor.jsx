@@ -5,19 +5,18 @@ import {
 } from 'axii';
 
 import { K6, Register, Graph } from '../../k6';
-import { EntityNode, EntityPort, EntityEdge, topState } from './Entity';
-import d from './data';
+import { EntityNode, EntityPort, EntityEdge, data as dataFunc } from './Entity';
 
 function ER2Editor({ data }, ref) {
 
   return (
     <K6>
-      <Register data={topState}>
+      <Register data={dataFunc}>
       </Register>
       <Register node={EntityNode} port={EntityPort} edge={EntityEdge}>
       </Register>
       
-      <Graph data={d}>
+      <Graph data={data}>
       </Graph>
     </K6>
   );

@@ -20,11 +20,11 @@ interface ITopState {
 class DataManager {
   nodes: IDataNode[] = [];
   nodeShapeComponentMap: Map<string, ShapeComponent> = new Map();
-  topState: ITopState | null = null;
+  data: ITopState | null = null;
   constructor() {
   }
   readState(obj: object) {
-    this.topState = reactive(obj);
+    this.data = reactive(obj);
   }
   readNodesData(nodes: IDataNode[]) {
     this.nodes = reactive(nodes);
@@ -47,7 +47,7 @@ class DataManager {
         nodeComponent,
         portComponent,
         edgeComponent,
-      ].forEach(c => c.topState = this.topState);
+      ].forEach(c => c.data = this.data);
       
       this.nodeShapeComponentMap.set(nodeComponent.shape, [
         nodeComponent,

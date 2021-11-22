@@ -6,7 +6,7 @@
 import { createElement, render, useRef } from "axii";
 import { debounce } from "lodash-es";
 
-import { EREditor } from "../";
+import { EREditor } from "../src/index";
 // FIXME: 使用 'axii-x6' 或者其他更合适的方式引入数据
 import localRawData from "../src/editors/er/data";
 

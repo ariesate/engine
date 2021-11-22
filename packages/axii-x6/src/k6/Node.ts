@@ -39,7 +39,7 @@ export interface ITopState {
 
 // -------
 export abstract class K6Node {
-  topState: ITopState;
+  data: ITopState;
   abstract shape: INodeShape;
   bbox: IBBox = { x: 10, y: 10 };
 

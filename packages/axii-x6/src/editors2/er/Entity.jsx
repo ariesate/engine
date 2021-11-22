@@ -64,7 +64,7 @@ export class EntityPort extends K6Port {
 
     const PortRender = () => {
       const ttt = computed(() => {
-        return this.topState.selectItemId === nodeConfig.id ? 'green': 'yellow';
+        return this.data.selectItemId === nodeConfig.id ? 'green': 'yellow';
       });
 
       return (
@@ -83,16 +83,16 @@ export class EntityPort extends K6Port {
       });
       frag.root.elements.port.style(props => {
         const s = genStyle();
-        const s2 = props.topState.selectItemId === nodeConfig.id ? 'green': '#fff';
+        const s2 = props.data.selectItemId === nodeConfig.id ? 'green': '#fff';
         
         s.backgroundColor = s2;
 
         return s;
       });
 
-      // watch(() => this.topState.selectItemId, () => {
-      //   const color = this.topState.selectItemId === nodeConfig.id ? 'green': 'yellow';
-      //   console.log('this.topState.selectItemId === nodeConfig.id: ', color, this.topState.selectItemId, nodeConfig.id);
+      // watch(() => this.data.selectItemId, () => {
+      //   const color = this.data.selectItemId === nodeConfig.id ? 'green': 'yellow';
+      //   console.log('this.data.selectItemId === nodeConfig.id: ', color, this.data.selectItemId, nodeConfig.id);
       //   const s = ps({
       //     backgroundColor: color,
       //   });
@@ -149,7 +149,7 @@ export class EntityNode extends K6Node {
 
       const clickOnEntity = () => {
         console.log('id: ', id);
-        this.topState.selectItemId = id;
+        this.data.selectItemId = id;
       };
 
       return (
@@ -177,6 +177,6 @@ export class EntityNode extends K6Node {
   }
 }
 
-export const topState = () => ({
+export const data = () => ({
   selectItemId: '',
 });
