@@ -10,7 +10,7 @@ import { INodeViewProps, ITopState, K6Node } from './Node';
  * 手动模式：理论上对齐css只要有absolute，relative
  */
 export abstract class K6Port {
-  topState: ITopState;
+  data: ITopState;
 	// 连接点通常是简单图行，用Component渲染是否过重了
   abstract getComponent(index: number): Axii.Component;
   // 连接点的快捷位置，其实都通过计算x，y得到，是否有必要直接提供这种配置项

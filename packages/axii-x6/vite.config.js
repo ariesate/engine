@@ -10,6 +10,9 @@ const config = defineConfig(({ mode }) => {
       jsxFactory: 'createElement',
       jsxFragment: 'Fragment'
     },
+    server: {
+      open: 'http://localhost:3000/examples/er2.html',
+    },
     css: {
       preprocessorOptions: {
         less: {
