@@ -20,7 +20,7 @@
     }
   },
   "scripts": {
-    "start": "pnpm start --filter \"axii-x6-playground\"",
+    "start": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode=development",
     "release": "pnpm run build && pnpm publish --no-git-checks",
