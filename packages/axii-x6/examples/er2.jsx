@@ -14,8 +14,3 @@ const editorRef = useRef();
 const root = document.getElementById("root");
 
 render(<EREditor2 data={localRawData} ref={editorRef} />, root);
-
-console.log('ref current:', editorRef.current);
-setTimeout(() => {
-  console.log('ref current2:', editorRef.current);
-}, 1000);

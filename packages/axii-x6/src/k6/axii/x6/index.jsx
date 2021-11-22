@@ -13,7 +13,7 @@ export const Register = {
       X6Graph.registerHTMLComponent(name, func);
     }
   },
-  registerHTMLComponentRender({ dm, myNode, myPort }) {
+  registerHTMLComponentRender({ graph, dm, myNode, myPort, myEdge }) {
     return (node) => {
       const wrap = document.createElement('div')
       const nodeConfig = dm.findNode(node.id);
@@ -29,10 +29,10 @@ export const Register = {
         node.setProp({ width, height });
         myNode.setSize({ width, height });      
 
+        // render port
         const portConfig = myPort.getPortConfig(nodeConfig);
-
         const ports = {
-          groups: new Array(portConfig.counts).fill('p').map((idPre, index) => {
+          groups: new Array(portConfig.ids.length).fill('p').map((idPre, index) => {
             const position = portConfig.positions[index];
             return {
               [`${idPre}${index}`]: {
@@ -47,14 +47,21 @@ export const Register = {
               }
             };
           }).reduce((p, n) => Object.assign(p, n), {}),
-          items: new Array(portConfig.counts).fill('p').map((idPre, index) => {
+          items: new Array(portConfig.ids.length).fill('p').map((idPre, index) => {
             return {
-              id: `${idPre}${index}`,
+              id: portConfig.ids ? portConfig.ids[index] : `${idPre}${index}`,
               group: `${idPre}${index}`,
             };
           }),
         };
         node.setProp({ ports });
+        // render edge
+        const edges = myEdge.getConfig(nodeConfig.edges);
+        edges.forEach(edge => {
+          graph.addEdge({
+            ...edge,
+          });
+        });
 
       }, 50);
 
@@ -72,7 +79,6 @@ export const Register = {
       if (container) {
         const portInst = nodeComponent[1];
         const Cpt = portInst.getComponent(originNode);
-        console.log('nodeComponent.data: ', portInst.data);
         render(createElement(Cpt, { ...originNode, data: portInst.data }), container);
       }  
     }
@@ -97,20 +103,28 @@ export const Graph = {
         
     const allShapeComponents = dm.getAllShapeComponents();
 
-    allShapeComponents.forEach(([myNode, myPort]) => {
+    allShapeComponents.forEach(([myNode, myPort, myEdge]) => {
       const registerKey = this.getHtmlKey(myNode.shape);
 
       Register.registerHTMLComponent(registerKey, Register.registerHTMLComponentRender({
         myNode,
         myPort,
+        myEdge,
         dm,
+        graph,
       }));  
     });
 
     this.graph = graph;
   },
 
-  addNode(nodeConfig, [myNode, myPort, myEdge]) {
+  renderNodes(nodes) {
+    nodes.forEach(node => {
+      this.addNode(node);      
+    });
+  },
+
+  addNode(nodeConfig) {
     const htmlKey = this.getHtmlKey(nodeConfig.shape);
 
     const nodeConfigView = nodeConfig.view;

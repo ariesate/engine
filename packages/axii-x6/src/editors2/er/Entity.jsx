@@ -17,10 +17,34 @@ import { K6Port } from '../../k6/Port';
 import { K6Edge } from '../../k6/Edge';
 
 export class EntityEdge extends K6Edge {
-  getConfig() {
-    return {
-      inherit: 'edge',
-    };
+  
+  getConfig(edges) {
+    const configs = edges.map(edge => {
+      return {
+        router: this.router,
+        ...edge,
+        attrs: {
+          line: {
+            stroke: '#5F95FF',
+            strokeWidth: 1,
+            targetMarker: {
+              name: 'classic',
+              size: 8,
+            },
+          },
+        },  
+        label: `${edge.name}${edge.type}`,
+        source: {
+          cell: edge.source.entity,
+          port: `${edge.source.field}-${edge.view.sourcePortSide}`,
+        },
+        target: {
+          cell: edge.target.entity,
+          port: `${edge.target.field}-${edge.view.targetPortSide}`,
+        },
+      }
+    });
+    return configs;
   }
 }
 
@@ -29,9 +53,9 @@ export class EntityPort extends K6Port {
     super(k6Node);
   }
   getPortConfig(nodeConfig) {
-    const counts = nodeConfig.fields.reduce((num, obj) => {
-      return num + (obj.type === 'rel' ? 2 : 0);
-    }, 0);
+    const ids = nodeConfig.fields.map((obj) => {
+      return obj.type === 'rel' ? [`${obj.id}-left`, `${obj.id}-right`] : [];
+    }).flat();
 
     console.log('this.contextNode: ', this.contextNode.size);
 
@@ -42,26 +66,25 @@ export class EntityPort extends K6Port {
         return [
           {
             x: refX,
-            y: index * 42 + 30 + 21 - 10,
+            y: index * 36 + 24 + 18 - 10,
           },
           {
             x: this.contextNode.size[0] + refX,
-            y: index * 42 + 30 + 21 - 10,
+            y: index * 36 + 24 + 18 - 10,
           }
         ];
       }
       return null
     }).filter(Boolean).flat();
 
+
     return {
-      counts,
+      ids,
       size: [20, 20],
       positions,
     };
   }
   getComponent(nodeConfig) {
-
-
     const PortRender = () => {
       const ttt = computed(() => {
         return this.data.selectItemId === nodeConfig.id ? 'green': 'yellow';
@@ -148,8 +171,11 @@ export class EntityNode extends K6Node {
       });
 
       const clickOnEntity = () => {
-        console.log('id: ', id);
-        this.data.selectItemId = id;
+        if (!this.data.selectItemId) {
+          this.data.selectItemId = id;
+        } else {
+          this.data.selectItemId = null;
+        }
       };
 
       return (

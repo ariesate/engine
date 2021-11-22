@@ -3,6 +3,7 @@ import { ITopState, K6Node } from './Node';
 
 
 export abstract class K6Edge {
+  router: string = 'manhattan';
   data: ITopState;
   constructor (public target: K6Node) {
   }

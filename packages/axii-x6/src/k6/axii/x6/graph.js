@@ -31,7 +31,7 @@ export function createFlowGraph(container, {connectingValidate = {}, width = 100
     //   movable: true,
     //   showNodeSelectionBox: true,
     // },
-    // connecting: {
+    connecting: {
     //   snap: true,
     //   allowBlank: true,
     //   allowLoop: true,
@@ -40,24 +40,24 @@ export function createFlowGraph(container, {connectingValidate = {}, width = 100
     //   connector: 'rounded',
     //   connectionPoint: 'boundary',
     //   ...connectingValidate,
-    //   createEdge() {
-    //     return new Shape.Edge({
-    //       attrs: {
-    //         line: {
-    //           stroke: '#5F95FF',
-    //           strokeWidth: 1,
-    //           targetMarker: {
-    //             name: 'classic',
-    //             size: 8,
-    //           },
-    //         },
-    //       },
-    //       router: {
-    //         name: 'manhattan',
-    //       },
-    //     })
-    //   }
-    // },
+      createEdge() {
+        return new Shape.Edge({
+          attrs: {
+            line: {
+              stroke: '#5F95FF',
+              strokeWidth: 1,
+              targetMarker: {
+                name: 'classic',
+                size: 8,
+              },
+            },
+          },
+          router: {
+            name: 'manhattan',
+          },
+        })
+      }
+    },
     // highlighting: {
     //   magnetAvailable: {
     //     name: 'stroke',
