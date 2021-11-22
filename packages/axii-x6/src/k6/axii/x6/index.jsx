@@ -50,7 +50,6 @@ export const Register = {
           items: new Array(portConfig.counts).fill('p').map((idPre, index) => {
             return {
               id: `${idPre}${index}`,
-              magnet: true,
               group: `${idPre}${index}`,
             };
           }),

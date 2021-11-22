@@ -42,11 +42,11 @@ export class EntityPort extends K6Port {
         return [
           {
             x: refX,
-            y: index * 40 + 50,
+            y: index * 42 + 30 + 21 - 10,
           },
           {
             x: this.contextNode.size[0] + refX,
-            y: index * 40 + 50,
+            y: index * 42 + 30 + 21 - 10,
           }
         ];
       }
@@ -76,13 +76,14 @@ export class EntityPort extends K6Port {
       const genStyle = (a = {}) => ({
         width: '16px',
         height: '16px',
-        backgroundColor: 'red',
+        backgroundColor: '#fff',
         borderRadius: '50%',
+        border: '1px solid #000',
         ...a,
       });
       frag.root.elements.port.style(props => {
         const s = genStyle();
-        const s2 = props.topState.selectItemId === nodeConfig.id ? 'green': 'yellow';
+        const s2 = props.topState.selectItemId === nodeConfig.id ? 'green': '#fff';
         
         s.backgroundColor = s2;
 
