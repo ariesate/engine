@@ -9,7 +9,7 @@ import {
 import { K6, Register, Graph } from '../../k6';
 import { EntityNode, EntityPort, EntityEdge, data as dataFunc } from './Entity';
 
-function ER2Editor({ data }, ref) {
+function ER2Editor({ data }) {
   data = reactive(data);
   const graphRef = useRef();
 

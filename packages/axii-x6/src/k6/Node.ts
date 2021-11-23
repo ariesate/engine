@@ -1,6 +1,5 @@
 // 以ER为例, 一个节点必备的元素
 import { Axii, IBBox } from './basicTypes';
-
 import { K6Port } from './Port';
 
 // 渲染方式，原始 或 Axii Component
@@ -42,15 +41,13 @@ export abstract class K6Node {
   data: ITopState;
   abstract shape: INodeShape;
   bbox: IBBox = { x: 10, y: 10 };
-
   ports: K6Port[] = [];
-
   size: number[] = [0, 0];
 
   constructor () {
 
   }
-
+  
   setSize(args: { width:number, height:number }) {
     console.log('args: ', args);
     this.size = [args.width, args.height];

@@ -19,8 +19,6 @@ export const Register = {
       const nodeConfig = dm.findNode(node.id);
       
       const Cpt = myNode.getComponent(nodeConfig);
-
-      window.fff = nodeConfig.fields;
       
       render(<Cpt {...nodeConfig} data={myNode.data} />, wrap);
 
