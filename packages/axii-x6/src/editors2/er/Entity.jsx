@@ -86,10 +86,6 @@ export class EntityPort extends K6Port {
   }
   getComponent(nodeConfig) {
     const PortRender = () => {
-      const ttt = computed(() => {
-        return this.data.selectItemId === nodeConfig.id ? 'green': 'yellow';
-      });
-
       return (
         <port block onMouseOver={() => console.log('mouse over')} >
         </port>
@@ -112,16 +108,6 @@ export class EntityPort extends K6Port {
 
         return s;
       });
-
-      // watch(() => this.data.selectItemId, () => {
-      //   const color = this.data.selectItemId === nodeConfig.id ? 'green': 'yellow';
-      //   console.log('this.data.selectItemId === nodeConfig.id: ', color, this.data.selectItemId, nodeConfig.id);
-      //   const s = ps({
-      //     backgroundColor: color,
-      //   });
-      //   console.log('s: ', s);
-      //   frag.root.elements.port.style(s);
-      // });
     };
 
     return createComponent(PortRender);
