@@ -145,6 +145,9 @@ export const Graph = {
 
     const x6NodeInstance = this.graph.addNode(node);
   },
+  exportData() {
+    return this.graph.toJSON();
+  },
 }
 
 

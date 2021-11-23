@@ -23,6 +23,10 @@ function ER2Editor({ data }) {
     };
     graphRef.current.addNode(newNode);
   }
+  function exportData() {
+    const graphData = graphRef.current.exportData();
+    console.log('graphData: ', graphData);
+  }
 
   return (
     <container block flex-display>
@@ -36,7 +40,12 @@ function ER2Editor({ data }) {
         </Graph>
       </K6>
       <operations block>
-        <button onClick={addNewNode} >add New Node</button>
+        <p>
+          <button onClick={addNewNode} >add New Node</button>
+        </p>
+        <p>
+          <button onClick={exportData} >export Data</button>
+        </p>
       </operations>
     </container>
   );

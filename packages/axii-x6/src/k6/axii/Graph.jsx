@@ -25,6 +25,9 @@ function Graph({ data }, ref) {
       dm.addNode(n);
       x6.Graph.addNode(n);
     },
+    exportData() {
+      return x6.Graph.exportData();
+    }
   };
   // 确保已经register完成
   if (rootContext.groups.length === 0) {
