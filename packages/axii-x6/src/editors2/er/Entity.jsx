@@ -20,9 +20,12 @@ export class EntityEdge extends K6Edge {
   
   getConfig(edges) {
     const configs = edges.map(edge => {
+      // 兼容旧ER数据
+      const ee = Object.assign({}, edge);
+      delete ee.view;
       return {
         router: this.router,
-        ...edge,
+        ...ee,
         attrs: {
           line: {
             stroke: '#5F95FF',
