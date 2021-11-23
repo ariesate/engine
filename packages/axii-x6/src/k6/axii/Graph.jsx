@@ -11,7 +11,6 @@ import {
 import { RootContext } from './Root';
 import * as x6 from './x6';
 import DM from './dm';
-import { watch } from 'less';
 
 function Graph({ data }, ref) {
   console.log('ref: ', ref);
