@@ -6,6 +6,7 @@ export default interface IExample {
       id: string;
       name: string;
       rel: boolean;
+      isCollection: boolean;
   }>;
   /**
    * @name 用户

@@ -5,12 +5,16 @@ const data = {
       "id":"_1","name":"Page",
       "data": {
         "fields": [
-        {"id":"f1","name":"title","type":"string"},
-        {"id":"f2","name":"url","type":"string"},
-        {"id":"f3","name":"posts","type":"rel"},
-        {"name":"description","type":"string"},
-        {"id":"_a","name":"keywords","type":"string","isCollection":true}
-      ]},
+          {"id":"f1","name":"title","type":"string"},
+          {"id":"f2","name":"url","type":"string"},
+          {"id":"f3","name":"posts","type":"rel"},
+          {"name":"description","type":"string"},
+          {"id":"_a","name":"keywords","type":"string","isCollection":true}
+        ],
+        "d": {
+          "d1": "123"
+        }
+      },
       "view":{"position":{"x":100,"y":100}}
     }, 
     {

@@ -7,36 +7,75 @@ import {
   useViewEffect,
   useContext,
   watch,
+  delegateLeaf,
+  traverse,
 } from 'axii';
 
 import { RootContext } from './Root';
 import { Input, Select, Button, Checkbox } from 'axii-components'
+import get from 'lodash/get';
+import cloneDeep from 'lodash/cloneDeep';
 
-
-const FormField = createComponent((() => {
-  function FormField({ item, enableRemove, enableAdd }) {
+const SimpleFormField = createComponent((() => {
+  function FormField({ item }) {
     return (
       <formField>
-        <fieldName>{item.description} </fieldName>
+        <fieldName>{item.description}</fieldName>
         <fieldValue block block-margin="4px 0px 8px 0">
           {() => {
             switch (item.type) {
               case 'string':
               case 'number':
                 return (
-                  <Input />
+                  <Input value={item.value} />
                 );
               case 'boolean':
                 return (
-                  <Checkbox />
+                  <Checkbox value={item.value} />
                 );
+            }
+          }}
+        </fieldValue>
+      </formField>
+    );
+  }
+  FormField.Style = () => {
+
+  };
+  return FormField;
+})());
+
+const HigherFormField = createComponent((() => {
+  function FormField({ item }) {
+    return (
+      <formField>
+        <fieldName>{item.description}</fieldName>
+        <fieldValue block block-margin="4px 0px 8px 0">
+          {() => {
+            switch (item.type) {
               case 'object':
+                {
+                  return (<DataConfigForm 
+                    json={item}
+                    layout:block-width="500px" 
+                    layout:block-padding="4px 16px"
+                  />);
+                }
               case 'array':
-                return (<DataConfigForm 
-                  json={item} 
-                  layout:block-width="500px" 
-                  layout:block-padding="4px 16px"
-                />);
+                {
+                  return item.children.map(item => {
+                    return (
+                      <DataConfigForm json={item} />
+                    );                    
+                  });
+                }
+                // return (<DataConfigForm 
+                //   json={item}
+                //   data={data}
+                //   path={valuePath}
+                //   layout:block-width="500px" 
+                //   layout:block-padding="4px 16px"
+                // />);
             }
           }}
         </fieldValue>
@@ -49,23 +88,75 @@ const FormField = createComponent((() => {
   return FormField;
 })())
 
+function rebuildArrayTypeItem(arrTypeItem, valueArr = []) {
+  return valueArr.map(singleValue => {
+    const firstValueKey = Object.keys(singleValue)[0];
+    const { description } = arrTypeItem.properties.find(obj => obj.name === firstValueKey) || {};
+    const itemJson = {
+      name: firstValueKey,
+      description: description || firstValueKey,
+      type: 'object',
+      properties: cloneDeep(arrTypeItem.properties),
+    };
+    const mergedItemJson = mergeJsonAndData(itemJson, singleValue);
+
+    return mergedItemJson;
+  });
+}
+
+function mergeJsonAndData(json, data) {
+  if (!json) {
+    return json;
+  }
+  const clonedJson = cloneDeep(json);
+
+  function traverseJson(obj, path) {
+    const cur = path.concat(obj.name);
+    
+    const propPathArr = cur.slice(1);
+    if (propPathArr.length) {
+      const value = get(data, propPathArr);
+      if (obj.type === 'array') {
+        obj.children = rebuildArrayTypeItem(obj, value);
+      }
+      obj.value = value;
+    } else {
+      obj.value = data;
+    }
+    
+    if (obj.type != 'array') {
+      obj.properties.forEach(child => {
+        traverseJson(child, cur);
+      });  
+    }
+  }
+  traverseJson(clonedJson, []);
+
+  return clonedJson;
+}
+
 const DataConfigForm = createComponent((() => {
   function DataConfigForm({ json }) {
 
     useViewEffect(() => {
-      watch(() => json ? json.properties : null, () => {
-      });
     });
 
     return (
-      <dataConfigForm block block-width="600px" block-padding="16px" >
-        {() => json ? json.properties.map(item => {
-          return (
-            <field block>
-              <FormField item={item} />
-            </field>
-          );
-        }) : ''}
+      <dataConfigForm block block-width="100%" block-padding="16px" block-box-sizing="border-box" >
+        {() => json.properties.map(item => {
+          const isSimple = ['string', 'number', 'boolean'].includes(item.type);
+          const isHigher = ['array', 'object'];
+          if (isSimple) {
+            return (
+              <SimpleFormField item={item} />
+            );
+          }
+          if (isHigher) {
+            return (
+              <HigherFormField item={item} />
+            );
+          }
+        })}
       </dataConfigForm>
     );
   }
@@ -86,11 +177,30 @@ const DataConfigForm = createComponent((() => {
 function DataConfig({ children }) {
   const context = useContext(RootContext);
 
+  useViewEffect(() => {
+    watch(() => traverse(context.dm.insideState), () => {
+      // console.log('context.dm.insideState changed!! ', context.dm.insideState);
+    });
+  });
+
   return (
-    <dataCofnig block block-margin="16px">
-      {() => (
-        context.dm.insideState.selectedConfigJSON ? <DataConfigForm json={context.dm.insideState.selectedConfigJSON} /> : ''
-      )}
+    <dataCofnig block block-margin="16px" block-width="600px" >
+      {() => {
+        if (!context.dm.insideState.selectedConfigJSON || !context.dm.insideState.selectedConfigData) {
+          return '';
+        }
+        const json = context.dm.insideState.selectedConfigJSON;
+        const data = context.dm.insideState.selectedConfigData;
+        const mergedJson = mergeJsonAndData(json, data);
+        console.log('mergedJson: ', mergedJson);
+    
+        return (
+          context.dm.insideState.selectedConfigJSON ? (
+            <DataConfigForm 
+              json={mergedJson} />
+          ) : ''  
+        );
+      }}
     </dataCofnig>
   );
 }
