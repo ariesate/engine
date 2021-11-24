@@ -25,6 +25,19 @@
           "type": "boolean",
           "description": "rel",
           "properties": []
+        },
+        {
+          "name": "isCollection",
+          "type": "boolean",
+          "description": "集合",
+          "properties": []
+        }
+      ],
+      "value": [
+        {
+          "id": "123",
+          "name": "456",
+          "rel": true
         }
       ]
     },
