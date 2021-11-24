@@ -33,7 +33,8 @@
     "axios": "^0.21.1",
     "copy-text-to-clipboard": "^2.2.0",
     "lodash": "^4.17.4",
-    "lodash-es": "^4.17.20"
+    "lodash-es": "^4.17.20",
+    "typescript": "^4.5.2"
   },
   "devDependencies": {
     "@jsdevtools/version-bump-prompt": "^6.1.0",

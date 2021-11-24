@@ -10,14 +10,13 @@ import {
 
 import { RootContext } from './Root';
 import * as x6 from './x6';
-import DM from './dm';
 
 function Graph({ data }, ref) {
-  console.log('ref: ', ref);
   const rootContext = useContext(RootContext);
   const { nodes, edges } = reactive(data);
   const graphRef = useRef();
-  const dm = new DM();
+
+  const dm = rootContext.dm;
 
   ref.current = {
     addNode(n) {
@@ -35,7 +34,7 @@ function Graph({ data }, ref) {
 
   useViewEffect(() => {
 
-    dm.readState(rootContext.states[0]);
+    dm.readState(rootContext.states);
     dm.readNodesData(nodes);
     dm.readEdgesData(edges);
     dm.readComponents(rootContext.groups);

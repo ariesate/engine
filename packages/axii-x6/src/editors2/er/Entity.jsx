@@ -15,6 +15,7 @@ import {useElementPosition, manualTrigger as createManualTrigger } from 'axii-co
 import { K6Node } from "../../k6/Node";
 import { K6Port } from '../../k6/Port';
 import { K6Edge } from '../../k6/Edge';
+import EntityConfigJSON from './Entity.k6.json';
 
 export class EntityEdge extends K6Edge {
   
@@ -56,15 +57,13 @@ export class EntityPort extends K6Port {
     super(k6Node);
   }
   getPortConfig(nodeConfig) {
-    const ids = nodeConfig.fields.map((obj) => {
+    const ids = nodeConfig.data.props.map((obj) => {
       return obj.type === 'rel' ? [`${obj.id}-left`, `${obj.id}-right`] : [];
     }).flat();
 
-    console.log('this.contextNode: ', this.contextNode.size);
-
     const refX = -10;
 
-    const positions = nodeConfig.fields.map((obj, index) => {
+    const positions = nodeConfig.data.props.map((obj, index) => {
       if (obj.type === 'rel') {
         return [
           {
@@ -105,7 +104,7 @@ export class EntityPort extends K6Port {
       });
       frag.root.elements.port.style(props => {
         const s = genStyle();
-        const s2 = props.data.selectItemId === nodeConfig.id ? 'green': '#fff';
+        const s2 = this.data.selectItemId === nodeConfig.id ? 'green': '#fff';
         
         s.backgroundColor = s2;
 
@@ -117,8 +116,13 @@ export class EntityPort extends K6Port {
   }
 }
 
+
 export class EntityNode extends K6Node {
   shape = 'enitity-shape';
+  configJSON = EntityConfigJSON;  
+  onChange(d) {
+
+  }
   getComponent() {
 
     function RawField({ field, entityPosition, positionTrigger }) {
@@ -146,7 +150,10 @@ export class EntityNode extends K6Node {
     
     const Field = createComponent(RawField)    
 
-    const EntityRender = ({ name, fields, id }) => {
+    const EntityRender = (props) => {
+      const { name, data, id } = props;
+
+      console.log('props::', props, data);
 
       const entityPosition = reactive({})
       const positionTrigger = createManualTrigger();
@@ -160,7 +167,7 @@ export class EntityNode extends K6Node {
       });
 
       const clickOnEntity = () => {
-        if (!this.data.selectItemId) {
+        if (this.data.selectItemId !== id) {
           this.data.selectItemId = id;
         } else {
           this.data.selectItemId = null;
@@ -173,7 +180,7 @@ export class EntityNode extends K6Node {
           inline
           ref={entityRef}>
           <name block block-padding-4px>{name}</name>
-          {() => fields.map(field=> (
+          {() => data.props.map(field=> (
             <row block>
               <Field key={field.id} field={field} entityPosition={entityPosition} positionTrigger={positionTrigger}/>
             </row>

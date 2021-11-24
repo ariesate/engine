@@ -3,24 +3,32 @@ const data = {
   "nodes":[
     {
       "id":"_1","name":"Page",
-      "fields":[
+      "data": {
+        "props": [
         {"id":"f1","name":"title","type":"string"},
         {"id":"f2","name":"url","type":"string"},
         {"id":"f3","name":"posts","type":"rel"},
         {"name":"description","type":"string"},
         {"id":"_a","name":"keywords","type":"string","isCollection":true}
-      ],
+      ]},
       "view":{"position":{"x":100,"y":100}}
     }, 
     {
       "id":"_2","name":"Post",
-      "fields":[
-        {"id":"f1","name":"content","type":"string"},
-        {"id":"f3","name":"page","type":"rel"},
-        {"id":"_a","name":"comments","type":"rel"}
-      ],
+      "data": {
+        "props": [
+          {"id":"f1","name":"content","type":"string"},
+          {"id":"f3","name":"page","type":"rel"},
+          {"id":"_a","name":"comments","type":"rel"}
+        ]
+      },
       "view":{"x":460,"y":140}
-    },{"id":"_a","name":"Comment","view":{"x":710,"y":390},"fields":[{"id":"_b","name":"target","type":"rel"},{"id":"_c","name":"content","type":"string"},{"id":"_d","name":"comments","type":"rel"}]}
+    },{"id":"_a","name":"Comment","view":{"x":710,"y":390}, "data": {
+        "props":[ 
+          {"id":"_b","name":"target","type":"rel"},{"id":"_c","name":"content","type":"string"},{"id":"_d","name":"comments","type":"rel"}
+        ]
+      }
+    }
   ],
   "edges":[
     {

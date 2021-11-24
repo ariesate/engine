@@ -5,6 +5,8 @@ import {
   reactive,
 } from 'axii';
 
+import DM from './dm';
+
 export const RootContext = createContext()
 /**
  * layout模式
@@ -13,18 +15,20 @@ export const RootContext = createContext()
  */
 
 function Root({ children }) {
-  const groups = reactive([]);
+
+  const dm = new DM();
 
   return (
-    <RootContext.Provider value={{
-      groups: [],
-      states: [],
-    }}>
-      <root>
+    <root>
+      <RootContext.Provider value={{
+        groups: [],
+        states: {}, // 自定义的共享数据源
+        dm, // 内部数据抽象model
+      }}>
         {() => children}
-      </root>
-    </RootContext.Provider>
+      </RootContext.Provider>
+    </root>
   );
 }
 
-export default createComponent(Root);
+export default (Root);
