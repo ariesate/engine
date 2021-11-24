@@ -1,5 +1,13 @@
 export default interface IExample {
   /**
+   * 字段
+   */
+  fields: Array<{
+      id: string;
+      name: string;
+      rel: boolean;
+  }>;
+  /**
    * @name 用户
    */
   w: string,

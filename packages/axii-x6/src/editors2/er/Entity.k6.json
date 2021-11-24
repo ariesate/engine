@@ -4,6 +4,31 @@
   "description": "IExample",
   "properties": [
     {
+      "name": "fields",
+      "type": "array",
+      "description": "字段",
+      "properties": [
+        {
+          "name": "id",
+          "type": "string",
+          "description": "id",
+          "properties": []
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "description": "name",
+          "properties": []
+        },
+        {
+          "name": "rel",
+          "type": "boolean",
+          "description": "rel",
+          "properties": []
+        }
+      ]
+    },
+    {
       "name": "w",
       "type": "string",
       "description": "用户",
