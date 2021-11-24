@@ -36,6 +36,12 @@ export interface ITopState {
   [key: string]: any;
 }
 
+export interface IK6DataConfig {
+  name: 'string'; // 结构属性名称
+  type: 'string' | 'number' | 'array' | 'object' | 'boolean';  // 仅支持有限的类型，
+  properties?: Array<IK6DataConfig>; // 嵌套结构
+}
+
 // -------
 export abstract class K6Node {
   data: ITopState;
@@ -43,7 +49,7 @@ export abstract class K6Node {
   bbox: IBBox = { x: 10, y: 10 };
   ports: K6Port[] = [];
   size: number[] = [0, 0];
-
+  configJSON: IK6DataConfig | null = null;
   constructor () {
 
   }

@@ -1,9 +1,10 @@
 import { X6Edge } from "./basicTypes";
-import { ITopState, K6Node } from './Node';
+import { IK6DataConfig, ITopState, K6Node } from './Node';
 
 export abstract class K6Edge {
   router: string = 'manhattan';
   data: ITopState;
+  configJSON: IK6DataConfig | null = null;
   constructor (public target: K6Node) {
   }
 	// 同上，边线也通常是更简单的线，是否必要用Component渲染，或者默认模式

@@ -1,0 +1,77 @@
+{
+  "name": "IExample",
+  "type": "object",
+  "description": "IExample",
+  "properties": [
+    {
+      "name": "w",
+      "type": "string",
+      "description": "用户",
+      "properties": []
+    },
+    {
+      "name": "b",
+      "type": "boolean",
+      "description": "活动id",
+      "properties": []
+    },
+    {
+      "name": "c",
+      "type": "number",
+      "description": "c",
+      "properties": []
+    },
+    {
+      "name": "d",
+      "type": "object",
+      "description": "d",
+      "properties": [
+        {
+          "name": "d1",
+          "type": "number",
+          "description": "属性",
+          "properties": []
+        }
+      ]
+    },
+    {
+      "name": "e",
+      "type": "array",
+      "description": "e",
+      "properties": [
+        {
+          "name": "e1",
+          "type": "boolean",
+          "description": "e1",
+          "properties": []
+        }
+      ]
+    },
+    {
+      "name": "f",
+      "type": "array",
+      "description": "f",
+      "properties": [
+        {
+          "name": "f1",
+          "type": "number",
+          "description": "f1",
+          "properties": []
+        }
+      ]
+    },
+    {
+      "name": "h",
+      "type": "array",
+      "description": "h",
+      "properties": [
+        {
+          "name": "",
+          "type": "string",
+          "description": "",
+          "properties": []
+        }
+      ]
+    }
+  ]
+}

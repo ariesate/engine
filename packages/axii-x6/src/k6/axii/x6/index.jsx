@@ -19,8 +19,8 @@ export const Register = {
       const nodeConfig = dm.findNode(node.id);
       
       const Cpt = myNode.getComponent(nodeConfig);
-      
-      render(<Cpt {...nodeConfig} data={myNode.data} />, wrap);
+
+      render(<Cpt {...nodeConfig} globalData={myNode.data} />, wrap);
 
       setTimeout(() => {
         const { width, height } = (wrap.children[0].getBoundingClientRect());
@@ -111,6 +111,14 @@ export const Graph = {
         dm,
         graph,
       }));  
+    });
+
+    graph.on('cell:click', ({ cell }) => {
+      if (cell.isNode()) {
+        dm.selectNode(cell.id);
+      } else if (cell.isEdge()) {
+        dm.selectEdge(cell.id);
+      }
     });
 
     this.graph = graph;

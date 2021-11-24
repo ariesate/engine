@@ -4,7 +4,7 @@ import {
 
 import { IBBox, IX6Cell, IX6Node, IX6Ddge } from '../basicTypes';
 import { K6Edge, K6EdgeChild } from '../Edge';
-import { K6Node, K6NodeChild } from '../Node';
+import { IK6DataConfig, K6Node, K6NodeChild } from '../Node';
 import { K6Port, K6PortChild } from '../Port';
 
 type IDataNode = IX6Node & {
@@ -25,10 +25,20 @@ interface ITopState {
   [key: string]: any;
 }
 
+export interface IInsideState {
+  selectedCellId: string;
+  selectedConfigJSON: IK6DataConfig | null;
+  selectedConfigData: { [k: string]: any };
+}
+
 class DataManager {
   nodes: IDataNode[] = [];
   nodeShapeComponentMap: Map<string, ShapeComponent> = new Map();
   data: ITopState | null = null;
+  insideState:IInsideState = reactive({
+    selectedCellId: '', // 包含节点和边
+    selectedConfigJSON: null,
+  });
   constructor() {
   }
   readState(obj: object) {
@@ -59,9 +69,9 @@ class DataManager {
   }
   findNode(id: string) {
     const n = this.nodes.find(n => n.id === id);
-    return {
+    return n ? {
       ...n,
-    };
+    } : null;
   }
   readComponents(groups: Group[]) {
     groups.forEach(group => {
@@ -91,6 +101,10 @@ class DataManager {
     ];
   }
   
+  getShapeComponentByNodeId(id: string): ShapeComponent {
+    const { shape } = this.findNode(id);
+    return this.getShapeComponent(shape);
+  }
 
   getShapeComponent(shapeName: string): ShapeComponent {
     let sc = this.nodeShapeComponentMap.get(shapeName);
@@ -98,6 +112,17 @@ class DataManager {
       sc = this.nodeShapeComponentMap.values().next().value;
     }
     return sc;  
+  }
+  selectNode (id: string) {
+    const node = this.findNode(id);
+    const [nodeComponent] = this.getShapeComponent(node.shape);
+    Object.assign(this.insideState, {
+      selectedCellId: id,
+      selectedConfigJSON: nodeComponent.configJSON,
+      selectedConfigData: node.data,
+    });
+  }
+  selectEdge(id: string) {
   }
 }
 

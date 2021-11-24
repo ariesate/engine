@@ -6,7 +6,7 @@ import {
   useRef,
 } from 'axii';
 
-import { K6, Register, Graph } from '../../k6';
+import { K6, Register, Graph, DataConfig } from '../../k6';
 import { EntityNode, EntityPort, EntityEdge, data as dataFunc } from './Entity';
 
 function ER2Editor({ data }) {
@@ -16,7 +16,7 @@ function ER2Editor({ data }) {
   function addNewNode() {
     const newNode = {
       "id": Math.random(),"name":"Page",
-      "fields":[
+      "data":[
         {"id":"f1","name":"title","type":"rel"},
       ],
       "view":{"position":{"x":30,"y":30}}
@@ -29,24 +29,27 @@ function ER2Editor({ data }) {
   }
 
   return (
-    <container block flex-display>
-      <K6>
-        <Register data={dataFunc}>
-        </Register>
-        <Register node={EntityNode} port={EntityPort} edge={EntityEdge}>
-        </Register>
-        
-        <Graph data={data} ref={graphRef}>
-        </Graph>
+    <container>
+      <K6 layout:block layout:flex-display>
+        <k6base>
+          <Register globalData={dataFunc}>
+          </Register>
+          <Register node={EntityNode} port={EntityPort} edge={EntityEdge}>
+          </Register>
+          
+          <Graph data={data} ref={graphRef}>
+          </Graph>
+        </k6base> 
+        <operations block>
+          <DataConfig />
+          <p>
+            <button onClick={addNewNode} >add New Node</button>
+          </p>
+          <p>
+            <button onClick={exportData} >export Data</button>
+          </p>
+        </operations>
       </K6>
-      <operations block>
-        <p>
-          <button onClick={addNewNode} >add New Node</button>
-        </p>
-        <p>
-          <button onClick={exportData} >export Data</button>
-        </p>
-      </operations>
     </container>
   );
 }

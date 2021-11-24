@@ -7,7 +7,7 @@ import {
 
 import { RootContext } from './Root';
 
-function Register({ node, port, edge, data }) {
+function Register({ node, port, edge, globalData }) {
   const { groups, states } = useContext(RootContext);
 
   const unEffect = [];
@@ -21,13 +21,9 @@ function Register({ node, port, edge, data }) {
     });
   }
 
-  if (data) {
-    const s = data();
-    states.push(s);  
-    unEffect.push(() => {
-      const i2 = states.indexOf(s);
-      states.splice(i2, 1);
-    });
+  if (globalData) {
+    const s = globalData();
+    Object.assign(states, s);
   }
 
   useViewEffect(() => {
