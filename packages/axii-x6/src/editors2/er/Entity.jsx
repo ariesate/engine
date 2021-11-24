@@ -57,13 +57,13 @@ export class EntityPort extends K6Port {
     super(k6Node);
   }
   getPortConfig(nodeConfig) {
-    const ids = nodeConfig.data.props.map((obj) => {
+    const ids = nodeConfig.data.fields.map((obj) => {
       return obj.type === 'rel' ? [`${obj.id}-left`, `${obj.id}-right`] : [];
     }).flat();
 
     const refX = -10;
 
-    const positions = nodeConfig.data.props.map((obj, index) => {
+    const positions = nodeConfig.data.fields.map((obj, index) => {
       if (obj.type === 'rel') {
         return [
           {
@@ -180,7 +180,7 @@ export class EntityNode extends K6Node {
           inline
           ref={entityRef}>
           <name block block-padding-4px>{name}</name>
-          {() => data.props.map(field=> (
+          {() => data.fields.map(field=> (
             <row block>
               <Field key={field.id} field={field} entityPosition={entityPosition} positionTrigger={positionTrigger}/>
             </row>

@@ -4,7 +4,7 @@ const data = {
     {
       "id":"_1","name":"Page",
       "data": {
-        "props": [
+        "fields": [
         {"id":"f1","name":"title","type":"string"},
         {"id":"f2","name":"url","type":"string"},
         {"id":"f3","name":"posts","type":"rel"},
@@ -16,7 +16,7 @@ const data = {
     {
       "id":"_2","name":"Post",
       "data": {
-        "props": [
+        "fields": [
           {"id":"f1","name":"content","type":"string"},
           {"id":"f3","name":"page","type":"rel"},
           {"id":"_a","name":"comments","type":"rel"}
@@ -24,7 +24,7 @@ const data = {
       },
       "view":{"x":460,"y":140}
     },{"id":"_a","name":"Comment","view":{"x":710,"y":390}, "data": {
-        "props":[ 
+        "fields":[ 
           {"id":"_b","name":"target","type":"rel"},{"id":"_c","name":"content","type":"string"},{"id":"_d","name":"comments","type":"rel"}
         ]
       }
