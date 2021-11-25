@@ -51,6 +51,9 @@ const SimpleFormField = createComponent((() => {
 function firstValue(obj) {
   return Object.values(obj || {})[0] || '';
 }
+function fisrtName(obj) {
+
+}
 
 const HigherFormField = createComponent((() => {
   function FormField({ item }, frag) {
@@ -85,7 +88,7 @@ const HigherFormField = createComponent((() => {
                   block block-padding="8px"
                   flex-display >
                   <text flex-grow="1" >
-                    {item.name}:{firstValue(item.value)}
+                    {firstValue(item.value)}
                   </text>
                   <icon2><Down /></icon2>
                 </itemHeader>
@@ -100,6 +103,29 @@ const HigherFormField = createComponent((() => {
       };
     }
 
+    function renderItemObject(item) {
+      console.log('item: ', item);
+      return (
+        <itemContainer>
+          <itemBox block flex-display flex-align-items="center">
+            <itemHeader
+              flex-grow="1"
+              onClick={genClickOnItemHeader(0)}
+              block block-padding="8px"
+              flex-display >
+              <text flex-grow="1" >
+                {firstValue(item.value)}
+              </text>
+              <icon2><Down /></icon2>
+            </itemHeader>
+          </itemBox>
+          {() => (0 === expandIndex.value) ? (
+            <DataConfigForm json={item} />
+          ) : ''}
+        </itemContainer>
+      );
+    }
+
     return (
       <formField>
         <fieldName>{item.description}</fieldName>
@@ -108,11 +134,11 @@ const HigherFormField = createComponent((() => {
             switch (item.type) {
               case 'object':
                 {
-                  return (<DataConfigForm 
-                    json={item}
-                    layout:block-width="500px" 
-                    layout:block-padding="4px 16px"
-                  />);
+                  return (
+                    <itemObject>
+                      {renderItemObject(item)}
+                    </itemObject>
+                  );
                 }
               case 'array':
                 {
@@ -130,15 +156,14 @@ const HigherFormField = createComponent((() => {
   }
   FormField.Style = (frag) => {
     const el = frag.root.elements;
-    el.itemHeader.style({
 
+    const itemHeaderStyle = {
       border: '1px solid #999',
-    });
-
-    frag.itemHeader.elements.itemHeader.style({
-      border: '1px solid #999',
+      marginBottom: '-1px',
       cursor: 'pointer',
-    });
+    };
+    el.itemHeader.style(itemHeaderStyle);
+    frag.itemHeader.elements.itemHeader.style(itemHeaderStyle);
     frag.itemHeader.elements.icon1.style({
       marginLeft: '8px'
     });
