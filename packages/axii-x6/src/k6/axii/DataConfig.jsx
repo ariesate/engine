@@ -9,12 +9,15 @@ import {
   watch,
   delegateLeaf,
   traverse,
+  atom,
 } from 'axii';
 
 import { RootContext } from './Root';
 import { Input, Select, Button, Checkbox } from 'axii-components'
 import get from 'lodash/get';
 import cloneDeep from 'lodash/cloneDeep';
+import Down from 'axii-icons/Down';
+import Delete from 'axii-icons/Delete';
 
 const SimpleFormField = createComponent((() => {
   function FormField({ item }) {
@@ -45,8 +48,58 @@ const SimpleFormField = createComponent((() => {
   return FormField;
 })());
 
+function firstValue(obj) {
+  return Object.values(obj || {})[0] || '';
+}
+
 const HigherFormField = createComponent((() => {
-  function FormField({ item }) {
+  function FormField({ item }, frag) {
+
+    const expandIndex = atom(null);
+
+    function genClickOnItemHeader(i) {
+      return () => {
+        if (expandIndex.value === i) {
+          expandIndex.value = null;
+        } else {
+          expandIndex.value = i;
+        }
+      };
+    }
+
+    function genRemoveItem(children, index) {
+      return () => {
+        children.splice(index, 1);        
+      };
+    }
+
+    function renderItemList(children) {
+      return () => {
+        return children.map((item, index) => {
+          return frag.itemHeader(item.name, item.value, expandIndex)(
+            <itemContainer>
+              <itemBox block flex-display flex-align-items="center">
+                <itemHeader
+                  flex-grow="1"
+                  onClick={genClickOnItemHeader(index)}
+                  block block-padding="8px"
+                  flex-display >
+                  <text flex-grow="1" >
+                    {item.name}:{firstValue(item.value)}
+                  </text>
+                  <icon2><Down /></icon2>
+                </itemHeader>
+                <icon1 onClick={genRemoveItem(children, index)}><Delete fill="#ff4d4f" /></icon1>
+              </itemBox>
+              {() => (index === expandIndex.value) ? (
+                <DataConfigForm json={item} />
+              ) : ''}
+            </itemContainer>
+          );
+        });
+      };
+    }
+
     return (
       <formField>
         <fieldName>{item.description}</fieldName>
@@ -63,27 +116,32 @@ const HigherFormField = createComponent((() => {
                 }
               case 'array':
                 {
-                  return item.children.map(item => {
-                    return (
-                      <DataConfigForm json={item} />
-                    );                    
-                  });
+                  return (
+                    <itemList>
+                      {renderItemList(item.children)}
+                    </itemList>
+                  );
                 }
-                // return (<DataConfigForm 
-                //   json={item}
-                //   data={data}
-                //   path={valuePath}
-                //   layout:block-width="500px" 
-                //   layout:block-padding="4px 16px"
-                // />);
             }
           }}
         </fieldValue>
       </formField>
     );
   }
-  FormField.Style = () => {
+  FormField.Style = (frag) => {
+    const el = frag.root.elements;
+    el.itemHeader.style({
 
+      border: '1px solid #999',
+    });
+
+    frag.itemHeader.elements.itemHeader.style({
+      border: '1px solid #999',
+      cursor: 'pointer',
+    });
+    frag.itemHeader.elements.icon1.style({
+      marginLeft: '8px'
+    });
   };
   return FormField;
 })())
