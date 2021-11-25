@@ -1,5 +1,6 @@
 /** @jsx createElement */
 import {
+  tryToRaw,
   createElement,
   createComponent,
   createContext,
@@ -10,14 +11,15 @@ import {
   delegateLeaf,
   traverse,
   atom,
+  computed,
 } from 'axii';
 
 import { RootContext } from './Root';
 import { Input, Select, Button, Checkbox } from 'axii-components'
-import get from 'lodash/get';
 import cloneDeep from 'lodash/cloneDeep';
 import Down from 'axii-icons/Down';
 import Delete from 'axii-icons/Delete';
+import { get, set, merge, take } from 'lodash';
 
 const SimpleFormField = createComponent((() => {
   function FormField({ item }) {
@@ -28,13 +30,16 @@ const SimpleFormField = createComponent((() => {
           {() => {
             switch (item.type) {
               case 'string':
+                return (
+                  <Input layout:block value={delegateLeaf(item).value} />
+                );
               case 'number':
                 return (
-                  <Input value={item.value} />
+                  <Input layout:block type="number" value={delegateLeaf(item).value} />
                 );
               case 'boolean':
                 return (
-                  <Checkbox value={item.value} />
+                  <Checkbox value={delegateLeaf(item).value} />
                 );
             }
           }}
@@ -51,22 +56,21 @@ const SimpleFormField = createComponent((() => {
 function firstValue(obj) {
   return Object.values(obj || {})[0] || '';
 }
-function fisrtName(obj) {
-
-}
 
 const HigherFormField = createComponent((() => {
   function FormField({ item }, frag) {
-
     const expandIndex = atom(null);
 
     function addItem() {
+      // 构造一个array children结构
       const newObj = item.properties.map(p => {
         return {
           [p.name]: null,
         }
       }).reduce((p, n) => Object.assign(p, n), {});
-      item.children.push(newObj);
+      item.value.push(newObj);
+
+      item.children = rebuildArrayValue2ReactiveChildren(item, item.value);
     }
 
     function genClickOnItemHeader(i) {
@@ -86,34 +90,31 @@ const HigherFormField = createComponent((() => {
     }
 
     function renderItemList(children) {
-      return () => {
-        return children.map((item, index) => {
-          return frag.itemHeader(item.name, item.value, expandIndex)(
-            <itemContainer>
-              <itemBox block flex-display flex-align-items="center">
-                <itemHeader
-                  flex-grow="1"
-                  onClick={genClickOnItemHeader(index)}
-                  block block-padding="8px"
-                  flex-display >
-                  <text flex-grow="1" >
-                    {firstValue(item.value)}
-                  </text>
-                  <icon2><Down /></icon2>
-                </itemHeader>
-                <icon1 onClick={genRemoveItem(children, index)}><Delete fill="#ff4d4f" /></icon1>
-              </itemBox>
-              {() => (index === expandIndex.value) ? (
-                <DataConfigForm json={item} />
-              ) : ''}
-            </itemContainer>
-          );
-        });
-      };
+      return children.map((item, index) => {
+        return (
+          <itemContainer>
+            <itemBox block flex-display flex-align-items="center">
+              <itemHeader
+                flex-grow="1"
+                onClick={genClickOnItemHeader(index)}
+                block block-padding="8px"
+                flex-display >
+                <text flex-grow="1" >
+                  {firstValue(item.value)}
+                </text>
+                <icon2><Down /></icon2>
+              </itemHeader>
+              <icon1 onClick={genRemoveItem(children, index)}><Delete fill="#ff4d4f" /></icon1>
+            </itemBox>
+            {() => (index === expandIndex.value) ? (
+              <DataConfigForm layout:block-padding="16px" json={item} />
+            ) : ''}
+          </itemContainer>
+        );
+      });
     }
 
     function renderItemObject(item) {
-      console.log('item: ', item);
       return (
         <itemContainer>
           <itemBox block flex-display flex-align-items="center">
@@ -129,11 +130,14 @@ const HigherFormField = createComponent((() => {
             </itemHeader>
           </itemBox>
           {() => (0 === expandIndex.value) ? (
-            <DataConfigForm json={item} />
+            <DataConfigForm layout:block-padding="16px" json={item} />
           ) : ''}
         </itemContainer>
       );
     }
+
+    useViewEffect(() => {
+    });
 
     return (
       <formField>
@@ -176,15 +180,16 @@ const HigherFormField = createComponent((() => {
     };
     el.itemHeader.style(itemHeaderStyle);
     frag.itemHeader.elements.itemHeader.style(itemHeaderStyle);
-    frag.itemHeader.elements.icon1.style({
-      marginLeft: '8px'
+    el.icon1.style({
+      marginLeft: '8px',
+      cursor: 'pointer',
     });
   };
   return FormField;
 })())
 
-function rebuildArrayTypeItem(arrTypeItem, valueArr = []) {
-  return valueArr.map(singleValue => {
+function rebuildArrayValue2ReactiveChildren(arrTypeItem, valueArr = []) {
+  const children = valueArr.map(singleValue => {
     const firstValueKey = Object.keys(singleValue)[0];
     const { description } = arrTypeItem.properties.find(obj => obj.name === firstValueKey) || {};
     const itemJson = {
@@ -197,13 +202,14 @@ function rebuildArrayTypeItem(arrTypeItem, valueArr = []) {
 
     return mergedItemJson;
   });
+  return children;
 }
 
 function mergeJsonAndData(json, data) {
   if (!json) {
     return json;
   }
-  const clonedJson = cloneDeep(json);
+  const clonedJson = reactive(cloneDeep(json));
 
   function traverseJson(obj, path) {
     const cur = path.concat(obj.name);
@@ -212,7 +218,7 @@ function mergeJsonAndData(json, data) {
     if (propPathArr.length) {
       const value = get(data, propPathArr);
       if (obj.type === 'array') {
-        obj.children = rebuildArrayTypeItem(obj, value);
+        obj.children = rebuildArrayValue2ReactiveChildren(obj, value);
       }
       obj.value = value;
     } else {
@@ -230,14 +236,49 @@ function mergeJsonAndData(json, data) {
   return clonedJson;
 }
 
-const DataConfigForm = createComponent((() => {
-  function DataConfigForm({ json }) {
+function fallbackEditorDataToNormal(myJson) {
+  myJson = tryToRaw(myJson);
+  console.log('myJson: ', myJson);
+  window.myJson = myJson;
 
-    useViewEffect(() => {
+  function task(properties, obj) {
+    properties.forEach(prop => {
+      switch (prop.type) {
+        case 'number':
+        case 'boolean':
+        case 'string':
+          obj[prop.name] = tryToRaw(prop.value);
+          break;
+        case 'object':
+          obj[prop.name] = {};
+          task(prop.properties, obj[prop.name]);
+          break;
+        case 'array':
+          {
+            obj[prop.name] = prop.children.map(child => {
+              return task(child.properties, {});
+            });  
+          }
+          break;
+      }
     });
+    return obj;
+  }
+  const result = {};
+  task(myJson.properties, result);
+  console.log('result:', result);
+  return result;
+}
+
+const DataConfigForm = createComponent((() => {
+  function DataConfigForm({ json, test }) {
+    
+    if(test) {
+      window.DataConfigFormTopJson = json;        
+    }
 
     return (
-      <dataConfigForm block block-width="100%" block-padding="16px" block-box-sizing="border-box" >
+      <dataConfigForm block block-width="100%" block-box-sizing="border-box" >
         {() => json.properties.map(item => {
           const isSimple = ['string', 'number', 'boolean'].includes(item.type);
           const isHigher = ['array', 'object'];
@@ -269,31 +310,58 @@ const DataConfigForm = createComponent((() => {
  * 默认不指定的情况下是根据node.x.y的绝对定位
  * 指定的情况下可以是根据相关Layout（这让我想起了安卓的xml
  */
-function DataConfig({ children }) {
+function DataConfig({ onChange, onSave }) {
   const context = useContext(RootContext);
 
+  const showConfigForm = computed(() => {
+    return !!context.dm.insideState.selectedConfigJSON && !!context.dm.insideState.selectedConfigData;
+  });
+
+  const myJson = atom(null);
+
+  function clickOnSave() {
+    const rawData = fallbackEditorDataToNormal(myJson.value);
+    onSave && onSave(rawData);
+  }
+
   useViewEffect(() => {
-    watch(() => traverse(context.dm.insideState), () => {
-      // console.log('context.dm.insideState changed!! ', context.dm.insideState);
+    watch(() => traverse(myJson.value), () => {
+      if (myJson.value) {
+        console.log('myJson changed');
+        const rawData = fallbackEditorDataToNormal(myJson.value);
+        onChange && onChange(rawData);
+      }
+    });
+
+    watch(() => showConfigForm.value, () => {
+      if (showConfigForm.value) {
+        const json = context.dm.insideState.selectedConfigJSON;
+        const data = context.dm.insideState.selectedConfigData;
+        const mergedJson = mergeJsonAndData(json, data);
+        myJson.value = mergedJson;
+      } else {
+        myJson.value = null;
+      }
     });
   });
 
   return (
-    <dataCofnig block block-margin="16px" block-width="400px" >
+    <dataCofnig block block-margin="16px" block-width="400px" style={{ backgroundColor: '#fff' }}>
       {() => {
-        if (!context.dm.insideState.selectedConfigJSON || !context.dm.insideState.selectedConfigData) {
+        if (!myJson.value) {
           return '';
         }
-        const json = context.dm.insideState.selectedConfigJSON;
-        const data = context.dm.insideState.selectedConfigData;
-        const mergedJson = mergeJsonAndData(json, data);
-        console.log('mergedJson: ', mergedJson);
-    
         return (
-          context.dm.insideState.selectedConfigJSON ? (
-            <DataConfigForm 
-              json={mergedJson} />
-          ) : ''  
+          <content block block-padding="16px">
+            <DataConfigForm
+              key={context.dm.insideState.selectedCellId}
+              json={myJson.value}
+              test
+            />
+            <actions block flex-display flex-justify-content="right" block-padding-right="0">
+              <Button layout:block-margin-top="8px" primary onClick={clickOnSave}>保存</Button>
+            </actions>
+          </content>
         );
       }}
     </dataCofnig>
