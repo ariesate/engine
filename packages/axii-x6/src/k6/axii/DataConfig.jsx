@@ -60,6 +60,15 @@ const HigherFormField = createComponent((() => {
 
     const expandIndex = atom(null);
 
+    function addItem() {
+      const newObj = item.properties.map(p => {
+        return {
+          [p.name]: null,
+        }
+      }).reduce((p, n) => Object.assign(p, n), {});
+      item.children.push(newObj);
+    }
+
     function genClickOnItemHeader(i) {
       return () => {
         if (expandIndex.value === i) {
@@ -145,6 +154,9 @@ const HigherFormField = createComponent((() => {
                   return (
                     <itemList>
                       {renderItemList(item.children)}
+                      <actions block flex-display flex-justify-content="right" block-padding-right="0">
+                        <Button layout:block-width="100%" layout:block-margin-top="8px" primary onClick={addItem}>+</Button>
+                      </actions>
                     </itemList>
                   );
                 }
@@ -267,7 +279,7 @@ function DataConfig({ children }) {
   });
 
   return (
-    <dataCofnig block block-margin="16px" block-width="600px" >
+    <dataCofnig block block-margin="16px" block-width="400px" >
       {() => {
         if (!context.dm.insideState.selectedConfigJSON || !context.dm.insideState.selectedConfigData) {
           return '';
