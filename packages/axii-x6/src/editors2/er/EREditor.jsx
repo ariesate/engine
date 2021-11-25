@@ -7,6 +7,7 @@ import {
 } from 'axii';
 
 import { K6, Register, Graph, DataConfig } from '../../k6';
+import NodeForm from '../../k6/axii/NodeForm';
 import { EntityNode, EntityPort, EntityEdge, data as dataFunc } from './Entity';
 
 function ER2Editor({ data }) {
@@ -41,7 +42,7 @@ function ER2Editor({ data }) {
           </Graph>
         </k6base> 
         <operations block>
-          <DataConfig />
+          <NodeForm />
           <p>
             <button onClick={addNewNode} >add New Node</button>
           </p>

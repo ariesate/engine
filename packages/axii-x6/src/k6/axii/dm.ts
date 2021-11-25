@@ -47,6 +47,7 @@ class DataManager {
   readNodesData(nodes: IDataNode[]) {
     this.nodes = reactive(nodes.map(n => ({
       ...n,
+      data: n.data ? reactive(n.data) : n.data,
       edges: [],
     })));
   }
@@ -114,6 +115,14 @@ class DataManager {
     return sc;  
   }
   selectNode (id: string) {
+    if (this.insideState.selectedCellId === id) {
+      Object.assign(this.insideState, {
+        selectedCellId: '',
+        selectedConfigJSON: null,
+        selectedConfigData: null,
+      });
+      return;
+    }
     const node = this.findNode(id);
     const [nodeComponent] = this.getShapeComponent(node.shape);
     Object.assign(this.insideState, {
