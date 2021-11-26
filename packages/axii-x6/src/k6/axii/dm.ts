@@ -171,7 +171,7 @@ class DataManager extends EventEmiter{
     return sc;  
   }
   selectNode (id: string) {
-    if (this.insideState.selectedCellId === id) {
+    if (!id || this.insideState.selectedCellId === id) {
       Object.assign(this.insideState, {
         selectedConfigJSON: null,
         selectedConfigData: null,
@@ -211,8 +211,8 @@ class DataManager extends EventEmiter{
   removeCurrent() {
     const i = this.nodes.findIndex(o => o.id === this.insideState.selectedCellId);
     const id = this.nodes[i]?.id;
-    console.log('removeCurrent: ', id);
     this.nodes.splice(i, 1);
+    this.selectNode(null);
     this.emit('remove', id);
   }
   zoomIn() {
