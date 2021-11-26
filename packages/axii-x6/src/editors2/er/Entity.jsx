@@ -120,8 +120,9 @@ export class EntityPort extends K6Port {
 export class EntityNode extends K6Node {
   shape = 'enitity-shape';
   configJSON = EntityConfigJSON;  
-  onChange(d) {
 
+  onChange(d) {
+    console.log('entityNode changed:', d);
   }
   getComponent() {
 

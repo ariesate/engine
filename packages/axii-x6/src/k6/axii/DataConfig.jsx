@@ -69,7 +69,6 @@ const HigherFormField = createComponent((() => {
         }
       }).reduce((p, n) => Object.assign(p, n), {});
       item.value.push(newObj);
-
       item.children = rebuildArrayValue2ReactiveChildren(item, item.value);
     }
 
