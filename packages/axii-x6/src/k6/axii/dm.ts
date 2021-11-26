@@ -40,6 +40,7 @@ class DataManager {
     selectedConfigJSON: null,
   });
   constructor() {
+    window.dm = this;
   }
   readState(obj: object) {
     this.data = reactive(obj);
