@@ -65,7 +65,7 @@ export abstract class K6Node {
 
   abstract getComponent(data?: INodeViewProps): Axii.Component;
 }
-export const DEFAULT_SHAPE = 'enitity-shape';
+export const DEFAULT_SHAPE = 'entity-shape';
 export class K6NodeChild extends K6Node {
   shape = DEFAULT_SHAPE;
   getComponent() {

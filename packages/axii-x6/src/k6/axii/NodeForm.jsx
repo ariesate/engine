@@ -31,23 +31,29 @@ function NodeForm(props) {
 
   function onSave(rawSelectedData) {    
     const r = onChange(rawSelectedData);  
-    context.dm.triggerCurrentEvent('save', latestData);    
+    if (r) {
+      context.dm.triggerCurrentEvent('save', r);
+    }
   }
 
   function onChange(rawSelectedData) {
     const { selectedCellId, selectedConfigData, selectedConfigJSON } = context.dm.insideState;
-    merge(selectedConfigData, rawSelectedData);
-    context.dm.triggerCurrentEvent('change', selectedConfigData);    
-    return selectedConfigData;
+    console.log('selectedCellId: ', selectedCellId, selectedConfigData.fields.length, rawSelectedData);
+    if (selectedCellId) {
+      Object.assign(selectedConfigData, rawSelectedData);
+      context.dm.triggerCurrentEvent('change', selectedConfigData);    
+      return selectedConfigData;  
+    }
   }
 
   useViewEffect(() => {
-    watch(() => showConfigForm.value, () => {
+    watch(() => context.dm.insideState.selectedCellId, () => {
       if (showConfigForm.value) {
         setTimeout(() => {
           const json = context.dm.insideState.selectedConfigJSON;
           const data = tryToRaw(context.dm.insideState.selectedConfigData);
           const mergedJson = mergeJsonAndData(json, data);
+          console.log('[NodeForm] recloned');
           formJson.value = cloneDeep(mergedJson);
         });
       } else {
@@ -61,7 +67,7 @@ function NodeForm(props) {
   return (
     <nodeForm>
       {(() => {
-        if (!formJson.value) {
+        if (!formJson.value || !context.dm.insideState.selectedCellId) {
           return '';
         }
         return (<DataConfig jsonWithData={formJson.value} onChange={onChange} onSave={onSave}></DataConfig>);  

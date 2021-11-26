@@ -121,6 +121,21 @@ export const Graph = {
       }
     });
 
+    dm.on('remove', (id) => {
+      graph.removeCell(id);
+    });
+    dm.on('zoom-in', (v) => {
+      graph.zoom(v);
+      console.log('graph.zoom(): ', graph.zoom());
+    });
+    dm.on('zoom-out', (v) => {
+      graph.zoom(-v);
+      console.log('graph.zoom(): ', graph.zoom());
+    });
+    dm.on('addNode', (n) => {
+      this.addNode(n);
+    });
+
     this.graph = graph;
   },
 

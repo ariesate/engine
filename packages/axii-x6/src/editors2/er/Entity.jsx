@@ -118,7 +118,7 @@ export class EntityPort extends K6Port {
 
 
 export class EntityNode extends K6Node {
-  shape = 'enitity-shape';
+  shape = 'entity-shape';
   configJSON = EntityConfigJSON;  
 
   onChange(node, d) {

@@ -22,7 +22,7 @@ import Delete from 'axii-icons/Delete';
 import { get, set, merge, take } from 'lodash';
 
 const SimpleFormField = createComponent((() => {
-  function FormField({ item }) {
+  function FormField({ item, onChange }) {
     return (
       <formField>
         <fieldName>{item.description}</fieldName>
@@ -31,16 +31,15 @@ const SimpleFormField = createComponent((() => {
             switch (item.type) {
               case 'string':
                 return (
-                  <Input onChange={() => {
-                  }}layout:block value={delegateLeaf(item).value} />
+                  <Input onChange={onChange} layout:block value={delegateLeaf(item).value} />
                 );
               case 'number':
                 return (
-                  <Input layout:block type="number" value={delegateLeaf(item).value} />
+                  <Input onChange={onChange}  layout:block type="number" value={delegateLeaf(item).value} />
                 );
               case 'boolean':
                 return (
-                  <Checkbox value={delegateLeaf(item).value} />
+                  <Checkbox onChange={onChange} value={delegateLeaf(item).value} />
                 );
             }
           }}
@@ -60,7 +59,7 @@ function firstValue(obj) {
 
 
 const HigherFormField = createComponent((() => {
-  function FormField({ item }, frag) {
+  function FormField({ item, onChange }, frag) {
     const expandIndex = atom(null);
 
     function addItem() {
@@ -69,9 +68,11 @@ const HigherFormField = createComponent((() => {
         return {
           [p.name]: null,
         }
-      }).reduce((p, n) => Object.assign(p, n), {});
+      }).reduce((p, n) => Object.assign(p, n), {});      
       item.value.push(newObj);
-      item.children = rebuildArrayValue2ReactiveChildren(item, item.value);
+      const newChildren = rebuildArrayValue2ReactiveChildren(item, item.value);
+      item.children = merge(newChildren, item.children);
+      onChange();
     }
 
     function genClickOnItemHeader(i) {
@@ -86,7 +87,9 @@ const HigherFormField = createComponent((() => {
 
     function genRemoveItem(children, index) {
       return () => {
+        item.value.splice(index, 1);
         children.splice(index, 1);        
+        onChange();
       };
     }
 
@@ -101,14 +104,14 @@ const HigherFormField = createComponent((() => {
                 block block-padding="8px"
                 flex-display >
                 <text flex-grow="1" >
-                  {firstValue(item.value)}
+                  {() => item.properties[0] ? item.properties[0].value : ''}
                 </text>
                 <icon2><Down /></icon2>
               </itemHeader>
               <icon1 onClick={genRemoveItem(children, index)}><Delete fill="#ff4d4f" /></icon1>
             </itemBox>
             {() => (index === expandIndex.value) ? (
-              <DataConfigForm layout:block-padding="16px" json={item} />
+              <DataConfigForm layout:block-padding="16px" json={item} onChange={onChange} />
             ) : ''}
           </itemContainer>
         );
@@ -131,7 +134,7 @@ const HigherFormField = createComponent((() => {
             </itemHeader>
           </itemBox>
           {() => (0 === expandIndex.value) ? (
-            <DataConfigForm layout:block-padding="16px" json={item} />
+            <DataConfigForm layout:block-padding="16px" json={item} onChange={onChange} />
           ) : ''}
         </itemContainer>
       );
@@ -239,7 +242,6 @@ export function mergeJsonAndData(json, data) {
 
 export function fallbackEditorDataToNormal(myJson) {
   myJson = tryToRaw(myJson);
-  window.myJson = myJson;
 
   function task(properties, obj) {
     properties.forEach(prop => {
@@ -270,7 +272,7 @@ export function fallbackEditorDataToNormal(myJson) {
 }
 
 const DataConfigForm = createComponent((() => {
-  function DataConfigForm({ json, test }) {
+  function DataConfigForm({ json, test, onChange }) {
     
     if(test) {
       window.DataConfigFormTopJson = json;        
@@ -283,12 +285,12 @@ const DataConfigForm = createComponent((() => {
           const isHigher = ['array', 'object'].includes(item.type);
           if (isSimple) {
             return (
-              <SimpleFormField item={item} />
+              <SimpleFormField item={item} onChange={onChange} />
             );
           }
           if (isHigher) {
             return (
-              <HigherFormField item={item} />
+              <HigherFormField item={item} onChange={onChange} />
             );
           }
         })}
@@ -310,6 +312,7 @@ const DataConfigForm = createComponent((() => {
  * 指定的情况下可以是根据相关Layout（这让我想起了安卓的xml
  */
 function DataConfig({ jsonWithData, onChange, onSave }) {
+  console.log('[DataConfig] Render: ');
 
   const myJson = reactive((jsonWithData));
   window.myJson = myJson;
@@ -320,12 +323,19 @@ function DataConfig({ jsonWithData, onChange, onSave }) {
   }
 
   useViewEffect(() => {
-    watch(() => traverse(myJson), () => {
-      console.log('<DataConfig> myJson changed');
-        const rawData = fallbackEditorDataToNormal(myJson);
-        onChange && onChange(rawData);
-    });
+    // watch(() => traverse(myJson), () => {
+    //   console.log('<DataConfig> myJson changed');
+    //     const rawData = fallbackEditorDataToNormal(myJson);
+    //     onChange && onChange(rawData);
+    // });
   });
+
+  function dataChanged(v) {
+    setTimeout(() => {
+      const rawData = fallbackEditorDataToNormal(myJson);      
+      onChange && onChange(rawData);
+  });
+  }
 
   return (
     <dataCofnig block block-margin="16px" block-width="400px" style={{ backgroundColor: '#fff' }}>
@@ -333,6 +343,7 @@ function DataConfig({ jsonWithData, onChange, onSave }) {
         <DataConfigForm
           json={myJson}
           test
+          onChange={dataChanged}
         />
         <actions block flex-display flex-justify-content="right" block-padding-right="0">
           <Button layout:block-margin-top="8px" primary onClick={clickOnSave}>保存</Button>
