@@ -133,6 +133,18 @@ class DataManager {
   }
   selectEdge(id: string) {
   }
+  triggerCurrentEvent(event: 'change', data: any) {
+    this.triggerNodeEvent(this.insideState.selectedCellId, event, data);      
+  }
+
+  triggerNodeEvent(nodeId: string, event: 'change', data: any) {
+    const [nodeComponent] = this.getShapeComponentByNodeId(nodeId);
+    switch (event) {
+      case 'change':
+        nodeComponent.onChange(data);
+        break;
+    }
+  }
 }
 
 export default DataManager;

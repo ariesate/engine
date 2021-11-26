@@ -53,6 +53,8 @@ export abstract class K6Node {
   constructor () {
 
   }
+  onChange(data: any) {
+  }
   
   setSize(args: { width:number, height:number }) {
     console.log('args: ', args);

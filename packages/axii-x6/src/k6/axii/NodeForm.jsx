@@ -13,14 +13,15 @@ function NodeForm(props) {
   const context = useContext(RootContext);
 
 
-
   function onSave(rawSelectedData) {
-
+    const { selectedCellId, selectedConfigData, selectedConfigJSON } = context.dm.insideState;
+    const latestData = merge(selectedConfigData, rawSelectedData);
+    
+    context.dm.triggerCurrentEvent('change', latestData);
   }
 
   function onChange(rawSelectedData) {
-    const { selectedConfigData, selectedConfigJSON } = context.dm.insideState;
-    merge(selectedConfigData, rawSelectedData);
+    
   }
 
   return (
