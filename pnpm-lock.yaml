@@ -142,6 +142,7 @@ importers:
       axios: ^0.21.1
       command-line-args: ^5.1.1
       copy-text-to-clipboard: ^2.2.0
+      eventemitter3: ^4.0.7
       less: ^3.12.2
       lodash: ^4.17.4
       lodash-es: ^4.17.20
@@ -154,6 +155,7 @@ importers:
       axii-icons: link:../axii-icons
       axios: 0.21.4
       copy-text-to-clipboard: 2.2.0
+      eventemitter3: 4.0.7
       lodash: 4.17.21
       lodash-es: 4.17.21
       typescript: 4.5.2
@@ -4589,7 +4591,6 @@ packages:
 
   /eventemitter3/4.0.7:
     resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
-    dev: true
 
   /events/3.3.0:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}

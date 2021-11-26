@@ -41,29 +41,29 @@ export interface X6Edge{
 export interface IX6Cell {
   
   shape: 'rect' | string; // x6内置了很多基础图形，但使用的时候还是要自定义的，这里是要接入axii-component
-  view: string;
+  view?: string;
   // 可视信息
-  zIndex: number;
-  visible: boolean;
+  zIndex?: number;
+  visible?: boolean;
   // svg颜色属性
-  attrs: {
+  attrs?: {
     [selector: string]: { // svg属性
       fill: string; // color hash
       stroke: string; // color
     }
   }
   // 
-  markup: IMarkup[];
+  markup?: IMarkup[];
   //
-  parent: {};
-  children: {}[];
+  parent?: {};
+  children?: {}[];
   //
-  data: {};
+  data?: {};
 }
 
 export type IX6Node =  IX6Cell & IBBox & {
   id: string;
-  angle: number; // 旋转角度？
+  angle?: number; // 旋转角度？
 }
 
 export interface IBBox {

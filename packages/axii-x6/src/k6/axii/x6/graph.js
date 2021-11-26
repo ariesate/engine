@@ -7,22 +7,7 @@ export function createFlowGraph(container, {connectingValidate = {}, width = 100
     container,
     width,
     height,
-    grid: {
-      size: 10,
-      visible: true,
-      type: 'mesh',
-      args: [
-        {
-          color: '#cccccc',
-          thickness: 1,
-        },
-        {
-          color: '#5F95FF',
-          thickness: 1,
-          factor: 4,
-        },
-      ],
-    },
+    grid: true,
     onPortRendered: onPortRendered,
     // selecting: {
     //   enabled: true,

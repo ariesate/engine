@@ -9,6 +9,7 @@ import {
 } from 'axii';
 
 import { RootContext } from './Root';
+import Toolbar from './Toolbar';
 import * as x6 from './x6';
 
 function Graph({ data }, ref) {
@@ -46,7 +47,14 @@ function Graph({ data }, ref) {
   });
 
   return (
-    <graph block ref={graphRef}></graph>
+    <graphContainer block >
+      <toolbarBox block >
+        <Toolbar />
+      </toolbarBox>
+      <graph block ref={graphRef} style={{ backgroundColor: '#fff' }}>
+
+      </graph>
+    </graphContainer>
   );
 }
 Graph.forwardRef = true;

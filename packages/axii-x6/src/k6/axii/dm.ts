@@ -1,7 +1,7 @@
 import {
   reactive,
 } from 'axii';
-
+import * as EventEmiter from 'eventemitter3';
 import { IBBox, IX6Cell, IX6Node, IX6Ddge } from '../basicTypes';
 import { K6Edge, K6EdgeChild } from '../Edge';
 import { IK6DataConfig, K6Node, K6NodeChild } from '../Node';
@@ -29,17 +29,67 @@ export interface IInsideState {
   selectedCellId: string;
   selectedConfigJSON: IK6DataConfig | null;
   selectedConfigData: { [k: string]: any };
+  graph: {
+    zoom: number,
+  }
 }
 
-class DataManager {
+export function fallbackEditorDataToNormal(myJson: IK6DataConfig) {
+  function task(properties: IK6DataConfig['properties'], obj: any) {
+    properties.forEach(prop => {
+      switch (prop.type) {
+        case 'number':
+        case 'boolean':
+        case 'string':
+          obj[prop.name] = undefined;
+          break;
+        case 'object':
+          obj[prop.name] = {};
+          task(prop.properties, obj[prop.name]);
+          break;
+        case 'array':
+          {
+            obj[prop.name] = [];
+          }
+          break;
+      }
+    });
+    return obj;
+  }
+  const result = {};
+  task(myJson.properties, result);
+  return result;
+}
+
+function generateNodeByConfig(k6Node: K6Node) {
+  const data = fallbackEditorDataToNormal(k6Node.configJSON);
+
+  const newNode = {
+    id: Math.random().toString(),
+    shape: k6Node.shape,
+    name: 'Page',
+    data,
+    x:30,
+    y:30,
+    edges: [],
+  };
+
+  return newNode;
+}
+
+class DataManager extends EventEmiter{
   nodes: IDataNode[] = [];
   nodeShapeComponentMap: Map<string, ShapeComponent> = new Map();
   data: ITopState | null = null;
   insideState:IInsideState = reactive({
     selectedCellId: '', // 包含节点和边
     selectedConfigJSON: null,
+    graph: {
+      zoom: 1,
+    },
   });
   constructor() {
+    super();
     window.dm = this;
   }
   readState(obj: object) {
@@ -63,11 +113,16 @@ class DataManager {
       });
     });
   }
-  addNode(n: IDataNode) {
-    this.nodes.push({
-      ...n,
-      edges: [],
-    });
+  addNode() {
+    // 先默认只支持一种
+    if (1) {
+      const nodeComponent: ShapeComponent = this.nodeShapeComponentMap.values().next().value;
+      const n = generateNodeByConfig(nodeComponent[0]);
+      this.nodes.push({
+        ...n,
+      });
+      this.emit('addNode', n);
+    }
   }
   findNode(id: string) {
     const n = this.nodes.find(n => n.id === id);
@@ -118,18 +173,18 @@ class DataManager {
   selectNode (id: string) {
     if (this.insideState.selectedCellId === id) {
       Object.assign(this.insideState, {
-        selectedCellId: '',
         selectedConfigJSON: null,
         selectedConfigData: null,
+        selectedCellId: '',
       });
       return;
     }
     const node = this.findNode(id);
     const [nodeComponent] = this.getShapeComponent(node.shape);
     Object.assign(this.insideState, {
-      selectedCellId: id,
       selectedConfigJSON: nodeComponent.configJSON,
       selectedConfigData: node.data,
+      selectedCellId: id,
     });
   }
   selectEdge(id: string) {
@@ -139,6 +194,9 @@ class DataManager {
   }
 
   triggerNodeEvent(nodeId: string, event: 'change' | 'save', data: any) {
+    if (!nodeId) {
+      return;
+    }
     const node = this.findNode(nodeId);
     const [nodeComponent] = this.getShapeComponent(node.shape);
     switch (event) {
@@ -150,6 +208,23 @@ class DataManager {
         break;
       }
   }
+  removeCurrent() {
+    const i = this.nodes.findIndex(o => o.id === this.insideState.selectedCellId);
+    const id = this.nodes[i]?.id;
+    console.log('removeCurrent: ', id);
+    this.nodes.splice(i, 1);
+    this.emit('remove', id);
+  }
+  zoomIn() {
+    this.insideState.graph.zoom += 0.2
+    this.emit('zoom-in', 0.2);
+  }
+  zoomOut(){
+    this.insideState.graph.zoom -= 0.2
+    this.emit('zoom-out', 0.2);
+  }
 }
 
 export default DataManager;
+
+
