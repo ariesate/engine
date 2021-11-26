@@ -121,8 +121,8 @@ export class EntityNode extends K6Node {
   shape = 'enitity-shape';
   configJSON = EntityConfigJSON;  
 
-  onChange(d) {
-    console.log('entityNode changed:', d);
+  onChange(node, d) {
+    console.log('entityNode changed:', node, d);
   }
   getComponent() {
 

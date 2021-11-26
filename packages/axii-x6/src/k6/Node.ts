@@ -1,5 +1,5 @@
 // 以ER为例, 一个节点必备的元素
-import { Axii, IBBox } from './basicTypes';
+import { Axii, IBBox, IX6Cell } from './basicTypes';
 import { K6Port } from './Port';
 
 // 渲染方式，原始 或 Axii Component
@@ -53,7 +53,9 @@ export abstract class K6Node {
   constructor () {
 
   }
-  onChange(data: any) {
+  onChange(node: IX6Cell, data: any) {
+  }
+  onSave(node: IX6Cell, data: any) {
   }
   
   setSize(args: { width:number, height:number }) {
