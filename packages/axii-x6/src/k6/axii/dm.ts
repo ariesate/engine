@@ -134,17 +134,21 @@ class DataManager {
   }
   selectEdge(id: string) {
   }
-  triggerCurrentEvent(event: 'change', data: any) {
+  triggerCurrentEvent(event: 'change' | 'save', data: any) {
     this.triggerNodeEvent(this.insideState.selectedCellId, event, data);      
   }
 
-  triggerNodeEvent(nodeId: string, event: 'change', data: any) {
-    const [nodeComponent] = this.getShapeComponentByNodeId(nodeId);
+  triggerNodeEvent(nodeId: string, event: 'change' | 'save', data: any) {
+    const node = this.findNode(nodeId);
+    const [nodeComponent] = this.getShapeComponent(node.shape);
     switch (event) {
       case 'change':
-        nodeComponent.onChange(data);
+        nodeComponent.onChange(node, data);
         break;
-    }
+      case 'save':
+        nodeComponent.onSave(node, data);
+        break;
+      }
   }
 }
 

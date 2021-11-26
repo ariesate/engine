@@ -30,16 +30,15 @@ function NodeForm(props) {
   });
 
   function onSave(rawSelectedData) {    
-    const { selectedCellId, selectedConfigData, selectedConfigJSON } = context.dm.insideState;
-    const latestData = merge(selectedConfigData, rawSelectedData);
-    
-    context.dm.triggerCurrentEvent('change', latestData);    
+    const r = onChange(rawSelectedData);  
+    context.dm.triggerCurrentEvent('save', latestData);    
   }
 
   function onChange(rawSelectedData) {
     const { selectedCellId, selectedConfigData, selectedConfigJSON } = context.dm.insideState;
     merge(selectedConfigData, rawSelectedData);
     context.dm.triggerCurrentEvent('change', selectedConfigData);    
+    return selectedConfigData;
   }
 
   useViewEffect(() => {
