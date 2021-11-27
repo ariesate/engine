@@ -1,7 +1,7 @@
 import {
   reactive,
 } from 'axii';
-import * as EventEmiter from 'eventemitter3';
+import EventEmiter from 'eventemitter3';
 import { IBBox, IX6Cell, IX6Node, IX6Ddge } from '../basicTypes';
 import { K6Edge, K6EdgeChild } from '../Edge';
 import { IK6DataConfig, K6Node, K6NodeChild } from '../Node';
