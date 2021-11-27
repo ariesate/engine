@@ -89,7 +89,7 @@ const HigherFormField = createComponent((() => {
       return () => {
         item.value.splice(index, 1);
         children.splice(index, 1);        
-        onChange();
+         onChange();
       };
     }
 
