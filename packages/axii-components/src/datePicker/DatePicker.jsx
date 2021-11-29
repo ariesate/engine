@@ -38,13 +38,13 @@ export function DatePicker({focused, onFocus, onBlur, value, onChange, format,})
       inline
       tabindex={-1}
       onFocusOut={() => onBlur()}
-      inline-display-none={atomComputed(() => !focused.value)}
       style={{background: "#fff", zIndex: 99999}}
       ref={calendarRef}
     >
       <calendar use={Calendar} value={value} onChange={onChange}/>
     </calendarContainer>, {
       getContainerRect,
+      visible: atomComputed(() => focused.value)
     })
 
   return <>

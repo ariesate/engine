@@ -25,7 +25,6 @@ export default function usePopover(content, position = 'bottom', align='left') {
 	}
 
 	const style = atomComputed(() => ({
-		display: visible.value ? 'block' : 'none',
 		whiteSpace: 'nowrap',
 		...layerStyle
 	}))
@@ -33,7 +32,8 @@ export default function usePopover(content, position = 'bottom', align='left') {
 	const layerReturn = useLayer(<dropdown style={style}>
 		{content}
 	</dropdown>, {
-		getContainerRect
+		getContainerRect,
+		visible
 	})
 
 	return {
