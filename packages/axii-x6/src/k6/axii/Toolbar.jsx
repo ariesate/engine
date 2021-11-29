@@ -72,7 +72,7 @@ function Toolbar({}) {
       <extraActions >
         <Button primary onClick={() => {
           context.dm.addNode();
-        }} >新增节点</Button>
+        }} >新增</Button>
       </extraActions>
     </k6Toolbar>
   );
