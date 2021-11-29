@@ -12,9 +12,7 @@ import {
   useContext,
 } from 'axii';
 import {useElementPosition, manualTrigger as createManualTrigger } from 'axii-components'
-import { K6Node } from "../../k6/Node";
-import { K6Port } from '../../k6/Port';
-import { K6Edge } from '../../k6/Edge';
+import { K6Node, K6Port, K6Edge } from "../../k6/index";
 import EntityConfigJSON from './Entity.k6.json';
 
 export class EntityEdge extends K6Edge {
