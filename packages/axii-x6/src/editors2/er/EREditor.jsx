@@ -6,8 +6,7 @@ import {
   useRef,
 } from 'axii';
 
-import { K6, Register, Graph, DataConfig } from '../../k6';
-import NodeForm from '../../k6/axii/NodeForm';
+import { K6, Register, Graph, NodeForm } from '../../k6';
 import { EntityNode, EntityPort, EntityEdge, data as dataFunc } from './Entity';
 
 function ER2Editor({ data }) {
