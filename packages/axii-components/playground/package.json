@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "start": "vite",
+    "local": "vite --config vite.local.config.js",
     "build": "pnpm build:site",
     "build:lib": "pnpm build:dev --filter \"axii-components\"",
     "build:site": "node scripts/buildDemoAssets & vite build",

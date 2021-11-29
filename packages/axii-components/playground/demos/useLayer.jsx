@@ -12,7 +12,7 @@ function App() {
     top: 0,
     height: document.body.offsetHeight,
     width: document.body.offsetWidth,
-    display: visible.value ? 'flex' : 'none',
+    display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     background: 'rgba(0,0,0, .2)'
@@ -23,7 +23,7 @@ function App() {
     <div>
       <button onClick={() => visible.value = false}>Close</button>
     </div>
-  </div>)
+  </div>, { visible })
 
   return (
     <div>

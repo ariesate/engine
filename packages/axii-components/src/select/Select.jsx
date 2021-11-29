@@ -57,7 +57,6 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
     return (
       <optionList
         inline
-        inline-display-none={atomComputed(() => !focused.value)}
         inline-min-width={atomComputed(() => `${sourceRef.value ? sourceRef.value.offsetWidth : 0}px`)}
         tabindex={-1}
         onKeyDown={onKeyDown}
@@ -81,6 +80,7 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
       </optionList>)
     }, {
       getContainerRect,
+      visible: atomComputed(() => focused.value)
     })
 
   return (

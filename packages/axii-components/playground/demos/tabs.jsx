@@ -1,6 +1,8 @@
 import { createElement, render, reactive, atom } from 'axii'
-import { Tabs } from 'axii-components'
+import { Tabs, Select } from 'axii-components'
 
+const { TabPane } = Tabs
+const options = [0, 1, 2, 3, 4]
 
 function BrowserLike() {
 
@@ -29,7 +31,7 @@ function BrowserLike() {
 
   return (
     <container block>
-      <urls block>
+      {/* <urls block>
         {
           urls.map(url => (
             <a href='#' onClick={() => open(url)} block>open  {url}</a>
@@ -48,6 +50,12 @@ function BrowserLike() {
             </Tabs.TabPane>
           )
         })}
+      </Tabs> */}
+      <Tabs layout:block-margin-80px>
+        <TabPane tabKey="tab1" title="tab1"></TabPane>
+        <TabPane tabKey="tab2" title="tab2">
+          <Select options={options} />
+        </TabPane>
       </Tabs>
     </container>
   )
