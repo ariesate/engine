@@ -14,7 +14,7 @@ class SimpleNodeView extends NodeView {
       body: {
         refWidth: '100%',
         refHeight: '100%',
-        fill: '#31d0c6',
+        fill: '#acd6fe',
       },
     })
   }
