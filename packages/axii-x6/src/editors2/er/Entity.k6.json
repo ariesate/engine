@@ -21,6 +21,25 @@
           "properties": []
         },
         {
+          "name": "type",
+          "type": "enum",
+          "description": "type",
+          "properties": [
+            {
+              "name": "string",
+              "type": "string",
+              "description": "string",
+              "properties": []
+            },
+            {
+              "name": "rel",
+              "type": "string",
+              "description": "rel",
+              "properties": []
+            }
+          ]
+        },
+        {
           "name": "rel",
           "type": "boolean",
           "description": "rel",

@@ -5,7 +5,7 @@ export default interface IExample {
   fields: Array<{
       id: string;
       name: string;
-      rel: boolean;
+      type: 'string' | 'rel'; // 字段类型
       isCollection: boolean;
   }>;
   /**
