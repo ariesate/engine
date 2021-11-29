@@ -47,18 +47,19 @@ function NodeForm(props) {
   }
 
   useViewEffect(() => {
-    watch(() => context.dm.insideState.selectedCellId, () => {
-      if (showConfigForm.value) {
+    const insideState = context.dm.insideState;
+    watch(() => insideState.selectedCellId, () => {
         setTimeout(() => {
-          const json = context.dm.insideState.selectedConfigJSON;
-          const data = tryToRaw(context.dm.insideState.selectedConfigData);
-          const mergedJson = mergeJsonAndData(json, data);
-          console.log('[NodeForm] recloned');
-          formJson.value = cloneDeep(mergedJson);
-        });
-      } else {
-        formJson.value = null;
-      }
+          if (showConfigForm.value) {
+            const json = context.dm.insideState.selectedConfigJSON;
+            const data = tryToRaw(context.dm.insideState.selectedConfigData);
+            const mergedJson = mergeJsonAndData(json, data);
+            console.log('[NodeForm] recloned');
+            formJson.value = cloneDeep(mergedJson);
+        } else {
+          formJson.value = null;
+        }
+      });
     });
   });
 

@@ -63,6 +63,7 @@ const SimpleFormField = createComponent((() => {
                       if (!optionToValue) return
                       value.value = optionToValue(option)
                       item.value = value.value.id;
+                      onChange();
                     }}/>
                   );  
                 }
@@ -349,18 +350,18 @@ function DataConfig({ jsonWithData, onChange, onSave }) {
   }
 
   useViewEffect(() => {
-    watch(() => traverse(myJson), () => {
-      console.log('<DataConfig> myJson changed');
-      // const rawData = fallbackEditorDataToNormal(myJson);
-      // onChange && onChange(rawData);
-    });
+    // watch(() => traverse(myJson), () => {
+    //   console.log('<DataConfig> myJson changed');
+    //   const rawData = fallbackEditorDataToNormal(myJson);
+    //   onChange && onChange(rawData);
+    // });
   });
 
   function dataChanged(v) {
     setTimeout(() => {
       const rawData = fallbackEditorDataToNormal(myJson);      
       onChange && onChange(rawData);
-  });
+    });
   }
 
   return (

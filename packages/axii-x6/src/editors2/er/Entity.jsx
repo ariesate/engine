@@ -166,11 +166,6 @@ export class EntityNode extends K6Node {
       });
 
       const clickOnEntity = () => {
-        if (this.data.selectItemId !== id) {
-          this.data.selectItemId = id;
-        } else {
-          this.data.selectItemId = null;
-        }
       };
 
       return (
