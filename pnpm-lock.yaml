@@ -166,19 +166,6 @@ importers:
       npm-run-all: 4.1.5
       vite: 2.6.13_less@3.13.1
 
-  packages/axii-x6/playground:
-    specifiers:
-      axii: workspace:*
-      axii-components: workspace:*
-      axii-x6: workspace:*
-      vite: ^2.6.10
-    dependencies:
-      axii: link:../../controller-axii
-      axii-components: link:../../axii-components
-      axii-x6: link:..
-    devDependencies:
-      vite: 2.6.13
-
   packages/controller-axii:
     specifiers:
       '@ariesate/are': workspace:*
@@ -2709,7 +2696,7 @@ packages:
   /axios/0.21.4:
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
     dependencies:
-      follow-redirects: 1.14.4
+      follow-redirects: 1.14.4_debug@4.3.2
     transitivePeerDependencies:
       - debug
     dev: false
@@ -4958,16 +4945,6 @@ packages:
       readable-stream: 2.3.7
     dev: true
 
-  /follow-redirects/1.14.4:
-    resolution: {integrity: sha512-zwGkiSXC1MUJG/qmeIFH2HBJx9u0V46QGUe3YR1fXG8bXQxq7fLj0RjLZQ5nubr9qNJUZrH+xUcwXEoXNpfS+g==}
-    engines: {node: '>=4.0'}
-    peerDependencies:
-      debug: '*'
-    peerDependenciesMeta:
-      debug:
-        optional: true
-    dev: false
-
   /follow-redirects/1.14.4_debug@4.3.2:
     resolution: {integrity: sha512-zwGkiSXC1MUJG/qmeIFH2HBJx9u0V46QGUe3YR1fXG8bXQxq7fLj0RjLZQ5nubr9qNJUZrH+xUcwXEoXNpfS+g==}
     engines: {node: '>=4.0'}
@@ -4978,7 +4955,6 @@ packages:
         optional: true
     dependencies:
       debug: 4.3.2_supports-color@6.1.0
-    dev: true
 
   /for-in/1.0.2:
     resolution: {integrity: sha1-gQaNKVqBQuwKxybG4iAMMPttXoA=}
