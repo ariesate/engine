@@ -62,13 +62,11 @@ function NodeForm(props) {
     });
   });
 
-  console.log('nodeForm render');
-
   return (
-    <nodeForm>
+    <nodeForm block block-width="400px">
       {(() => {
         if (!formJson.value || !context.dm.insideState.selectedCellId) {
-          return '';
+          return;
         }
         return (<DataConfig jsonWithData={formJson.value} onChange={onChange} onSave={onSave}></DataConfig>);  
       })}

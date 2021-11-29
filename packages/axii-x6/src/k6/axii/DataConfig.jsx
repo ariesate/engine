@@ -338,7 +338,7 @@ function DataConfig({ jsonWithData, onChange, onSave }) {
   }
 
   return (
-    <dataCofnig block block-margin="16px" block-width="400px" style={{ backgroundColor: '#fff' }}>
+    <dataCofnig block block-width="100%" style={{ backgroundColor: '#fff' }}>
       <content block block-padding="16px">
         <DataConfigForm
           json={myJson}

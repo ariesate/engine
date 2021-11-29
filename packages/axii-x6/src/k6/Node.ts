@@ -59,7 +59,6 @@ export abstract class K6Node {
   }
   
   setSize(args: { width:number, height:number }) {
-    console.log('args: ', args);
     this.size = [args.width, args.height];
   }
 

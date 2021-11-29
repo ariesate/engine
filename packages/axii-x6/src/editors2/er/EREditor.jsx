@@ -6,7 +6,7 @@ import {
   useRef,
 } from 'axii';
 
-import { K6, Register, Graph, NodeForm } from '../../k6';
+import { K6, Register, Graph, NodeForm, MiniMap } from '../../k6';
 import { EntityNode, EntityPort, EntityEdge, data as dataFunc } from './Entity';
 
 function ER2Editor({ data }) {
@@ -29,9 +29,9 @@ function ER2Editor({ data }) {
   }
 
   return (
-    <container>
+    <container block>
       <K6 layout:block layout:flex-display>
-        <k6base>
+        <k6base flex-grow="1" block>
           <Register globalData={dataFunc}>
           </Register>
           <Register node={EntityNode} port={EntityPort} edge={EntityEdge}>
@@ -40,11 +40,9 @@ function ER2Editor({ data }) {
           <Graph data={data} ref={graphRef}>
           </Graph>
         </k6base> 
-        <operations block>
+        <operations block block-margin="16px">
           <NodeForm />
-          <p>
-            <button onClick={addNewNode} >add New Node</button>
-          </p>
+          <MiniMap />
           <p>
             <button onClick={exportData} >export Data</button>
           </p>

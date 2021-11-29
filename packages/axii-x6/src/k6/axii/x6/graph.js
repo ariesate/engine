@@ -1,13 +1,54 @@
 import { createElement,render } from 'axii';
-import { Graph, Addon, FunctionExt, Shape } from '@antv/x6'
-import dm from '../dm';
+import { Graph, Addon, FunctionExt, Shape, NodeView } from '@antv/x6'
+
+class SimpleNodeView extends NodeView {
+  renderMarkup() {
+    return this.renderJSONMarkup({
+      tagName: 'rect',
+      selector: 'body',
+    })
+  }
+
+  update() {
+    super.update({
+      body: {
+        refWidth: '100%',
+        refHeight: '100%',
+        fill: '#31d0c6',
+      },
+    })
+  }
+}
 ///////////////////
-export function createFlowGraph(container, {connectingValidate = {}, width = 1000, height = 800, onPortRendered} = {}) {
+export function createFlowGraph(container, initOptions = {}) {
+  const {connectingValidate = {}, width = 1000, height = 800, onPortRendered} = initOptions;
+
   const graph = new Graph({
     container,
     width,
     height,
     grid: true,
+    panning: true,
+    // scroller: true,
+    minimap: initOptions.minimap ? {
+      enabled: true,
+      container: initOptions.minimap,
+      width: 400,
+      height: 200,
+      graphOptions: {
+        async: true,
+        getCellView(cell) {
+          if (cell.isNode()) {
+            return SimpleNodeView
+          }
+        },
+        createCellView(cell) {
+          if (cell.isEdge()) {
+            return null
+          }
+        },
+      },
+    } : undefined,
     onPortRendered: onPortRendered,
     // selecting: {
     //   enabled: true,
