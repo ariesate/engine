@@ -21,8 +21,13 @@ import Down from 'axii-icons/Down';
 import Delete from 'axii-icons/Delete';
 import { get, set, merge, take } from 'lodash';
 
+const simpleTypes = ['string', 'number', 'boolean', 'enum'];
+
 const SimpleFormField = createComponent((() => {
   function FormField({ item, onChange }) {
+
+    const itemValue = delegateLeaf(item).value;
+
     return (
       <formField>
         <fieldName>{item.description}</fieldName>
@@ -31,16 +36,36 @@ const SimpleFormField = createComponent((() => {
             switch (item.type) {
               case 'string':
                 return (
-                  <Input onChange={onChange} layout:block value={delegateLeaf(item).value} />
+                  <Input onChange={onChange} layout:block value={itemValue} />
                 );
               case 'number':
                 return (
-                  <Input onChange={onChange}  layout:block type="number" value={delegateLeaf(item).value} />
+                  <Input onChange={onChange}  layout:block type="number" value={itemValue} />
                 );
               case 'boolean':
                 return (
-                  <Checkbox onChange={onChange} value={delegateLeaf(item).value} />
+                  <Checkbox onChange={onChange} value={itemValue} />
                 );
+              case 'enum':
+                {
+                  const options = (item.properties.map(obj => {
+                    return {
+                      id: obj.name,
+                      name: obj.name,
+                    };
+                  }));
+                  const value = atom({
+                    id: item.value,
+                    name: item.value,
+                  });
+                  return (
+                    <Select value={value} options={options} onChange={(option, {value, optionToValue}) => {
+                      if (!optionToValue) return
+                      value.value = optionToValue(option)
+                      item.value = value.value.id;
+                    }}/>
+                  );  
+                }
             }
           }}
         </fieldValue>
@@ -249,6 +274,7 @@ export function fallbackEditorDataToNormal(myJson) {
         case 'number':
         case 'boolean':
         case 'string':
+        case 'enum':
           obj[prop.name] = tryToRaw(prop.value);
           break;
         case 'object':
@@ -281,7 +307,7 @@ const DataConfigForm = createComponent((() => {
     return (
       <dataConfigForm block block-width="100%" block-box-sizing="border-box" >
         {() => json.properties.map(item => {
-          const isSimple = ['string', 'number', 'boolean'].includes(item.type);
+          const isSimple = simpleTypes.includes(item.type);
           const isHigher = ['array', 'object'].includes(item.type);
           if (isSimple) {
             return (
@@ -323,11 +349,11 @@ function DataConfig({ jsonWithData, onChange, onSave }) {
   }
 
   useViewEffect(() => {
-    // watch(() => traverse(myJson), () => {
-    //   console.log('<DataConfig> myJson changed');
-    //     const rawData = fallbackEditorDataToNormal(myJson);
-    //     onChange && onChange(rawData);
-    // });
+    watch(() => traverse(myJson), () => {
+      console.log('<DataConfig> myJson changed');
+      // const rawData = fallbackEditorDataToNormal(myJson);
+      // onChange && onChange(rawData);
+    });
   });
 
   function dataChanged(v) {
