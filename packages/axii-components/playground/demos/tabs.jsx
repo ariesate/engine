@@ -2,7 +2,11 @@ import { createElement, render, reactive, atom } from 'axii'
 import { Tabs, Select } from 'axii-components'
 
 const { TabPane } = Tabs
-const options = [0, 1, 2, 3, 4]
+const options = [
+  { name: '选项1' },
+  { name: '选项2' },
+  { name: '选项3' }
+]
 
 function BrowserLike() {
 
@@ -54,7 +58,7 @@ function BrowserLike() {
       <Tabs layout:block-margin-80px>
         <TabPane tabKey="tab1" title="tab1"></TabPane>
         <TabPane tabKey="tab2" title="tab2">
-          <Select options={options} />
+          <Select layout:block-margin-top-8px options={options} />
         </TabPane>
       </Tabs>
     </container>
