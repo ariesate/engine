@@ -88,9 +88,14 @@ class DataManager extends EventEmiter{
       zoom: 1,
     },
   });
+  // x6/index.jsx
+  dmx6: any;
   constructor() {
     super();
     window.dm = this;
+  }
+  setX6(x6: any) {
+    this.dmx6 = x6;
   }
   readState(obj: object) {
     this.data = reactive(obj);
@@ -199,6 +204,16 @@ class DataManager extends EventEmiter{
     }
     const node = this.findNode(nodeId);
     const [nodeComponent] = this.getShapeComponent(node.shape);
+
+    // @TODO: 更新节点的画布属性    
+    const position = this.dmx6.Graph.getNodePosition(nodeId);
+    if (position) {
+      Object.assign(node, {
+        x: position.x,
+        y: position.y,
+      });
+    }
+    
     switch (event) {
       case 'change':
         nodeComponent.onChange(node, data);

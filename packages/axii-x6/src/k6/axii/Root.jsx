@@ -20,6 +20,7 @@ export const RootContext = createContext()
 function Root({ children, height }) {
 
   const dm = new DM();
+  dm.setX6(x6);
 
   const rootContext = {
     groups: [],
@@ -45,10 +46,8 @@ function Root({ children, height }) {
           height: height || 800,
           minimap: elementRefs.miniMap,
         });
-
         x6.Graph.renderNodes(dm.nodes);
-
-         once = true;
+        once = true;
       }
     });
   });

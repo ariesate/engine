@@ -345,8 +345,10 @@ function DataConfig({ jsonWithData, onChange, onSave }) {
   window.myJson = myJson;
 
   function clickOnSave() {
-    const rawData = fallbackEditorDataToNormal(myJson);
-    onSave && onSave(rawData);
+    setTimeout(() => {
+      const rawData = fallbackEditorDataToNormal(myJson);
+      onSave && onSave(rawData);
+    });
   }
 
   useViewEffect(() => {

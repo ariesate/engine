@@ -41,8 +41,8 @@ function NodeForm(props) {
     console.log('selectedCellId: ', selectedCellId, selectedConfigData.fields.length, rawSelectedData);
     if (selectedCellId) {
       Object.assign(selectedConfigData, rawSelectedData);
-      context.dm.triggerCurrentEvent('change', selectedConfigData);    
-      return selectedConfigData;  
+      context.dm.triggerCurrentEvent('change', selectedConfigData);
+      return selectedConfigData;
     }
   }
 
