@@ -171,6 +171,13 @@ export const Graph = {
   exportData() {
     return this.graph.toJSON();
   },
+  getNodePosition(id) {
+    const allNodes = this.graph.model.getNodes();
+    const targetNode = allNodes.find(n => n.id === id);
+    if (targetNode) {
+      return targetNode.position();
+    }
+  }
 }
 
 
