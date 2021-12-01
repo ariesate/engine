@@ -2,7 +2,15 @@
 import { createFlowGraph } from './graph';
 import { Graph as X6Graph, Markup } from '@antv/x6'
 import lodash from 'lodash';
-import { createElement, render, useRef } from "axii";
+import {
+  tryToRaw,
+  createElement,
+  render,
+  useRef,
+  watch,
+  traverse,
+  useViewEffect,
+} from "axii";
 import { DEFAULT_SHAPE } from '../../Node';
 
 export const Register = {
@@ -16,50 +24,65 @@ export const Register = {
   registerHTMLComponentRender({ graph, dm, myNode, myPort, myEdge }) {
     return (node) => {
       const wrap = document.createElement('div')
+      // nodeConfig is reactive
       const nodeConfig = dm.findNode(node.id);
       
       const Cpt = myNode.getComponent(nodeConfig);
-
       render(<Cpt {...nodeConfig} globalData={myNode.data} />, wrap);
 
-      setTimeout(() => {
+      function refreshNodeSize(){
         const { width, height } = (wrap.children[0].getBoundingClientRect());
         node.setProp({ width, height });
-        myNode.setSize({ width, height });      
+        myNode.setSize({ width, height });
 
         // render port
-        const portConfig = myPort.getPortConfig(nodeConfig);
+        const portConfigArr = myPort.getConfig(nodeConfig.id);
         const ports = {
-          groups: new Array(portConfig.ids.length).fill('p').map((idPre, index) => {
-            const position = portConfig.positions[index];
+          groups: portConfigArr.map((portConfig, index) => {
+            const { portId, position, size } = portConfig;
             return {
-              [`${idPre}${index}`]: {
+              [`${portId}${index}`]: {
                 position: [position.x, position.y],
                 attrs: {
                   fo: {
-                    width: portConfig.size[0],
-                    height: portConfig.size[1],
+                    width: size.width,
+                    height: size.height,
                     magnet: true,
                   }
                 }
               }
             };
           }).reduce((p, n) => Object.assign(p, n), {}),
-          items: new Array(portConfig.ids.length).fill('p').map((idPre, index) => {
+          items: portConfigArr.map((portConfig, index) => {
+            const { portId, position } = portConfig;
             return {
-              id: portConfig.ids ? portConfig.ids[index] : `${idPre}${index}`,
-              group: `${idPre}${index}`,
+              id: portId,
+              group: `${portId}${index}`,
+              position,
             };
           }),
         };
-        node.setProp({ ports });
+        node.setProp('ports', ports);
         // render edge
-        const edges = myEdge.getConfig(nodeConfig.edges);
-        edges.forEach(edge => {
-          graph.addEdge({
-            ...edge,
+        requestAnimationFrame(() => {
+          const edges = myEdge.getConfig(nodeConfig.edges);
+          edges.forEach(edge => {
+            graph.addEdge({
+              ...edge,
+            });
           });
         });
+      }
+
+      watch(() => traverse(nodeConfig.data), () => {
+        // @TODO:依赖myNode的axii渲染完成之后的动作，先加延时解决
+        setTimeout(() => {
+          refreshNodeSize();
+        }, 25);
+      });
+
+      setTimeout(() => {
+        refreshNodeSize();
 
       }, 50);
 
@@ -141,7 +164,7 @@ export const Graph = {
 
   renderNodes(nodes) {
     nodes.forEach(node => {
-      this.addNode(node);      
+      this.addNode(tryToRaw(node));      
     });
   },
 
