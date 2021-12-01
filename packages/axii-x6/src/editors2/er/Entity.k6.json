@@ -4,6 +4,12 @@
   "description": "IExample",
   "properties": [
     {
+      "name": "name",
+      "type": "string",
+      "description": "页面名称",
+      "properties": []
+    },
+    {
       "name": "fields",
       "type": "array",
       "description": "字段",
@@ -17,13 +23,13 @@
         {
           "name": "name",
           "type": "string",
-          "description": "name",
+          "description": "名称",
           "properties": []
         },
         {
           "name": "type",
           "type": "enum",
-          "description": "type",
+          "description": "字段类型",
           "properties": [
             {
               "name": "string",
@@ -40,92 +46,9 @@
           ]
         },
         {
-          "name": "rel",
-          "type": "boolean",
-          "description": "rel",
-          "properties": []
-        },
-        {
           "name": "isCollection",
           "type": "boolean",
           "description": "集合",
-          "properties": []
-        }
-      ],
-      "value": [
-        {
-          "id": "123",
-          "name": "456",
-          "rel": true
-        }
-      ]
-    },
-    {
-      "name": "w",
-      "type": "string",
-      "description": "用户",
-      "properties": []
-    },
-    {
-      "name": "b",
-      "type": "boolean",
-      "description": "活动id",
-      "properties": []
-    },
-    {
-      "name": "c",
-      "type": "number",
-      "description": "c",
-      "properties": []
-    },
-    {
-      "name": "d",
-      "type": "object",
-      "description": "d",
-      "properties": [
-        {
-          "name": "d1",
-          "type": "number",
-          "description": "属性",
-          "properties": []
-        }
-      ]
-    },
-    {
-      "name": "e",
-      "type": "array",
-      "description": "e",
-      "properties": [
-        {
-          "name": "e1",
-          "type": "boolean",
-          "description": "e1",
-          "properties": []
-        }
-      ]
-    },
-    {
-      "name": "f",
-      "type": "array",
-      "description": "f",
-      "properties": [
-        {
-          "name": "f1",
-          "type": "number",
-          "description": "f1",
-          "properties": []
-        }
-      ]
-    },
-    {
-      "name": "h",
-      "type": "array",
-      "description": "h",
-      "properties": [
-        {
-          "name": "",
-          "type": "string",
-          "description": "",
           "properties": []
         }
       ]
