@@ -1,10 +1,11 @@
 /** @jsx createElement */
 import {
+  isReactive,
   createElement,
   createComponent,
   useViewEffect,
   propTypes,
-  atom,
+  useRef,
   reactive,
   watch,
   traverse,
@@ -53,36 +54,34 @@ export class EntityEdge extends K6Edge {
 export class EntityPort extends K6Port {
   constructor(k6Node) {
     super(k6Node);
+    // this.config = reactive([]);
   }
-  getPortConfig(nodeConfig) {
-    const ids = nodeConfig.data.fields.map((obj) => {
-      return obj.rel === true || obj.type === 'rel' ? [`${obj.id}-left`, `${obj.id}-right`] : [];
-    }).flat();
 
-    const refX = -10;
-
-    const positions = nodeConfig.data.fields.map((obj, index) => {
-      if (obj.rel === true || obj.type === 'rel') {
-        return [
-          {
-            x: refX,
-            y: index * 36 + 24 + 18 - 10,
-          },
-          {
-            x: this.contextNode.size[0] + refX,
-            y: index * 36 + 24 + 18 - 10,
-          }
-        ];
-      }
-      return null
-    }).filter(Boolean).flat();
-
-
-    return {
-      ids,
-      size: [20, 20],
-      positions,
+  registerPortConfig(props = {}) {
+    
+    const config = {
+      nodeId: props.nodeId,
+      portId: props.id,
+      position: {
+        x: props.position.x,
+        y: props.position.y,
+      },
+      size: {
+        width: 20,
+        height: 20,
+      },
     };
+    const configArr = this.config;
+    configArr.push(config);
+
+    useViewEffect(() => {
+      return () => {
+        const i = this.config.indexOf(config);
+        configArr.splice(i, 1);
+      };
+    });
+
+    return '';
   }
   getComponent(nodeConfig) {
     const PortRender = () => {
@@ -102,10 +101,6 @@ export class EntityPort extends K6Port {
       });
       frag.root.elements.port.style(props => {
         const s = genStyle();
-        const s2 = this.data.selectItemId === nodeConfig.id ? 'green': '#fff';
-        
-        s.backgroundColor = s2;
-
         return s;
       });
     };
@@ -119,28 +114,62 @@ export class EntityNode extends K6Node {
   shape = 'entity-shape';
   configJSON = EntityConfigJSON;  
 
-  onChange(node, d) {
-    console.log('entityNode changed:', node, d);
+  onChange(d, node) {
+    console.log('entityNode changed:', node, d, node.data === d);
   }
-  getComponent() {
+  getComponent(nodeConfig) {
+    const { id: nodeId } = nodeConfig;
 
-    function RawField({ field, entityPosition, positionTrigger }) {
+    const RawField = ({ field, entityPosition, positionTrigger }) => {
 
       const fieldPosition = reactive({})
-      const {ref: fieldRef} = useElementPosition(fieldPosition, positionTrigger)
-        
+
+      const portPosition = computed(() => {
+        const result = {};
+        // 如果 fieldPosition
+        if (field.type === 'rel' && fieldPosition.y && fieldPosition.height && entityPosition.y) {
+          const y = fieldPosition.y - entityPosition.y + (fieldPosition.height / 2) - 10
+          console.log('y: ', y, '= ', fieldPosition.y ,'-', entityPosition.y ,'+', (fieldPosition.height / 2), '-', 10);
+          result.right = {
+            x: entityPosition.width - 10,
+            y
+          };
+          result.left = {
+            x: -10,
+            y
+          };
+        }
+        return result
+      });
+
+      // 暂时用id取dom元素，因为ref在rerender之后会丢失current
+      const fieldId = `entityFieldId${field.name}${field.name}${Date.now()}${Math.floor(Math.random() * 1000)}`;
+      // 异步延时，用于取到dom
+      setTimeout(() => {
+        const fieldIds = document.querySelectorAll(`#${fieldId}`);
+        if (!fieldIds || fieldIds.length !== 1) {
+          throw new Error('field id 不存在或重复了');
+        }
+        const { y, height } = fieldIds[0].getBoundingClientRect();
+        fieldPosition.y = y;
+        fieldPosition.height = height;
+        positionTrigger.trigger();
+      }, 0);
+
       return (
-        <field block ref={fieldRef} block-padding-10px>
+        <field block id={fieldId} block-padding-10px>
           <name>{() => field.name}</name>
           <type inline inline-margin-left-10px>{() => `${field.type}${field.isCollection? '[]' : ''}`}</type>
+          {() => (
+            portPosition.left ? <this.registerPortConfig nodeId={nodeId} id={`${field.id}-left`} position={portPosition.left} /> : ''
+          )}
+          {() => (
+            portPosition.right ? <this.registerPortConfig nodeId={nodeId} id={`${field.id}-right`} position={portPosition.right} /> : ''
+          )}
         </field>
       )
     }
     
-    RawField.propTypes = {
-      name: propTypes.string.default(() => atom('')),
-      type: propTypes.string.default(() => atom('')),
-    }
     RawField.Style = (fragments) => {
       fragments.root.elements.type.style({
         color: 'blue'
@@ -150,35 +179,29 @@ export class EntityNode extends K6Node {
     const Field = createComponent(RawField)    
 
     const EntityRender = (props) => {
-      const { name, data, id } = props;
+      const { data } = props;
 
-      console.log('props::', props, data);
+      console.log('[EntityRender] props::', props);
 
       const entityPosition = reactive({})
-      const positionTrigger = createManualTrigger();
-      const {ref: entityRef} = useElementPosition(entityPosition, positionTrigger)
+      const {ref: entityRef, trigger} = useElementPosition(entityPosition)
     
-      useViewEffect(() => {    
-        positionTrigger.trigger()
-        return () => {
-          positionTrigger.destroy()
-        }
+      useViewEffect(() => {
+        trigger.trigger();
       });
-
-      const clickOnEntity = () => {
-      };
 
       return (
         <entity 
-          onClick={() => clickOnEntity()}
           inline
           ref={entityRef}>
-          <name block block-padding-4px>{name}</name>
-          {() => data.fields.map(field=> (
-            <row block>
-              <Field key={field.id} field={field} entityPosition={entityPosition} positionTrigger={positionTrigger}/>
-            </row>
-          ))}
+          <name block block-padding-4px>{() => data.name}</name>
+          {() => data.fields.map(field=> {
+            return (
+              <row block>
+                <Field key={field.id} field={field} entityPosition={entityPosition} positionTrigger={trigger}/>
+              </row>              
+            );
+          })}
         </entity>
       );
     }
