@@ -39,16 +39,18 @@ function Root({ children, height }) {
     // @TODO useViewEffect的父子顺序不对，先这样占个坑，后续axii里修复后再调整
     let once = false;
     watch(() => [elementRefs.miniMap, elementRefs.graph], () => {
-      if (elementRefs.miniMap && elementRefs.graph && !once) {
+      setTimeout(() => {
+        if (elementRefs.miniMap && elementRefs.graph && !once) {
 
-        x6.Graph.init(elementRefs.graph, dm, {
-          width: elementRefs.graph.offsetWidth,
-          height: height || 800,
-          minimap: elementRefs.miniMap,
-        });
-        x6.Graph.renderNodes(dm.nodes);
-        once = true;
-      }
+          x6.Graph.init(elementRefs.graph, dm, {
+            width: elementRefs.graph.offsetWidth,
+            height: height || 800,
+            minimap: elementRefs.miniMap,
+          });
+          x6.Graph.renderNodes(dm.nodes);
+          once = true;
+        }  
+      });
     });
   });
 
