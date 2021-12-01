@@ -39,9 +39,13 @@ export function fallbackEditorDataToNormal(myJson: IK6DataConfig) {
     properties.forEach(prop => {
       switch (prop.type) {
         case 'number':
-        case 'boolean':
-        case 'string':
           obj[prop.name] = undefined;
+          break;
+        case 'boolean':
+          obj[prop.name] = false;
+          break;
+        case 'string':
+          obj[prop.name] = '';
           break;
         case 'object':
           obj[prop.name] = {};
@@ -62,10 +66,10 @@ export function fallbackEditorDataToNormal(myJson: IK6DataConfig) {
 }
 
 function generateNodeByConfig(k6Node: K6Node) {
-  const data = fallbackEditorDataToNormal(k6Node.configJSON);
+  const data: any = fallbackEditorDataToNormal(k6Node.configJSON);
 
   const newNode = {
-    id: Math.random().toString(),
+    id: Math.floor(((Math.random() * 10000))).toString(),
     shape: k6Node.shape,
     name: 'Page',
     data,
@@ -225,10 +229,14 @@ class DataManager extends EventEmiter{
   }
   removeCurrent() {
     const i = this.nodes.findIndex(o => o.id === this.insideState.selectedCellId);
-    const id = this.nodes[i]?.id;
-    this.nodes.splice(i, 1);
-    this.selectNode(null);
-    this.emit('remove', id);
+    if (i > 0) {
+      const node = this.nodes[i];
+      this.nodes.splice(i, 1);
+      this.selectNode(null);
+      this.emit('remove', node.id);
+      const [nodeComponent] = this.getShapeComponent(node.shape);
+      nodeComponent && nodeComponent.onRemove(node);
+    }
   }
   zoomIn() {
     this.insideState.graph.zoom += 0.2
