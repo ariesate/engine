@@ -45,7 +45,7 @@ export interface IK6DataConfig {
 // -------
 export abstract class K6Node {
   data: ITopState;
-  static shape: INodeShape;
+  shape: INodeShape;
   bbox: IBBox = { x: 10, y: 10 };
   ports: K6Port[] = [];
   size: number[] = [0, 0];
@@ -56,6 +56,8 @@ export abstract class K6Node {
   onChange(node: IX6Cell, data: any) {
   }
   onSave(node: IX6Cell, data: any) {
+  }
+  onRemove(node: IX6Cell){    
   }
 
 
