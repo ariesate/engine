@@ -101,7 +101,7 @@ class DataManager extends EventEmiter{
     this.data = reactive(obj);
   }
   readNodesData(nodes: IDataNode[]) {
-    this.nodes = reactive(nodes.map(n => ({
+    this.nodes = (nodes.map(n => ({
       ...n,
       data: n.data ? reactive(n.data) : n.data,
       edges: [],
