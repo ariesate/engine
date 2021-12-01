@@ -1,6 +1,6 @@
 // 以ER为例, 一个节点必备的元素
-import { Axii, IBBox, IX6Cell } from './basicTypes';
-import { K6Port } from './Port';
+import { Axii, IBBox, IX6Cell, IX6Node } from './basicTypes';
+import { IRegisterPortConfigProps, K6Port } from './Port';
 
 // 渲染方式，原始 或 Axii Component
 enum ENodeViewMode {
@@ -45,24 +45,32 @@ export interface IK6DataConfig {
 // -------
 export abstract class K6Node {
   data: ITopState;
-  abstract shape: INodeShape;
+  static shape: INodeShape;
   bbox: IBBox = { x: 10, y: 10 };
   ports: K6Port[] = [];
   size: number[] = [0, 0];
   configJSON: IK6DataConfig | null = null;
-  constructor () {
-
-  }
+  workNode: IX6Node = null;
+  port: K6Port | null = null; // 在Port Constructor中反向注入
+  
   onChange(node: IX6Cell, data: any) {
   }
   onSave(node: IX6Cell, data: any) {
+  }
+
+
+  get registerPortConfig() {
+    if (this.port) {
+      return this.port.registerPortConfig.bind(this.port);
+    }
+    return () => '';
   }
   
   setSize(args: { width:number, height:number }) {
     this.size = [args.width, args.height];
   }
 
-  abstract getComponent(data?: INodeViewProps): Axii.Component;
+  abstract getComponent(nodeConfig?: INodeViewProps): Axii.Component;
 }
 export const DEFAULT_SHAPE = 'entity-shape';
 export class K6NodeChild extends K6Node {

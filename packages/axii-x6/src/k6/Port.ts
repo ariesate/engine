@@ -1,8 +1,21 @@
-import { Axii, IBBox } from './basicTypes';
+import { Axii, IBBox, IX6Cell, IX6Node } from './basicTypes';
 
 import { K6Edge } from './Edge';
 import { INodeViewProps, ITopState, K6Node } from './Node';
 
+
+export interface IRegisterPortConfigProps {
+  nodeId: string;
+  portId: string;
+  position: {
+    x: number | string;
+    y: number | string;
+  }
+  size?: {
+    width: number;
+    height: number;
+  }
+}
 /**
  * 节点的连接点（可选）
  * Port有2种模式：自动，手动
@@ -17,21 +30,27 @@ export abstract class K6Port {
   position?: 'top' | 'left' | 'bottom' | 'right' | 'absolute';
   abstract bbox: IBBox;
   edges: K6Edge[] = [];
+  // 通过register收集而来
 
-  abstract getPortConfig(data?: INodeViewProps): { 
-    counts: number;
-    size: number[];
-  };
+  workNode: IX6Node = null;
+
+  getConfig(nodeId: string): IRegisterPortConfigProps[] {
+    return this.config.filter(c => c.nodeId === nodeId || !nodeId);
+  }
+
+  config: IRegisterPortConfigProps[] = [];
 
   constructor(public contextNode: K6Node | null) {
+    contextNode.port = this;
   }
+
+  abstract registerPortConfig(props: IRegisterPortConfigProps): Axii.Element;
 }
 
 export class K6PortChild extends K6Port {
   bbox: IBBox = { x:0, y: 0 };
-  getPortConfig() {
-    return { counts: 0, size: [0, 0] };
-  }
   getComponent() {    
+  }
+  registerPortConfig() {
   }
 }
