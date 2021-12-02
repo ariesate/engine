@@ -2,7 +2,7 @@ import {
   reactive,
 } from 'axii';
 import EventEmiter from 'eventemitter3';
-import { IBBox, IX6Cell, IX6Node, IX6Ddge } from '../basicTypes';
+import { IBBox, IX6Cell, IX6Node, IX6Edge } from '../basicTypes';
 import { K6Edge, K6EdgeChild } from '../Edge';
 import { IK6DataConfig, K6Node, K6NodeChild } from '../Node';
 import { K6Port, K6PortChild } from '../Port';
@@ -10,7 +10,7 @@ import { K6Port, K6PortChild } from '../Port';
 type IDataNode = IX6Node & {
   edges: IEdgeData[];
 };
-type IEdgeData = IX6Ddge & {
+type IEdgeData = IX6Edge & {
   data: {
     [key: string]: any;
   };
@@ -261,7 +261,11 @@ class DataManager extends EventEmiter{
       }
     }
     if (edge) {
-      
+      const newEdgeConfig = edgeComponent.getConfig(node, edge);
+      const model = this.dmx6.Graph.updateEdge(edge, newEdgeConfig);
+      Object.assign(edge, model, {
+        data: edge.data,
+      });
     }
     
     // 说明仅仅是边的修改

@@ -74,7 +74,7 @@ export interface IBBox {
   height?: number;
 }
 
-export interface IX6Ddge {
+export interface IX6Edge {
   id: string;
   name?: string;
   type?: string;
