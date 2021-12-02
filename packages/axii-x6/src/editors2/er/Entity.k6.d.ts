@@ -1,27 +1,33 @@
 export default interface IExample {
-    /**
-     * 页面名称
-     */
-    name: string;
-    /**
-     * 字段
-     */
-    fields: Array<{
-      /**
-       * id
-       */
+  /**
+   * 字段
+   */
+  fields: Array<{
       id: string;
-      /**
-       * 名称
-       */
       name: string;
-      /**
-       * 字段类型
-       */
-      type: 'string' | 'rel';
-      /**
-       * 集合
-       */
+      type: 'string' | 'rel'; // 字段类型
       isCollection: boolean;
-    }>;
-  }
+  }>;
+  /**
+   * @name 用户
+   */
+  w: string,
+  /**
+   * @name 活动id
+   */
+  b: boolean,
+  c: number;
+  d: {
+      /**
+       * @name 属性
+       */
+      d1: number;
+  },
+  e: {
+      e1: boolean;
+  }[];
+  f: Array<{
+      f1: number;
+  }>;
+  h: string[];
+}
