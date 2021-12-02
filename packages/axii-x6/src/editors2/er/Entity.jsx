@@ -25,25 +25,28 @@ export class EntityEdge extends K6Edge {
     console.log('nodeConfig, edge, data: ', nodeConfig, edge, data);
   }
 
-  getConfig(edges) {
-    const configs = edges.map(edge => {
-      // 兼容旧ER数据
-      const ee = Object.assign({}, edge);
-      delete ee.view;
-      return {
-        router: this.router,
-        ...ee,
-        attrs: {
-          line: {
-            stroke: '#5F95FF',
-            strokeWidth: 1,
-            targetMarker: {
-              name: 'classic',
-              size: 8,
-            },
+  getConfig(nodeConfig, edge) {
+    // 兼容旧ER数据
+    const ee = Object.assign({}, edge);
+    delete ee.view;
+
+    const config = {
+      router: this.router,
+      ...ee,
+      attrs: {
+        line: {
+          stroke: '#5F95FF',
+          strokeWidth: 1,
+          targetMarker: {
+            name: 'classic',
+            size: 8,
           },
         },
-        label: `${edge.name}${edge.type}`,
+      },
+      label: `${edge.data.name} ${edge.data.type}`,
+    };
+    if (edge.view) {
+      Object.assign(config, {
         source: {
           cell: edge.source.entity,
           port: `${edge.source.field}-${edge.view.sourcePortSide}`,
@@ -51,10 +54,10 @@ export class EntityEdge extends K6Edge {
         target: {
           cell: edge.target.entity,
           port: `${edge.target.field}-${edge.view.targetPortSide}`,
-        },
-      }
-    });
-    return configs;
+        },          
+      });
+    }
+    return config;
   }
 }
 

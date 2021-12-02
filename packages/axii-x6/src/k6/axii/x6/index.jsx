@@ -1,7 +1,7 @@
 /** @jsx createElement */
 import { createFlowGraph } from './graph';
 import { Graph as X6Graph, Markup } from '@antv/x6'
-import lodash from 'lodash';
+import lodash, { pick } from 'lodash';
 import {
   tryToRaw,
   createElement,
@@ -65,12 +65,12 @@ export const Register = {
         node.setProp('ports', ports);
         // render edge
         requestAnimationFrame(() => {
-          const edges = myEdge.getConfig(nodeConfig.edges);
-          edges.forEach(edge => {
+          nodeConfig.edges.forEach(edge => {
+            const edgeConfig = myEdge.getConfig(nodeConfig, edge);
             const edgeIns = graph.addEdge({
-              ...edge,
+              ...edgeConfig,
             });
-          });
+        });
         });
       }
 
@@ -207,6 +207,12 @@ export const Graph = {
     if (targetNode) {
       return targetNode.position();
     }
+  },
+  updateEdge(edge, newEdgeConfig) {
+    const allEdges = this.graph.model.getEdges();
+    const edgeIns = allEdges.find(e => e.id === edge.id);
+    edgeIns.setLabels(newEdgeConfig.label || '');
+    return pick(edgeIns, ['id', 'target', 'source', 'label', 'name', 'type']);
   }
 }
 
