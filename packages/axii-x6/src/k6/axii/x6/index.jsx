@@ -19,10 +19,13 @@ export const Register = {
     if (!this.htmlComponentMap.get(name)) {
       this.htmlComponentMap.set(name, func);
       X6Graph.registerHTMLComponent(name, func);
+    } else {
+      console.warn(`${name} has already register`);
     }
   },
-  registerHTMLComponentRender({ graph, dm, myNode, myPort, myEdge }) {
+  registerHTMLComponentRender({ getInject }) {
     return (node) => {
+      const [graph, dm, myNode, myPort, myEdge] = getInject();
       const wrap = document.createElement('div')
       // nodeConfig is reactive
       const nodeConfig = dm.findNode(node.id);
@@ -37,6 +40,7 @@ export const Register = {
 
         // render port
         const portConfigArr = myPort.getConfig(nodeConfig.id);
+        console.log('portConfigArr: ', portConfigArr);
         const ports = {
           groups: portConfigArr.map((portConfig, index) => {
             const { portId, position, size } = portConfig;
@@ -109,6 +113,8 @@ export const Register = {
 export const Graph = {
   graph: null,
 
+  dm: null,
+
   getHtmlKey(n) {
     const registerKey = `${n || DEFAULT_SHAPE}-html`;
     return registerKey;
@@ -124,18 +130,21 @@ export const Graph = {
         dm.addNewEdge(nodeId,edgeId);
       },
     });
-        
+
     const allShapeComponents = dm.getAllShapeComponents();
 
     allShapeComponents.forEach(([myNode, myPort, myEdge]) => {
-      const registerKey = this.getHtmlKey(myNode.shape);
-
+      const shape = myNode.shape;
+      const registerKey = this.getHtmlKey(shape);
       Register.registerHTMLComponent(registerKey, Register.registerHTMLComponentRender({
-        myNode,
-        myPort,
-        myEdge,
-        dm,
-        graph,
+        // 运行时动态获取，防止泄露
+        getInject: () => {
+          return [
+            this.graph,
+            this.dm,
+            ...this.dm.nodeShapeComponentMap.get(shape),
+          ];
+        },
       }));  
     });
 
@@ -167,6 +176,7 @@ export const Graph = {
     });
 
     this.graph = graph;
+    this.dm = dm;
   },
 
   renderNodes(nodes) {
@@ -213,6 +223,12 @@ export const Graph = {
     const edgeIns = allEdges.find(e => e.id === edge.id);
     edgeIns.setLabels(newEdgeConfig.label || '');
     return pick(edgeIns, ['id', 'target', 'source', 'label', 'name', 'type']);
+  },
+  dispose() {
+    const { graph } = this;
+    graph.removeCells(graph.getCells());
+    graph.getEdges().forEach(e => graph.removeEdge(e));
+    graph.dispose();
   }
 }
 
