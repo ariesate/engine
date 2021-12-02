@@ -76,14 +76,14 @@ export interface IBBox {
 
 export interface IX6Ddge {
   id: string;
-  name: string;
-  type: string;
-  source: { 
+  name?: string;
+  type?: string;
+  source?: { 
     cell: string;
     port: string;
     [key: string]: string;
   };
-  target: { 
+  target?: { 
     cell: string;
     port: string;
   };
