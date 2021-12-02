@@ -290,15 +290,25 @@ class DataManager extends EventEmiter{
     }
   }
   removeCurrent() {
-    const i = this.nodes.findIndex(o => o.id === this.insideState.selectedCellId);
-    if (i > 0) {
-      const node = this.nodes[i];
-      this.nodes.splice(i, 1);
-      this.selectNode(null);
-      this.emit('remove', node.id);
-      const [nodeComponent] = this.getShapeComponent(node.shape);
-      nodeComponent && nodeComponent.onRemove(node);
+    const currentCellId = this.insideState.selectedCellId;
+    const [node, edge] = this.findNodeAndEdge(currentCellId);
+    const [nodeComponent, _, edgeComponent] = this.getShapeComponent(node.shape);
+
+    if (edge) {
+      const i = node.edges.indexOf(edge);
+      if (i >= 0) {
+        node.edges.splice(i, 1);
+        edgeComponent && edgeComponent.onRemove(node, edge);
+      }
+    } else {
+      const i = this.nodes.indexOf(node);
+      if (i >= 0) {
+        this.nodes.splice(i, 1);
+        nodeComponent && nodeComponent.onRemove(node);
+      }  
     }
+    this.emit('remove', currentCellId);
+    this.selectNode(null);
   }
   zoomIn() {
     this.insideState.graph.zoom += 0.2

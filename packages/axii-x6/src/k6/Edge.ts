@@ -11,7 +11,7 @@ export abstract class K6Edge {
   }
   onSave(node: IX6Cell, edge: IX6Edge, data: any) {
   }
-  onRemove(node: IX6Cell, edge: IX6Edge, data: any){    
+  onRemove(node: IX6Cell, edge: IX6Edge){    
   }
 	// 同上，边线也通常是更简单的线，是否必要用Component渲染，或者默认模式
   // 边线实在太简单了，还是用config

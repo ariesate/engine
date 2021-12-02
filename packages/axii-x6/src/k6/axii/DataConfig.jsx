@@ -35,6 +35,9 @@ const SimpleFormField = createComponent((() => {
           {() => {
             switch (item.type) {
               case 'string':
+                if (itemValue.value === undefined) {
+                  itemValue.value = '';
+                }
                 return (
                   <Input onChange={onChange} layout:block value={itemValue} />
                 );
@@ -56,7 +59,7 @@ const SimpleFormField = createComponent((() => {
                   }));
                   const value = atom({
                     id: item.value,
-                    name: item.value,
+                    name: item.value || '',
                   });
                   return (
                     <Select value={value} options={options} onChange={(option, {value, optionToValue}) => {
