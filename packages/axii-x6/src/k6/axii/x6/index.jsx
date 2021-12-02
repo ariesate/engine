@@ -143,6 +143,10 @@ export const Graph = {
         dm.selectEdge(cell.id);
       }
     });
+    graph.on('blank:click', (arg) => {      
+      dm.selectNode();
+    });
+
 
     dm.on('remove', (id) => {
       graph.removeCell(id);

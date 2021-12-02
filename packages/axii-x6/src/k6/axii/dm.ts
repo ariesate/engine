@@ -129,6 +129,7 @@ class DataManager extends EventEmiter{
       const n = generateNodeByConfig(nodeComponent[0]);
       this.nodes.push({
         ...n,
+        data: reactive(n.data),
       });
       this.emit('addNode', n);
     }
