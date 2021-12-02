@@ -23,6 +23,12 @@ export const Register = {
       console.warn(`${name} has already register`);
     }
   },
+  unregisterAll() {
+    [...this.htmlComponentMap.keys()].forEach(k => {
+      X6Graph.unregisterHTMLComponent(k);
+    });
+    this.htmlComponentMap.clear();
+  },
   registerHTMLComponentRender({ getInject }) {
     return (node) => {
       const [graph, dm, myNode, myPort, myEdge] = getInject();
@@ -93,8 +99,9 @@ export const Register = {
       return wrap;
     }
   },
-  registerPortRender({ dm }) {
+  registerPortRender({ getDm }) {
     return args => {
+      const dm = getDm();
       const node = args.node;
       const originNode = dm.findNode(node.id);
       const nodeComponent = dm.getShapeComponent(originNode.shape);
@@ -124,7 +131,7 @@ export const Graph = {
     const graph = createFlowGraph(container, {
       ...config, 
       onPortRendered: Register.registerPortRender({
-        dm,
+        getDm: () => this.dm,
       }),
       onAddEdge(nodeId, edgeId) {
         dm.addNewEdge(nodeId,edgeId);
@@ -229,6 +236,7 @@ export const Graph = {
     graph.removeCells(graph.getCells());
     graph.getEdges().forEach(e => graph.removeEdge(e));
     graph.dispose();
+    Register.unregisterAll();
   }
 }
 
