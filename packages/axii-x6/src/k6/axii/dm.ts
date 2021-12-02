@@ -11,7 +11,10 @@ type IDataNode = IX6Node & {
   edges: IEdgeData[];
 };
 type IEdgeData = IX6Ddge & {
-  view:{
+  data: {
+    [key: string]: any;
+  };
+  view?:{
     sourcePortSide: 'right' | 'left';
     targetPortSide: 'left' | 'right';
   }
@@ -116,8 +119,11 @@ class DataManager extends EventEmiter{
       const id = node.id;
       edges.forEach(edge => {
         const cell = edge.source.cell || edge.source.entity;
-        if (cell === id) {
-          node.edges.push(edge);
+        if (cell === id) {          
+          node.edges.push({
+            ...edge,
+            data: reactive(edge.data || {}),
+          });
         }
       });
     });
@@ -134,11 +140,26 @@ class DataManager extends EventEmiter{
       this.emit('addNode', n);
     }
   }
+  addNewEdge(nodeId: string, edgeId: string) {
+    const node = this.findNode(nodeId);
+    node.edges.push({
+      id: edgeId,
+      data: reactive({}),
+    });
+  }
   findNode(id: string) {
     const n = this.nodes.find(n => n.id === id);
     return n ? {
       ...n,
     } : null;
+  }
+  findNodeAndEdge(id: string): [IDataNode?, IEdgeData?] {
+    let edge: IEdgeData;
+    const n = this.nodes.find(n => {      
+      edge = n.edges.find(e => e.id === id);
+      return !!edge || n.id === id;
+    });
+    return n ? [n, edge] : [];
   }
   readComponents(groups: Group[]) {
     groups.forEach(group => {
@@ -198,35 +219,71 @@ class DataManager extends EventEmiter{
     });
   }
   selectEdge(id: string) {
-  }
-  triggerCurrentEvent(event: 'change' | 'save', data: any) {
-    this.triggerNodeEvent(this.insideState.selectedCellId, event, data);      
-  }
-
-  triggerNodeEvent(nodeId: string, event: 'change' | 'save', data: any) {
-    if (!nodeId) {
+    console.log('selectEdge: ', id);
+    if (!id || this.insideState.selectedCellId === id) {
+      Object.assign(this.insideState, {
+        selectedConfigJSON: null,
+        selectedConfigData: null,
+        selectedCellId: '',
+      });
       return;
     }
-    const node = this.findNode(nodeId);
-    const [nodeComponent] = this.getShapeComponent(node.shape);
 
-    // @TODO: 更新节点的画布属性    
-    const position = this.dmx6.Graph.getNodePosition(nodeId);
-    if (position) {
-      Object.assign(node, {
-        x: position.x,
-        y: position.y,
+    const [node, edge] = this.findNodeAndEdge(id);
+    if (node) {
+      const [ _1, _2, edgeComponent ] = this.getShapeComponent(node.shape);
+      Object.assign(this.insideState, {
+        selectedConfigJSON: edgeComponent.configJSON,
+        selectedConfigData: edge.data,
+        selectedCellId: id,
       });
     }
-    
-    switch (event) {
-      case 'change':
-        nodeComponent.onChange(node, data);
-        break;
-      case 'save':
-        nodeComponent.onSave(node, data);
-        break;
+  }
+  triggerCurrentEvent(event: 'change' | 'save', data: any) {
+    this.triggerEvent(this.insideState.selectedCellId, event, data);      
+  }
+
+  triggerEvent(cellId: string, event: 'change' | 'save', data: any) {
+    if (!cellId) {
+      return;
+    }
+    const [node, edge] = this.findNodeAndEdge(cellId);
+    const [nodeComponent, _, edgeComponent] = this.getShapeComponent(node.shape);
+
+    if (node) {
+      // @TODO: 更新节点的画布属性    
+      const position = this.dmx6.Graph.getNodePosition(cellId);
+      if (position) {
+        Object.assign(node, {
+          x: position.x,
+          y: position.y,
+        });
       }
+    }
+    if (edge) {
+      
+    }
+    
+    // 说明仅仅是边的修改
+    if (edge) {
+      switch (event) {
+        case 'change':
+          edgeComponent.onChange(node, edge, data);
+          break;
+        case 'save':
+          edgeComponent.onSave(node, edge, data);
+          break;
+        }
+    } else {
+      switch (event) {
+        case 'change':
+          nodeComponent.onChange(node, data);
+          break;
+        case 'save':
+          nodeComponent.onSave(node, data);
+          break;
+        }
+    }
   }
   removeCurrent() {
     const i = this.nodes.findIndex(o => o.id === this.insideState.selectedCellId);
