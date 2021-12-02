@@ -67,7 +67,7 @@ export const Register = {
         requestAnimationFrame(() => {
           const edges = myEdge.getConfig(nodeConfig.edges);
           edges.forEach(edge => {
-            graph.addEdge({
+            const edgeIns = graph.addEdge({
               ...edge,
             });
           });
@@ -120,6 +120,9 @@ export const Graph = {
       onPortRendered: Register.registerPortRender({
         dm,
       }),
+      onAddEdge(nodeId, edgeId) {
+        dm.addNewEdge(nodeId,edgeId);
+      },
     });
         
     const allShapeComponents = dm.getAllShapeComponents();

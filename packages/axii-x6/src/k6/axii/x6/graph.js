@@ -21,7 +21,7 @@ class SimpleNodeView extends NodeView {
 }
 ///////////////////
 export function createFlowGraph(container, initOptions = {}) {
-  const {connectingValidate = {}, width = 1000, height = 800, onPortRendered} = initOptions;
+  const {connectingValidate = {}, width = 1000, height = 800, onPortRendered, onAddEdge} = initOptions;
 
   const graph = new Graph({
     container,
@@ -66,8 +66,9 @@ export function createFlowGraph(container, initOptions = {}) {
     //   connector: 'rounded',
     //   connectionPoint: 'boundary',
     //   ...connectingValidate,
-      createEdge() {
-        return new Shape.Edge({
+      createEdge(args) {
+
+        const newEdge = new Shape.Edge({
           attrs: {
             line: {
               stroke: '#5F95FF',
@@ -81,7 +82,13 @@ export function createFlowGraph(container, initOptions = {}) {
           router: {
             name: 'manhattan',
           },
-        })
+        });
+        setTimeout(() => {
+          console.log('createEdge args: ', args, newEdge);
+          onAddEdge(args.sourceCell.id, newEdge.id);
+        }, 20);
+
+        return newEdge;
       }
     },
     // highlighting: {

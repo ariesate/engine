@@ -15,9 +15,16 @@ import {
 import {useElementPosition, manualTrigger as createManualTrigger } from 'axii-components'
 import { K6Node, K6Port, K6Edge } from "../../k6/index";
 import EntityConfigJSON from './Entity.k6.json';
+import RelationConfigJSON from './Relation.k6.json';
 
 export class EntityEdge extends K6Edge {
+  configJSON = RelationConfigJSON;
   
+
+  onChange(nodeConfig, edge, data) {
+    console.log('nodeConfig, edge, data: ', nodeConfig, edge, data);
+  }
+
   getConfig(edges) {
     const configs = edges.map(edge => {
       // 兼容旧ER数据
@@ -35,7 +42,7 @@ export class EntityEdge extends K6Edge {
               size: 8,
             },
           },
-        },  
+        },
         label: `${edge.name}${edge.type}`,
         source: {
           cell: edge.source.entity,
