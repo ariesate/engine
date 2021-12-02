@@ -28,7 +28,7 @@ function Register({ node, port, edge, globalData }) {
 
   useViewEffect(() => {
     return () => {
-      unEffect(fn => fn());
+      unEffect.forEach(fn => fn());
     };
   });
 

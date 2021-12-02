@@ -84,7 +84,6 @@ export function createFlowGraph(container, initOptions = {}) {
           },
         });
         setTimeout(() => {
-          console.log('createEdge args: ', args, newEdge);
           onAddEdge(args.sourceCell.id, newEdge.id);
         }, 20);
 

@@ -22,6 +22,8 @@ function Root({ children, height }) {
   const dm = new DM();
   dm.setX6(x6);
 
+  window.dm = dm;
+
   const rootContext = {
     groups: [],
     states: {}, // 自定义的共享数据源
@@ -52,6 +54,10 @@ function Root({ children, height }) {
         }  
       });
     });
+
+    return () => {
+      x6.Graph.dispose();
+    };
   });
 
   return (
