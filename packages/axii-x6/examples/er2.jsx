@@ -13,4 +13,11 @@ import localRawData from "../src/editors2/er/data";
 const editorRef = useRef();
 const root = document.getElementById("root");
 
+localRawData.edges.forEach(e => {
+  e.data = {
+    name: e.name,
+    type: e.type,
+  }
+});
+
 render(<EREditor2 data={localRawData} ref={editorRef} />, root);
