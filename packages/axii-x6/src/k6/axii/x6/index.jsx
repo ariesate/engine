@@ -46,7 +46,6 @@ export const Register = {
 
         // render port
         const portConfigArr = myPort.getConfig(nodeConfig.id);
-        console.log('portConfigArr: ', portConfigArr);
         const ports = {
           groups: portConfigArr.map((portConfig, index) => {
             const { portId, position, size } = portConfig;

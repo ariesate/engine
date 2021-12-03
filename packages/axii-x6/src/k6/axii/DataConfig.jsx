@@ -14,7 +14,6 @@ import {
   computed,
 } from 'axii';
 
-import { RootContext } from './Root';
 import { Input, Select, Button, Checkbox } from 'axii-components'
 import cloneDeep from 'lodash/cloneDeep';
 import Down from 'axii-icons/Down';
@@ -26,6 +25,7 @@ const simpleTypes = ['string', 'number', 'boolean', 'enum'];
 const SimpleFormField = createComponent((() => {
   function FormField({ item, onChange }) {
 
+    console.log('item: ', item);
     const itemValue = delegateLeaf(item).value;
 
     return (
@@ -238,11 +238,29 @@ function rebuildArrayValue2ReactiveChildren(arrTypeItem, valueArr = []) {
   return children;
 }
 
+/**
+ * 通过路径，返回对象的值的delegate
+ */
+function delegateByPath(obj, pathArr = []) {
+  if (pathArr.length === 0) {
+    return obj;
+  }
+  const lastKey = pathArr[pathArr.length - 1];
+  const prevObjKeys = pathArr.slice(0, -1);
+
+  let prevObj = obj;
+  if (prevObjKeys.length !== 0) {
+    prevObj = get(obj, prevObjKeys);
+  }
+  const result = delegateLeaf(prevObj)[lastKey];
+  return result;
+}
+
 export function mergeJsonAndData(json, data) {
   if (!json) {
     return json;
   }
-  const clonedJson = reactive(cloneDeep(json));
+  const clonedJson = json;
 
   function traverseJson(obj, path) {
     const cur = path.concat(obj.name);
@@ -258,7 +276,7 @@ export function mergeJsonAndData(json, data) {
       obj.value = data;
     }
     
-    if (obj.type != 'array') {
+    if (obj.type === 'object') {
       obj.properties.forEach(child => {
         traverseJson(child, cur);
       });  
@@ -304,10 +322,6 @@ export function fallbackEditorDataToNormal(myJson) {
 const DataConfigForm = createComponent((() => {
   function DataConfigForm({ json, test, onChange }) {
     
-    if(test) {
-      window.DataConfigFormTopJson = json;        
-    }
-
     return (
       <dataConfigForm block block-width="100%" block-box-sizing="border-box" >
         {() => json.properties.map(item => {
@@ -344,7 +358,7 @@ const DataConfigForm = createComponent((() => {
 function DataConfig({ jsonWithData, onChange, onSave }) {
   console.log('[DataConfig] Render: ');
 
-  const myJson = reactive((jsonWithData));
+  const myJson = (jsonWithData);
   window.myJson = myJson;
 
   function clickOnSave() {
@@ -354,20 +368,13 @@ function DataConfig({ jsonWithData, onChange, onSave }) {
     });
   }
 
-  useViewEffect(() => {
-    // watch(() => traverse(myJson), () => {
-    //   console.log('<DataConfig> myJson changed');
-    //   const rawData = fallbackEditorDataToNormal(myJson);
-    //   onChange && onChange(rawData);
-    // });
-  });
-
-  function dataChanged(v) {
-    setTimeout(() => {
-      const rawData = fallbackEditorDataToNormal(myJson);      
-      onChange && onChange(rawData);
-    });
-  }
+  // @TODO 先不主动触发，让外界通过watch监听
+  // function dataChanged(v) {
+  //   setTimeout(() => {
+  //     const rawData = fallbackEditorDataToNormal(myJson);      
+  //     onChange && onChange(rawData);
+  //   });
+  // }
 
   return (
     <dataCofnig block block-width="100%" style={{ backgroundColor: '#fff' }}>

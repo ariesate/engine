@@ -38,8 +38,8 @@ function NodeForm(props) {
 
   function onChange(rawSelectedData) {
     const { selectedCellId, selectedConfigData, selectedConfigJSON } = context.dm.insideState;
-    console.log('selectedCellId: ', selectedCellId, selectedConfigData, rawSelectedData);
-    if (selectedCellId) {
+    if (selectedCellId && selectedConfigData && selectedConfigJSON) {
+      console.log('selectedCellId: ', selectedCellId, selectedConfigData, rawSelectedData);
       Object.assign(selectedConfigData, rawSelectedData);
       context.dm.triggerCurrentEvent('change', selectedConfigData);
       return selectedConfigData;
@@ -51,15 +51,23 @@ function NodeForm(props) {
     watch(() => insideState.selectedCellId, () => {
         setTimeout(() => {
           if (showConfigForm.value) {
-            const json = context.dm.insideState.selectedConfigJSON;
-            const data = tryToRaw(context.dm.insideState.selectedConfigData);
+            const json = insideState.selectedConfigJSON;
+            const data = insideState.selectedConfigData;
             const mergedJson = mergeJsonAndData(json, data);
-            console.log('[NodeForm] recloned');
-            formJson.value = cloneDeep(mergedJson);
+            console.log('[NodeForm] remerged');
+            formJson.value = mergedJson;
         } else {
           formJson.value = null;
         }
       });
+    });
+
+    watch(() => traverse(formJson.value), () => {
+      console.log('form json changed:');
+      if (formJson.value) {
+        const rawData = fallbackEditorDataToNormal(formJson.value);
+        onChange(rawData);          
+      }
     });
   });
 
