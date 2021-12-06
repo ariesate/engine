@@ -29,6 +29,8 @@ interface ITopState {
   [key: string]: any;
 }
 
+type INodeComponentEvent = 'change' | 'save' | 'remove';
+
 export interface IInsideState {
   selectedCellId: string;
   selectedConfigJSON: IK6DataConfig | null;
@@ -95,6 +97,10 @@ class DataManager extends EventEmiter{
   insideState:IInsideState = reactive({
     selectedCellId: '', // 包含节点和边
     selectedConfigJSON: null,
+    selectedConfigData: null,
+    cacheSelected: {
+      dataConfig: null,
+    },
     graph: {
       zoom: 1,
     },
@@ -137,11 +143,13 @@ class DataManager extends EventEmiter{
     if (1) {
       const nodeComponent: ShapeComponent = this.nodeShapeComponentMap.values().next().value;
       const n = generateNodeByConfig(nodeComponent[0]);
-      this.nodes.push({
+      const newNode = {
         ...n,
         data: reactive(n.data),
-      });
-      this.emit('addNode', n);
+      };
+      this.nodes.push(newNode);
+      this.emit('addNode', newNode);
+      this.notifyShapeComponent(n, null, 'change', newNode.data);
     }
   }
   addNewEdge(nodeId: string, edgeId: string) {
@@ -211,6 +219,9 @@ class DataManager extends EventEmiter{
         selectedConfigJSON: null,
         selectedConfigData: null,
         selectedCellId: '',
+        cacheSelected: {
+          configData: null
+        }
       });
       return;
     }
@@ -226,7 +237,6 @@ class DataManager extends EventEmiter{
   });
   }
   selectEdge(id: string) {
-    console.log('selectEdge: ', id);
     if (!id || this.insideState.selectedCellId === id) {
       Object.assign(this.insideState, {
         selectedConfigJSON: null,
@@ -252,27 +262,13 @@ class DataManager extends EventEmiter{
       });
     }
   }
-  triggerCurrentEvent(event: 'change' | 'save', data: any) {
+  triggerCurrentEvent(event: INodeComponentEvent, data: any) {
     this.triggerEvent(this.insideState.selectedCellId, event, data);      
   }
 
-  triggerEvent(cellId: string, event: 'change' | 'save', data: any) {
-    if (!cellId) {
-      return;
-    }
-    const [node, edge] = this.findNodeAndEdge(cellId);
+  notifyShapeComponent(node: IDataNode, edge: IEdgeData, event: INodeComponentEvent, data: IK6DataConfig) {
     const [nodeComponent, _, edgeComponent] = this.getShapeComponent(node.shape);
 
-    if (node) {
-      // @TODO: 更新节点的画布属性    
-      const position = this.dmx6.Graph.getNodePosition(cellId);
-      if (position) {
-        Object.assign(node, {
-          x: position.x,
-          y: position.y,
-        });
-      }
-    }
     if (edge) {
       const newEdgeConfig = edgeComponent.getConfig(node, edge);
       const model = this.dmx6.Graph.updateEdge(edge, newEdgeConfig);
@@ -302,6 +298,25 @@ class DataManager extends EventEmiter{
           break;
         }
     }
+  }
+
+  triggerEvent(cellId: string, event: INodeComponentEvent, data: any) {
+    if (!cellId) {
+      return;
+    }
+    const [node, edge] = this.findNodeAndEdge(cellId);
+
+    if (node) {
+      // @TODO: 更新节点的画布属性    
+      const position = this.dmx6.Graph.getNodePosition(cellId);
+      if (position) {
+        Object.assign(node, {
+          x: position.x,
+          y: position.y,
+        });
+      }
+    }
+    this.notifyShapeComponent(node, edge, event, data);
   }
   removeCurrent() {
     const currentCellId = this.insideState.selectedCellId;
