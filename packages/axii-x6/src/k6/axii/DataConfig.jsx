@@ -381,8 +381,6 @@ function DataConfig({ jsonWithData, onChange, onSave }) {
       <content block block-padding="16px">
         <DataConfigForm
           json={myJson}
-          test
-          onChange={dataChanged}
         />
         <actions block flex-display flex-justify-content="right" block-padding-right="0">
           <Button layout:block-margin-top="8px" primary onClick={clickOnSave}>保存</Button>
