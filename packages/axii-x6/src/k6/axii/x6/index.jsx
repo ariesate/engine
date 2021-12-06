@@ -1,7 +1,7 @@
 /** @jsx createElement */
 import { createFlowGraph } from './graph';
 import { Graph as X6Graph, Markup } from '@antv/x6'
-import lodash, { pick } from 'lodash';
+import lodash, { merge, pick } from 'lodash';
 import {
   tryToRaw,
   createElement,
@@ -12,6 +12,12 @@ import {
   useViewEffect,
 } from "axii";
 import { DEFAULT_SHAPE } from '../../Node';
+
+function assignDefaultEdge(edge = {}) {
+  return merge({
+    router: 'manhattan',
+  }, edge);
+}
 
 export const Register = {
   htmlComponentMap: new Map(),
@@ -31,21 +37,22 @@ export const Register = {
   },
   registerHTMLComponentRender({ getInject }) {
     return (node) => {
-      const [graph, dm, myNode, myPort, myEdge] = getInject();
+      const [graph, dm, NodeCpt, PortCpt, EdgeCpt] = getInject();
       const wrap = document.createElement('div')
       // nodeConfig is reactive
       const nodeConfig = dm.findNode(node.id);
       
-      const Cpt = myNode.getComponent(nodeConfig);
-      render(<Cpt {...nodeConfig} globalData={myNode.data} />, wrap);
+      render(<NodeCpt 
+          node={nodeConfig}
+          RegisterPort={PortCpt.RegisterPort}
+      />, wrap);
 
       function refreshNodeSize(){
         const { width, height } = (wrap.children[0].getBoundingClientRect());
         node.setProp({ width, height });
-        myNode.setSize({ width, height });
 
         // render port
-        const portConfigArr = myPort.getConfig(nodeConfig.id);
+        const portConfigArr = PortCpt.getConfig(nodeConfig.id);
         const ports = {
           groups: portConfigArr.map((portConfig, index) => {
             const { portId, position, size } = portConfig;
@@ -75,9 +82,10 @@ export const Register = {
         // render edge
         requestAnimationFrame(() => {
           nodeConfig.edges.forEach(edge => {
-            const edgeConfig = myEdge.getConfig(nodeConfig, edge);
+            const edgeConfig = EdgeCpt(nodeConfig, edge);
+            const c = assignDefaultEdge(edgeConfig);
             const edgeIns = graph.addEdge({
-              ...edgeConfig,
+              ...c,
             });
         });
         });
@@ -108,9 +116,10 @@ export const Register = {
       const selectors = args.contentSelectors
       const container = selectors && selectors.foContent
       if (container) {
-        const portInst = nodeComponent[1];
-        const Cpt = portInst.getComponent(originNode);
-        render(createElement(Cpt, { ...originNode, data: portInst.data }), container);
+        const PortCpt = nodeComponent[1];
+        render(createElement(PortCpt, {
+          node: originNode,
+        }), container);
       }  
     }
   },

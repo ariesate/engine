@@ -3,9 +3,9 @@ import {
 } from 'axii';
 import EventEmiter from 'eventemitter3';
 import { IBBox, IX6Cell, IX6Node, IX6Edge } from '../basicTypes';
-import { K6Edge, K6EdgeChild } from '../Edge';
-import { IK6DataConfig, K6Node, K6NodeChild } from '../Node';
-import { K6Port, K6PortChild } from '../Port';
+import { K6Edge, K6EdgeChild, INodeEdge } from '../Edge';
+import { IK6DataConfig, K6Node, K6NodeChild, INodeComponent } from '../Node';
+import { K6Port, K6PortChild, IRegisterPortConfigProps, INodePort } from '../Port';
 import { cloneDeep } from 'lodash';
 
 type IDataNode = IX6Node & {
@@ -21,9 +21,9 @@ type IEdgeData = IX6Edge & {
   }
 };
 
-type Group = [typeof K6NodeChild, typeof K6PortChild, typeof K6EdgeChild];
+type Group = [INodeComponent, INodePort, INodeEdge];
 
-type ShapeComponent = [K6Node, K6Port, K6Edge];
+type ShapeComponent = [INodeComponent, INodePort, INodeEdge];
 
 interface ITopState {
   [key: string]: any;
@@ -74,7 +74,7 @@ export function fallbackEditorDataToNormal(myJson: IK6DataConfig) {
   return result;
 }
 
-function generateNodeByConfig(k6Node: K6Node) {
+function generateNodeByConfig(k6Node: INodeComponent) {
   const data: any = fallbackEditorDataToNormal(k6Node.configJSON);
 
   const newNode = {
@@ -109,6 +109,7 @@ class DataManager extends EventEmiter{
   dmx6: any;
   constructor() {
     super();
+    // @ts-ignore
     window.dm = this;
   }
   setX6(x6: any) {
@@ -175,22 +176,12 @@ class DataManager extends EventEmiter{
   }
   readComponents(groups: Group[]) {
     groups.forEach(group => {
-      const [NodeCls, PortCls, EdgeCls] = group;
-  
-      const nodeComponent = new NodeCls();
-      const portComponent = new PortCls(nodeComponent);
-      const edgeComponent = new EdgeCls(nodeComponent);
+      const [NodeCpt, PortCpt, EdgeFunc] = group;
 
-      [
-        nodeComponent,
-        portComponent,
-        edgeComponent,
-      ].forEach(c => c.data = this.data);
-      
-      this.nodeShapeComponentMap.set(nodeComponent.shape, [
-        nodeComponent,
-        portComponent,
-        edgeComponent,
+      this.nodeShapeComponentMap.set(NodeCpt.shape, [
+        NodeCpt,
+        PortCpt,
+        EdgeFunc,
       ]);
     });
   }
@@ -270,7 +261,7 @@ class DataManager extends EventEmiter{
     const [nodeComponent, _, edgeComponent] = this.getShapeComponent(node.shape);
 
     if (edge) {
-      const newEdgeConfig = edgeComponent.getConfig(node, edge);
+      const newEdgeConfig = edgeComponent(node, edge);
       const model = this.dmx6.Graph.updateEdge(edge, newEdgeConfig);
       Object.assign(edge, model, {
         data: edge.data,
@@ -279,25 +270,25 @@ class DataManager extends EventEmiter{
     
     const oldConfigData = this.insideState.cacheSelected.configData;
     // 说明仅仅是边的修改
-    if (edge) {
-      switch (event) {
-        case 'change':
-          edgeComponent.onChange(node, edge, data, oldConfigData);
-          break;
-        case 'save':
-          edgeComponent.onSave(node, edge, data, oldConfigData);
-          break;
-        }
-    } else {
-      switch (event) {
-        case 'change':
-          nodeComponent.onChange(node, data, oldConfigData);
-          break;
-        case 'save':
-          nodeComponent.onSave(node, data, oldConfigData);
-          break;
-        }
-    }
+    // if (edge) {
+    //   switch (event) {
+    //     case 'change':
+    //       edgeComponent.onChange(node, edge, data, oldConfigData);
+    //       break;
+    //     case 'save':
+    //       edgeComponent.onSave(node, edge, data, oldConfigData);
+    //       break;
+    //     }
+    // } else {
+    //   switch (event) {
+    //     case 'change':
+    //       nodeComponent.onChange(node, data, oldConfigData);
+    //       break;
+    //     case 'save':
+    //       nodeComponent.onSave(node, data, oldConfigData);
+    //       break;
+    //     }
+    // }
   }
 
   triggerEvent(cellId: string, event: INodeComponentEvent, data: any) {
