@@ -7,9 +7,9 @@ export abstract class K6Edge {
   configJSON: IK6DataConfig | null = null;
   constructor (public target: K6Node) {
   }
-  onChange(node: IX6Cell, edge: IX6Edge, data: any) {
+  onChange(node: IX6Cell, edge: IX6Edge, data: any, oldData: any) {
   }
-  onSave(node: IX6Cell, edge: IX6Edge, data: any) {
+  onSave(node: IX6Cell, edge: IX6Edge, data: any, oldData: any) {
   }
   onRemove(node: IX6Cell, edge: IX6Edge){    
   }

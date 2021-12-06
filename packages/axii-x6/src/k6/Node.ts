@@ -53,9 +53,9 @@ export abstract class K6Node {
   workNode: IX6Node = null;
   port: K6Port | null = null; // 在Port Constructor中反向注入
   
-  onChange(node: IX6Cell, data: any) {
+  onChange(node: IX6Cell, data: any, oldData: any) {
   }
-  onSave(node: IX6Cell, data: any) {
+  onSave(node: IX6Cell, data: any, oldData: any) {
   }
   onRemove(node: IX6Cell){    
   }

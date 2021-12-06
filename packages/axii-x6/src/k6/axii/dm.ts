@@ -6,6 +6,7 @@ import { IBBox, IX6Cell, IX6Node, IX6Edge } from '../basicTypes';
 import { K6Edge, K6EdgeChild } from '../Edge';
 import { IK6DataConfig, K6Node, K6NodeChild } from '../Node';
 import { K6Port, K6PortChild } from '../Port';
+import { cloneDeep } from 'lodash';
 
 type IDataNode = IX6Node & {
   edges: IEdgeData[];
@@ -32,6 +33,9 @@ export interface IInsideState {
   selectedCellId: string;
   selectedConfigJSON: IK6DataConfig | null;
   selectedConfigData: { [k: string]: any };
+  cacheSelected: {
+    configData: { [k: string]: any }; // 镜像版本
+  },
   graph: {
     zoom: number,
   }
@@ -225,6 +229,9 @@ class DataManager extends EventEmiter{
         selectedConfigJSON: null,
         selectedConfigData: null,
         selectedCellId: '',
+        cacheSelcted: {
+          configData: null,
+        }
       });
       return;
     }
@@ -236,6 +243,10 @@ class DataManager extends EventEmiter{
         selectedConfigJSON: edgeComponent.configJSON,
         selectedConfigData: edge.data,
         selectedCellId: id,
+
+        cacheSelcted: {
+          configData: cloneDeep(edge.data),
+        }
       });
     }
   }
@@ -268,23 +279,24 @@ class DataManager extends EventEmiter{
       });
     }
     
+    const oldConfigData = this.insideState.cacheSelected.configData;
     // 说明仅仅是边的修改
     if (edge) {
       switch (event) {
         case 'change':
-          edgeComponent.onChange(node, edge, data);
+          edgeComponent.onChange(node, edge, data, oldConfigData);
           break;
         case 'save':
-          edgeComponent.onSave(node, edge, data);
+          edgeComponent.onSave(node, edge, data, oldConfigData);
           break;
         }
     } else {
       switch (event) {
         case 'change':
-          nodeComponent.onChange(node, data);
+          nodeComponent.onChange(node, data, oldConfigData);
           break;
         case 'save':
-          nodeComponent.onSave(node, data);
+          nodeComponent.onSave(node, data, oldConfigData);
           break;
         }
     }
