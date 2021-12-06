@@ -40,7 +40,8 @@ function NodeForm(props) {
     const { selectedCellId, selectedConfigData, selectedConfigJSON } = context.dm.insideState;
     if (selectedCellId && selectedConfigData && selectedConfigJSON) {
       console.log('selectedCellId: ', selectedCellId, selectedConfigData, rawSelectedData);
-      Object.assign(selectedConfigData, rawSelectedData);
+      // 用merge防止主数据的某些字段被覆盖
+      merge(selectedConfigData, rawSelectedData);
       context.dm.triggerCurrentEvent('change', selectedConfigData);
       return selectedConfigData;
     }
