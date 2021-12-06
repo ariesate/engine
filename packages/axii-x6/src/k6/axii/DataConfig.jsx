@@ -35,9 +35,6 @@ const SimpleFormField = createComponent((() => {
           {() => {
             switch (item.type) {
               case 'string':
-                if (itemValue.value === undefined) {
-                  itemValue.value = '';
-                }
                 return (
                   <Input onChange={onChange} layout:block value={itemValue} />
                 );
@@ -275,6 +272,10 @@ export function mergeJsonAndData(json, data) {
       obj.value = value;
     } else {
       obj.value = data;
+    }
+
+    if (obj.type === 'string' && obj.value === undefined) {
+      obj.value = '';
     }
     
     if (obj.type === 'object') {
