@@ -260,7 +260,8 @@ export function mergeJsonAndData(json, data) {
   if (!json) {
     return json;
   }
-  const clonedJson = json;
+  // 原始的json应该是一个固定的json结构
+  const clonedJson = reactive(cloneDeep(json));
 
   function traverseJson(obj, path) {
     const cur = path.concat(obj.name);
