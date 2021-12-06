@@ -369,18 +369,19 @@ function DataConfig({ jsonWithData, onChange, onSave }) {
   }
 
   // @TODO 先不主动触发，让外界通过watch监听
-  // function dataChanged(v) {
-  //   setTimeout(() => {
-  //     const rawData = fallbackEditorDataToNormal(myJson);      
-  //     onChange && onChange(rawData);
-  //   });
-  // }
+  function dataChanged(v) {
+    // setTimeout(() => {
+    //   const rawData = fallbackEditorDataToNormal(myJson);      
+    //   onChange && onChange(rawData);
+    // });
+  }
 
   return (
     <dataCofnig block block-width="100%" style={{ backgroundColor: '#fff' }}>
       <content block block-padding="16px">
         <DataConfigForm
           json={myJson}
+          onChange={dataChanged}
         />
         <actions block flex-display flex-justify-content="right" block-padding-right="0">
           <Button layout:block-margin-top="8px" primary onClick={clickOnSave}>保存</Button>
