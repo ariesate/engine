@@ -220,7 +220,10 @@ class DataManager extends EventEmiter{
       selectedConfigJSON: nodeComponent.configJSON,
       selectedConfigData: node.data,
       selectedCellId: id,
-    });
+      cacheSelected: {
+        configData: cloneDeep(node.data),
+      },
+  });
   }
   selectEdge(id: string) {
     console.log('selectEdge: ', id);
@@ -243,10 +246,9 @@ class DataManager extends EventEmiter{
         selectedConfigJSON: edgeComponent.configJSON,
         selectedConfigData: edge.data,
         selectedCellId: id,
-
         cacheSelected: {
           configData: cloneDeep(edge.data),
-        }
+        },
       });
     }
   }
