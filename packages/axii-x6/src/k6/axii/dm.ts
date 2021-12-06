@@ -229,7 +229,7 @@ class DataManager extends EventEmiter{
         selectedConfigJSON: null,
         selectedConfigData: null,
         selectedCellId: '',
-        cacheSelcted: {
+        cacheSelected: {
           configData: null,
         }
       });
@@ -244,7 +244,7 @@ class DataManager extends EventEmiter{
         selectedConfigData: edge.data,
         selectedCellId: id,
 
-        cacheSelcted: {
+        cacheSelected: {
           configData: cloneDeep(edge.data),
         }
       });
