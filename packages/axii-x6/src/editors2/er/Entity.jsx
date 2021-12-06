@@ -139,7 +139,7 @@ export class EntityNode extends K6Node {
         // 如果 fieldPosition
         if (field.type === 'rel' && fieldPosition.y && fieldPosition.height && entityPosition.y) {
           const y = fieldPosition.y - entityPosition.y + (fieldPosition.height / 2) - 10
-          console.log('y: ', y, '= ', fieldPosition.y ,'-', entityPosition.y ,'+', (fieldPosition.height / 2), '-', 10);
+          console.log('B:', field.name, 'y: ', y, '= ', fieldPosition.y ,'-', entityPosition.y ,'+', (fieldPosition.height / 2), '-', 10);
           result.right = {
             x: entityPosition.width - 10,
             y
@@ -161,9 +161,9 @@ export class EntityNode extends K6Node {
           throw new Error('field id 不存在或重复了');
         }
         const { y, height } = fieldIds[0].getBoundingClientRect();
+        positionTrigger.trigger();
         fieldPosition.y = y;
         fieldPosition.height = height;
-        positionTrigger.trigger();
       }, 0);
 
       return (
