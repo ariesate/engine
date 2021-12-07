@@ -42,6 +42,14 @@ export interface IK6DataConfig {
   properties?: Array<IK6DataConfig>; // 嵌套结构
 }
 
+export interface INodeComponent extends Function {
+  shape: string;
+  configJSON: IK6DataConfig;
+  onChange:(node: IX6Cell, data: any, oldData: any) => void;
+  onSave: (node: IX6Cell, data: any, oldData: any) => void;
+  onRemove: (node: IX6Cell) => void;
+};
+
 // -------
 export abstract class K6Node {
   data: ITopState;

@@ -11,7 +11,8 @@ const config = defineConfig(({ mode }) => {
       jsxFragment: 'Fragment'
     },
     server: {
-      open: 'http://localhost:3000/examples/er2.html',
+      port: 5001,
+      open: 'http://localhost:5001/examples/er2.html',
     },
     css: {
       preprocessorOptions: {
