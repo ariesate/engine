@@ -4,6 +4,7 @@
   "author": "sskyy <skyking_H@hotmail.com>",
   "license": "MIT",
   "type": "module",
+  "types": "src/k6",
   "publishConfig": {
     "access": "public"
   },
@@ -19,7 +20,7 @@
     }
   },
   "scripts": {
-    "start": "pnpm start --filter \"axii-x6-playground\"",
+    "start": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode=development",
     "release": "pnpm run build && pnpm publish --no-git-checks",
@@ -31,7 +32,10 @@
     "axii-icons": "workspace:^1.0.2",
     "axios": "^0.21.1",
     "copy-text-to-clipboard": "^2.2.0",
-    "lodash-es": "^4.17.20"
+    "eventemitter3": "^4.0.7",
+    "lodash": "^4.17.4",
+    "lodash-es": "^4.17.20",
+    "typescript": "^4.5.2"
   },
   "devDependencies": {
     "@jsdevtools/version-bump-prompt": "^6.1.0",
