@@ -6,7 +6,7 @@ import { IBBox, IX6Cell, IX6Node, IX6Edge } from '../basicTypes';
 import { K6Edge, K6EdgeChild, INodeEdge } from '../Edge';
 import { IK6DataConfig, K6Node, K6NodeChild, INodeComponent } from '../Node';
 import { K6Port, K6PortChild, IRegisterPortConfigProps, INodePort } from '../Port';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, merge } from 'lodash';
 
 type IDataNode = IX6Node & {
   edges: IEdgeData[];
@@ -29,7 +29,7 @@ interface ITopState {
   [key: string]: any;
 }
 
-type INodeComponentEvent = 'change' | 'save' | 'remove';
+type INodeComponentEvent = 'change' | 'save' | 'remove' | 'add';
 
 export interface IInsideState {
   selectedCellId: string;
@@ -80,7 +80,7 @@ function generateNodeByConfig(k6Node: INodeComponent) {
   const newNode = {
     id: Math.floor(((Math.random() * 10000))).toString(),
     shape: k6Node.shape,
-    name: 'Page',
+    name: '',
     data,
     x:30,
     y:30,
@@ -139,18 +139,23 @@ class DataManager extends EventEmiter{
       });
     });
   }
-  addNode() {
+  async addNode() {
     // 先默认只支持一种
     if (1) {
       const nodeComponent: ShapeComponent = this.nodeShapeComponentMap.values().next().value;
       const n = generateNodeByConfig(nodeComponent[0]);
       const newNode = {
         ...n,
-        data: reactive(n.data),
       };
+      
+      const notifiedNode = await this.notifyShapeComponent(n, null, 'add', newNode.data);
+      if (!notifiedNode) 
+      merge(newNode, notifiedNode);
+
+      newNode.data = reactive(newNode.data);
+
       this.nodes.push(newNode);
       this.emit('addNode', newNode);
-      this.notifyShapeComponent(n, null, 'change', newNode.data);
     }
   }
   addNewEdge(nodeId: string, edgeId: string) {
@@ -270,25 +275,23 @@ class DataManager extends EventEmiter{
     
     const oldConfigData = this.insideState.cacheSelected.configData;
 
+    let targetComponent = !!edge ? edgeComponent : nodeComponent;
+    let args: any[] = !!edge ? [node, edge, data, oldConfigData] : [node, edge, data, oldConfigData];
     // 有edge，说明仅仅是针对边的修改
-    if (edge) {
-      switch (event) {
-        case 'change':
-          edgeComponent.onChange && edgeComponent.onChange(node, edge, data, oldConfigData);
-          break;
-        case 'save':
-          edgeComponent.onSave && edgeComponent.onSave(node, edge, data, oldConfigData);
-          break;
+    switch (event) {
+      case 'change':
+        return targetComponent.onChange && targetComponent.onChange.apply(targetComponent, args);
+      case 'save':
+        return targetComponent.onSave && targetComponent.onSave.apply(targetComponent, args);
+      case 'add': {
+        if (targetComponent.onAdd) {
+          const r = targetComponent.onAdd.apply(targetComponent, args);
+          if (!r || ( r && r.id === undefined)) {
+            console.log('onAdd method must have return result with id');
+          }
+          return r;
         }
-    } else {
-      switch (event) {
-        case 'change':
-          nodeComponent.onChange && nodeComponent.onChange(node, data, oldConfigData);
-          break;
-        case 'save':
-          nodeComponent.onSave && nodeComponent.onSave(node, data, oldConfigData);
-          break;
-        }
+      }
     }
   }
 
