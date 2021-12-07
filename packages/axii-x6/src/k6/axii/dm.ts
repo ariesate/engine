@@ -75,6 +75,8 @@ export function fallbackEditorDataToNormal(myJson: IK6DataConfig) {
   return result;
 }
 
+let newAddIndex = 1;
+
 function generateNodeByConfig(k6Node: INodeComponent) {
   const data: any = fallbackEditorDataToNormal(k6Node.configJSON);
 
@@ -83,10 +85,12 @@ function generateNodeByConfig(k6Node: INodeComponent) {
     shape: k6Node.shape,
     name: '',
     data,
-    x:30,
-    y:30,
+    x:30 * newAddIndex,
+    y:30 * newAddIndex,
     edges: [],
   };
+
+  newAddIndex++;
 
   return newNode;
 }
@@ -150,7 +154,6 @@ class DataManager extends EventEmiter{
       };
       
       const notifiedNode = await this.notifyShapeComponent(n, null, 'add', newNode.data);
-      if (!notifiedNode) 
       merge(newNode, notifiedNode);
 
       newNode.data = reactive(newNode.data);
@@ -263,7 +266,7 @@ class DataManager extends EventEmiter{
     this.triggerEvent(this.insideState.selectedCellId, event, data);      
   }
 
-  notifyShapeComponent(node: IDataNode, edge: IEdgeData, event: INodeComponentEvent, data: IK6DataConfig) {
+  async notifyShapeComponent(node: IDataNode, edge: IEdgeData, event: INodeComponentEvent, data: IK6DataConfig) {
     const [nodeComponent, _, edgeComponent] = this.getShapeComponent(node.shape);
 
     if (edge) {
@@ -286,9 +289,9 @@ class DataManager extends EventEmiter{
         return targetComponent.onSave && targetComponent.onSave.apply(targetComponent, args);
       case 'add': {
         if (targetComponent.onAdd) {
-          const r = targetComponent.onAdd.apply(targetComponent, args);
+          const r = await targetComponent.onAdd.apply(targetComponent, args);
           if (!r || ( r && r.id === undefined)) {
-            console.log('onAdd method must have return result with id');
+            throw new Error('onAdd method must have return result with id');
           }
           return r;
         }

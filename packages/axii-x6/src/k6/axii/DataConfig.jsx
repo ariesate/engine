@@ -94,8 +94,9 @@ const HigherFormField = createComponent((() => {
           [p.name]: null,
         }
       }).reduce((p, n) => Object.assign(p, n), {});      
-      item.value.push(newObj);
-      const newChildren = rebuildArrayValue2ReactiveChildren(item, item.value);
+      // item.value.push(newObj);
+      const newValueArr = item.value.concat(newObj);
+      const newChildren = rebuildArrayValue2ReactiveChildren(item, newValueArr);
       item.children = merge(newChildren, item.children);
       onChange();
     }
