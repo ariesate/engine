@@ -24,8 +24,6 @@ const simpleTypes = ['string', 'number', 'boolean', 'enum'];
 
 const SimpleFormField = createComponent((() => {
   function FormField({ item, onChange }) {
-
-    console.log('item: ', item);
     const itemValue = delegateLeaf(item).value;
 
     return (
@@ -358,7 +356,6 @@ const DataConfigForm = createComponent((() => {
  * 指定的情况下可以是根据相关Layout（这让我想起了安卓的xml
  */
 function DataConfig({ jsonWithData, onChange, onSave }) {
-  console.log('[DataConfig] Render: ');
 
   const myJson = (jsonWithData);
   window.myJson = myJson;

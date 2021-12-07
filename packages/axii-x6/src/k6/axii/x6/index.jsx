@@ -42,10 +42,15 @@ export const Register = {
       // nodeConfig is reactive
       const nodeConfig = dm.findNode(node.id);
       
-      render(<NodeCpt 
+      const renderController = render(<NodeCpt 
           node={nodeConfig}
           RegisterPort={PortCpt.RegisterPort}
       />, wrap);
+
+      dm.once('dispose', () => {
+        renderController.destroy();
+        wrap.innerHTML = '';
+      });
 
       function refreshNodeSize(){
         const { width, height } = (wrap.children[0].getBoundingClientRect());
@@ -79,6 +84,7 @@ export const Register = {
           }),
         };
         node.setProp('ports', ports);
+        window.ports = ports;
         // render edge
         requestAnimationFrame(() => {
           nodeConfig.edges.forEach(edge => {
@@ -87,7 +93,7 @@ export const Register = {
             const edgeIns = graph.addEdge({
               ...c,
             });
-        });
+          });
         });
       }
 
@@ -98,9 +104,9 @@ export const Register = {
         }, 25);
       });
 
+      // @TODO:依赖myNode的axii渲染完成之后的动作，先加延时解决
       setTimeout(() => {
         refreshNodeSize();
-
       }, 50);
 
       return wrap;
@@ -180,18 +186,20 @@ export const Graph = {
     });
     dm.on('zoom-in', (v) => {
       graph.zoom(v);
-      console.log('graph.zoom(): ', graph.zoom());
     });
     dm.on('zoom-out', (v) => {
       graph.zoom(-v);
-      console.log('graph.zoom(): ', graph.zoom());
     });
     dm.on('addNode', (n) => {
       this.addNode(n);
     });
+    dm.once('dispose', () => {
+      this.dispose();
+    });
 
     this.graph = graph;
     this.dm = dm;
+    window.graph = graph;
   },
 
   renderNodes(nodes) {
@@ -241,8 +249,13 @@ export const Graph = {
   },
   dispose() {
     const { graph } = this;
-    graph.removeCells(graph.getCells());
-    graph.getEdges().forEach(e => graph.removeEdge(e));
+    const cells = graph.getCells();
+    cells.forEach((cell) => {
+      if (cell.isNode()) {
+        cell.removePorts();
+      }
+    });
+    graph.removeCells(cells);
     graph.dispose();
     Register.unregisterAll();
   }

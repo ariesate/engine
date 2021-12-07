@@ -48,6 +48,7 @@ export interface INodeComponent extends Function {
   onChange:(node: IX6Cell, data: any, oldData: any) => void;
   onSave: (node: IX6Cell, data: any, oldData: any) => void;
   onRemove: (node: IX6Cell) => void;
+  onAdd: (node: IX6Cell) => IX6Cell;
 };
 
 // -------

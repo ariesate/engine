@@ -7,6 +7,7 @@ export interface INodeEdge extends Function {
   onChange: (node: IX6Cell, edge: IX6Edge, data: any, oldData: any) => void;
   onSave: (node: IX6Cell, edge: IX6Edge, data: any, oldData: any) => void;
   onRemove: (node: IX6Cell, edge: IX6Edge) => void
+  onAdd: (node: IX6Cell) => IX6Cell;
 };
 
 export abstract class K6Edge {
