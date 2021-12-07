@@ -18,7 +18,8 @@ import { Input, Select, Button, Checkbox } from 'axii-components'
 import cloneDeep from 'lodash/cloneDeep';
 import Down from 'axii-icons/Down';
 import Delete from 'axii-icons/Delete';
-import { get, set, merge, take } from 'lodash';
+import get from 'lodash/get';
+import merge from 'lodash/merge';
 
 const simpleTypes = ['string', 'number', 'boolean', 'enum'];
 

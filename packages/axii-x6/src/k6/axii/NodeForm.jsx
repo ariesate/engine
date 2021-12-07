@@ -16,7 +16,7 @@ import {
 
 import { RootContext } from './Root';
 import DataConfig, { mergeJsonAndData, fallbackEditorDataToNormal } from './DataConfig';
-import { merge, cloneDeep } from 'lodash';
+import merge from 'lodash/merge';
 
 function NodeForm(props) {
   const context = useContext(RootContext);

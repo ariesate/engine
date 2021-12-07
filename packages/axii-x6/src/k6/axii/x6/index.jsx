@@ -1,7 +1,8 @@
 /** @jsx createElement */
 import { createFlowGraph } from './graph';
 import { Graph as X6Graph, Markup } from '@antv/x6'
-import lodash, { merge, pick } from 'lodash';
+import merge from 'lodash/merge';
+import pick from 'lodash/pick';
 import {
   tryToRaw,
   createElement,
@@ -214,7 +215,7 @@ export const Graph = {
     const nodeConfigView = nodeConfig.view;
     delete nodeConfig.view;
 
-    const node = lodash.merge({
+    const node = merge({
       ...nodeConfigView,
     }, nodeConfig, {
       shape: 'html',
