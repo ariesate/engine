@@ -56,7 +56,10 @@ function Root({ children, height }) {
     });
 
     return () => {
-      x6.Graph.dispose();
+      // @TODO: dispose会触发其它render的卸载，当此时当前这个render并没有卸载完成
+      setTimeout(() => {
+        dm.dispose();
+      });
     };
   });
 

@@ -339,6 +339,10 @@ class DataManager extends EventEmiter{
     this.insideState.graph.zoom -= 0.2
     this.emit('zoom-out', 0.2);
   }
+
+  dispose() {
+    this.emit('dispose');
+  }
 }
 
 export default DataManager;
