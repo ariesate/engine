@@ -269,26 +269,27 @@ class DataManager extends EventEmiter{
     }
     
     const oldConfigData = this.insideState.cacheSelected.configData;
-    // 说明仅仅是边的修改
-    // if (edge) {
-    //   switch (event) {
-    //     case 'change':
-    //       edgeComponent.onChange(node, edge, data, oldConfigData);
-    //       break;
-    //     case 'save':
-    //       edgeComponent.onSave(node, edge, data, oldConfigData);
-    //       break;
-    //     }
-    // } else {
-    //   switch (event) {
-    //     case 'change':
-    //       nodeComponent.onChange(node, data, oldConfigData);
-    //       break;
-    //     case 'save':
-    //       nodeComponent.onSave(node, data, oldConfigData);
-    //       break;
-    //     }
-    // }
+
+    // 有edge，说明仅仅是针对边的修改
+    if (edge) {
+      switch (event) {
+        case 'change':
+          edgeComponent.onChange && edgeComponent.onChange(node, edge, data, oldConfigData);
+          break;
+        case 'save':
+          edgeComponent.onSave && edgeComponent.onSave(node, edge, data, oldConfigData);
+          break;
+        }
+    } else {
+      switch (event) {
+        case 'change':
+          nodeComponent.onChange && nodeComponent.onChange(node, data, oldConfigData);
+          break;
+        case 'save':
+          nodeComponent.onSave && nodeComponent.onSave(node, data, oldConfigData);
+          break;
+        }
+    }
   }
 
   triggerEvent(cellId: string, event: INodeComponentEvent, data: any) {
