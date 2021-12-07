@@ -28,7 +28,6 @@ const MiniMap = createComponent((() => {
   }
 
   MiniMap.Style = (frag) => {
-    console.log('frag.root.elements.k6MiniMap: ', frag.root.elements.k6MiniMap);
     frag.root.elements.k6MiniMap.style(props => {
       return {
         display: props.show.value ? 'block' : 'none',
