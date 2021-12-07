@@ -32,7 +32,6 @@ const config = defineConfig(({ mode }) => {
       lib: {
         entry : './src/index.js',
         name: 'axii-x6',
-        formats: ['es'],
       },
       rollupOptions: {
         external: ['axii'],
