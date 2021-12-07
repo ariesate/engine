@@ -1,5 +1,5 @@
-import { createElement,render } from 'axii';
 import { Graph, Addon, FunctionExt, Shape, NodeView } from '@antv/x6'
+import pick from 'lodash/pick';
 
 class SimpleNodeView extends NodeView {
   renderMarkup() {
@@ -59,7 +59,7 @@ export function createFlowGraph(container, initOptions = {}) {
     // },
     connecting: {
     //   snap: true,
-    //   allowBlank: true,
+      allowBlank: false,
     //   allowLoop: true,
     //   highlight: true,
     //   anchor: 'center',
@@ -84,8 +84,23 @@ export function createFlowGraph(container, initOptions = {}) {
           },
         });
         setTimeout(() => {
-          onAddEdge(args.sourceCell.id, newEdge.id);
-        }, 20);
+          let si;
+          let trigger;
+          si = setInterval(() => {
+            const newEdgeId = newEdge.id;
+            const allEdges = graph.model.getEdges();
+            const edgeIns = allEdges.find(e => e.id === newEdgeId);
+            const pickedEdge = pick(edgeIns, ['id', 'target', 'source', 'label', 'name', 'type']);
+            
+            if (pickedEdge.target.cell && !trigger) {
+              clearInterval(si);
+              trigger = true;
+              onAddEdge(args.sourceCell.id, pickedEdge);  
+            } else {
+              // console.log('pickedEdge.target:', pickedEdge.target);
+            }
+          }, 500);
+        }, 50);
 
         return newEdge;
       }

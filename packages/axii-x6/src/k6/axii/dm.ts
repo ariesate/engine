@@ -13,6 +13,7 @@ type IDataNode = IX6Node & {
   edges: IEdgeData[];
 };
 type IEdgeData = IX6Edge & {
+  remoteId?: string | number;
   data: {
     [key: string]: any;
   };
@@ -162,12 +163,18 @@ class DataManager extends EventEmiter{
       this.emit('addNode', newNode);
     }
   }
-  addNewEdge(nodeId: string, edgeId: string) {
+  async addNewEdge(nodeId: string, edge: IEdgeData) {
     const node = this.findNode(nodeId);
-    node.edges.push({
-      id: edgeId,
-      data: reactive({}),
-    });
+    if (node) {
+      const newEdge = {
+        ...edge,
+        data: reactive(edge.data || {}),
+      };
+      node.edges.push(newEdge);
+
+      const r = await this.notifyShapeComponent(node, newEdge, 'add', {});
+      newEdge.remoteId = r.id;
+    }
   }
   findNode(id: string) {
     const n = this.nodes.find(n => n.id === id);
@@ -266,7 +273,7 @@ class DataManager extends EventEmiter{
     this.triggerEvent(this.insideState.selectedCellId, event, data);      
   }
 
-  async notifyShapeComponent(node: IDataNode, edge: IEdgeData, event: INodeComponentEvent, data: IK6DataConfig) {
+  async notifyShapeComponent(node: IDataNode, edge: IEdgeData, event: INodeComponentEvent, data: any) {
     const [nodeComponent, _, edgeComponent] = this.getShapeComponent(node.shape);
 
     if (edge) {
@@ -275,6 +282,9 @@ class DataManager extends EventEmiter{
       Object.assign(edge, model, {
         data: edge.data,
       });
+      if (edge.remoteId) {
+        edge = Object.assign({}, edge, { id: edge.remoteId });
+      }
     }
     
     const oldConfigData = this.insideState.cacheSelected.configData;
