@@ -3,10 +3,6 @@ import { Axii, IBBox, IX6Cell, IX6Node } from './basicTypes';
 import { K6Edge } from './Edge';
 import { INodeViewProps, ITopState, K6Node } from './Node';
 
-export interface INodePort extends Function {
-  portConfig: IRegisterPortConfigProps[];
-  RegisterPort: () => IRegisterPortConfigProps;
-}
 
 export interface IRegisterPortConfigProps {
   nodeId: string;
