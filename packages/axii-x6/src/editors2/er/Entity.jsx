@@ -161,6 +161,11 @@ export const EntityNode = createComponent((() => {
   
     useViewEffect(() => {
       trigger.trigger();
+
+
+      watch(() => data.fields.length, () => {
+        console.log('new field or delete field');
+    }, 15);
     });
 
     return (
@@ -168,7 +173,7 @@ export const EntityNode = createComponent((() => {
         inline
         ref={entityRef}>
         <name block block-padding-4px>{() => data.name}</name>
-        {() => data.fields.map(field=> {
+        {() => data.fields.filter(f => f.id).map(field=> {
           return (
             <row block>
               <Field key={field.id} field={field} 
