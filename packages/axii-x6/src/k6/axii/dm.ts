@@ -6,12 +6,19 @@ import { IBBox, IX6Cell, IX6Node, IX6Edge } from '../basicTypes';
 import { K6Edge, K6EdgeChild, INodeEdge } from '../Edge';
 import { IK6DataConfig, K6Node, K6NodeChild, INodeComponent } from '../Node';
 import { K6Port, K6PortChild, IRegisterPortConfigProps, INodePort } from '../Port';
-import { cloneDeep, merge } from 'lodash';
+import merge from 'lodash/merge';
+import cloneDeep from 'lodash/cloneDeep';
 
 type IDataNode = IX6Node & {
+  data?: {
+    [k: string]: any;
+    x: number;
+    y: number;
+  };
   edges: IEdgeData[];
 };
 type IEdgeData = IX6Edge & {
+  remoteId?: string | number;
   data: {
     [key: string]: any;
   };
@@ -20,6 +27,7 @@ type IEdgeData = IX6Edge & {
     targetPortSide: 'left' | 'right';
   }
 };
+type INodePropKeys = keyof IDataNode;
 
 type Group = [INodeComponent, INodePort, INodeEdge];
 
@@ -74,19 +82,33 @@ export function fallbackEditorDataToNormal(myJson: IK6DataConfig) {
   return result;
 }
 
+let newAddIndex = 1;
+
 function generateNodeByConfig(k6Node: INodeComponent) {
   const data: any = fallbackEditorDataToNormal(k6Node.configJSON);
+
+  if (Reflect.has(data, 'x') || Reflect.has(data, 'y')) {
+    throw new Error('[generateNodeByConfig] x, y is preserved prop name')
+  }
 
   const newNode = {
     id: Math.floor(((Math.random() * 10000))).toString(),
     shape: k6Node.shape,
     name: '',
-    data,
-    x:30,
-    y:30,
-    edges: [],
+    data: {
+      ...data,
+    },
+    x:30 * newAddIndex,
+    y:30 * newAddIndex,
+  edges: [],
   };
+  newAddIndex++;
 
+  Object.assign(newNode.data, {
+    x: newNode.x,
+    y: newNode.y,
+  });
+  
   return newNode;
 }
 
@@ -118,12 +140,21 @@ class DataManager extends EventEmiter{
   readState(obj: object) {
     this.data = reactive(obj);
   }
-  readNodesData(nodes: IDataNode[]) {
-    this.nodes = (nodes.map(n => ({
-      ...n,
-      data: n.data ? reactive(n.data) : n.data,
-      edges: [],
-    })));
+  readNodesData(nodes: (IDataNode & { x:number; y:number })[]) {
+
+    this.nodes = nodes.map(n => {
+      const p = {
+        x: n.x,
+        y: n.y,
+      };
+      const data = n.data ? Object.assign({}, n.data, p): p;
+
+      return {
+        ...n,
+        data: reactive(data),
+        edges: [],
+      }
+    });
   }
   readEdgesData(edges: IEdgeData[]) {
     this.nodes.forEach(node => {
@@ -149,7 +180,6 @@ class DataManager extends EventEmiter{
       };
       
       const notifiedNode = await this.notifyShapeComponent(n, null, 'add', newNode.data);
-      if (!notifiedNode) 
       merge(newNode, notifiedNode);
 
       newNode.data = reactive(newNode.data);
@@ -158,12 +188,37 @@ class DataManager extends EventEmiter{
       this.emit('addNode', newNode);
     }
   }
-  addNewEdge(nodeId: string, edgeId: string) {
+  async addNewEdge(nodeId: string, edge: IEdgeData) {
     const node = this.findNode(nodeId);
-    node.edges.push({
-      id: edgeId,
-      data: reactive({}),
-    });
+    if (node) {
+      const newEdge = {
+        ...edge,
+        data: reactive(edge.data || {}),
+      };
+      node.edges.push(newEdge);
+
+      const r = await this.notifyShapeComponent(node, newEdge, 'add', {});
+      newEdge.remoteId = r.id;
+    }
+  }
+  /**
+   * 更新DM中的节点数据
+   * @param nodeId 
+   * @param props 
+   */
+  syncNode(nodeId: string, props: { [k in INodePropKeys]: any }) {
+    const node = this.findNode(nodeId);
+    if (node) {
+      const propKeys = Object.keys(props || {});
+      if (propKeys.includes('x') && propKeys.includes('y')) {
+        merge(node, props, { data: {
+          x: props.x,
+          y: props.y,
+        }});
+      } else {
+        merge(node, props);
+      }
+    }
   }
   findNode(id: string) {
     const n = this.nodes.find(n => n.id === id);
@@ -262,7 +317,7 @@ class DataManager extends EventEmiter{
     this.triggerEvent(this.insideState.selectedCellId, event, data);      
   }
 
-  notifyShapeComponent(node: IDataNode, edge: IEdgeData, event: INodeComponentEvent, data: IK6DataConfig) {
+  async notifyShapeComponent(node: IDataNode, edge: IEdgeData, event: INodeComponentEvent, data: any) {
     const [nodeComponent, _, edgeComponent] = this.getShapeComponent(node.shape);
 
     if (edge) {
@@ -271,6 +326,9 @@ class DataManager extends EventEmiter{
       Object.assign(edge, model, {
         data: edge.data,
       });
+      if (edge.remoteId) {
+        edge = Object.assign({}, edge, { id: edge.remoteId });
+      }
     }
     
     const oldConfigData = this.insideState.cacheSelected.configData;
@@ -285,9 +343,9 @@ class DataManager extends EventEmiter{
         return targetComponent.onSave && targetComponent.onSave.apply(targetComponent, args);
       case 'add': {
         if (targetComponent.onAdd) {
-          const r = targetComponent.onAdd.apply(targetComponent, args);
+          const r = await targetComponent.onAdd.apply(targetComponent, args);
           if (!r || ( r && r.id === undefined)) {
-            console.log('onAdd method must have return result with id');
+            throw new Error('onAdd method must have return result with id');
           }
           return r;
         }
@@ -301,16 +359,6 @@ class DataManager extends EventEmiter{
     }
     const [node, edge] = this.findNodeAndEdge(cellId);
 
-    if (node) {
-      // @TODO: 更新节点的画布属性    
-      const position = this.dmx6.Graph.getNodePosition(cellId);
-      if (position) {
-        Object.assign(node, {
-          x: position.x,
-          y: position.y,
-        });
-      }
-    }
     this.notifyShapeComponent(node, edge, event, data);
   }
   removeCurrent() {
