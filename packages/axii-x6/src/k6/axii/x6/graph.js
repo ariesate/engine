@@ -27,9 +27,8 @@ class SimpleNodeView extends NodeView {
       },
       text: {
         x: 10,
-        y: 40,
+        y: 20,
         fill: '#000',
-        fontSize: '30px'
       }
     });
     const text = this.container.querySelector('text')
