@@ -57,8 +57,6 @@ export interface IX6Cell {
   //
   parent?: {};
   children?: {}[];
-  //
-  data?: {};
 }
 
 export type IX6Node =  IX6Cell & IBBox & {

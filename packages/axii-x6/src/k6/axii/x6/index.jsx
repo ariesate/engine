@@ -181,6 +181,10 @@ export const Graph = {
       dm.selectNode();
     });
 
+    graph.on('node:moved', ({ node }) => {
+      const { x, y } = node.position();
+      dm.syncNode(node.id, { x, y });
+    });
 
     dm.on('remove', (id) => {
       graph.removeCell(id);

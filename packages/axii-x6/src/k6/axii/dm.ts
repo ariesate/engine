@@ -10,6 +10,11 @@ import merge from 'lodash/merge';
 import cloneDeep from 'lodash/cloneDeep';
 
 type IDataNode = IX6Node & {
+  data?: {
+    [k: string]: any;
+    x: number;
+    y: number;
+  };
   edges: IEdgeData[];
 };
 type IEdgeData = IX6Edge & {
@@ -22,6 +27,7 @@ type IEdgeData = IX6Edge & {
     targetPortSide: 'left' | 'right';
   }
 };
+type INodePropKeys = keyof IDataNode;
 
 type Group = [INodeComponent, INodePort, INodeEdge];
 
@@ -81,18 +87,28 @@ let newAddIndex = 1;
 function generateNodeByConfig(k6Node: INodeComponent) {
   const data: any = fallbackEditorDataToNormal(k6Node.configJSON);
 
+  if (Reflect.has(data, 'x') || Reflect.has(data, 'y')) {
+    throw new Error('[generateNodeByConfig] x, y is preserved prop name')
+  }
+
   const newNode = {
     id: Math.floor(((Math.random() * 10000))).toString(),
     shape: k6Node.shape,
     name: '',
-    data,
+    data: {
+      ...data,
+    },
     x:30 * newAddIndex,
     y:30 * newAddIndex,
-    edges: [],
+  edges: [],
   };
-
   newAddIndex++;
 
+  Object.assign(newNode.data, {
+    x: newNode.x,
+    y: newNode.y,
+  });
+  
   return newNode;
 }
 
@@ -124,12 +140,21 @@ class DataManager extends EventEmiter{
   readState(obj: object) {
     this.data = reactive(obj);
   }
-  readNodesData(nodes: IDataNode[]) {
-    this.nodes = (nodes.map(n => ({
-      ...n,
-      data: n.data ? reactive(n.data) : n.data,
-      edges: [],
-    })));
+  readNodesData(nodes: (IDataNode & { x:number; y:number })[]) {
+
+    this.nodes = nodes.map(n => {
+      const p = {
+        x: n.x,
+        y: n.y,
+      };
+      const data = n.data ? Object.assign({}, n.data, p): p;
+
+      return {
+        ...n,
+        data: reactive(data),
+        edges: [],
+      }
+    });
   }
   readEdgesData(edges: IEdgeData[]) {
     this.nodes.forEach(node => {
@@ -174,6 +199,25 @@ class DataManager extends EventEmiter{
 
       const r = await this.notifyShapeComponent(node, newEdge, 'add', {});
       newEdge.remoteId = r.id;
+    }
+  }
+  /**
+   * 更新DM中的节点数据
+   * @param nodeId 
+   * @param props 
+   */
+  syncNode(nodeId: string, props: { [k in INodePropKeys]: any }) {
+    const node = this.findNode(nodeId);
+    if (node) {
+      const propKeys = Object.keys(props || {});
+      if (propKeys.includes('x') && propKeys.includes('y')) {
+        merge(node, props, { data: {
+          x: props.x,
+          y: props.y,
+        }});
+      } else {
+        merge(node, props);
+      }
     }
   }
   findNode(id: string) {
@@ -315,16 +359,6 @@ class DataManager extends EventEmiter{
     }
     const [node, edge] = this.findNodeAndEdge(cellId);
 
-    if (node) {
-      // @TODO: 更新节点的画布属性    
-      const position = this.dmx6.Graph.getNodePosition(cellId);
-      if (position) {
-        Object.assign(node, {
-          x: position.x,
-          y: position.y,
-        });
-      }
-    }
     this.notifyShapeComponent(node, edge, event, data);
   }
   removeCurrent() {
