@@ -5,11 +5,13 @@
   "author": "sskyy <skyking_H@hotmail.com>",
   "license": "MIT",
   "type": "module",
+  "types": "./types/index.d.ts",
   "publishConfig": {
     "access": "public"
   },
   "files": [
-    "dist"
+    "dist",
+    "types"
   ],
   "main": "./dist/axii.umd.js",
   "module": "./dist/axii.es.js",
@@ -28,6 +30,7 @@
     "prepare": "pnpm build"
   },
   "dependencies": {
+    "csstype": "^3.0.10",
     "fast-json-patch": "^3.0.0-1",
     "immer": "^9.0.1"
   },
