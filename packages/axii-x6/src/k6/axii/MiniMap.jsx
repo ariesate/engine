@@ -22,14 +22,19 @@ const MiniMap = createComponent((() => {
     });
 
     return (
-      <k6MiniMap ref={mmap} block block-width="100%" block-height="200px" block-margin-top="16px">
-      </k6MiniMap>
+      <k6MiniMapContainer block block-margin-top="0px">
+        <miniTitle block block-padding="8px 8px 0">缩略图</miniTitle>
+        <k6MiniMap ref={mmap} block block-width="100%" block-height="200px">
+        </k6MiniMap>
+      </k6MiniMapContainer>
     );
   }
 
   MiniMap.Style = (frag) => {
-    frag.root.elements.k6MiniMap.style(props => {
+    frag.root.elements.k6MiniMapContainer.style(props => {
       return {
+        backgroundColor: '#fff',
+        fontSize: '14px',
         display: props.show.value ? 'block' : 'none',
       };
     });

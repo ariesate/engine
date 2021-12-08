@@ -2,22 +2,41 @@ import { Graph, Addon, FunctionExt, Shape, NodeView } from '@antv/x6'
 import pick from 'lodash/pick';
 
 class SimpleNodeView extends NodeView {
+  init() {
+    super.init()
+  }
   renderMarkup() {
-    return this.renderJSONMarkup({
-      tagName: 'rect',
-      selector: 'body',
-    })
+    return this.renderJSONMarkup([
+      {
+        tagName: 'rect',
+        selector: 'body',
+      },
+      {
+        tagName: 'text',
+        selector: 'text'
+      }
+    ]);
   }
 
   update() {
     super.update({
       body: {
         refWidth: '100%',
-        refHeight: '100%',
-        fill: '#acd6fe',
+        stroke: '#000',
+        fill: '#fff',
       },
-    })
-  }
+      text: {
+        x: 10,
+        y: 40,
+        fill: '#000',
+        fontSize: '30px'
+      }
+    });
+    const text = this.container.querySelector('text')
+    if (text) {
+      text.innerHTML = this.cell.data ? this.cell.data.name : '';
+    }
+  };
 }
 ///////////////////
 export function createFlowGraph(container, initOptions = {}) {
@@ -41,12 +60,7 @@ export function createFlowGraph(container, initOptions = {}) {
           if (cell.isNode()) {
             return SimpleNodeView
           }
-        },
-        createCellView(cell) {
-          if (cell.isEdge()) {
-            return null
-          }
-        },
+        }
       },
     } : undefined,
     onPortRendered: onPortRendered,
