@@ -12,11 +12,12 @@ import {
   traverse,
   atom,
   computed,
+  debounceComputed,
 } from 'axii';
 
 import { RootContext } from './Root';
 import DataConfig, { mergeJsonAndData, fallbackEditorDataToNormal } from './DataConfig';
-import { merge, cloneDeep } from 'lodash';
+import merge from 'lodash/merge';
 
 function NodeForm(props) {
   const context = useContext(RootContext);
@@ -39,7 +40,6 @@ function NodeForm(props) {
   function onChange(rawSelectedData) {
     const { selectedCellId, selectedConfigData, selectedConfigJSON } = context.dm.insideState;
     if (selectedCellId && selectedConfigData && selectedConfigJSON) {
-      console.log('selectedCellId: ', selectedCellId, selectedConfigData, rawSelectedData);
       // 用merge防止主数据的某些字段被覆盖
       merge(selectedConfigData, rawSelectedData);
       context.dm.triggerCurrentEvent('change', selectedConfigData);
@@ -56,7 +56,6 @@ function NodeForm(props) {
           const json = insideState.selectedConfigJSON;
           const data = insideState.selectedConfigData;
           const mergedJson = mergeJsonAndData(json, data);
-          console.log('[NodeForm] remerged');
           formJson.value = mergedJson;
       } else {
           formJson.value = null;

@@ -18,7 +18,8 @@ import { Input, Select, Button, Checkbox } from 'axii-components'
 import cloneDeep from 'lodash/cloneDeep';
 import Down from 'axii-icons/Down';
 import Delete from 'axii-icons/Delete';
-import { get, set, merge, take } from 'lodash';
+import get from 'lodash/get';
+import merge from 'lodash/merge';
 
 const simpleTypes = ['string', 'number', 'boolean', 'enum'];
 
@@ -93,8 +94,9 @@ const HigherFormField = createComponent((() => {
           [p.name]: null,
         }
       }).reduce((p, n) => Object.assign(p, n), {});      
-      item.value.push(newObj);
-      const newChildren = rebuildArrayValue2ReactiveChildren(item, item.value);
+      // item.value.push(newObj);
+      const newValueArr = item.value.concat(newObj);
+      const newChildren = rebuildArrayValue2ReactiveChildren(item, newValueArr);
       item.children = merge(newChildren, item.children);
       onChange();
     }
@@ -113,7 +115,7 @@ const HigherFormField = createComponent((() => {
       return () => {
         item.value.splice(index, 1);
         children.splice(index, 1);        
-         onChange();
+        onChange();
       };
     }
 

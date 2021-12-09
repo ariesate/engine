@@ -1393,9 +1393,15 @@ interface IntrinsicElementAttributes {
   view: SVGAttributes;
 }
 
+export interface RefObject<T> {
+  current?: T;
+}
+export type RefCallback<T> = (ref: T) => void;
+export type Ref<T = any> = RefObject<T> | RefCallback<T>;
+
 type ReservedProps = {
   key?: string | number | symbol;
-  ref?: any;
+  ref?: Ref;
 };
 
 type ElementAttrs<T> = { [K in keyof T]: Atomish<T[K]> } & ReservedProps;
