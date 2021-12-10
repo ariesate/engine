@@ -58,34 +58,39 @@ export const Register = {
         node.setProp({ width, height });
 
         // render port
-        const portConfigArr = PortCpt.getConfig(nodeConfig.id);
-        const ports = {
-          groups: portConfigArr.map((portConfig, index) => {
-            const { portId, position, size } = portConfig;
-            return {
-              [`${portId}${index}`]: {
-                position: [position.x, position.y],
-                attrs: {
-                  fo: {
-                    width: size.width,
-                    height: size.height,
-                    magnet: true,
+        if (PortCpt.getConfig) {
+          const portConfigArr = PortCpt.getConfig(nodeConfig.id);
+          const ports = {
+            groups: portConfigArr.map((portConfig, index) => {
+              const { portId, position, size } = portConfig;
+              return {
+                [`${portId}${index}`]: {
+                  position: [position.x, position.y],
+                  attrs: {
+                    fo: {
+                      width: size.width,
+                      height: size.height,
+                      magnet: true,
+                    }
                   }
                 }
-              }
-            };
-          }).reduce((p, n) => Object.assign(p, n), {}),
-          items: portConfigArr.map((portConfig, index) => {
-            const { portId, position } = portConfig;
-            return {
-              id: portId,
-              group: `${portId}${index}`,
-              position,
-            };
-          }),
-        };
-        node.setProp('ports', ports);
-        window.ports = ports;
+              };
+            }).reduce((p, n) => Object.assign(p, n), {}),
+            items: portConfigArr.map((portConfig, index) => {
+              const { portId, position } = portConfig;
+              return {
+                id: portId,
+                group: `${portId}${index}`,
+                position,
+              };
+            }),
+          };
+          node.setProp('ports', ports);
+          window.ports = ports;
+        } else {
+          console.error('Register Port getConfig method is undefined');
+        }
+
         // render edge
         requestAnimationFrame(() => {
           nodeConfig.edges.forEach(edge => {

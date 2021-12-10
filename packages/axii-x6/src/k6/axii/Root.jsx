@@ -17,7 +17,27 @@ export const RootContext = createContext()
  * 指定的情况下可以是根据相关Layout（这让我想起了安卓的xml
  */
 
-function Root({ children, height }) {
+function splitChildren (children) {
+  const slots = [];
+  const realChildren = [];
+
+  children.forEach(obj => {
+    // 是一个组件节点
+    if (obj.props) {
+      realChildren.push(obj);
+    } else {
+      slots.push(obj);
+    }
+  });
+
+  return {
+    realChildren,
+    slots: slots.reduce((p, n) => Object.assign(p, n), {}),
+  };
+}
+
+function Root({ children, height }, fragments) {
+  const {slots, realChildren} = splitChildren(children);
 
   const dm = new DM();
   dm.setX6(x6);
@@ -64,12 +84,58 @@ function Root({ children, height }) {
   });
 
   return (
-    <k6root block block-width="100%">
+    <k6root block block-width="100%" style={{
+      position: 'relative',
+    }}>
       <RootContext.Provider value={rootContext}>
-        {() => children}
+        <k6base flex-grow="1" block >
+          {() => realChildren}
+        </k6base>
+        <action block style={{
+        }}>
+          {() => slots.nodeForm ? (
+            <nodeFormContainer block style={{
+              backgroundColor: '#fff',
+              minWidth: '400px',
+              position: 'absolute',
+              top: '56px',
+              right: '16px',
+            }} >
+              {slots.nodeForm}
+            </nodeFormContainer>
+          ) : '' }
+          
+          {() => slots.miniMap ? (
+            <miniMapBox block style={{
+              backgroundColor: '#fff',
+              minWidth: '400px',
+              position: 'absolute',
+              bottom: '16px',    
+              right: '16px',
+              overflow: 'hidden',
+            }}>{slots.miniMap}</miniMapBox>) : '' }
+          
+        </action>
       </RootContext.Provider>
     </k6root>
   );
 }
 
-export default (Root);
+Root.Style = (frag) => {
+  const el = frag.root.elements;
+  const genStyle = (s = {}) => ({
+    backgroundColor: '#fff',
+    minWidth: '400px',
+    position: 'absolute',
+    right: '16px',
+    ...s,
+  });
+  el.nodeFormContainer.style(genStyle({
+    top: '16px',
+  }));
+  el.miniMapContainer.style(genStyle({
+    bottom: '16px',    
+  }));
+}
+
+export default createComponent(Root);

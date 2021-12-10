@@ -34,6 +34,8 @@ const MiniMap = createComponent((() => {
     frag.root.elements.k6MiniMapContainer.style(props => {
       return {
         backgroundColor: '#fff',
+        border: '1px solid #666',
+        overflow: 'hidden',
         fontSize: '14px',
         display: props.show.value ? 'block' : 'none',
       };
