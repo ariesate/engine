@@ -60,7 +60,13 @@ function Root({ children, height }, fragments) {
 
     // @TODO useViewEffect的父子顺序不对，先这样占个坑，后续axii里修复后再调整
     let once = false;
-    watch(() => [elementRefs.miniMap, elementRefs.graph], () => {
+    watch(() => {
+      if (slots.miniMap) {
+        return [elementRefs.miniMap, elementRefs.graph];
+      } else {
+        return [elementRefs.graph];
+      }
+    }, () => {
       setTimeout(() => {
         if (elementRefs.miniMap && elementRefs.graph && !once) {
 
