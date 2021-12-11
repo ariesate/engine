@@ -370,13 +370,13 @@ class DataManager extends EventEmiter{
       const i = node.edges.indexOf(edge);
       if (i >= 0) {
         node.edges.splice(i, 1);
-        edgeComponent && edgeComponent.onRemove(node, edge);
+        edgeComponent && edgeComponent.onRemove && edgeComponent.onRemove(node, edge);
       }
     } else {
       const i = this.nodes.indexOf(node);
       if (i >= 0) {
         this.nodes.splice(i, 1);
-        nodeComponent && nodeComponent.onRemove(node);
+        nodeComponent && edgeComponent.onRemove && nodeComponent.onRemove(node);
       }  
     }
     this.emit('remove', currentCellId);
