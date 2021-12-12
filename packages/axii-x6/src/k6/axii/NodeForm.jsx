@@ -21,7 +21,7 @@ import merge from 'lodash/merge';
 import isFunction from 'lodash/isFunction';
 
 function isPlainObj(jsonOrJsx) {
-  return typeof jsonOrJsx === 'object' && !isFunction(jsonOrJsx);
+  return !!jsonOrJsx && typeof jsonOrJsx === 'object' && !isFunction(jsonOrJsx);
 }
 
 function traverseSelectJSON(obj) {

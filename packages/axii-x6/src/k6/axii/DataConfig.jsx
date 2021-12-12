@@ -317,7 +317,11 @@ export function fallbackEditorDataToNormal(myJson) {
     return obj;
   }
   const result = {};
-  task(myJson.properties, result);
+  if (myJson.properties) {
+    task(myJson.properties, result);
+  } else {
+    Object.assign(result, myJson);
+  }
   return result;
 }
 
