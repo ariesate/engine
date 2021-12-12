@@ -49,7 +49,7 @@ function MiniMapContainer(props) {
   const context = useContext(RootContext);
 
   const showMiniMap = computed(() => {
-    const selected = !!context.dm.insideState.selectedConfigJSON && !!context.dm.insideState.selectedConfigData;
+    const selected = !!context.dm.insideState.selectedConfigJsonOrJsx && !!context.dm.insideState.selectedConfigData;
 
     return !selected;
   });

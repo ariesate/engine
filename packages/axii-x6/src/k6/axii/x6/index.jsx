@@ -230,10 +230,6 @@ export const Graph = {
       shape: 'html',
       portMarkup: [ Markup.getForeignObjectMarkup() ],
       attrs: {
-        rect: {
-          fill: '#fff',
-          stroke: '#000',
-        },
       },
       html: htmlKey,
       ports: {},      

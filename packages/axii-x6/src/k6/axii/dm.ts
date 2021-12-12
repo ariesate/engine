@@ -41,7 +41,7 @@ type INodeComponentEvent = 'change' | 'save' | 'remove' | 'add';
 
 export interface IInsideState {
   selectedCellId: string;
-  selectedConfigJSON: IK6DataConfig | null;
+  selectedConfigJsonOrJsx: IK6DataConfig | null;
   selectedConfigData: { [k: string]: any };
   cacheSelected: {
     configData: { [k: string]: any }; // 镜像版本
@@ -78,7 +78,9 @@ export function fallbackEditorDataToNormal(myJson: IK6DataConfig) {
     return obj;
   }
   const result = {};
-  task(myJson.properties, result);
+  if (myJson) {
+    task(myJson.properties, result);
+  }
   return result;
 }
 
@@ -118,7 +120,7 @@ class DataManager extends EventEmiter{
   data: ITopState | null = null;
   insideState:IInsideState = reactive({
     selectedCellId: '', // 包含节点和边
-    selectedConfigJSON: null,
+    selectedConfigJsonOrJsx: null,
     selectedConfigData: null,
     cacheSelected: {
       dataConfig: null,
@@ -267,7 +269,7 @@ class DataManager extends EventEmiter{
   selectNode (id: string) {
     if (!id || this.insideState.selectedCellId === id) {
       Object.assign(this.insideState, {
-        selectedConfigJSON: null,
+        selectedConfigJsonOrJsx: null,
         selectedConfigData: null,
         selectedCellId: '',
         cacheSelected: {
@@ -279,7 +281,7 @@ class DataManager extends EventEmiter{
     const node = this.findNode(id);
     const [nodeComponent] = this.getShapeComponent(node.shape);
     Object.assign(this.insideState, {
-      selectedConfigJSON: nodeComponent.configJSON,
+      selectedConfigJsonOrJsx: nodeComponent.configJSON || nodeComponent.ConfigPanel,
       selectedConfigData: node.data,
       selectedCellId: id,
       cacheSelected: {
@@ -290,7 +292,7 @@ class DataManager extends EventEmiter{
   selectEdge(id: string) {
     if (!id || this.insideState.selectedCellId === id) {
       Object.assign(this.insideState, {
-        selectedConfigJSON: null,
+        selectedConfigJsonOrJsx: null,
         selectedConfigData: null,
         selectedCellId: '',
         cacheSelected: {
@@ -304,7 +306,7 @@ class DataManager extends EventEmiter{
     if (node) {
       const [ _1, _2, edgeComponent ] = this.getShapeComponent(node.shape);
       Object.assign(this.insideState, {
-        selectedConfigJSON: edgeComponent.configJSON,
+        selectedConfigJsonOrJsx: edgeComponent.configJSON,
         selectedConfigData: edge.data,
         selectedCellId: id,
         cacheSelected: {
