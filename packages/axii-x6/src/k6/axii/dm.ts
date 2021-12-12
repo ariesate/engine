@@ -131,6 +131,7 @@ class DataManager extends EventEmiter{
   });
   // x6/index.jsx
   dmx6: any;
+  shareContextValue: any = null;
   constructor() {
     super();
     // @ts-ignore
@@ -138,6 +139,9 @@ class DataManager extends EventEmiter{
   }
   setX6(x6: any) {
     this.dmx6 = x6;
+  }
+  registerShareValue(shareContextValue: any) {
+    this.shareContextValue = shareContextValue;
   }
   readState(obj: object) {
     this.data = reactive(obj);
@@ -273,8 +277,8 @@ class DataManager extends EventEmiter{
         selectedConfigData: null,
         selectedCellId: '',
         cacheSelected: {
-          configData: null
-        }
+          configData: null,
+        },
       });
       return;
     }

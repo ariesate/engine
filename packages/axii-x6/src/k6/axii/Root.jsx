@@ -3,11 +3,13 @@ import {
   createElement,
   createComponent,
   createContext,
+  useContext,
   reactive,
   watch,
 } from 'axii';
 import * as x6 from './x6';
 import DM from './dm';
+import ShareContext from './ShareContext';
 
 export const RootContext = createContext()
 
@@ -38,9 +40,14 @@ function splitChildren (children) {
 
 function Root({ children, height }, fragments) {
   const {slots, realChildren} = splitChildren(children);
+  const shareContext = useContext(ShareContext);
 
   const dm = new DM();
   dm.setX6(x6);
+
+  if (shareContext) {
+    dm.registerShareValue(shareContext.value);
+  }
 
   window.dm = dm;
 

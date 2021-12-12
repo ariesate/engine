@@ -12,6 +12,8 @@ import {
   traverse,
   useViewEffect,
 } from "axii";
+import ShareContext from '../ShareContext';
+
 import { DEFAULT_SHAPE } from '../../Node';
 
 function assignDefaultEdge(edge = {}) {
@@ -42,11 +44,13 @@ export const Register = {
       const wrap = document.createElement('div')
       // nodeConfig is reactive
       const nodeConfig = dm.findNode(node.id);
-      
-      const renderController = render(<NodeCpt 
+      const shareContextValue = dm.shareContextValue;
+      const renderController = render(<ShareContext.Provider value={shareContextValue} >
+        <NodeCpt
           node={nodeConfig}
           RegisterPort={PortCpt.RegisterPort}
-      />, wrap);
+        />
+      </ShareContext.Provider>, wrap);
 
       dm.once('dispose', () => {
         renderController.destroy();
@@ -129,10 +133,12 @@ export const Register = {
       const container = selectors && selectors.foContent
       if (container) {
         const PortCpt = nodeComponent[1];
-        render(createElement(PortCpt, {
-          node: originNode,
-        }), container);
-      }  
+        const shareContextValue = dm.shareContextValue;
+        
+        render(<ShareContext.Provider value={shareContextValue} >
+          <PortCpt node={originNode} />
+        </ShareContext.Provider>, container);
+      }
     }
   },
 };
