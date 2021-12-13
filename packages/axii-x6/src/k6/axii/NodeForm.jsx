@@ -122,6 +122,7 @@ function NodeForm(props) {
         }
         if (insideState.selectedNodeComponent.ConfigPanel) {
           return createElement(insideState.selectedNodeComponent.ConfigPanel, {
+            node: insideState.selectedCell,
             data: formJson.value,
             onSave,
           });  
