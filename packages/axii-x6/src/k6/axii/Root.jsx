@@ -120,8 +120,6 @@ function Root({ children, height }, fragments) {
           
           {() => slots.miniMap ? (
             <miniMapBox block style={{
-              backgroundColor: '#fff',
-              minWidth: '400px',
               position: 'absolute',
               bottom: '16px',    
               right: '16px',

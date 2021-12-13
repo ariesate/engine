@@ -22,10 +22,11 @@ const MiniMap = createComponent((() => {
     });
 
     return (
-      <k6MiniMapContainer block block-margin-top="0px">
-        <miniTitle block block-padding="8px 8px 0">缩略图</miniTitle>
-        <k6MiniMap ref={mmap} block block-width="100%" block-height="200px">
-        </k6MiniMap>
+      <k6MiniMapContainer block flex-display block-margin-top="0px" block-padding="8px">
+        <miniTitle block block-padding="0 0 8px 0">缩略图</miniTitle>
+        <img ref={mmap} height="120" style={{
+        }} />
+        {/* <k6MiniMap ref={mmap} block block-width="100%" block-height="200px" /> */}
       </k6MiniMapContainer>
     );
   }

@@ -165,6 +165,8 @@ export const Graph = {
       },
     });
 
+    this.syncMiniMap(config.minimap);
+
     const allShapeComponents = dm.getAllShapeComponents();
 
     allShapeComponents.forEach(([myNode, myPort, myEdge]) => {
@@ -213,6 +215,9 @@ export const Graph = {
     dm.once('dispose', () => {
       this.dispose();
     });
+    dm.on('notifyComponent', () => {
+      this.syncMiniMap();
+    });
 
     this.graph = graph;
     this.dm = dm;
@@ -223,6 +228,26 @@ export const Graph = {
     nodes.forEach(node => {
       this.addNode(tryToRaw(node));      
     });
+  },
+
+  syncMiniMap(img) {
+    clearInterval(this.syncMiniMapSi);
+    const task = () => {
+      this.syncMiniMapSi = setTimeout(() => {
+        requestIdleCallback(() => {
+          graph.toPNG((dataUri) => {
+            // 下载
+            if (img) {
+              requestIdleCallback(() => {
+                img.src = dataUri;
+                task();
+              });
+            }
+          });
+        });
+      }, 1500);  
+    }
+    task();
   },
 
   addNode(nodeConfig) {
@@ -261,6 +286,7 @@ export const Graph = {
     return pick(edgeIns, ['id', 'target', 'source', 'label', 'name', 'type']);
   },
   dispose() {
+    clearTimeout(this.syncMiniMapSi);
     const { graph } = this;
     const cells = graph.getCells();
     cells.forEach((cell) => {

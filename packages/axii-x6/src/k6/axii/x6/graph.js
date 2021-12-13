@@ -47,21 +47,20 @@ export function createFlowGraph(container, initOptions = {}) {
     height,
     grid: true,
     panning: true,
-    // scroller: true,
-    minimap: initOptions.minimap ? {
-      enabled: true,
-      container: initOptions.minimap,
-      width: 400,
-      height: 200,
-      graphOptions: {
-        async: true,
-        getCellView(cell) {
-          if (cell.isNode()) {
-            return SimpleNodeView
-          }
-        }
-      },
-    } : undefined,
+    // minimap: initOptions.minimap ? {
+    //   enabled: true,
+    //   container: initOptions.minimap,
+    //   width: 400,
+    //   height: 200,
+    //   graphOptions: {
+    //     async: true,
+    //     getCellView(cell) {
+    //       if (cell.isNode()) {
+    //         return SimpleNodeView
+    //       }
+    //     }
+    //   },
+    // } : undefined,
     onPortRendered: onPortRendered,
     // selecting: {
     //   enabled: true,
