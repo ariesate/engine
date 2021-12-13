@@ -61,7 +61,7 @@ function Toolbar({}) {
         </Item>
         <Split />
         {() => {
-          let enabled = context.dm.insideState.selectedCellId;
+          let enabled = context.dm.insideState.selectedCell;
           return (
             <Item disabled={!enabled} onClick={() => context.dm.removeCurrent()}>
               <DeleteOne />

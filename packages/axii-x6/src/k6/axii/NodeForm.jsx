@@ -49,7 +49,7 @@ function NodeForm(props) {
   window.formJson = formJson;
 
   const showConfigForm = computed(() => {
-    return !!context.dm.insideState.selectedConfigJsonOrJsx && !!context.dm.insideState.selectedConfigData;
+    return !!context.dm.insideState.selectedCell;
   });
 
   function onSave(rawSelectedData) {    
@@ -60,25 +60,26 @@ function NodeForm(props) {
   }
 
   function onChange(rawSelectedData) {
-    const { selectedCellId, selectedConfigData, selectedConfigJsonOrJsx } = context.dm.insideState;
-    if (selectedCellId && selectedConfigData && selectedConfigJsonOrJsx) {
+    const { selectedCell, selectedNodeComponent } = context.dm.insideState;
+    if (selectedCell && selectedNodeComponent) {
       // 用merge防止主数据的某些字段被覆盖
-      merge(selectedConfigData, rawSelectedData);
-      context.dm.triggerCurrentEvent('change', selectedConfigData);
-      return selectedConfigData;
+      merge(selectedCell.data, rawSelectedData);
+      context.dm.triggerCurrentEvent('change', selectedCell.data);
+      return selectedCell.data;
     }
   }
 
   useViewEffect(() => {
     const insideState = context.dm.insideState;
-    watch(() => insideState.selectedCellId, () => {
+    watch(() => insideState.selectedCell, () => {
       // 防止watch callback触发之后去destroy组件内的renderProcess，导致组件响应性丢失
       setTimeout(() => {
         if (showConfigForm.value) {
-          const jsonOrCpt = insideState.selectedConfigJsonOrJsx;
-          const data = insideState.selectedConfigData;
-          if (isPlainObj(jsonOrCpt)) {
-            const mergedJson = mergeJsonAndData(jsonOrCpt, data);
+          const cell = insideState.selectedCell;
+          const { configJSON, ConfigPanel } = insideState.selectedNodeComponent;
+          const data = cell.data;
+          if (configJSON) {
+            const mergedJson = mergeJsonAndData(configJSON, data);
             formJson.value = mergedJson;  
           } else {
             formJson.value = data;  
@@ -113,16 +114,18 @@ function NodeForm(props) {
     <nodeForm block block-width="400px">
       {(() => {
         const insideState = context.dm.insideState;
-        if (!formJson.value || !insideState.selectedCellId) {
+        if (!formJson.value || !insideState.selectedCell) {
           return;
         }
-        if (isPlainObj(insideState.selectedConfigJsonOrJsx)) {
+        if (insideState.selectedNodeComponent.configJSON) {
           return (<DataConfig jsonWithData={formJson.value} onSave={onSave}></DataConfig>);  
         }
-        return createElement(insideState.selectedConfigJsonOrJsx, {
-          data: formJson.value,
-          onSave,
-        });
+        if (insideState.selectedNodeComponent.ConfigPanel) {
+          return createElement(insideState.selectedNodeComponent.ConfigPanel, {
+            data: formJson.value,
+            onSave,
+          });  
+        }
       })}
     </nodeForm>
   )

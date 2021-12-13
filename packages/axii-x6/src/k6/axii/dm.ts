@@ -40,11 +40,12 @@ interface ITopState {
 type INodeComponentEvent = 'change' | 'save' | 'remove' | 'add';
 
 export interface IInsideState {
-  selectedCellId: string;
-  selectedConfigJsonOrJsx: IK6DataConfig | null;
-  selectedConfigData: { [k: string]: any };
+  selectedCell: IDataNode;
+  selectedComponent: INodeComponent;
+  // selectedConfigJsonOrJsx: IK6DataConfig | null;
+  // selectedConfigData: { [k: string]: any };
   cacheSelected: {
-    configData: { [k: string]: any }; // 镜像版本
+    cell: { [k: string]: any }; // 镜像版本，用以对比数据
   },
   graph: {
     zoom: number,
@@ -119,11 +120,10 @@ class DataManager extends EventEmiter{
   nodeShapeComponentMap: Map<string, ShapeComponent> = new Map();
   data: ITopState | null = null;
   insideState:IInsideState = reactive({
-    selectedCellId: '', // 包含节点和边
-    selectedConfigJsonOrJsx: null,
-    selectedConfigData: null,
+    selectedCell: null,
+    selectedComponent: null,
     cacheSelected: {
-      dataConfig: null,
+      cell: null,
     },
     graph: {
       zoom: 1,
@@ -271,13 +271,12 @@ class DataManager extends EventEmiter{
     return sc;  
   }
   selectNode (id: string) {
-    if (!id || this.insideState.selectedCellId === id) {
+    if (!id || this.insideState.selectedCell?.id === id) {
       Object.assign(this.insideState, {
-        selectedConfigJsonOrJsx: null,
-        selectedConfigData: null,
-        selectedCellId: '',
+        selectedCell: null,
+        selectedNodeComponent: null,
         cacheSelected: {
-          configData: null,
+          cell: null,
         },
       });
       return;
@@ -285,23 +284,21 @@ class DataManager extends EventEmiter{
     const node = this.findNode(id);
     const [nodeComponent] = this.getShapeComponent(node.shape);
     Object.assign(this.insideState, {
-      selectedConfigJsonOrJsx: nodeComponent.configJSON || nodeComponent.ConfigPanel,
-      selectedConfigData: node.data,
-      selectedCellId: id,
+      selectedCell: node,
+      selectedNodeComponent: nodeComponent,
       cacheSelected: {
-        configData: cloneDeep(node.data),
+        cell: cloneDeep(node),
       },
-  });
+    });
   }
   selectEdge(id: string) {
-    if (!id || this.insideState.selectedCellId === id) {
+    if (!id || this.insideState.selectedCell?.id === id) {
       Object.assign(this.insideState, {
-        selectedConfigJsonOrJsx: null,
-        selectedConfigData: null,
-        selectedCellId: '',
+        selectedCell: null,
+        selectedNodeComponent: null,
         cacheSelected: {
-          configData: null,
-        }
+          cell: null,
+        },
       });
       return;
     }
@@ -310,17 +307,16 @@ class DataManager extends EventEmiter{
     if (node) {
       const [ _1, _2, edgeComponent ] = this.getShapeComponent(node.shape);
       Object.assign(this.insideState, {
-        selectedConfigJsonOrJsx: edgeComponent.configJSON,
-        selectedConfigData: edge.data,
-        selectedCellId: id,
+        selectedCell: edge,
+        selectedNodeComponent: edgeComponent,
         cacheSelected: {
-          configData: cloneDeep(edge.data),
+          cell: cloneDeep(edge),
         },
       });
     }
   }
   triggerCurrentEvent(event: INodeComponentEvent, data: any) {
-    this.triggerEvent(this.insideState.selectedCellId, event, data);      
+    this.triggerEvent(this.insideState.selectedCell?.id, event, data);      
   }
 
   async notifyShapeComponent(node: IDataNode, edge: IEdgeData, event: INodeComponentEvent, data: any) {
@@ -337,10 +333,10 @@ class DataManager extends EventEmiter{
       }
     }
     
-    const oldConfigData = this.insideState.cacheSelected.configData;
+    const oldConfigData = this.insideState.cacheSelected.cell?.data || {};
 
     let targetComponent = !!edge ? edgeComponent : nodeComponent;
-    let args: any[] = !!edge ? [node, edge, data, oldConfigData] : [node, edge, data, oldConfigData];
+    let args: any[] = !!edge ? [node, edge, data, oldConfigData] : [node, data, oldConfigData];
     // 有edge，说明仅仅是针对边的修改
     switch (event) {
       case 'change':
@@ -368,7 +364,7 @@ class DataManager extends EventEmiter{
     this.notifyShapeComponent(node, edge, event, data);
   }
   removeCurrent() {
-    const currentCellId = this.insideState.selectedCellId;
+    const currentCellId = this.insideState.selectedCell.id;
     const [node, edge] = this.findNodeAndEdge(currentCellId);
     const [nodeComponent, _, edgeComponent] = this.getShapeComponent(node.shape);
 
