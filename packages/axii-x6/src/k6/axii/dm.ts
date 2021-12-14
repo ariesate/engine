@@ -246,6 +246,9 @@ class DataManager extends EventEmiter{
     groups.forEach(group => {
       const [NodeCpt, PortCpt, EdgeFunc] = group;
 
+      if (!NodeCpt.shape) {
+        throw new Error(`[Node Componnet] ${NodeCpt.name} must have 'shape' prop`);
+      }
       this.nodeShapeComponentMap.set(NodeCpt.shape, [
         NodeCpt,
         PortCpt,

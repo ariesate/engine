@@ -75,7 +75,8 @@ export const Register = {
 
       function refreshNodeSize(){
         const { width, height } = (wrap.children[0].getBoundingClientRect());
-        node.setProp({ width, height });
+        // @TIP: +2 是为了包含dom border
+        node.setProp({ width: width + 2, height: height + 2 });
 
         // render port
         if (PortCpt.getConfig) {
@@ -116,7 +117,6 @@ export const Register = {
           nodeConfig.edges.forEach(edge => {
             const edgeConfig = EdgeCpt({ nodeConfig, edge });
             const c = assignDefaultEdge(edgeConfig, edge);
-            console.log('c: ', c);
             const edgeIns = graph.addEdge({
               ...c,
             });
@@ -274,7 +274,6 @@ export const Graph = {
 
   addNode(nodeConfig) {
     const htmlKey = this.getHtmlKey(nodeConfig.shape);
-
     const nodeConfigView = nodeConfig.view;
     delete nodeConfig.view;
 
