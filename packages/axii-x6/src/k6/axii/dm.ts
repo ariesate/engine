@@ -204,7 +204,9 @@ class DataManager extends EventEmiter{
       node.edges.push(newEdge);
 
       const r = await this.notifyShapeComponent(node, newEdge, 'add', {});
-      newEdge.remoteId = r.id;
+      if (r) {
+        newEdge.remoteId = r.id;        
+      }
     }
   }
   /**
@@ -323,7 +325,7 @@ class DataManager extends EventEmiter{
     const [nodeComponent, _, edgeComponent] = this.getShapeComponent(node.shape);
 
     if (edge) {
-      const newEdgeConfig = edgeComponent(node, edge);
+      const newEdgeConfig = edgeComponent({ node, edge });
       const model = this.dmx6.Graph.updateEdge(edge, newEdgeConfig);
       Object.assign(edge, model, {
         data: edge.data,

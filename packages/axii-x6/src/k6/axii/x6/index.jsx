@@ -4,6 +4,7 @@ import { Graph as X6Graph, Markup } from '@antv/x6'
 import merge from 'lodash/merge';
 import pick from 'lodash/pick';
 import {
+  Fragment,
   tryToRaw,
   createElement,
   render,
@@ -16,10 +17,23 @@ import ShareContext from '../ShareContext';
 
 import { DEFAULT_SHAPE } from '../../Node';
 
-function assignDefaultEdge(edge = {}) {
+function assignDefaultEdge(customEdge = {}, edge) {
   return merge({
     router: 'manhattan',
-  }, edge);
+    attrs: {
+      line: {
+        stroke: '#5F95FF',
+        strokeWidth: 1,
+        targetMarker: {
+          name: 'classic',
+          size: 8,
+        },
+      },
+      text: {
+        fill: '#666',
+      }
+    },
+  }, edge, customEdge);
 }
 
 export const Register = {
@@ -45,10 +59,12 @@ export const Register = {
       // nodeConfig is reactive
       const nodeConfig = dm.findNode(node.id);
       const shareContextValue = dm.shareContextValue;
+      const RegisterPort = PortCpt.RegisterPort ? PortCpt.RegisterPort : () => <></>;
+
       const renderController = render(<ShareContext.Provider value={shareContextValue} >
         <NodeCpt
           node={nodeConfig}
-          RegisterPort={PortCpt.RegisterPort}
+          RegisterPort={RegisterPort}
         />
       </ShareContext.Provider>, wrap);
 
@@ -64,7 +80,6 @@ export const Register = {
         // render port
         if (PortCpt.getConfig) {
           const portConfigArr = PortCpt.getConfig(nodeConfig.id);
-          console.log('portConfigArr: ', portConfigArr);
           const ports = {
             groups: portConfigArr.map((portConfig, index) => {
               const { portId, position, size } = portConfig;
@@ -99,8 +114,9 @@ export const Register = {
         // render edge
         requestAnimationFrame(() => {
           nodeConfig.edges.forEach(edge => {
-            const edgeConfig = EdgeCpt(nodeConfig, edge);
-            const c = assignDefaultEdge(edgeConfig);
+            const edgeConfig = EdgeCpt({ nodeConfig, edge });
+            const c = assignDefaultEdge(edgeConfig, edge);
+            console.log('c: ', c);
             const edgeIns = graph.addEdge({
               ...c,
             });
@@ -118,6 +134,12 @@ export const Register = {
       // @TODO:依赖myNode的axii渲染完成之后的动作，先加延时解决
       setTimeout(() => {
         refreshNodeSize();
+        const portConfigArr = PortCpt.getConfig(nodeConfig.id)
+        if (portConfigArr.length) {
+          watch(() => portConfigArr.forEach(p => [p.position.x]), () => {
+            refreshNodeSize();
+          });
+        }
       }, 50);
 
       return wrap;
@@ -126,7 +148,7 @@ export const Register = {
   registerPortRender({ getDm }) {
     return args => {
       const dm = getDm();
-      const node = args.node;
+      const { node, port } = args;
       const originNode = dm.findNode(node.id);
       const nodeComponent = dm.getShapeComponent(originNode.shape);
   
@@ -137,7 +159,7 @@ export const Register = {
         const shareContextValue = dm.shareContextValue;
         
         render(<ShareContext.Provider value={shareContextValue} >
-          <PortCpt node={originNode} />
+          <PortCpt node={originNode} port={port} />
         </ShareContext.Provider>, container);
       }
     }
