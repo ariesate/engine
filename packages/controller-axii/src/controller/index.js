@@ -289,7 +289,7 @@ export default function createAxiiController(rootElement) {
 				// 处理新节点
 				Object.values(toInitialize).forEach(newCnode => {
 					if (newCnode.didMount) {
-						sessionSideEffects.push(() => {
+						sessionSideEffects.unshift(() => {
 							newCnode.didMount()
 						})
 					}
