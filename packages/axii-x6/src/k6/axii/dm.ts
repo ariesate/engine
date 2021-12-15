@@ -205,8 +205,26 @@ class DataManager extends EventEmiter{
 
       const r = await this.notifyShapeComponent(node, newEdge, 'add', {});
       if (r) {
-        newEdge.remoteId = r.id;        
+        newEdge.id = r.id;
+        return r.id;
       }
+    }
+  }
+  /**
+   * 更新DM中的边数据
+   * @param nodeId 
+   * @param props 
+   */
+  syncEdge(edgeId: string, props: { id?: string }) {
+    let edge: IEdgeData = null;
+    this.nodes.forEach(n => {
+      const e = n.edges.find(e => e.id === edgeId);
+      if (e) {
+        edge = e;
+      }
+    });
+    if (edge) {
+      merge(edge, props);
     }
   }
   /**
@@ -227,6 +245,21 @@ class DataManager extends EventEmiter{
         merge(node, props);
       }
     }
+  }
+  findEdges(id: string) {
+    const edges = [];
+    this.nodes.forEach(n => {
+      if (n.id === id) {
+        edges.push(...n.edges);
+      } else {
+        n.edges.forEach(e => {
+          if (e.target.cell === id) {
+            edges.push(e);
+          }
+        });
+      }
+    });
+    return edges;
   }
   findNode(id: string) {
     const n = this.nodes.find(n => n.id === id);
@@ -333,9 +366,6 @@ class DataManager extends EventEmiter{
       Object.assign(edge, model, {
         data: edge.data,
       });
-      if (edge.remoteId) {
-        edge = Object.assign({}, edge, { id: edge.remoteId });
-      }
     }
     
     const oldConfigData = this.insideState.cacheSelected.cell?.data || {};

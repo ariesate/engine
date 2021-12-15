@@ -107,7 +107,7 @@ export function createFlowGraph(container, initOptions = {}) {
             if (pickedEdge.target.cell && !trigger) {
               clearInterval(si);
               trigger = true;
-              onAddEdge(args.sourceCell.id, pickedEdge);  
+              onAddEdge(args.sourceCell.id, pickedEdge, newEdge);
             } else {
               // console.log('pickedEdge.target:', pickedEdge.target);
             }

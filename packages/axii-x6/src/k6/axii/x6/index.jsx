@@ -117,9 +117,12 @@ export const Register = {
           nodeConfig.edges.forEach(edge => {
             const edgeConfig = EdgeCpt({ nodeConfig, edge });
             const c = assignDefaultEdge(edgeConfig, edge);
+            const remoteId = c.id;
+            delete c.id;
             const edgeIns = graph.addEdge({
               ...c,
             });
+            edgeIns.setData({ remoteId }, { silent: true });
           });
         });
       }
@@ -182,8 +185,10 @@ export const Graph = {
       onPortRendered: Register.registerPortRender({
         getDm: () => this.dm,
       }),
-      onAddEdge(nodeId, edgeId) {
-        dm.addNewEdge(nodeId,edgeId);
+      onAddEdge(nodeId, edge, edgeIns) {
+        dm.addNewEdge(nodeId, edge).then(remoteId => {
+          edgeIns.setData({ remoteId });
+        });
       },
     });
 
@@ -210,7 +215,8 @@ export const Graph = {
       if (cell.isNode()) {
         dm.selectNode(cell.id);
       } else if (cell.isEdge()) {
-        dm.selectEdge(cell.id);
+        const remoteId = cell.getData().remoteId;
+        dm.selectEdge(remoteId || cell.id);
       }
     });
     graph.on('blank:click', (arg) => {      
@@ -223,7 +229,14 @@ export const Graph = {
     });
 
     dm.on('remove', (id) => {
-      graph.removeCell(id);
+      const cells = graph.getCells();
+      const cell = cells.find(cell => cell.getData().remoteId === id);
+      let removedCell;
+      if (cell) {
+        removedCell = graph.removeCell(cell.id);
+      } else {
+        removedCell = graph.removeCell(id);
+      }
     });
     dm.on('zoom-in', (v) => {
       graph.zoom(v);
@@ -302,9 +315,14 @@ export const Graph = {
   },
   updateEdge(edge, newEdgeConfig) {
     const allEdges = this.graph.model.getEdges();
-    const edgeIns = allEdges.find(e => e.id === edge.id);
+    const edgeIns = allEdges.find(e => {
+      if (e.id === edge.id) {
+        return true;
+      }
+      return e.getData().remoteId === edge.id;
+    });
     edgeIns.setLabels(newEdgeConfig.label || '');
-    return pick(edgeIns, ['id', 'target', 'source', 'label', 'name', 'type']);
+    return pick(edgeIns, ['target', 'source', 'label', 'name', 'type']);
   },
   dispose() {
     clearTimeout(this.syncMiniMapSi);
