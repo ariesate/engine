@@ -1,5 +1,13 @@
 import { VNode, AxiiElement, Ref, RefObject } from "./runtime-dom";
 
+type SimpleType =
+  | string
+  | number
+  | boolean
+  | bigint
+  | symbol
+  | null
+  | undefined;
 export interface Atom<T> {
   value?: T;
 }
@@ -40,7 +48,7 @@ export function asAtom<T, P>(item: T, parent: P, key: keyof P): Atom<T>;
  * @param isComputed 是否为计算属性
  * @returns 响应式的对象状态
  */
-export function reactive<T>(value: T, isComputed?: boolean): T;
+export function reactive<T>(value: T, isComputed?: boolean): T extends SimpleType? never: T;
 /**
  * 判断一个值是否为reactive对象
  * @param value 值
@@ -57,14 +65,17 @@ export function toRaw<T>(value: T, unwrap: true): Atom.Unwrap<T>;
  * 接受一个`getter`函数，并根据`getter`的返回值返回一个不可变的响应式`atom`对象
  * @param getter 计算函数
  * @param shallow 是否浅比较
- * @returns 计算后的不可变响应式`atom`对象
+ * @returns 响应式对象
  */
-export function computed<T>(getter: () => T, shallow?: boolean): Atom<T>;
+export function computed<T>(
+  getter: () => T,
+  shallow?: boolean
+): T extends SimpleType ? Atom<T> : T;
 export function debounceComputed(func: () => void): void;
 /**
  * 接受一个`getter`函数，并根据`getter`的返回值返回一个不可变的响应式`atom`对象
  * @param getter 计算函数
- * @returns 计算后的不可变响应式`atom`对象
+ * @returns `atom`对象
  * @description 适用于计算数据不需要深度监听时
  */
 export function atomComputed<T>(getter: () => T): Atom<T>;
@@ -131,6 +142,8 @@ export function useRef<T = any>(): RefObject<T>;
 export function createRef<T = any>(): RefObject<T>;
 export function createContext<T>(defaultValue?: T): Context<T>;
 export function useContext<T>(context: Context<T>): T;
+export function batchOperation<T>(source: T, op: (source: T) => void): void
+export function isDraft(data: any): boolean
 
 // TODO:
 export const createComputed: any;
@@ -168,6 +181,4 @@ export const flattenChildren: any;
 export const Scenario: any;
 export const createRange: any;
 export const matrixMatch: any;
-export const batchOperation: any;
-export const isDraft: any;
 export const getDisplayValue: any;
