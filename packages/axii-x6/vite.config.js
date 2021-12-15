@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
-
+// import analyzer from 'rollup-plugin-analyzer';
+// import { visualizer } from 'rollup-plugin-visualizer';
 /**
  * @type {import('vite').UserConfig}
  */
@@ -9,6 +10,10 @@ const config = defineConfig(({ mode }) => {
     esbuild: {
       jsxFactory: 'createElement',
       jsxFragment: 'Fragment'
+    },
+    server: {
+      port: 5001,
+      open: 'http://localhost:5001/examples/er2.html',
     },
     css: {
       preprocessorOptions: {
@@ -26,10 +31,16 @@ const config = defineConfig(({ mode }) => {
       sourcemap: isDev,
       lib: {
         entry : './src/index.js',
-        name: 'axii-x6'
+        name: 'axii-x6',
       },
       rollupOptions: {
         external: ['axii'],
+        plugins: [
+          // analyzer(), 
+          // visualizer({
+          //   open: true,
+          // }),
+        ],
         output: {
           globals: {
             axii: 'Axii'
