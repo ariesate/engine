@@ -366,6 +366,9 @@ class DataManager extends EventEmiter{
       Object.assign(edge, model, {
         data: edge.data,
       });
+      if (edge.remoteId) {
+        edge = Object.assign({}, edge, { id: edge.remoteId });
+      }
     }
     
     const oldConfigData = this.insideState.cacheSelected.cell?.data || {};
