@@ -38,7 +38,7 @@ function splitChildren (children) {
   };
 }
 
-function Root({ children, height }, fragments) {
+function Root({ children, height, ref }, frags) {
   const {slots, realChildren} = splitChildren(children);
   const shareContext = useContext(ShareContext);
 
@@ -49,6 +49,7 @@ function Root({ children, height }, fragments) {
     dm.registerShareValue(shareContext.value);
   }
 
+  ref.current = dm;
   window.dm = dm;
 
   const rootContext = {
@@ -148,5 +149,7 @@ Root.Style = (frag) => {
     bottom: '16px',    
   }));
 }
+
+Root.forwardRef = true;
 
 export default createComponent(Root);
