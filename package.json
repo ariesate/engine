@@ -1,5 +1,6 @@
 {
   "name": "@ariesate/engine",
+  "private": true,
   "version": "0.0.1",
   "description": "you should not publish this package.",
   "main": "index.js",
@@ -17,5 +18,6 @@
   "license": "MIT",
   "dependencies": {
     "butterfly-dag": "^4.0.38"
-  }
+  },
+  "workspaces": ["packages/!(example|controller-react)"]
 }
