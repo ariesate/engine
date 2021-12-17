@@ -44,9 +44,11 @@ function Toolbar({}) {
   return (
     <k6Toolbar block flex-display block-padding="4px 8px">
       <quickKeys block flex-grow="1" flex-display flex-align-items="center">
-        <Item>
-          <Mouse />
-        </Item>
+        <extraActions>
+          <Button primary onClick={() => {
+            context.dm.addNode();
+          }} >新增</Button>
+        </extraActions>
         <Split />
         <Item>
           <ZoomIn onClick={() => context.dm.zoomIn()} />
@@ -69,10 +71,8 @@ function Toolbar({}) {
           );
         }}
       </quickKeys>
-      <extraActions >
-        <Button primary onClick={() => {
-          context.dm.addNode();
-        }} >新增</Button>
+      <extraActions block flex-display flex-align-items="center">
+        双击空白处可新增节点
       </extraActions>
     </k6Toolbar>
   );
@@ -82,6 +82,9 @@ Toolbar.Style = (frag) => {
   const el = frag.root.elements;
   el.k6Toolbar.style({
     backgroundColor: '#eee',
+  });
+  el.extraActions.style({
+    color: '#999',
   });
 };
 

@@ -87,7 +87,7 @@ export function fallbackEditorDataToNormal(myJson: IK6DataConfig) {
 
 let newAddIndex = 1;
 
-function generateNodeByConfig(k6Node: INodeComponent) {
+function generateNodeByConfig(k6Node: INodeComponent, initNodeProp?: { x?:number, y?:number }) {
   const data: any = fallbackEditorDataToNormal(k6Node.configJSON);
 
   if (Reflect.has(data, 'x') || Reflect.has(data, 'y')) {
@@ -103,9 +103,13 @@ function generateNodeByConfig(k6Node: INodeComponent) {
     },
     x:30 * newAddIndex,
     y:30 * newAddIndex,
-  edges: [],
+    edges: [],
   };
   newAddIndex++;
+
+  if (initNodeProp) {
+    Object.assign(newNode, initNodeProp);
+  }
 
   Object.assign(newNode.data, {
     x: newNode.x,
@@ -176,11 +180,11 @@ class DataManager extends EventEmiter{
       });
     });
   }
-  async addNode() {
+  async addNode(initNode?: { x?:number, y?:number }) {
     // 先默认只支持一种
     if (1) {
       const nodeComponent: ShapeComponent = this.nodeShapeComponentMap.values().next().value;
-      const n = generateNodeByConfig(nodeComponent[0]);
+      const n = generateNodeByConfig(nodeComponent[0], initNode);
       const newNode = {
         ...n,
       };

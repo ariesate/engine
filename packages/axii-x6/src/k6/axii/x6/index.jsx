@@ -211,7 +211,8 @@ export const Graph = {
       }));  
     });
 
-    graph.on('cell:click', ({ cell }) => {
+    graph.on('cell:click', (e) => {
+      const { cell } = e;
       if (cell.isNode()) {
         dm.selectNode(cell.id);
       } else if (cell.isEdge()) {
@@ -226,6 +227,9 @@ export const Graph = {
     graph.on('node:moved', ({ node }) => {
       const { x, y } = node.position();
       dm.syncNode(node.id, { x, y });
+    });
+    graph.on('blank:dblclick', ({ e, x, y}) => {
+      dm.addNode({ x, y })
     });
 
     dm.on('remove', (id) => {
