@@ -64,6 +64,7 @@ export const Register = {
       const renderController = render(<ShareContext.Provider value={shareContextValue} >
         <NodeCpt
           node={nodeConfig}
+          state={dm.insideState}
           RegisterPort={RegisterPort}
         />
       </ShareContext.Provider>, wrap);
@@ -279,6 +280,7 @@ export const Graph = {
             if (img) {
               requestIdleCallback(() => {
                 img.src = dataUri;
+                img.style.display = 'block';
                 task();
               });
             }

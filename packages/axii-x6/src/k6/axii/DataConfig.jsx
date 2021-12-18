@@ -383,7 +383,7 @@ function DataConfig({ jsonWithData, onChange, onSave }) {
 
   return (
     <dataCofnig block block-width="100%" style={{
-      border: '1px solid #666',
+      border: '1px solid #aaa',
       backgroundColor: '#fff',
       overflow: 'hidden',
     }} >

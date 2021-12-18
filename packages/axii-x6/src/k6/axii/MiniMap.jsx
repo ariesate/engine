@@ -24,7 +24,7 @@ const MiniMap = createComponent((() => {
     return (
       <k6MiniMapContainer block flex-display block-margin-top="0px" block-padding="8px">
         <miniTitle block block-padding="0 0 8px 0">小地图</miniTitle>
-        <img ref={mmap} height="80" style={{ minWidth: '120px' }} />
+        <img ref={mmap} height="80" style={{ minWidth: '120px', display: 'none ' }} />
         {/* <k6MiniMap ref={mmap} block block-width="100%" block-height="200px" /> */}
       </k6MiniMapContainer>
     );

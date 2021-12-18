@@ -125,7 +125,7 @@ function NodeForm(props) {
             node: insideState.selectedCell,
             data: formJson.value,
             onSave,
-          });  
+          });
         }
       })}
     </nodeForm>

@@ -102,11 +102,11 @@ function Root({ children, height, ref }, frags) {
       position: 'relative',
     }}>
       <RootContext.Provider value={rootContext}>
-        <k6base flex-grow="1" block >
+        <k6base flex-grow="1" block style={{ minHeight: '200px' }}>
           {() => realChildren}
         </k6base>
         <action block style={{
-        }}>
+        }} >
           {() => slots.nodeForm ? (
             <nodeFormContainer block style={{
               backgroundColor: '#fff',
@@ -144,9 +144,6 @@ Root.Style = (frag) => {
   });
   el.nodeFormContainer.style(genStyle({
     top: '16px',
-  }));
-  el.miniMapContainer.style(genStyle({
-    bottom: '16px',    
   }));
 }
 
