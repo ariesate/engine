@@ -16,7 +16,7 @@ import {
 
 import { Input, Select, Button, Checkbox } from 'axii-components'
 import cloneDeep from 'lodash/cloneDeep';
-import Down from 'axii-icons/Down';
+import Right from 'axii-icons/Right';
 import Delete from 'axii-icons/Delete';
 import get from 'lodash/get';
 import merge from 'lodash/merge';
@@ -132,7 +132,7 @@ const HigherFormField = createComponent((() => {
                 <text flex-grow="1" >
                   {() => item.properties[0] ? item.properties[0].value : ''}
                 </text>
-                <icon2><Down /></icon2>
+                <icon2><Right /></icon2>
               </itemHeader>
               <icon1 onClick={genRemoveItem(children, index)}><Delete fill="#ff4d4f" /></icon1>
             </itemBox>
@@ -156,7 +156,7 @@ const HigherFormField = createComponent((() => {
               <text flex-grow="1" >
                 {firstValue(item.value)}
               </text>
-              <icon2><Down /></icon2>
+              <icon2><Right /></icon2>
             </itemHeader>
           </itemBox>
           {() => (0 === expandIndex.value) ? (

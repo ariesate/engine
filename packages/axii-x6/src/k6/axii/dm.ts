@@ -405,8 +405,8 @@ class DataManager extends EventEmiter{
 
     this.notifyShapeComponent(node, edge, event, data);
   }
-  removeCurrent() {
-    const currentCellId = this.insideState.selectedCell.id;
+  removeIdOrCurrent(targetId: string) {
+    const currentCellId = targetId ? targetId : this.insideState.selectedCell.id;
     const [node, edge] = this.findNodeAndEdge(currentCellId);
     const [nodeComponent, _, edgeComponent] = this.getShapeComponent(node.shape);
 

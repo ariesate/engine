@@ -66,6 +66,7 @@ export const Register = {
           node={nodeConfig}
           state={dm.insideState}
           RegisterPort={RegisterPort}
+          onRemove={() => dm.removeIdOrCurrent(node.id)}
         />
       </ShareContext.Provider>, wrap);
 
