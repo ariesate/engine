@@ -46,7 +46,7 @@ function Root({ children, height, ref }, frags) {
   dm.setX6(x6);
 
   if (shareContext) {
-    dm.registerShareValue(shareContext.value);
+    dm.registerShareValue(shareContext);
   }
 
   ref.current = dm;
