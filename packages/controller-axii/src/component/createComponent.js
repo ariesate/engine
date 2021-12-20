@@ -103,7 +103,12 @@ const generateComponentId = createUniqueIdGenerator()
  * fragment 要确保每次自己被调用时，都会去把已经注册的 modify 等执行一遍。
  */
 export default function createComponent(Base, featureDefs=[]) {
-  const generateInstanceId = createUniqueIdGenerator()
+
+  // sideEffects，目前 css 会插入到 head 中
+  const stylesheet = createStylesheet()
+  const componentId = generateComponentId()
+  const generateInstanceId = createUniqueIdGenerator(componentId)
+
   // 虽然 Base 不需要收集，但要享受 methods 等注入修改，所以把 base 也伪装陈给一个 Feature，
   const BaseAsFeature = function() {}
   BaseAsFeature.match = () => true
@@ -120,10 +125,6 @@ export default function createComponent(Base, featureDefs=[]) {
     }
     return last
   }, [])
-
-  // sideEffects，目前只有 css
-  const componentId = generateComponentId()
-  const stylesheet = createStylesheet()
 
   function Component({ children, listeners, overwrite = [], ref, ...restProps }, upperRef) {
     const instanceId = generateInstanceId()
