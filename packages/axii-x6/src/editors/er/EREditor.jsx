@@ -1,5 +1,6 @@
 /** @jsx createElement */
 import {
+  computed,
   createElement,
   reactive,
   atom,
@@ -253,6 +254,31 @@ export default data;
     }
   })
 
+  const checkEntitySelected = entity => computed(() => {
+    if (!selectedItemRef.value) {
+      return true;
+    }
+
+    switch (selectedTypeRef.value) {
+      case 'entity':
+        return entity.id === selectedItemRef.value.id;
+      case 'relation':
+        return [selectedItemRef.value.source.entity, selectedItemRef.value.target.entity].includes(entity.id);
+    }
+  });
+
+  const checkReleationSelected = relation => computed(() => {
+    if (!selectedItemRef.value) {
+      return true;
+    }
+    switch (selectedTypeRef.value) {
+      case 'entity':
+        return [relation.source.entity, relation.target.entity].includes(selectedItemRef.value.id);
+      case 'relation':
+        return selectedItemRef.value.id === relation.id;
+    }
+  });
+
   return (
     <container block block-height="100%" style={{background: '#fff'}}>
       <Split layout:block layout:block-height="100%">
@@ -267,8 +293,24 @@ export default data;
         </div>
       </Split>
       <GraphContext.Provider value={graphRef}>
-        {() => graphRef.value ? entities.map(entity => <AxiiNode id={entity.id} key={entity.id} shape='entity-shape' component="Entity" viewProps={entity.view} entity={entity} onChange={onChange}/>): null}
-        {() => graphRef.value ? relations.map(relation => <Relation key={relation.id} relation={relation} onChange={onChange} />) : null}
+        {() => graphRef.value ? entities.map(entity => 
+          <AxiiNode 
+            id={entity.id} 
+            key={entity.id} 
+            selected={checkEntitySelected(entity)}
+            shape='entity-shape' 
+            component="Entity"
+            viewProps={entity.view} 
+            entity={entity} 
+            onChange={onChange}
+          />): null}
+        {() => graphRef.value ? relations.map(relation => 
+          <Relation 
+            key={relation.id}
+            selected={checkReleationSelected(relation)}
+            relation={relation}
+            onChange={onChange}
+          />) : null}
       </GraphContext.Provider>
     </container>
   )

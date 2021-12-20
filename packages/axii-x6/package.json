@@ -16,7 +16,7 @@
     "vite": "^2.1.5"
   },
   "peerDependencies": {
-    "axii": "^1.0.8"
+    "axii": "^1.1.7"
   },
   "scripts": {
     "start": "vite --force",
