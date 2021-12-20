@@ -73,7 +73,7 @@ function findMatch(options, pathname, ancestors) {
 	return {
 		path: matchedRoute.path,
 		params: matchedParams,
-		routes: matchedRoute.routes.map(route => Object.assign({}, route)),
+		routes: matchedRoute?.routes?.map(route => Object.assign({}, route)),
 		component: matchedRoute.component,
 		shouldHasChildren
 	}
