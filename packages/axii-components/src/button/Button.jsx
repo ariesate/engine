@@ -40,7 +40,9 @@ Button.Style = (fragments) => {
 		const [hasColor, colorScen, color] = getColorScen({ danger, primary, disabled })
 
 		return {
-			borderRadius: 4,
+			borderWidth: hasColor? 'none': '1px',
+			borderStyle: 'solid',
+			borderRadius: '2px',
 			borderColor: hasColor ? colorScen.bgColor(0, color) : colorScen.separateColor(),
 			cursor: disabled.value ? 'not-allowed' : 'pointer',
 			color: colorScen.color(0, color),

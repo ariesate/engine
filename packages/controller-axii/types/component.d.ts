@@ -33,7 +33,7 @@ export namespace PropTypes {
   }
 }
 
-export interface FunctionComponent<P = {}> {
+export interface FunctionComponent<P = {}> extends FeatureBase<P> {
   (props: Atom.Props<P>): JSX.Element;
   /**
    * 默认特性
@@ -115,8 +115,10 @@ export namespace Feature {
     readonly [x: string]: Fragment<P, S>;
   }
 }
-export interface Feature<P = {}, S = {}> {
+export interface Feature<P = {}, S = {}> extends FeatureBase<P> {
   (fragments: Feature.Fragments<Atom.Props<P>, S>): void;
+}
+interface FeatureBase<P> {
   /**
    * 属性声明
    */
