@@ -66,37 +66,18 @@ function Root({ children, height, ref }, frags) {
   useViewEffect(() => {
     const { elementRefs } = rootContext;
 
-    console.log('[Root] refs:', elementRefs.miniMap, elementRefs.graph);
-    // @TODO useViewEffect的父子顺序不对，先这样占个坑，后续axii里修复后再调整
-    let once = false;
-    watch(() => {
-      if (slots.miniMap) {
-        return [elementRefs.miniMap, elementRefs.graph];
-      } else {
-        return [elementRefs.graph];
-      }
-    }, () => {
-      setTimeout(() => {
-        let r = false;
-        if (slots.miniMap) {
-          r = elementRefs.miniMap && elementRefs.graph;
-        } else {
-          r = elementRefs.graph;
-        }
-
-        if (r && !once) {
-
-          x6.Graph.init(elementRefs.graph, dm, {
-            width: elementRefs.graph.offsetWidth,
-            height: height || 800,
-            minimap: elementRefs.miniMap,
-          });
-          x6.Graph.renderNodes(dm.nodes);
-          once = true;
-        }  
+    let r = !!elementRefs.graph;
+    if (slots.miniMap) {
+      r = r && elementRefs.miniMap
+    }
+    if (r) {
+      x6.Graph.init(elementRefs.graph, dm, {
+        width: elementRefs.graph.offsetWidth,
+        height: height || 800,
+        minimap: elementRefs.miniMap,
       });
-    });
-
+      x6.Graph.renderNodes(dm.nodes);
+    } 
     return () => {
       // @TODO: dispose会触发其它render的卸载，当此时当前这个render并没有卸载完成
       setTimeout(() => {
