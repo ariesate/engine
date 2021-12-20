@@ -54,6 +54,7 @@
   },
   "scripts": {
     "build": "vite build",
+    "build:watch": "vite build --watch",
     "publish:patch": "node ./scripts/publish.js --patch",
     "publish:minor": "node ./scripts/publish.js --minor",
     "test": "jest",

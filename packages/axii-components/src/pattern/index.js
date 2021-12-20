@@ -1,92 +1,7 @@
-import { Scenario, createRange, matrixMatch } from 'axii'
-import { generate, presetPalettes } from '@ant-design/colors';
-
-/**
- * 规划该组件库的 Pattern
- *
- * values: 具体的常量值
- *
- * base: 从各个 values 中选出的基准值。包括
- * color
- *
- * font: {
- *   family,
- *   box: { size, lineHeight, word-spacing },
- *   weight
- * }
- * space
- * shadow
- * lineWidth
- */
-
-/**
- * 场景：undefined 就是取默认值
- * interactive: 不可交互 1 可交互 2 正在交互
- * activity: 正常 1 常亮 3 禁用
- * invert: 不反色 1 发色
- *
- * stress: 不强调 1 强调
- *
- * size: 正常 1 小 size 2 size
- *
- * 得到的值：
- * 颜色类： color/bgColor/fieldColor/separateColor
- *
- * 字体类：
- * family
- * size
- * weight
- * lineHeight
- *
- * 其他：
- * lineWidth
- * spacing
- * shadow
- */
-
-/***************
- * CONSTANTS
- **************/
-export const colors = {}
-Object.keys(presetPalettes).forEach(name => {
-  colors[name] = createRange(presetPalettes[name], 5)
-})
-colors.axii = createRange(generate('#0052CC'), 5)
-colors.red = createRange(generate('#dd3306'), 5)
-colors.black = createRange(['#666', '#555', '#444', '#333', '#222', '#111', '#000'], 3)
-colors.white = createRange(['#fff'], 0)
-colors.gray = createRange(['#efefef', '#eeeeee', '#cecece', '#cccccc', '#bbbbbb'], 2)
-
-
-const fontSizes = createRange([12, 14, 16, 20, 24, 30, 38, 46, 56, 68], 1)
-const spaceValues = createRange([4, 8, 12, 20, 32, 48, 80, 128], 1)
-
-const PRIMARY_COLOR = 'axii'
-
-/***************
- * Index
- **************/
-const INDEX = {
-  interactable: 1,
-
-  active: {
-    active: 1, // 常亮
-    inactive: 2 // 暗
-  },
-
-  inverted: 1, //反色
-
-  stressed: 1, // 强调
-
-  interact: 1, // 交互
-
-  size: {
-    small: 1, // 小尺寸
-    large: 2, // 大尺寸
-  },
-
-  elevate: 1
-}
+import { Scenario, matrixMatch } from 'axii'
+import { colors, spaceValues, fontSizes, PRIMARY_COLOR } from './basic.js'
+import { INDEX } from './case.js'
+import { createButtonToken } from './components/button.js';
 
 // 正色是黑色
 // 主色是蓝色
@@ -110,7 +25,7 @@ const valueRules = {
     const matrix = [
       [undefined, undefined, undefined, undefined, undefined, colors.black(offset)],  // 正常情况下是褐色
       [undefined, INDEX.stressed, undefined, undefined, undefined, colors.black(1 + offset)], // 强调的时候黑色变深
-      [INDEX.interactable, undefined, INDEX.inverted, undefined, undefined, colors.white()], // 反色
+      [INDEX.interactable, undefined, INDEX.inverted, undefined, undefined, colors.gray(-6)], // 反色
       [INDEX.interactable, undefined, undefined, undefined, undefined, colors.black(offset)], // 可交互时，默认颜色是正色
       [INDEX.interactable, undefined, undefined, INDEX.active.active, undefined, colors[color](offset)], // 可交互并且激活时，显示的是主色。
       [INDEX.interactable, undefined, undefined, INDEX.active.inactive, undefined, colors.gray()], // 可交互，但未激活是灰色
@@ -142,7 +57,7 @@ const valueRules = {
      */
     const matrix = [
       [undefined, undefined, undefined, 'transparent'],
-      [undefined, INDEX.active.active, undefined, colors.white()],
+      [undefined, INDEX.active.active, undefined, colors.grey(-6)],
       [INDEX.inverted, undefined, undefined, colors[color](+ offset)],
       [INDEX.inverted, INDEX.active.inactive, undefined, colors[color](-3 + offset)],
       [INDEX.inverted, INDEX.active.active, undefined, colors[color](offset)],
@@ -157,6 +72,21 @@ const valueRules = {
   },
   separateColor() {
     return colors.gray()
+  },
+  naturalColor({ natural }) {
+    const matrix = [
+      [undefined, colors.natural()],
+      [INDEX.natural.title, colors.natural()],
+      [INDEX.natural.primaryText, colors.natural(1)],
+      [INDEX.natural.secondary, colors.natural(2)],
+      [INDEX.natural.disabled, colors.natural(3)],
+      [INDEX.natural.border, colors.gray(-1)],
+      [INDEX.natural.divider, colors.natural(5)],
+      [INDEX.natural.background, colors.natural(6)],
+      [INDEX.natural.tableHead, colors.natural(7)],
+    ]
+
+    return matrixMatch([natural], matrix)
   },
   // 受 size 影响
   fontSize({ size }, offset = 0) {
@@ -191,10 +121,13 @@ const valueRules = {
   fontFamily() {},
   radius() {
     return 2
+  },
+  components({ size }, offset = 0) {
+    return {
+      button: createButtonToken({ size }, offset)
+    }
   }
-
 }
-
 
 
 /***************
@@ -203,4 +136,3 @@ const valueRules = {
 export default function scen() {
   return new Scenario(INDEX, valueRules)
 }
-
