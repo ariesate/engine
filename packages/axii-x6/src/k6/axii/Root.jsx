@@ -76,7 +76,14 @@ function Root({ children, height, ref }, frags) {
       }
     }, () => {
       setTimeout(() => {
-        if (elementRefs.miniMap && elementRefs.graph && !once) {
+        let r = false;
+        if (slots.miniMap) {
+          r = elementRefs.miniMap && elementRefs.graph;
+        } else {
+          r = elementRefs.graph;
+        }
+
+        if (r && !once) {
 
           x6.Graph.init(elementRefs.graph, dm, {
             width: elementRefs.graph.offsetWidth,
