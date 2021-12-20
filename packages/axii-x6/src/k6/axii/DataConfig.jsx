@@ -189,7 +189,11 @@ const HigherFormField = createComponent((() => {
                     <itemList>
                       {renderItemList(item.children)}
                       <actions block flex-display flex-justify-content="right" block-padding-right="0">
-                        <Button layout:block-width="100%" layout:block-margin-top="8px" primary onClick={addItem}>+</Button>
+                        <addBtn
+                          block block-padding="4px 0" block-width="100%" block-margin-top="8px" onClick={addItem}
+                          style={{ border: '1px solid #999', textAlign: 'center', cursor: 'pointer' }}>
+                          +
+                        </addBtn>
                       </actions>
                     </itemList>
                   );
@@ -330,7 +334,7 @@ const DataConfigForm = createComponent((() => {
     
     return (
       <dataConfigForm block block-width="100%" block-box-sizing="border-box" >
-        {() => json.properties.map(item => {
+        {() => json.properties?.map(item => {
           const isSimple = simpleTypes.includes(item.type);
           const isHigher = ['array', 'object'].includes(item.type);
           if (isSimple) {
@@ -392,9 +396,9 @@ function DataConfig({ jsonWithData, onChange, onSave }) {
           json={myJson}
           onChange={dataChanged}
         />
-        <actions block flex-display flex-justify-content="right" block-padding-right="0">
+        {/* <actions block flex-display flex-justify-content="right" block-padding-right="0">
           <Button layout:block-margin-top="8px" primary onClick={clickOnSave}>保存</Button>
-        </actions>
+        </actions> */}
       </content>
     </dataCofnig>
   );

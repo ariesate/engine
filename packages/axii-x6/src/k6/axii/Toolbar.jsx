@@ -33,7 +33,8 @@ function Split() {
   )
 }
 
-function Toolbar({}) {
+function Toolbar(props) {
+  const { extra = {} } = props;
   const context = useContext(RootContext);
 
   useViewEffect(() => {
@@ -45,9 +46,11 @@ function Toolbar({}) {
     <k6Toolbar block flex-display block-padding="4px 8px">
       <quickKeys block flex-grow="1" flex-display flex-align-items="center">
         <extraActions>
-          <Button primary onClick={() => {
-            context.dm.addNode();
-          }} >新增</Button>
+          <addAction onClick={() => {
+              context.dm.addNode();
+          }}>
+            {extra.addNode ? extra.addNode : (<Button primary >新增</Button>)}            
+          </addAction>
         </extraActions>
         <Split />
         <Item>
