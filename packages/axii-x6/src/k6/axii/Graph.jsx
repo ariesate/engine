@@ -43,6 +43,8 @@ function Graph({ data, height }, ref) {
     dm.readComponents(rootContext.groups);
 
     rootContext.elementRefs.graph = graphRef.current;
+
+    console.log('[Graph] useView')
   });  
 
 

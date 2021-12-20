@@ -66,6 +66,7 @@ function Root({ children, height, ref }, frags) {
   useViewEffect(() => {
     const { elementRefs } = rootContext;
 
+    console.log('[Root] refs:', elementRefs.miniMap, elementRefs.graph);
     // @TODO useViewEffect的父子顺序不对，先这样占个坑，后续axii里修复后再调整
     let once = false;
     watch(() => {
