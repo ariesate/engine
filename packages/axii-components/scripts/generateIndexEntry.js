@@ -48,6 +48,7 @@ exportStr.push(...commandLikeComponents.map(name => `export { default as ${name}
 
 // pattern
 exportStr.push('export { default as pattern } from "./pattern"')
+exportStr.push('export * as utils from "./util"')
 
 // TODO 去掉 style
 exportStr.push('import "./style/global.less";')

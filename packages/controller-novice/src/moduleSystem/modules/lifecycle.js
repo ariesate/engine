@@ -9,8 +9,9 @@ export function initialize(apply, collect, system) {
   let afterSessionLifecycle = []
 
   return {
-    unit: next => (unitName, cnode, fn) => {
-      if (cnode.type.lifecycle === undefined) return next(unitName, cnode, fn)
+    unit: next => (sessionName, unitName, cnode, fn) => {
+      if (cnode.type.lifecycle === undefined)
+        return next(unitName, cnode, fn)
 
       const beforeLifecycleName = unitNameToLifecycleName(unitName, true)
       const afterLifecycleName = unitNameToLifecycleName(unitName)

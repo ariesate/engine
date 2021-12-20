@@ -2,32 +2,25 @@
   "name": "novice",
   "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "/src/index.js",
   "author": "ariesate@outlook.com",
   "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "jest"
+  },
   "dependencies": {
     "exist.js": "^0.3.0",
-    "fast-deep-equal": "^1.0.0",
     "lodash": "^4.17.4",
     "mobx": "^3.3.1",
     "mobx-state-tree": "^1.0.1"
   },
   "devDependencies": {
-    "babel-loader": "^7.1.2",
-    "babel-core": "^6.26.0",
-    "babel-jest": "^21.0.2",
-    "babel-plugin-module-alias": "^1.6.0",
-    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.0",
-    "babel-plugin-transform-react-jsx": "^6.24.1",
-    "babel-preset-es2015": "^6.24.1",
-    "babel-preset-stage-0": "^6.24.1",
-    "classnames": "^2.2.5",
+    "@ariesate/are": "workspace:*",
+    "@jest/types": "^27.2.5",
     "dom-serialize": "^2.2.1",
-    "jest": "^21.0.2",
-    "lodash": "^4.17.4",
-    "webpack": "^3.5.5"
-  },
-  "scripts": {
-    "test": "jest"
+    "esbuild-jest": "^0.5.0",
+    "jest": "^27.3.0",
+    "jest-environment-jsdom": "^27.3.0"
   }
 }

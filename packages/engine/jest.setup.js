@@ -1,14 +1,13 @@
-require('@testing-library/jest-dom')
-// CAUTION 这里似乎躲不过要用相对路径。
-const {partialMatchDOM} = require('./testUtil')
-const prettyData = require('pretty-data').pd
+import '@testing-library/jest-dom'
+import { partialMatchDOM } from './testUtil'
+import { pd as prettyData } from 'pretty-data'
 
 expect.extend({
   partialMatchDOM(received, toMatch) {
     let pass = true
     try {
       partialMatchDOM(received, toMatch)
-    } catch(e) {
+    } catch (e) {
       console.error(e)
       pass = false
     }

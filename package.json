@@ -1,21 +1,14 @@
 {
-  "name": "@ariesate/engine",
-  "version": "0.0.1",
-  "description": "you should not publish this package.",
-  "main": "index.js",
-  "devDependencies": {
-    "@rollup/plugin-alias": "^3.1.1",
-    "lerna": "^4.0.0",
-    "rollup": "^2.28.2"
-  },
+  "name": "@ariesate/engine-monorepo",
+  "private": "true",
   "scripts": {
-    "start": "webpack-dev-server",
-    "lint": "eslint ./render/src",
-    "eslint-fix": "eslint ./render/src --fix"
+    "preinstall": "node scripts/preinstall",
+    "reset": "pnpm -r exec -- rm -rf ./node_modules"
   },
-  "author": "ariesate@outlook.com",
-  "license": "MIT",
-  "dependencies": {
-    "butterfly-dag": "^4.0.38"
+  "devDependencies": {
+    "@ariesate/are": "workspace:*",
+    "axii": "workspace:*",
+    "axii-components": "workspace:*",
+    "axii-icons": "workspace:*"
   }
 }

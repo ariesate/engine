@@ -28,7 +28,7 @@
     "build": "vite build"
   },
   "peerDependencies": {
-    "axii": "^1.0.0"
+    "axii": "workspace:^1.0.0"
   },
   "devDependencies": {
     "vite": "^2.1.5"

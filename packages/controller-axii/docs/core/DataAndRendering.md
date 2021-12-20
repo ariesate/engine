@@ -1,6 +1,3 @@
 # 用户对数据操作的深入分析和根据数据重新渲染的理解
 
-Array 与其他 collection 类型不同，它有"序"的信息在内，而 object/map/set 都没有，只有非序关系。
-
-
-
+`Array` 与其他 collection 类型不同，它有“序”的信息在内，而 `object` / `map` / `set` 都没有，只有非序关系。

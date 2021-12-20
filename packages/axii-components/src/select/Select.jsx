@@ -14,7 +14,9 @@ import {
 import useLayer from "../hooks/useLayer";
 import {composeRef, nextTick} from "../util";
 import Input from "../input/Input";
+import Checkbox from '../checkbox/Checkbox';
 import scen from "../pattern";
+import Down from 'axii-icons/Down';
 
 export function Select({value, options, onChange, renderOption, onActiveOptionChange, activeOptionIndex, renderValue, onFocus, onBlur, focused, ref}, fragments) {
   const optionListRef = useRef()
@@ -55,7 +57,6 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
     return (
       <optionList
         inline
-        inline-display-none={atomComputed(() => !focused.value)}
         inline-min-width={atomComputed(() => `${sourceRef.value ? sourceRef.value.offsetWidth : 0}px`)}
         tabindex={-1}
         onKeyDown={onKeyDown}
@@ -79,6 +80,7 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
       </optionList>)
     }, {
       getContainerRect,
+      visible: atomComputed(() => focused.value)
     })
 
   return (
@@ -93,6 +95,9 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
         onBlur={() => false}
         value={atomComputed(() => renderValue(value))}
       >
+        {{
+          after: <Down />
+        }}
       </selectInput>
       {optionListNode}
     </container>
@@ -119,7 +124,7 @@ Select.propTypes = {
   renderValue: propTypes.function.default(() => (value) => value.value ? value.value.name : ''),
   optionToValue: propTypes.function.default(() => (option) => Object.assign({}, option)),
   onChange: propTypes.callback.default(() => (option, {value, optionToValue}) => {
-
+    if (!optionToValue) return
     value.value = optionToValue(option)
   }),
   onActiveOptionChange: propTypes.callback.default(() => (index, {activeOptionIndex}) => {
@@ -147,7 +152,6 @@ Select.Style = (fragments) => {
 }
 
 Select.forwardRef = true
-
 
 /**
  * TODO 搜索模式。支持回车选中。
@@ -262,7 +266,26 @@ RecommendMode.propTypes = {
   }),
 }
 
-
 // TODO Select 的多选 feature
+export function MultipleMode(fragments) {
+  fragments.optionItem.modify((item, { onChange, match, value, option, index }) => {
+    const checked = atom(match(value, option))
+    console.log(checked.value)
+    const onClick = (option, index) => {
+      checked.value = !checked.value
+      onChange(option, checked.value, index)
+    }
+    item.attributes.onClick = () => onClick(option, index)
+    item.children.unshift(<Checkbox value={checked} />)
 
-export default createComponent(Select, [SearchableFeature, RecommendMode])
+    return item
+  })
+}
+
+MultipleMode.propTypes = {
+  multi : propTypes.feature.default(() => false),
+}
+
+MultipleMode.match = ({ multi }) => multi
+
+export default createComponent(Select, [SearchableFeature, RecommendMode, MultipleMode])
