@@ -36,6 +36,7 @@ Button.Style = (fragments) => {
 
 		const colorScen = scen().interactable()
 		if (hasColor) colorScen.inverted()
+		if (danger.value) colorScen.danger()
 		if (disabled.value) colorScen.inactive()
 		return [hasColor, colorScen, color]
 	}

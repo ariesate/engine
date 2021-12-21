@@ -97,45 +97,47 @@ Input.Style = (fragments) => {
     onBlur()
   })
 
-  rootElements.container.style(({focused}) => {
+  rootElements.container.style(() => {
     return {
-      borderStyle: 'solid',
-      borderWidth: 1,
       borderRadius: scen().radius(),
-      borderColor: focused.value ?
-        scen().interactable().active().color() :
-        scen().separateColor(),
-      boxShadow: focused.value ?
-        `0 0 0 ${scen().outlineWidth()}px ${scen().interactable().active().shadowColor()}` :
-        undefined
     }
   })
 
-  rootElements.input.style(() => ({
+  rootElements.input.style(({ focused }) => ({
     color: scen().color(),
     lineHeight: `${scen().lineHeight()}px`,
-    outline: 0
+    outline: 0,
+    borderStyle: 'solid',
+    borderWidth: 1,
+    borderRadius: 2,
+    borderColor: focused.value ? scen().components().input.activeBorderColor : scen().border().naturalColor(),
+    boxShadow: focused.value ?
+      `0 0 0 ${scen().outlineWidth()}px ${scen().interactable().active().shadowColor()}` :
+      undefined,
+    zIndex: 1
   }))
 
   const commonPrefixStyle = {
+    borderRadius: 2,
     color: scen().color(),
-    backgroundColor: scen().fieldColor(),
+    backgroundColor: scen().components().input.addon,
     borderStyle: 'solid',
-    borderColor: scen().separateColor(),
-    borderWidth: 0,
+    borderWidth: 1,
+    borderColor: scen().border().naturalColor(),
   }
 
-  fragments.prefix.elements.prefix.style(commonPrefixStyle)
-  fragments.suffix.elements.suffix.style(commonPrefixStyle)
+  fragments.prefix.elements.prefix.style({ ...commonPrefixStyle, borderRight: 0})
+  fragments.suffix.elements.suffix.style({ ...commonPrefixStyle, borderLeft: 0})
 
   const commonAfterStyle = {
+    borderRadius: 2,
     color: scen().color(),
     borderStyle: 'solid',
-    borderWidth: 0,
-    borderColor: scen().separateColor()
+    borderWidth: 1,
+    borderColor: scen().border().naturalColor()
   }
-  fragments.before.elements.before.style(commonAfterStyle)
-  fragments.after.elements.after.style(commonAfterStyle)
+  fragments.before.elements.before.style({ ...commonAfterStyle, borderRight: 0 })
+  fragments.after.elements.after.style({ ...commonAfterStyle, borderLeft: 0})
 }
 
 Input.Style.propTypes = {

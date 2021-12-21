@@ -31,6 +31,13 @@ const INDEX = {
     divider: 6,
     background: 7,
     tableHead: 8,
+  },
+
+  feature: {
+    success: 1,
+    info: 2,
+    warning: 3,
+    danger: 4,
   }
 }
 

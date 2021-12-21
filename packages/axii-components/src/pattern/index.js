@@ -1,7 +1,7 @@
 import { Scenario, matrixMatch } from 'axii'
 import { colors, spaceValues, fontSizes, PRIMARY_COLOR } from './basic.js'
 import { INDEX } from './case.js'
-import { createButtonToken } from './components/button.js';
+import { createButtonToken, createInputToken } from './components';
 
 // 正色是黑色
 // 主色是蓝色
@@ -9,7 +9,7 @@ import { createButtonToken } from './components/button.js';
 
 const valueRules = {
   // 颜色类，受交互状态、反色等规则影响。
-  color({ interactable, stress, inverted, active, interact }, offset = 0, color=PRIMARY_COLOR) {
+  color({ interactable, stress, inverted, active, interact, feature }, offset = 0, color=PRIMARY_COLOR) {
     /**
      * 判断维度：
      * 1. 先判断 interactable。如果否，判断 stress.
@@ -23,16 +23,19 @@ const valueRules = {
      *
      */
     const matrix = [
-      [undefined, undefined, undefined, undefined, undefined, colors.black(offset)],  // 正常情况下是褐色
-      [undefined, INDEX.stressed, undefined, undefined, undefined, colors.black(1 + offset)], // 强调的时候黑色变深
-      [INDEX.interactable, undefined, INDEX.inverted, undefined, undefined, colors.gray(-6)], // 反色
-      [INDEX.interactable, undefined, undefined, undefined, undefined, colors.black(offset)], // 可交互时，默认颜色是正色
-      [INDEX.interactable, undefined, undefined, INDEX.active.active, undefined, colors[color](offset)], // 可交互并且激活时，显示的是主色。
-      [INDEX.interactable, undefined, undefined, INDEX.active.inactive, undefined, colors.gray()], // 可交互，但未激活是灰色
-      [INDEX.interactable, undefined, undefined, INDEX.active.active, INDEX.interact, colors[color](-1 + offset)], // 可交互，激活，正在交互时，主色变浅一点。
+      [undefined, undefined, undefined, undefined, undefined, undefined,colors.black(offset)],  // 正常情况下是褐色
+      [undefined, INDEX.stressed, undefined, undefined, undefined, undefined,colors.black(1 + offset)], // 强调的时候黑色变深
+      [INDEX.interactable, undefined, INDEX.inverted, undefined, undefined, undefined,colors.gray(-6)], // 反色
+      [INDEX.interactable, undefined, undefined, undefined, undefined, undefined,colors.black(offset)], // 可交互时，默认颜色是正色
+      [INDEX.interactable, undefined, undefined, INDEX.active.active, undefined, undefined,colors[color](offset)], // 可交互并且激活时，显示的是主色。
+      [INDEX.interactable, undefined, undefined, INDEX.active.inactive, undefined, undefined,colors.gray()], // 可交互，但未激活是灰色
+      [INDEX.interactable, undefined, undefined, INDEX.active.active, INDEX.interact, undefined,colors[color](-1 + offset)], // 可交互，激活，正在交互时，主色变浅一点。
+      // 根据不同的 feature 展示不同的颜色
+      [INDEX.interactable, undefined, undefined, undefined, undefined, INDEX.feature.danger ,colors.red(-1 + offset)],
+      [INDEX.interactable, undefined, undefined, undefined, INDEX.interact, INDEX.feature.danger ,colors.red(-2 + offset)],
     ]
 
-    return matrixMatch([interactable, stress, inverted, active, interact], matrix)
+    return matrixMatch([interactable, stress, inverted, active, interact, feature], matrix)
   },
   shadowColor(props, offset = 0, color = PRIMARY_COLOR) {
     return valueRules.color(props, offset - 4, color)
@@ -46,7 +49,7 @@ const valueRules = {
       '0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22)'
     ])[offset]
   },
-  bgColor({inverted, active, interact}, offset, color=PRIMARY_COLOR) {
+  bgColor({inverted, active, interact, feature}, offset, color=PRIMARY_COLOR) {
     /**
      * 判断维度: 正常情况下都是 transparent(undefined)
      * 1. 判断 invert
@@ -56,16 +59,19 @@ const valueRules = {
      *     1.2.1.1 interacting 是 变亮一点。否，正常
      */
     const matrix = [
-      [undefined, undefined, undefined, 'transparent'],
-      [undefined, INDEX.active.active, undefined, colors.grey(-6)],
-      [INDEX.inverted, undefined, undefined, colors[color](+ offset)],
-      [INDEX.inverted, INDEX.active.inactive, undefined, colors[color](-3 + offset)],
-      [INDEX.inverted, INDEX.active.active, undefined, colors[color](offset)],
-      [INDEX.inverted, undefined, INDEX.interact, colors[color](-1 + offset)],
-      [INDEX.inverted, INDEX.active.active, INDEX.interact, colors[color](-1 + offset)],
+      [undefined, undefined, undefined, undefined, 'transparent'],
+      [undefined, INDEX.active.active, undefined, undefined, colors.gray(-6)],
+      [INDEX.inverted, undefined, undefined, undefined, colors[color](offset)],
+      [INDEX.inverted, INDEX.active.inactive, undefined, undefined, colors[color](-3 + offset)],
+      [INDEX.inverted, INDEX.active.active, undefined, undefined, colors[color](offset)],
+      [INDEX.inverted, undefined, INDEX.interact, undefined, colors[color](-1 + offset)],
+      [INDEX.inverted, INDEX.active.active, INDEX.interact, undefined, colors[color](-1 + offset)],
+      // 根据不同的 feature 展示不同的颜色
+      [INDEX.inverted, undefined, undefined, INDEX.feature.danger ,colors.red(-1 + offset)],
+      [INDEX.inverted, undefined, INDEX.interact, INDEX.feature.danger ,colors.red(-2 + offset)],
     ]
 
-    return matrixMatch([inverted, active, interact], matrix)
+    return matrixMatch([inverted, active, interact, feature], matrix)
   },
   fieldColor() {
     return colors.gray(-2)
@@ -80,7 +86,7 @@ const valueRules = {
       [INDEX.natural.primaryText, colors.natural(1)],
       [INDEX.natural.secondary, colors.natural(2)],
       [INDEX.natural.disabled, colors.natural(3)],
-      [INDEX.natural.border, colors.gray(-1)],
+      [INDEX.natural.border, colors.gray(-2)],
       [INDEX.natural.divider, colors.natural(5)],
       [INDEX.natural.background, colors.natural(6)],
       [INDEX.natural.tableHead, colors.natural(7)],
@@ -124,7 +130,8 @@ const valueRules = {
   },
   components({ size }, offset = 0) {
     return {
-      button: createButtonToken({ size }, offset)
+      button: createButtonToken({ size }, offset),
+      input: createInputToken()
     }
   }
 }

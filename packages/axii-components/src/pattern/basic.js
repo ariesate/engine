@@ -56,10 +56,14 @@ colors.black = createRange(['#666', '#555', '#444', '#333', '#222', '#111', '#00
 colors.gray = createRange(['#fff', '#fafafa', '#f5f5f5', '#f0f0f0', '#d9d9d9', '#bfbfbf', '#8c8c8c', '#595959', '#434343', '#262626', '#1f1f1f', '#141414', '#000000'], 6)
 colors.natural = createRange(['rgba(0,0,0, 0.85)', 'rgba(0,0,0, 0.45)', 'rgba(0,0,0, 0.25)', 'rgba(0,0,0, 0.15)', 'rgba(0,0,0, 0.06)', 'rgba(0,0,0, 0.04)', 'rgba(0,0,0, 0.02)'], 0)
 
+const backgroundColors = {}
+backgroundColors.base = 'hsl(0deg 0% 98%)'
+backgroundColors.light = 'hsl(0deg 0% 96%)'
+
 const fontSizes = createRange([12, 14, 16, 20, 24, 30, 38, 46, 56, 68], 1)
 const spaceValues = createRange([4, 8, 12, 20, 32, 48, 80, 128], 1)
 const lineHeightValues = createRange([1.5715, 2], 0)
 
 const PRIMARY_COLOR = 'axii'
 
-export { colors, fontSizes, spaceValues, PRIMARY_COLOR, lineHeightValues }
+export { colors, fontSizes, spaceValues, PRIMARY_COLOR, lineHeightValues, backgroundColors }
