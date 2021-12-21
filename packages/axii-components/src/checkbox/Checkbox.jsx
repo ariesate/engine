@@ -16,11 +16,13 @@ import scen from '../pattern'
  * 或者有个规划位置的作为 base。
  */
 
+// checkbox 重写样式得新增一个 label 替换掉默认样式
+
 export function Checkbox({ value, disabled, onChange, children }) {
   return (
     <container use="label" inline flex-display-inline flex-align-items-center>
       <input type="checkbox" value="" disabled={disabled} checked={value} onChange={onChange} />
-      <affix inline inline-padding-left={scen().small().spacing()}>{children}</affix>
+      <affix inline inline-padding={`0 ${scen().spacing()}px`}>{children}</affix>
     </container>
   )
 }
@@ -37,9 +39,12 @@ Checkbox.propTypes = {
 Checkbox.Style = (fragments) => {
   const rootElements = fragments.root.elements
 
-  rootElements.input.style({
-    lineHeight: "14px"
-  })
+  rootElements.input.style(({ disabled }) => ({
+    lineHeight: "14px",
+    cursor: disabled.value ? 'not-allowed' : 'pointer',
+    width: "16px",
+    height: "16px"
+  }))
 
 }
 
