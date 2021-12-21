@@ -61,7 +61,7 @@ backgroundColors.base = 'hsl(0deg 0% 98%)'
 backgroundColors.light = 'hsl(0deg 0% 96%)'
 
 const fontSizes = createRange([12, 14, 16, 20, 24, 30, 38, 46, 56, 68], 1)
-const spaceValues = createRange([4, 8, 12, 20, 32, 48, 80, 128], 1)
+const spaceValues = createRange([0, 4, 8, 12, 20, 32, 48, 80, 128], 2)
 const lineHeightValues = createRange([1.5715, 2], 0)
 
 const PRIMARY_COLOR = 'axii'

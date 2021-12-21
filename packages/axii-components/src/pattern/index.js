@@ -1,7 +1,7 @@
 import { Scenario, matrixMatch } from 'axii'
-import { colors, spaceValues, fontSizes, PRIMARY_COLOR } from './basic.js'
+import { colors, spaceValues, fontSizes, PRIMARY_COLOR, lineHeightValues } from './basic.js'
 import { INDEX } from './case.js'
-import { createButtonToken, createInputToken } from './components';
+import { createInputToken } from './components';
 
 // 正色是黑色
 // 主色是蓝色
@@ -79,20 +79,8 @@ const valueRules = {
   separateColor() {
     return colors.gray()
   },
-  naturalColor({ natural }) {
-    const matrix = [
-      [undefined, colors.natural()],
-      [INDEX.natural.title, colors.natural()],
-      [INDEX.natural.primaryText, colors.natural(1)],
-      [INDEX.natural.secondary, colors.natural(2)],
-      [INDEX.natural.disabled, colors.natural(3)],
-      [INDEX.natural.border, colors.gray(-2)],
-      [INDEX.natural.divider, colors.natural(5)],
-      [INDEX.natural.background, colors.natural(6)],
-      [INDEX.natural.tableHead, colors.natural(7)],
-    ]
-
-    return matrixMatch([natural], matrix)
+  borderColor() {
+    return colors.gray(-2)
   },
   // 受 size 影响
   fontSize({ size }, offset = 0) {
@@ -104,7 +92,7 @@ const valueRules = {
     return matrixMatch([size], matrix)
   },
   lineHeight({ size }, offset = 0) {
-    return (size === undefined ? 2 : (size === 1 ? 1.5 : 2.5)) + offset
+    return (size === undefined ? lineHeightValues() : (size === 1 ? lineHeightValues() : lineHeightValues(1))) + offset
   },
   weight({ stressed }) {
     return stressed ? 'bold' : undefined
@@ -130,7 +118,6 @@ const valueRules = {
   },
   components({ size }, offset = 0) {
     return {
-      button: createButtonToken({ size }, offset),
       input: createInputToken()
     }
   }

@@ -22,17 +22,6 @@ const INDEX = {
 
   elevate: 1,
 
-  natural: {
-    title: 1,
-    primaryText: 2,
-    secondary: 3,
-    disabled: 4,
-    border: 5,
-    divider: 6,
-    background: 7,
-    tableHead: 8,
-  },
-
   feature: {
     success: 1,
     info: 2,
