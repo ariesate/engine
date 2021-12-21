@@ -228,7 +228,7 @@ export function RecommendMode(fragments) {
           // 如果不是，说明是光标丢失，需要执行 blur。
           // 这个判断我们得过一段时间才能真正确定是为什么 blur。
           if (focused.value) onBlur()
-        }, 50)
+        }, 200)
       }),
     })
 
