@@ -1,7 +1,13 @@
 import { Scenario, matrixMatch } from 'axii'
-import { colors, spaceValues, fontSizes, PRIMARY_COLOR, lineHeightValues } from './basic.js'
+import {
+  colors,
+  spaceValues,
+  fontSizes,
+  PRIMARY_COLOR,
+  lineHeightValues,
+  backgroundColors,
+} from './basic.js';
 import { INDEX } from './case.js'
-import { createInputToken } from './components';
 
 // 正色是黑色
 // 主色是蓝色
@@ -74,7 +80,7 @@ const valueRules = {
     return matrixMatch([inverted, active, interact, feature], matrix)
   },
   fieldColor() {
-    return colors.gray(-2)
+    return backgroundColors.base
   },
   separateColor() {
     return colors.gray()
@@ -115,11 +121,6 @@ const valueRules = {
   fontFamily() {},
   radius() {
     return 2
-  },
-  components({ size }, offset = 0) {
-    return {
-      input: createInputToken()
-    }
   }
 }
 

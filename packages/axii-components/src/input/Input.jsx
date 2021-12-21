@@ -9,7 +9,7 @@ import {
   atomComputed,
   vnodeComputed,
   watchReactive,
-  createRef,
+  createRef, computed,
 } from 'axii';
 import scen from '../pattern'
 
@@ -26,7 +26,7 @@ export function Input({value, onChange, children, placeholder, ref: parentRef, .
   const prefixLikeProps = {
     'flex-display-inline': true,
     'flex-align-items-center': true,
-    'inline-padding': `0 ${scen().spacing()}px`
+    'inline-padding': `0 ${scen().spacing(1)}px`
   }
 
   const prefixVnode = fragments.prefix()(() => {
@@ -57,7 +57,7 @@ export function Input({value, onChange, children, placeholder, ref: parentRef, .
           inline-max-width="100%"
           inline-box-sizing="border-box"
           inline-font-size={scen().fontSize()}
-          inline-padding={`${scen().spacing()}px ${scen().spacing()}px `}
+          inline-padding={`${scen().spacing(-1)}px ${scen().spacing(1)}px `}
           value={value}
           onInput={onChange}
           placeholder={placeholder}
@@ -103,14 +103,19 @@ Input.Style = (fragments) => {
     }
   })
 
-  rootElements.input.style(({ focused }) => ({
+  const commonStyle = {
+    borderRadius: scen().radius(),
     color: scen().color(),
-    lineHeight: `${scen().lineHeight()}px`,
-    outline: 0,
     borderStyle: 'solid',
     borderWidth: 1,
-    borderRadius: 2,
-    borderColor: focused.value ? scen().components().input.activeBorderColor : scen().border().naturalColor(),
+    borderColor: scen().borderColor()
+  }
+
+  rootElements.input.style(({ focused }) => ({
+    ...commonStyle,
+    lineHeight: scen().lineHeight(),
+    outline: 0,
+    borderColor: focused.value ? scen().interactable().active().color(-1) : scen().borderColor(),
     boxShadow: focused.value ?
       `0 0 0 ${scen().outlineWidth()}px ${scen().interactable().active().shadowColor()}` :
       undefined,
@@ -118,26 +123,15 @@ Input.Style = (fragments) => {
   }))
 
   const commonPrefixStyle = {
-    borderRadius: 2,
-    color: scen().color(),
-    backgroundColor: scen().components().input.addon,
-    borderStyle: 'solid',
-    borderWidth: 1,
-    borderColor: scen().border().naturalColor(),
+    ...commonStyle,
+    backgroundColor: scen().fieldColor(),
   }
 
   fragments.prefix.elements.prefix.style({ ...commonPrefixStyle, borderRight: 0})
   fragments.suffix.elements.suffix.style({ ...commonPrefixStyle, borderLeft: 0})
 
-  const commonAfterStyle = {
-    borderRadius: 2,
-    color: scen().color(),
-    borderStyle: 'solid',
-    borderWidth: 1,
-    borderColor: scen().border().naturalColor()
-  }
-  fragments.before.elements.before.style({ ...commonAfterStyle, borderRight: 0 })
-  fragments.after.elements.after.style({ ...commonAfterStyle, borderLeft: 0})
+  fragments.before.elements.before.style({ ...commonStyle, borderRight: 0 })
+  fragments.after.elements.after.style({ ...commonStyle, borderLeft: 0})
 }
 
 Input.Style.propTypes = {
