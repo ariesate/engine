@@ -6,6 +6,7 @@ import {
   PRIMARY_COLOR,
   lineHeightValues,
   backgroundColors,
+  zIndexs
 } from './basic.js';
 import { INDEX } from './case.js'
 
@@ -83,9 +84,6 @@ const valueRules = {
     return backgroundColors.base
   },
   separateColor() {
-    return colors.gray()
-  },
-  borderColor() {
     return colors.gray(-2)
   },
   // 受 size 影响
@@ -121,6 +119,17 @@ const valueRules = {
   fontFamily() {},
   radius() {
     return 2
+  },
+  zIndex({ zIndex }) {
+    const matrix = [
+      [undefined, zIndexs(-1)],
+      [INDEX.zIndex.fixed, zIndexs()],
+      [INDEX.zIndex.modal, zIndexs(1)],
+      [INDEX.zIndex.toast, zIndexs(2)],
+      [INDEX.zIndex.popover, zIndexs(3)],
+      [INDEX.zIndex.picker, zIndexs(4)],
+    ]
+    return matrixMatch([zIndex], matrix)
   }
 }
 

@@ -138,6 +138,12 @@ Calendar.Style = (fragments) => {
     background: scen().active().bgColor()
   })
 
+  fragments.header.elements.header.style({
+    lineHeight: '40px',
+    padding: `0 ${scen().spacing()}px`,
+    borderBottom: `1px solid ${scen().separateColor()}`
+  })
+
   fragments.header.elements.month.style({
     textAlign: 'center'
   })

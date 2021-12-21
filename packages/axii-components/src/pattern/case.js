@@ -27,6 +27,14 @@ const INDEX = {
     info: 2,
     warning: 3,
     danger: 4,
+  },
+
+  zIndex: {
+    fixed: 1,
+    modal: 2,
+    toast: 3,
+    popover: 4,
+    picker: 5,
   }
 }
 

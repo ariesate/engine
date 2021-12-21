@@ -108,14 +108,14 @@ Input.Style = (fragments) => {
     color: scen().color(),
     borderStyle: 'solid',
     borderWidth: 1,
-    borderColor: scen().borderColor()
+    borderColor: scen().separateColor()
   }
 
   rootElements.input.style(({ focused }) => ({
     ...commonStyle,
     lineHeight: scen().lineHeight(),
     outline: 0,
-    borderColor: focused.value ? scen().interactable().active().color(-1) : scen().borderColor(),
+    borderColor: focused.value ? scen().interactable().active().color(-1) : scen().separateColor(),
     boxShadow: focused.value ?
       `0 0 0 ${scen().outlineWidth()}px ${scen().interactable().active().shadowColor()}` :
       undefined,

@@ -63,7 +63,8 @@ backgroundColors.light = 'hsl(0deg 0% 96%)'
 const fontSizes = createRange([12, 14, 16, 20, 24, 30, 38, 46, 56, 68], 1)
 const spaceValues = createRange([0, 4, 8, 12, 20, 32, 48, 80, 128], 2)
 const lineHeightValues = createRange([1.5715, 2], 0)
+const zIndexs = createRange([1, 10, 1000, 1010, 1030, 1050], 1)
 
 const PRIMARY_COLOR = 'axii'
 
-export { colors, fontSizes, spaceValues, PRIMARY_COLOR, lineHeightValues, backgroundColors }
+export { colors, fontSizes, spaceValues, PRIMARY_COLOR, lineHeightValues, backgroundColors, zIndexs }
