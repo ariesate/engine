@@ -2,27 +2,14 @@
   "name": "areact",
   "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "/src/index.js",
   "author": "ariesate@outlook.com",
   "license": "MIT",
-  "dependencies": {
-    "@ariesate/are" : "0.0.1"
+  "scripts": {
+    "test": "jest --passWithNoTests"
   },
   "devDependencies": {
-    "@babel/core": "^7.0.0-beta.44",
-    "@babel/plugin-transform-react-jsx": "^7.0.0-beta.44",
-    "@babel/preset-env": "^7.0.0-beta.44",
-    "@babel/preset-react": "^7.0.0-beta.44",
-    "@babel/preset-stage-0": "^7.0.0-beta.44",
-    "babel-loader": "^8.0.0-beta.2",
-    "babel-plugin-module-resolver": "^3.1.1",
-    "classnames": "^2.2.5",
-    "dom-serialize": "^2.2.1",
-    "jest": "^21.0.2",
-    "lodash": "^4.17.4",
-    "webpack": "^3.5.5"
-  },
-  "scripts": {
-    "test": "jest"
+    "@ariesate/are": "workspace:*",
+    "jest": "^27.3.0"
   }
 }

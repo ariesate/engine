@@ -407,5 +407,6 @@ export function appendRule(stylesheet, className, name, rules) {
     return `${k}: ${normalizeStyleValue(k, v)} !important`
   }).join(';')
   // TODO 驼峰转 - 写法
-  stylesheet.sheet.insertRule(`.${className}:${name} {${rulesStr}}`)
+  // CAUTION 最后一个参数，一定要插入到尾部。默认是插到头部，会导致不能覆盖。做成一个链表? 这样就可以删除已有的了。
+  stylesheet.sheet.insertRule(`.${className}:${name} {${rulesStr}}`, stylesheet.sheet.cssRules.length)
 }

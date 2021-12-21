@@ -89,7 +89,6 @@ export function Cascader(props, fragments) {
 				flex-display
 				tabindex={-1}
 				onFocusOut={() => props.onBlur()}
-				inline-display-none={atomComputed(() => !focused.value)}
 				style={{background: "#fff", zIndex: 99}}
 				ref={optionContainerRef}
 			>
@@ -106,6 +105,7 @@ export function Cascader(props, fragments) {
 			</optionContainer>)
 	}, {
 		getContainerRect,
+		visible: atomComputed(() => focused.value)
 	})
 
 	return (

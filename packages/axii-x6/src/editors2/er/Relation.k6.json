@@ -1,0 +1,44 @@
+{
+  "name": "Relation",
+  "type": "object",
+  "description": "Relation",
+  "properties": [
+    {
+      "name": "name",
+      "type": "string",
+      "description": "名称",
+      "properties": []
+    },
+    {
+      "name": "type",
+      "type": "enum",
+      "description": "类型",
+      "properties": [
+        {
+          "name": "1:1",
+          "type": "string",
+          "description": "1:1",
+          "properties": []
+        },
+        {
+          "name": "1:n",
+          "type": "string",
+          "description": "1:n",
+          "properties": []
+        },
+        {
+          "name": "n:1",
+          "type": "string",
+          "description": "n:1",
+          "properties": []
+        },
+        {
+          "name": "n:n",
+          "type": "string",
+          "description": "n:n",
+          "properties": []
+        }
+      ]
+    }
+  ]
+}

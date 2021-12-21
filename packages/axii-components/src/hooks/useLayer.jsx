@@ -24,17 +24,19 @@ function defaultCreateContainer() {
   const portalRoot = document.createElement('div')
   document.body.appendChild(portalRoot)
   return [portalRoot, () => {
+    if (!portalRoot?.parentElement) return
     portalRoot.parentElement.removeChild(portalRoot)
   }]
 }
 
 
-export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), createContainer = defaultCreateContainer, level, renderOnVisible, syncMove, sourceRef : inputSourceRef } = {}) {
+export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), createContainer = defaultCreateContainer, sourceRef: inputSourceRef, visible = true } = {}) {
 
   const sourceRef = inputSourceRef || reactive({})
 
   // 因为我们提供给 nodeInPortal 的是 source.getBoundingClientRect 的位置，这个是相对于 page 的。所以这里用 fixed 定位。
   const style = atomComputed(() => {
+    if (!visible || !visible.value) return { display: 'none' }
     const rect = sourceRef.current ? sourceRef.current.getBoundingClientRect() : {
       top: 0,
       left: 0,
@@ -67,7 +69,6 @@ export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), 
     {typeof nodeInPortal === 'function' ? nodeInPortal(sourceRef) : nodeInPortal}
   </portal>, portalRoot)
 
-
   return {
     source: inputSourceRef ? undefined : (ref) => {
       // TODO 为什么要 nexttick。因为立即 sourceRef 是 reactive，一但挂载，马上就会出发 style 重新计算。
@@ -76,7 +77,7 @@ export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), 
         sourceRef.current = ref
       })
     },
-    node,
+    node
   }
 }
 

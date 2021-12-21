@@ -44,6 +44,7 @@ export function DatePicker({focused, onFocus, onBlur, value, onChange, format,})
       <calendar use={Calendar} value={value} onChange={onChange}/>
     </calendarContainer>, {
       getContainerRect,
+      visible: atomComputed(() => focused.value)
     })
 
   return <>
