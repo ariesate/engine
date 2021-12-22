@@ -64,7 +64,14 @@ const fontSizes = createRange([12, 14, 16, 20, 24, 30, 38, 46, 56, 68], 1)
 const spaceValues = createRange([0, 4, 8, 12, 20, 32, 48, 80, 128], 2)
 const lineHeightValues = createRange([1.5715, 2], 0)
 const zIndexs = createRange([1, 10, 1000, 1010, 1030, 1050], 1)
+const shadows = createRange([
+  '0 -6px 16px -8px rgba(0, 0, 0, 0.08), 0 -9px 28px 0 rgba(0, 0, 0, 0.05), 0 -12px 48px 16px rgba(0, 0, 0, 0.03)',
+  '0 6px 16px -8px rgba(0, 0, 0, 0.08), 0 9px 28px 0 rgba(0, 0, 0, 0.05), 0 12px 48px 16px rgba(0, 0, 0, 0.03)',
+  '0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
+  '-6px 0 16px -8px rgba(0, 0, 0, 0.08), -9px 0 28px 0 rgba(0, 0, 0, 0.05), -12px 0 48px 16px rgba(0, 0, 0, 0.03)',
+  '6px 0 16px -8px rgba(0, 0, 0, 0.08), 9px 0 28px 0 rgba(0, 0, 0, 0.05), 12px 0 48px 16px rgba(0, 0, 0, 0.03)',
+], 2)
 
 const PRIMARY_COLOR = 'axii'
 
-export { colors, fontSizes, spaceValues, PRIMARY_COLOR, lineHeightValues, backgroundColors, zIndexs }
+export { colors, fontSizes, spaceValues, PRIMARY_COLOR, lineHeightValues, backgroundColors, zIndexs, shadows }
