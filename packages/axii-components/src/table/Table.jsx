@@ -104,7 +104,7 @@ export const thStyle = {
 export const tdStyle = {
   borderStyle: 'solid',
   borderColor: scen().separateColor(),
-  background: '#fff',
+  background: scen().active().bgColor(),
   padding: scen().spacing()
 }
 
