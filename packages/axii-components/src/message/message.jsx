@@ -2,7 +2,8 @@
 /** @jsxFrag Fragment */
 import { render, atom, reactive, atomComputed, createElement, Fragment } from 'axii'
 import layerStyle  from '../style/layer'
-import scen, { colors } from "../pattern";
+import scen from "../pattern";
+import { colors } from '../pattern/basic.js';
 
 function defaultCreateContainer() {
 	const portalRoot = document.createElement('div')

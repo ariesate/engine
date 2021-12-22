@@ -48,24 +48,22 @@ export function Input({value, onChange, children, placeholder, ref: parentRef, .
   return (
     <container inline flex-display-inline block-border-width-1px flex-align-items-stretch>
       {prefixVnode}
-      <middle inline flex-display-inline flex-grow-1 flex-align-items-stretch inline-max-width="100%">
-        {beforeVnode}
-        <input
-          flex-grow-1
-          inline
-          inline-border-width-0
-          inline-max-width="100%"
-          inline-box-sizing="border-box"
-          inline-font-size={scen().fontSize()}
-          inline-padding={`${scen().spacing(-1)}px ${scen().spacing(1)}px `}
-          value={value}
-          onInput={onChange}
-          placeholder={placeholder}
-          ref={parentRef}
-          {...rest}
-        />
-        {afterVnode}
-      </middle>
+      {beforeVnode}
+      <input
+        flex-grow-1
+        inline
+        inline-border-width-0
+        inline-width='100%'
+        inline-box-sizing="border-box"
+        inline-font-size={scen().fontSize()}
+        inline-padding={`${scen().spacing(-1)}px ${scen().spacing(1)}px `}
+        value={value}
+        onInput={onChange}
+        placeholder={placeholder}
+        ref={parentRef}
+        {...rest}
+      />
+      {afterVnode}
       {suffixVnode}
     </container>
   )
@@ -97,29 +95,29 @@ Input.Style = (fragments) => {
     onBlur()
   })
 
-  rootElements.container.style(() => {
+  rootElements.container.style(({ focused }) => {
     return {
+      borderStyle: 'solid',
+      borderWidth: 1,
       borderRadius: scen().radius(),
+      borderColor: focused.value ? scen().interactable().active().color(-1) : scen().separateColor(),
+      boxShadow: focused.value ?
+        `0 0 0 ${scen().outlineWidth()}px ${scen().interactable().active().shadowColor()}` :
+        undefined,
     }
   })
 
   const commonStyle = {
-    borderRadius: scen().radius(),
     color: scen().color(),
     borderStyle: 'solid',
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: scen().separateColor()
   }
 
-  rootElements.input.style(({ focused }) => ({
-    ...commonStyle,
+  rootElements.input.style(() => ({
+    color: scen().color(),
     lineHeight: scen().lineHeight(),
     outline: 0,
-    borderColor: focused.value ? scen().interactable().active().color(-1) : scen().separateColor(),
-    boxShadow: focused.value ?
-      `0 0 0 ${scen().outlineWidth()}px ${scen().interactable().active().shadowColor()}` :
-      undefined,
-    zIndex: 1
   }))
 
   const commonPrefixStyle = {
@@ -127,11 +125,11 @@ Input.Style = (fragments) => {
     backgroundColor: scen().fieldColor(),
   }
 
-  fragments.prefix.elements.prefix.style({ ...commonPrefixStyle, borderRight: 0})
-  fragments.suffix.elements.suffix.style({ ...commonPrefixStyle, borderLeft: 0})
+  fragments.prefix.elements.prefix.style({ ...commonPrefixStyle, borderRight: 1})
+  fragments.suffix.elements.suffix.style({ ...commonPrefixStyle, borderLeft: 1})
 
-  fragments.before.elements.before.style({ ...commonStyle, borderRight: 0 })
-  fragments.after.elements.after.style({ ...commonStyle, borderLeft: 0})
+  fragments.before.elements.before.style(commonStyle)
+  fragments.after.elements.after.style(commonStyle)
 }
 
 Input.Style.propTypes = {

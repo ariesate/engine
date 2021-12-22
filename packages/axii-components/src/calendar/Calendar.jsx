@@ -5,7 +5,7 @@ import {
   propTypes
 } from 'axii'
 import scen from '../pattern'
-
+// TODO 替换成 dayjs
 import moment from 'moment';
 
 export function Calendar({ value, current, onSelect, onSelectNextMonth, onSelectLastMonth, onSelectLastYear, onSelectNextYear, onChange }, fragments) {
