@@ -71,9 +71,13 @@ function NodeForm(props) {
 
   useViewEffect(() => {
     const insideState = context.dm.insideState;
+    let formJsonChangedLockSt = 0;
+    let formJsonChangedLockEd = 0;
     watch(() => insideState.selectedCell, () => {
       // 防止watch callback触发之后去destroy组件内的renderProcess，导致组件响应性丢失
       setTimeout(() => {
+        formJsonChangedLockSt++;
+        console.log('formJsonChangedLockSt: ', formJsonChangedLockSt);
         if (showConfigForm.value) {
           const cell = insideState.selectedCell;
           const { configJSON, ConfigPanel } = insideState.selectedNodeComponent;
@@ -82,11 +86,13 @@ function NodeForm(props) {
             const mergedJson = mergeJsonAndData(configJSON, data);
             formJson.value = mergedJson;  
           } else {
-            formJson.value = data;  
+            formJson.value = data;
           }
-      } else {
+        } else {
           formJson.value = null;
         }
+        formJsonChangedLockEd++;
+        console.log('formJsonChangedLockEd: ', formJsonChangedLockEd);
       });
     });
 
@@ -99,9 +105,13 @@ function NodeForm(props) {
         traverse(formJson.value)
       }
     }, () => {
-      console.log('form json changed:', formJson.value);
+      console.log('formJsonChangedLockSt !== formJsonChangedLockEd: ', formJsonChangedLockSt, formJsonChangedLockEd);
+      if (formJsonChangedLockSt !== formJsonChangedLockEd) {
+        return;
+      }
       // 确保这个watch callback不会依赖 selectedXX 相关数据的变更
       setTimeout(() => {
+        console.log('form json changed:', formJson.value);
         if (formJson.value) {
           const rawData = fallbackEditorDataToNormal(formJson.value);
           onChange(rawData);          
