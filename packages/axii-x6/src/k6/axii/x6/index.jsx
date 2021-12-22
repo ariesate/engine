@@ -12,6 +12,7 @@ import {
   watch,
   traverse,
   useViewEffect,
+  destroyComputed,
 } from "axii";
 import ShareContext from '../ShareContext';
 
@@ -75,7 +76,11 @@ export const Register = {
         wrap.innerHTML = '';
       });
 
+      let watchTokens = [];
       function refreshNodeSize(){
+        watchTokens.forEach(token => destroyComputed(token));
+        watchTokens = [];
+
         const { width, height } = (wrap.children[0].getBoundingClientRect());
         // @TIP: +2 是为了包含dom border
         node.setProp({ width: width + 2, height: height + 2 });
@@ -116,14 +121,33 @@ export const Register = {
 
         // render edge
         requestAnimationFrame(() => {
+          // 先清除“边”
+          graph.model.getEdges().forEach(edgeIns => {
+            if (edgeIns.source.cell === nodeConfig.id) {
+              edgeIns.remove();
+            }
+          });
+
+          // TODO:x6不会添加完全重复的“边”
           nodeConfig.edges.forEach(edge => {
-            const edgeConfig = EdgeCpt({ nodeConfig, edge });
+            const edgeConfig = EdgeCpt({ node, edge });
             const c = assignDefaultEdge(edgeConfig, edge);
             const remoteId = c.id;
             delete c.id;
             const edgeIns = graph.addEdge({
               ...c,
             });
+
+            // 监听并动态修改label
+            const [_, token] = watch(() => edgeConfig.label, () => {
+              setTimeout(() => {
+                const c = assignDefaultEdge(edgeConfig, edge);
+                delete c.id;
+                edgeIns.setLabels([c.label]);
+              });
+            });
+            watchTokens.push(token);
+
             edgeIns.setData({ remoteId }, { silent: true });
           });
         });

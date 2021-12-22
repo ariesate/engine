@@ -76,7 +76,7 @@ function Root({ children, height, ref }, frags) {
         height: height || 800,
         minimap: elementRefs.miniMap,
       });
-      x6.Graph.renderNodes(dm.nodes);
+      x6.Graph.renderNodes(dm.nm.nodes);
     } 
     return () => {
       // @TODO: dispose会触发其它render的卸载，当此时当前这个render并没有卸载完成
