@@ -7,7 +7,8 @@ import {
   lineHeightValues,
   backgroundColors,
   zIndexs,
-  shadows
+  shadows,
+  fontWeights
 } from './basic.js';
 import { INDEX } from './case.js'
 
@@ -94,7 +95,11 @@ const valueRules = {
     return (size === undefined ? lineHeightValues() : (size === 1 ? lineHeightValues() : lineHeightValues(1))) + offset
   },
   weight({ stressed }) {
-    return stressed ? 'bold' : undefined
+    const matrix = [
+      [undefined, fontWeights()],
+      [INDEX.stressed, fontWeights(1)],
+    ]
+    return matrixMatch([stressed], matrix)
   },
   spacing({ size }, offset = 0) {
     const matrix = [
