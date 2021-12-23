@@ -105,13 +105,11 @@ function NodeForm(props) {
         traverse(formJson.value)
       }
     }, () => {
-      console.log('formJsonChangedLockSt !== formJsonChangedLockEd: ', formJsonChangedLockSt, formJsonChangedLockEd);
       if (formJsonChangedLockSt !== formJsonChangedLockEd) {
         return;
       }
       // 确保这个watch callback不会依赖 selectedXX 相关数据的变更
       setTimeout(() => {
-        console.log('form json changed:', formJson.value);
         if (formJson.value) {
           const rawData = fallbackEditorDataToNormal(formJson.value);
           onChange(rawData);          

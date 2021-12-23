@@ -43,8 +43,6 @@ function Graph({ data, height, toolbarExtra }, ref) {
     dm.readComponents(rootContext.groups);
 
     rootContext.elementRefs.graph = graphRef.current;
-
-    console.log('[Graph] useView')
   });  
 
 
