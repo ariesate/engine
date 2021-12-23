@@ -8,9 +8,6 @@ export default function watch(computation, callback, runAtOnce) {
   let isFirstRun = true
   const token = createComputed((lastValue, watchAnyMutation) => {
     result = computation(watchAnyMutation)
-    if (isFirstRun) {
-      isFirstRun = false
-    }
 
     if (!isFirstRun || runAtOnce) {
       // TODO callback 中发生的数据变化不应该影响当前的 computation ，使用 deferred ？
@@ -18,6 +15,10 @@ export default function watch(computation, callback, runAtOnce) {
       //  目前用 deferred 测试用例会有很多失败。
       // deferred(() => callback(result))
       callback(result)
+    }
+
+    if (isFirstRun) {
+      isFirstRun = false
     }
   }, TYPE.TOKEN)
   return [result, token]
