@@ -197,8 +197,14 @@ class NodeManager {
     this.nodes.push(n);
   }
   addEdge(nodeId: string, edge: IEdgeData) {
-    const n = this.findNode(nodeId);
+    const n = this.findNode(nodeId, false);
     n.edges.push(edge);
+
+    const nextNode = this.findNode(edge.target.cell, false);
+    if (nextNode) {
+      nextNode.prev.push(n);
+      n.next.push(nextNode);  
+    }
   }
   findEdgeById(edgeId: string): IEdgeData | null {
     let edge = null;
@@ -250,23 +256,44 @@ class NodeManager {
       }
     });
     if (i >= 0) {
+      const currentNode = this.nodes[i];
+      // 清理next里的当前节点
+      currentNode.next.forEach(nextNode => {
+        const fi = nextNode.prev.findIndex(n => n.id === currentNode.id);
+        nextNode.prev.splice(fi, 1);
+      });
+      // 清理prev的当前节点
+      currentNode.prev.forEach(prevNode => {
+        const fi = prevNode.next.findIndex(n => n.id === currentNode.id);
+        prevNode.next.splice(fi, 1);
+      });
+
       this.nodes.splice(i, 1);
       return true;
     }
   }
   removeEdge(edgeId: string): boolean {
     let i = -1;
-    const n = this.nodes.find(n => {      
+    let targetNodeId
+    const currentNode = this.nodes.find(n => {      
       return n.edges.find((e, fi) => {
         const r = e.id === edgeId;
         if (r) {
           i = fi;
+          targetNodeId = e.target.cell;
         }
         return r;
       });
     });
-    if (n && i >= 0) {
-      n.edges.splice(i, 1);
+    if (currentNode && i >= 0) {
+      currentNode.edges.splice(i, 1);
+      const removedNextIndex = currentNode.next.findIndex(n => n.id === targetNodeId);
+      const nextNode = currentNode.next[removedNextIndex];
+      const removedPrevInNextNodeIndex = nextNode.prev.findIndex(n => n.id === currentNode.id);
+      // 清理next的prev
+      nextNode.prev.splice(removedPrevInNextNodeIndex, 1);
+      // 清理next
+      currentNode.next.splice(removedNextIndex, 1);
       return true;
     }
   }

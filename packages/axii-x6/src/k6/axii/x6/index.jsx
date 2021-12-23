@@ -23,7 +23,7 @@ function assignDefaultEdge(customEdge = {}, edge) {
     router: 'manhattan',
     attrs: {
       line: {
-        stroke: '#5F95FF',
+        stroke: customEdge.lineColor || '#5F95FF',
         strokeWidth: 1,
         targetMarker: {
           name: 'classic',
@@ -130,7 +130,7 @@ export const Register = {
 
           // TODO:x6不会添加完全重复的“边”
           nodeConfig.edges.forEach(edge => {
-            const edgeConfig = EdgeCpt({ node, edge });
+            const edgeConfig = EdgeCpt({ node: nodeConfig, edge });
             const c = assignDefaultEdge(edgeConfig, edge);
             const remoteId = c.id;
             delete c.id;
