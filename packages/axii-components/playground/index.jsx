@@ -75,8 +75,8 @@ const availablePlayground = {
   ],
   Misc: [
     'button', // x
-    'icon', // x
-    'iconPark', // x
+    'icon*', // x
+    'iconPark*', // x
   ],
   Layout: [
     'grid*', // 7  row/col 实现

@@ -15,6 +15,6 @@ function App() {
 	</div>
 }
 
-const Fpp =createComponent(App)
+const Fpp = createComponent(App)
 
 render(<Fpp/>, document.getElementById('root'))

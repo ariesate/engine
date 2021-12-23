@@ -1,6 +1,6 @@
 /** @jsx createElement */
 import { createElement, render, reactive, atomComputed, atom } from 'axii'
-import { useLayer } from 'axii-components'
+import { useLayer, Button } from 'axii-components'
 
 function App() {
 
@@ -21,13 +21,13 @@ function App() {
   const { node } = useLayer(<div style={style}>
     <div>show message in page center</div>
     <div>
-      <button onClick={() => visible.value = false}>Close</button>
+      <Button onClick={() => visible.value = false}>Close</Button>
     </div>
   </div>, { visible })
 
   return (
     <div>
-      <button onClick={() => visible.value = true}>open modal</button>
+      <Button onClick={() => visible.value = true}>open modal</Button>
       {node}
     </div>
   )

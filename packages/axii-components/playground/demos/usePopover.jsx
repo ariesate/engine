@@ -1,6 +1,6 @@
 /** @jsx createElement */
 import { createElement, render } from 'axii'
-import { usePopover, Menu } from 'axii-components'
+import { usePopover, Menu, Button } from 'axii-components'
 
 function App() {
 
@@ -19,7 +19,7 @@ function App() {
 
 	return (
 		<div>
-			<button ref={source} onClick={() => visible.value = !visible.value}>open/close popover</button>
+			<Button ref={source} onClick={() => visible.value = !visible.value}>open/close popover</Button>
 			{node}
 		</div>
 	)

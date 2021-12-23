@@ -1,6 +1,6 @@
 /** @jsx createElement */
 import { createElement, render, useRef } from 'axii'
-import ToastGrid from 'axii-components/toastGrid'
+import { ToastGrid, Button } from 'axii-components'
 
 function App() {
 	const editor = useRef()
@@ -243,7 +243,7 @@ function App() {
 
 	return (
 		<div>
-			<button onClick={save}>保存</button>
+			<Button primary onClick={save}>保存</Button>
 			<ToastGrid ref={editor} data={data} columns={columns} header={{align: 'left'}}/>
 		</div>
 	)

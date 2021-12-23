@@ -1,6 +1,7 @@
 /** @jsx createElement */
 import { createElement, render, atom } from 'axii'
 import { Input } from 'axii-components'
+import HomeStay from 'axii-icons/HomeStay'
 
 const refPrefix = atom('prefix')
 
@@ -8,13 +9,18 @@ const slots = {
   prefix() {
     return refPrefix
   },
-  before: atom('test'),
   suffix: atom('suffix')
 }
 
-setTimeout(() => {
-  slots.before.value = undefined
-  // refPrefix.value = 'prefix1'
-}, 1000)
-//
-render(<Input>{slots}</Input>, document.getElementById('root'));
+const slot = {
+  before: <HomeStay />
+}
+
+render(<div>
+  <div>
+    <Input>{slots}</Input>
+  </div>
+  <div style={{ marginTop: 8 }}>
+    <Input>{slot}</Input>
+  </div>
+</div>, document.getElementById('root'));
