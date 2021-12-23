@@ -12,7 +12,7 @@ import { RootContext } from './Root';
 import Toolbar from './Toolbar';
 import * as x6 from './x6';
 
-function Graph({ data, height }, ref) {
+function Graph({ data, height, toolbarExtra }, ref) {
   const rootContext = useContext(RootContext);
   const { nodes, edges } = reactive(data);
   const graphRef = useRef();
@@ -49,7 +49,7 @@ function Graph({ data, height }, ref) {
   return (
     <graphContainer block >
       <toolbarBox block >
-        <Toolbar />
+        <Toolbar extra={toolbarExtra} />
       </toolbarBox>
       <graph block ref={graphRef} style={{ backgroundColor: '#fff' }}>
 

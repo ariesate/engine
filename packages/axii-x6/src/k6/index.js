@@ -4,6 +4,7 @@ export { default as Graph } from './axii/Graph';
 export { default as NodeForm } from './axii/NodeForm';
 export { default as Register } from './axii/Register';
 export { default as MiniMap } from './axii/MiniMap';
+export { default as ShareContext } from './axii/ShareContext';
 
 export { K6Node } from './Node';
 export { K6Port } from './Port';

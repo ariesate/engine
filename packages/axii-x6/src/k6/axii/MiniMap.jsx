@@ -22,10 +22,10 @@ const MiniMap = createComponent((() => {
     });
 
     return (
-      <k6MiniMapContainer block block-margin-top="0px">
-        <miniTitle block block-padding="8px 8px 0">缩略图</miniTitle>
-        <k6MiniMap ref={mmap} block block-width="100%" block-height="200px">
-        </k6MiniMap>
+      <k6MiniMapContainer block flex-display block-margin-top="0px" block-padding="8px">
+        <miniTitle block block-padding="0 0 8px 0">小地图</miniTitle>
+        <img ref={mmap} height="80" style={{ minWidth: '120px', display: 'none ' }} />
+        {/* <k6MiniMap ref={mmap} block block-width="100%" block-height="200px" /> */}
       </k6MiniMapContainer>
     );
   }
@@ -34,6 +34,8 @@ const MiniMap = createComponent((() => {
     frag.root.elements.k6MiniMapContainer.style(props => {
       return {
         backgroundColor: '#fff',
+        border: '1px solid #666',
+        overflow: 'hidden',
         fontSize: '14px',
         display: props.show.value ? 'block' : 'none',
       };
@@ -47,7 +49,7 @@ function MiniMapContainer(props) {
   const context = useContext(RootContext);
 
   const showMiniMap = computed(() => {
-    const selected = !!context.dm.insideState.selectedConfigJSON && !!context.dm.insideState.selectedConfigData;
+    const selected = !!context.dm.insideState.selectedCell;
 
     return !selected;
   });

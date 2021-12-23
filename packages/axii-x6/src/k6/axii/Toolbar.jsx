@@ -33,7 +33,8 @@ function Split() {
   )
 }
 
-function Toolbar({}) {
+function Toolbar(props) {
+  const { extra = {} } = props;
   const context = useContext(RootContext);
 
   useViewEffect(() => {
@@ -44,9 +45,13 @@ function Toolbar({}) {
   return (
     <k6Toolbar block flex-display block-padding="4px 8px">
       <quickKeys block flex-grow="1" flex-display flex-align-items="center">
-        <Item>
-          <Mouse />
-        </Item>
+        <extraActions>
+          <addAction onClick={() => {
+              context.dm.addNode();
+          }}>
+            {extra.addNode ? extra.addNode : (<Button primary >新增</Button>)}            
+          </addAction>
+        </extraActions>
         <Split />
         <Item>
           <ZoomIn onClick={() => context.dm.zoomIn()} />
@@ -61,18 +66,16 @@ function Toolbar({}) {
         </Item>
         <Split />
         {() => {
-          let enabled = context.dm.insideState.selectedCellId;
+          let enabled = context.dm.insideState.selectedCell;
           return (
-            <Item disabled={!enabled} onClick={() => context.dm.removeCurrent()}>
+            <Item disabled={!enabled} onClick={() => context.dm.removeIdOrCurrent()}>
               <DeleteOne />
             </Item>  
           );
         }}
       </quickKeys>
-      <extraActions >
-        <Button primary onClick={() => {
-          context.dm.addNode();
-        }} >新增</Button>
+      <extraActions block flex-display flex-align-items="center">
+        双击空白处可新增节点
       </extraActions>
     </k6Toolbar>
   );
@@ -82,6 +85,9 @@ Toolbar.Style = (frag) => {
   const el = frag.root.elements;
   el.k6Toolbar.style({
     backgroundColor: '#eee',
+  });
+  el.extraActions.style({
+    color: '#999',
   });
 };
 

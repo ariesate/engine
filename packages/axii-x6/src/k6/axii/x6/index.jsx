@@ -4,6 +4,7 @@ import { Graph as X6Graph, Markup } from '@antv/x6'
 import merge from 'lodash/merge';
 import pick from 'lodash/pick';
 import {
+  Fragment,
   tryToRaw,
   createElement,
   render,
@@ -11,13 +12,29 @@ import {
   watch,
   traverse,
   useViewEffect,
+  destroyComputed,
 } from "axii";
+import ShareContext from '../ShareContext';
+
 import { DEFAULT_SHAPE } from '../../Node';
 
-function assignDefaultEdge(edge = {}) {
+function assignDefaultEdge(customEdge = {}, edge) {
   return merge({
     router: 'manhattan',
-  }, edge);
+    attrs: {
+      line: {
+        stroke: '#5F95FF',
+        strokeWidth: 1,
+        targetMarker: {
+          name: 'classic',
+          size: 8,
+        },
+      },
+      text: {
+        fill: '#666',
+      }
+    },
+  }, edge, customEdge);
 }
 
 export const Register = {
@@ -42,58 +59,96 @@ export const Register = {
       const wrap = document.createElement('div')
       // nodeConfig is reactive
       const nodeConfig = dm.findNode(node.id);
-      
-      const renderController = render(<NodeCpt 
+      const shareContextValue = dm.shareContextValue;
+      const RegisterPort = PortCpt.RegisterPort ? PortCpt.RegisterPort : () => <></>;
+
+      const renderController = render(<ShareContext.Provider value={shareContextValue} >
+        <NodeCpt
           node={nodeConfig}
-          RegisterPort={PortCpt.RegisterPort}
-      />, wrap);
+          state={dm.insideState}
+          RegisterPort={RegisterPort}
+          onRemove={() => dm.removeIdOrCurrent(node.id)}
+        />
+      </ShareContext.Provider>, wrap);
 
       dm.once('dispose', () => {
         renderController.destroy();
         wrap.innerHTML = '';
       });
 
+      let watchTokens = [];
       function refreshNodeSize(){
+        watchTokens.forEach(token => destroyComputed(token));
+        watchTokens = [];
+
         const { width, height } = (wrap.children[0].getBoundingClientRect());
-        node.setProp({ width, height });
+        // @TIP: +2 是为了包含dom border
+        node.setProp({ width: width + 2, height: height + 2 });
 
         // render port
-        const portConfigArr = PortCpt.getConfig(nodeConfig.id);
-        const ports = {
-          groups: portConfigArr.map((portConfig, index) => {
-            const { portId, position, size } = portConfig;
-            return {
-              [`${portId}${index}`]: {
-                position: [position.x, position.y],
-                attrs: {
-                  fo: {
-                    width: size.width,
-                    height: size.height,
-                    magnet: true,
+        if (PortCpt.getConfig) {
+          const portConfigArr = PortCpt.getConfig(nodeConfig.id);
+          const ports = {
+            groups: portConfigArr.map((portConfig, index) => {
+              const { portId, position, size } = portConfig;
+              return {
+                [`${portId}${index}`]: {
+                  position: [position.x, position.y],
+                  attrs: {
+                    fo: {
+                      width: size.width,
+                      height: size.height,
+                      magnet: true,
+                    }
                   }
                 }
-              }
-            };
-          }).reduce((p, n) => Object.assign(p, n), {}),
-          items: portConfigArr.map((portConfig, index) => {
-            const { portId, position } = portConfig;
-            return {
-              id: portId,
-              group: `${portId}${index}`,
-              position,
-            };
-          }),
-        };
-        node.setProp('ports', ports);
-        window.ports = ports;
+              };
+            }).reduce((p, n) => Object.assign(p, n), {}),
+            items: portConfigArr.map((portConfig, index) => {
+              const { portId, position } = portConfig;
+              return {
+                id: portId,
+                group: `${portId}${index}`,
+                position,
+              };
+            }),
+          };
+          node.setProp('ports', ports);
+          window.ports = ports;
+        } else {
+          console.error('Register Port getConfig method is undefined');
+        }
+
         // render edge
         requestAnimationFrame(() => {
+          // 先清除“边”
+          graph.model.getEdges().forEach(edgeIns => {
+            if (edgeIns.source.cell === nodeConfig.id) {
+              edgeIns.remove();
+            }
+          });
+
+          // TODO:x6不会添加完全重复的“边”
           nodeConfig.edges.forEach(edge => {
-            const edgeConfig = EdgeCpt(nodeConfig, edge);
-            const c = assignDefaultEdge(edgeConfig);
+            const edgeConfig = EdgeCpt({ node, edge });
+            const c = assignDefaultEdge(edgeConfig, edge);
+            const remoteId = c.id;
+            delete c.id;
             const edgeIns = graph.addEdge({
               ...c,
             });
+
+            // 监听并动态修改label
+            const [_, token] = watch(() => edgeConfig.label, () => {
+              setTimeout(() => {
+                const c = assignDefaultEdge(edgeConfig, edge);
+                delete c.id;
+                edgeIns.setLabels([c.label]);
+              });
+            });
+            watchTokens.push(token);
+
+            edgeIns.setData({ remoteId }, { silent: true });
           });
         });
       }
@@ -108,6 +163,12 @@ export const Register = {
       // @TODO:依赖myNode的axii渲染完成之后的动作，先加延时解决
       setTimeout(() => {
         refreshNodeSize();
+        const portConfigArr = PortCpt.getConfig(nodeConfig.id)
+        if (portConfigArr.length) {
+          watch(() => portConfigArr.forEach(p => [p.position.x]), () => {
+            refreshNodeSize();
+          });
+        }
       }, 50);
 
       return wrap;
@@ -116,7 +177,7 @@ export const Register = {
   registerPortRender({ getDm }) {
     return args => {
       const dm = getDm();
-      const node = args.node;
+      const { node, port } = args;
       const originNode = dm.findNode(node.id);
       const nodeComponent = dm.getShapeComponent(originNode.shape);
   
@@ -124,10 +185,12 @@ export const Register = {
       const container = selectors && selectors.foContent
       if (container) {
         const PortCpt = nodeComponent[1];
-        render(createElement(PortCpt, {
-          node: originNode,
-        }), container);
-      }  
+        const shareContextValue = dm.shareContextValue;
+        
+        render(<ShareContext.Provider value={shareContextValue} >
+          <PortCpt node={originNode} port={port} />
+        </ShareContext.Provider>, container);
+      }
     }
   },
 };
@@ -148,10 +211,14 @@ export const Graph = {
       onPortRendered: Register.registerPortRender({
         getDm: () => this.dm,
       }),
-      onAddEdge(nodeId, edgeId) {
-        dm.addNewEdge(nodeId,edgeId);
+      onAddEdge(nodeId, edge, edgeIns) {
+        dm.addNewEdge(nodeId, edge).then(remoteId => {
+          edgeIns.setData({ remoteId });
+        });
       },
     });
+
+    this.syncMiniMap(config.minimap);
 
     const allShapeComponents = dm.getAllShapeComponents();
 
@@ -170,11 +237,13 @@ export const Graph = {
       }));  
     });
 
-    graph.on('cell:click', ({ cell }) => {
+    graph.on('cell:click', (e) => {
+      const { cell } = e;
       if (cell.isNode()) {
         dm.selectNode(cell.id);
       } else if (cell.isEdge()) {
-        dm.selectEdge(cell.id);
+        const remoteId = cell.getData().remoteId;
+        dm.selectEdge(remoteId || cell.id);
       }
     });
     graph.on('blank:click', (arg) => {      
@@ -185,9 +254,19 @@ export const Graph = {
       const { x, y } = node.position();
       dm.syncNode(node.id, { x, y });
     });
+    graph.on('blank:dblclick', ({ e, x, y}) => {
+      dm.addNode({ x, y })
+    });
 
     dm.on('remove', (id) => {
-      graph.removeCell(id);
+      const cells = graph.getCells();
+      const cell = cells.find(cell => cell.getData().remoteId === id);
+      let removedCell;
+      if (cell) {
+        removedCell = graph.removeCell(cell.id);
+      } else {
+        removedCell = graph.removeCell(id);
+      }
     });
     dm.on('zoom-in', (v) => {
       graph.zoom(v);
@@ -201,6 +280,9 @@ export const Graph = {
     dm.once('dispose', () => {
       this.dispose();
     });
+    dm.on('notifyComponent', () => {
+      this.syncMiniMap();
+    });
 
     this.graph = graph;
     this.dm = dm;
@@ -213,9 +295,29 @@ export const Graph = {
     });
   },
 
+  syncMiniMap(img) {
+    clearInterval(this.syncMiniMapSi);
+    const task = () => {
+      this.syncMiniMapSi = setTimeout(() => {
+        requestIdleCallback(() => {
+          graph.toPNG((dataUri) => {
+            // 下载
+            if (img) {
+              requestIdleCallback(() => {
+                img.src = dataUri;
+                img.style.display = 'block';
+                task();
+              });
+            }
+          });
+        });
+      }, 1500);  
+    }
+    task();
+  },
+
   addNode(nodeConfig) {
     const htmlKey = this.getHtmlKey(nodeConfig.shape);
-
     const nodeConfigView = nodeConfig.view;
     delete nodeConfig.view;
 
@@ -225,10 +327,6 @@ export const Graph = {
       shape: 'html',
       portMarkup: [ Markup.getForeignObjectMarkup() ],
       attrs: {
-        rect: {
-          fill: '#fff',
-          stroke: '#000',
-        },
       },
       html: htmlKey,
       ports: {},      
@@ -248,11 +346,17 @@ export const Graph = {
   },
   updateEdge(edge, newEdgeConfig) {
     const allEdges = this.graph.model.getEdges();
-    const edgeIns = allEdges.find(e => e.id === edge.id);
+    const edgeIns = allEdges.find(e => {
+      if (e.id === edge.id) {
+        return true;
+      }
+      return e.getData().remoteId === edge.id;
+    });
     edgeIns.setLabels(newEdgeConfig.label || '');
-    return pick(edgeIns, ['id', 'target', 'source', 'label', 'name', 'type']);
+    return pick(edgeIns, ['target', 'source', 'label', 'name', 'type']);
   },
   dispose() {
+    clearTimeout(this.syncMiniMapSi);
     const { graph } = this;
     const cells = graph.getCells();
     cells.forEach((cell) => {
