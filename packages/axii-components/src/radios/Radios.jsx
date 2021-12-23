@@ -34,7 +34,6 @@ Radios.propTypes = {
   }),
   renderOption: propTypes.function.default(() => (option) => option),
   onChange: propTypes.callback.default(() => (option, {value, optionToValue}) => {
-    console.log(option, optionToValue)
     value.value = optionToValue(option)
   }),
   optionToValue: propTypes.function.default(() => o => o)

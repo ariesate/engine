@@ -50,6 +50,7 @@ export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), 
       display: 'block',
       left: 0,
       top: 0,
+      marginTop: 4,
       ...getContainerRect(rect, sourceRef.current)
     }
   })

@@ -38,7 +38,7 @@ export function DatePicker({focused, onFocus, onBlur, value, onChange, format,})
       inline
       tabindex={-1}
       onFocusOut={() => onBlur()}
-      style={{background: "#fff", zIndex: 99999}}
+      inline-display-none={atomComputed(() => !focused.value)}
       ref={calendarRef}
     >
       <calendar use={Calendar} value={value} onChange={onChange}/>
@@ -75,7 +75,9 @@ DatePicker.propTypes = {
 
 DatePicker.Style = (fragments) => {
   fragments.root.elements.calendarContainer.style({
-    boxShadow: scen().elevate().shadow()
+    boxShadow: scen().elevate().shadow(),
+    background: scen().active().bgColor(),
+    zIndex: scen().picker().zIndex()
   })
 }
 

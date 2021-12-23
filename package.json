@@ -1,9 +1,17 @@
 {
+  "version": "0.0.1",
+  "description": "you should not publish this package.",
+  "main": "index.js",
   "name": "@ariesate/engine-monorepo",
   "private": "true",
   "scripts": {
     "preinstall": "node scripts/preinstall",
     "reset": "pnpm -r exec -- rm -rf ./node_modules"
+  },
+  "author": "ariesate@outlook.com",
+  "license": "MIT",
+  "dependencies": {
+    "butterfly-dag": "^4.0.38"
   },
   "devDependencies": {
     "@ariesate/are": "workspace:*",

@@ -1,92 +1,16 @@
-import { Scenario, createRange, matrixMatch } from 'axii'
-import { generate, presetPalettes } from '@ant-design/colors';
-
-/**
- * 规划该组件库的 Pattern
- *
- * values: 具体的常量值
- *
- * base: 从各个 values 中选出的基准值。包括
- * color
- *
- * font: {
- *   family,
- *   box: { size, lineHeight, word-spacing },
- *   weight
- * }
- * space
- * shadow
- * lineWidth
- */
-
-/**
- * 场景：undefined 就是取默认值
- * interactive: 不可交互 1 可交互 2 正在交互
- * activity: 正常 1 常亮 3 禁用
- * invert: 不反色 1 发色
- *
- * stress: 不强调 1 强调
- *
- * size: 正常 1 小 size 2 size
- *
- * 得到的值：
- * 颜色类： color/bgColor/fieldColor/separateColor
- *
- * 字体类：
- * family
- * size
- * weight
- * lineHeight
- *
- * 其他：
- * lineWidth
- * spacing
- * shadow
- */
-
-/***************
- * CONSTANTS
- **************/
-export const colors = {}
-Object.keys(presetPalettes).forEach(name => {
-  colors[name] = createRange(presetPalettes[name], 5)
-})
-colors.axii = createRange(generate('#0052CC'), 5)
-colors.red = createRange(generate('#dd3306'), 5)
-colors.black = createRange(['#666', '#555', '#444', '#333', '#222', '#111', '#000'], 3)
-colors.white = createRange(['#fff'], 0)
-colors.gray = createRange(['#efefef', '#eeeeee', '#cecece', '#cccccc', '#bbbbbb'], 2)
-
-
-const fontSizes = createRange([12, 14, 16, 20, 24, 30, 38, 46, 56, 68], 1)
-const spaceValues = createRange([4, 8, 12, 20, 32, 48, 80, 128], 1)
-
-const PRIMARY_COLOR = 'axii'
-
-/***************
- * Index
- **************/
-const INDEX = {
-  interactable: 1,
-
-  active: {
-    active: 1, // 常亮
-    inactive: 2 // 暗
-  },
-
-  inverted: 1, //反色
-
-  stressed: 1, // 强调
-
-  interact: 1, // 交互
-
-  size: {
-    small: 1, // 小尺寸
-    large: 2, // 大尺寸
-  },
-
-  elevate: 1
-}
+import { Scenario, matrixMatch } from 'axii'
+import {
+  colors,
+  spaceValues,
+  fontSizes,
+  PRIMARY_COLOR,
+  lineHeightValues,
+  backgroundColors,
+  zIndexs,
+  shadows,
+  fontWeights
+} from './basic.js';
+import { INDEX } from './case.js'
 
 // 正色是黑色
 // 主色是蓝色
@@ -94,7 +18,7 @@ const INDEX = {
 
 const valueRules = {
   // 颜色类，受交互状态、反色等规则影响。
-  color({ interactable, stress, inverted, active, interact }, offset = 0, color=PRIMARY_COLOR) {
+  color({ interactable, stress, inverted, active, interact, feature }, offset = 0, color=PRIMARY_COLOR) {
     /**
      * 判断维度：
      * 1. 先判断 interactable。如果否，判断 stress.
@@ -108,30 +32,27 @@ const valueRules = {
      *
      */
     const matrix = [
-      [undefined, undefined, undefined, undefined, undefined, colors.black(offset)],  // 正常情况下是褐色
-      [undefined, INDEX.stressed, undefined, undefined, undefined, colors.black(1 + offset)], // 强调的时候黑色变深
-      [INDEX.interactable, undefined, INDEX.inverted, undefined, undefined, colors.white()], // 反色
-      [INDEX.interactable, undefined, undefined, undefined, undefined, colors.black(offset)], // 可交互时，默认颜色是正色
-      [INDEX.interactable, undefined, undefined, INDEX.active.active, undefined, colors[color](offset)], // 可交互并且激活时，显示的是主色。
-      [INDEX.interactable, undefined, undefined, INDEX.active.inactive, undefined, colors.gray()], // 可交互，但未激活是灰色
-      [INDEX.interactable, undefined, undefined, INDEX.active.active, INDEX.interact, colors[color](-1 + offset)], // 可交互，激活，正在交互时，主色变浅一点。
+      [undefined, undefined, undefined, undefined, undefined, undefined,colors.black(offset)],  // 正常情况下是褐色
+      [undefined, INDEX.stressed, undefined, undefined, undefined, undefined,colors.black(1 + offset)], // 强调的时候黑色变深
+      [INDEX.interactable, undefined, INDEX.inverted, undefined, undefined, undefined,colors.gray(-6)], // 反色
+      [INDEX.interactable, undefined, undefined, undefined, undefined, undefined,colors.black(offset)], // 可交互时，默认颜色是正色
+      [INDEX.interactable, undefined, undefined, INDEX.active.active, undefined, undefined,colors[color](offset)], // 可交互并且激活时，显示的是主色。
+      [INDEX.interactable, undefined, undefined, INDEX.active.inactive, undefined, undefined,colors.gray()], // 可交互，但未激活是灰色
+      [INDEX.interactable, undefined, undefined, INDEX.active.active, INDEX.interact, undefined,colors[color](-1 + offset)], // 可交互，激活，正在交互时，主色变浅一点。
+      // 根据不同的 feature 展示不同的颜色
+      [INDEX.interactable, undefined, undefined, undefined, undefined, INDEX.feature.danger ,colors.red(-1 + offset)],
+      [INDEX.interactable, undefined, undefined, undefined, INDEX.interact, INDEX.feature.danger ,colors.red(-2 + offset)],
     ]
 
-    return matrixMatch([interactable, stress, inverted, active, interact], matrix)
+    return matrixMatch([interactable, stress, inverted, active, interact, feature], matrix)
   },
   shadowColor(props, offset = 0, color = PRIMARY_COLOR) {
     return valueRules.color(props, offset - 4, color)
   },
   shadow({ elevate }, offset = 0) {
-    return ([
-      '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
-      '0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)',
-      '0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23)',
-      '0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22)',
-      '0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22)'
-    ])[offset]
+    return shadows(offset)
   },
-  bgColor({inverted, active, interact}, offset, color=PRIMARY_COLOR) {
+  bgColor({inverted, active, interact, feature}, offset, color=PRIMARY_COLOR) {
     /**
      * 判断维度: 正常情况下都是 transparent(undefined)
      * 1. 判断 invert
@@ -141,22 +62,25 @@ const valueRules = {
      *     1.2.1.1 interacting 是 变亮一点。否，正常
      */
     const matrix = [
-      [undefined, undefined, undefined, 'transparent'],
-      [undefined, INDEX.active.active, undefined, colors.white()],
-      [INDEX.inverted, undefined, undefined, colors[color](+ offset)],
-      [INDEX.inverted, INDEX.active.inactive, undefined, colors[color](-3 + offset)],
-      [INDEX.inverted, INDEX.active.active, undefined, colors[color](offset)],
-      [INDEX.inverted, undefined, INDEX.interact, colors[color](-1 + offset)],
-      [INDEX.inverted, INDEX.active.active, INDEX.interact, colors[color](-1 + offset)],
+      [undefined, undefined, undefined, undefined, 'transparent'],
+      [undefined, INDEX.active.active, undefined, undefined, colors.gray(-6)],
+      [INDEX.inverted, undefined, undefined, undefined, colors[color](offset)],
+      [INDEX.inverted, INDEX.active.inactive, undefined, undefined, colors[color](-3 + offset)],
+      [INDEX.inverted, INDEX.active.active, undefined, undefined, colors[color](offset)],
+      [INDEX.inverted, undefined, INDEX.interact, undefined, colors[color](-1 + offset)],
+      [INDEX.inverted, INDEX.active.active, INDEX.interact, undefined, colors[color](-1 + offset)],
+      // 根据不同的 feature 展示不同的颜色
+      [INDEX.inverted, undefined, undefined, INDEX.feature.danger ,colors.red(-1 + offset)],
+      [INDEX.inverted, undefined, INDEX.interact, INDEX.feature.danger ,colors.red(-2 + offset)],
     ]
 
-    return matrixMatch([inverted, active, interact], matrix)
+    return matrixMatch([inverted, active, interact, feature], matrix)
   },
   fieldColor() {
-    return colors.gray(-2)
+    return backgroundColors.base
   },
   separateColor() {
-    return colors.gray()
+    return colors.gray(-2)
   },
   // 受 size 影响
   fontSize({ size }, offset = 0) {
@@ -168,10 +92,14 @@ const valueRules = {
     return matrixMatch([size], matrix)
   },
   lineHeight({ size }, offset = 0) {
-    return (size === undefined ? 2 : (size === 1 ? 1.5 : 2.5)) + offset
+    return (size === undefined ? lineHeightValues() : (size === 1 ? lineHeightValues() : lineHeightValues(1))) + offset
   },
   weight({ stressed }) {
-    return stressed ? 'bold' : undefined
+    const matrix = [
+      [undefined, fontWeights()],
+      [INDEX.stressed, fontWeights(1)],
+    ]
+    return matrixMatch([stressed], matrix)
   },
   spacing({ size }, offset = 0) {
     const matrix = [
@@ -191,9 +119,20 @@ const valueRules = {
   fontFamily() {},
   radius() {
     return 2
+  },
+  zIndex({ zIndex }) {
+    const matrix = [
+      [undefined, zIndexs(-1)],
+      [INDEX.zIndex.fixed, zIndexs()],
+      [INDEX.zIndex.modal, zIndexs(1)],
+      [INDEX.zIndex.toast, zIndexs(2)],
+      [INDEX.zIndex.popover, zIndexs(3)],
+      [INDEX.zIndex.picker, zIndexs(4)],
+    ]
+    return matrixMatch([zIndex], matrix)
   }
-
 }
+
 
 /***************
  * export

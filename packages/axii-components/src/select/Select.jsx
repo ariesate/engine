@@ -61,7 +61,6 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
         tabindex={-1}
         onKeyDown={onKeyDown}
         onFocusOut={() => onBlur()}
-        style={{background: "#fff", zIndex: 99}}
         ref={optionListRef}
       >
         {() => options.map((option, index) => fragments.optionItem({ option, index })(
@@ -87,7 +86,7 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
     <container block flex-display-inline>
       <selectInput
         layout:inline
-        layout:inline-max-width="100%"
+        layout:inline-width="100%"
         use={Input}
         ref={composeRef(ref,  source)}
         onFocus={onInputFocus}
@@ -147,7 +146,9 @@ Select.Style = (fragments) => {
   })
 
   fragments.root.elements.optionList.style({
-    boxShadow: scen().elevate().shadow()
+    boxShadow: scen().elevate().shadow(),
+    zIndex: scen().picker().zIndex(),
+    background: scen().active().bgColor()
   })
 }
 

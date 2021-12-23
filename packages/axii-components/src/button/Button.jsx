@@ -3,14 +3,16 @@ import { propTypes, createElement, atom, createComponent, computed } from 'axii'
 import scen from "../pattern";
 
 export function Button({ children, size, onClick, disabled }) {
-	const paddingSize = computed(() => size.value ? scen()[size.value]().spacing() : scen().spacing())
+	const horizontalPadding = computed(() => size.value ? scen()[size.value]().spacing() : scen().spacing(1))
+	const verticalPadding = computed(() => size.value ? scen()[size.value]().spacing(size.value === 'large' ? -2 : -1) : scen().spacing(-1))
 	const lineHeight = computed(() => size.value ? scen()[size.value]().lineHeight() : scen().lineHeight())
+
 	return <button
 		inline
-		inline-padding-left={paddingSize}
-		inline-padding-right={paddingSize}
-		inline-padding-top-0
-		inline-padding-bottom-0
+		inline-padding-left={horizontalPadding}
+		inline-padding-right={horizontalPadding}
+		inline-padding-top={verticalPadding}
+		inline-padding-bottom={verticalPadding}
 		inline-line-height={lineHeight}
 		onClick={() => (!disabled.value) && onClick && onClick()}>
 		{children}
@@ -32,6 +34,7 @@ Button.Style = (fragments) => {
 
 		const colorScen = scen().interactable()
 		if (hasColor) colorScen.inverted()
+		if (danger.value) colorScen.danger()
 		if (disabled.value) colorScen.inactive()
 		return [hasColor, colorScen, color]
 	}
@@ -40,14 +43,14 @@ Button.Style = (fragments) => {
 		const [hasColor, colorScen, color] = getColorScen({ danger, primary, disabled })
 
 		return {
+			borderRadius: colorScen.radius(),
 			borderWidth: hasColor? 'none': '1px',
 			borderStyle: 'solid',
-			borderRadius: '2px',
 			borderColor: hasColor ? colorScen.bgColor(0, color) : colorScen.separateColor(),
 			cursor: disabled.value ? 'not-allowed' : 'pointer',
 			color: colorScen.color(0, color),
 			background: colorScen.bgColor(0, color),
-			outline: 'none'
+			outline: 'none',
 		}
 	})
 
