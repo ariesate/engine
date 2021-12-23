@@ -32,7 +32,7 @@ const INDEX = {
   zIndex: {
     fixed: 1,
     modal: 2,
-    toast: 3,
+    message: 3,
     popover: 4,
     picker: 5,
   }

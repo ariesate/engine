@@ -4,6 +4,11 @@ import { render, atom, reactive, atomComputed, createElement, Fragment } from 'a
 import layerStyle  from '../style/layer'
 import scen from "../pattern";
 import { colors } from '../pattern/basic.js';
+import Success from 'axii-icons/Success'
+import Info from 'axii-icons/Info'
+import Error from 'axii-icons/ErrorPrompt'
+
+// TODO 单独 show 内容的话，在销毁过程中会与有 type 的重叠
 
 function defaultCreateContainer() {
 	const portalRoot = document.createElement('div')
@@ -32,8 +37,22 @@ function defaultGetLayoutStyle() {
 }
 
 function defaultCreateCommonMessage(text, color, type) {
+  let Icon
+  switch (type) {
+    case 'success': {
+      Icon = <Success fill={color} size={20} unit={'px'} style={{ position: 'relative', top: 2 }} />
+      break
+    }
+    case 'error': {
+      Icon = <Error fill={color} size={20} unit={'px'} style={{ position: 'relative', top: 2 }} />
+      break
+    }
+    default: {
+      Icon = <Info fill={color} size={20} unit={'px'} style={{ position: 'relative', top: 2 }} />
+    }
+  }
 	return <>
-		<indicator inline flex-align-self-stretch inline-width-4px  style={{background: color}}/>
+    {Icon}
 		<span inline inline-padding-left-10px inline-padding-right-10px>{text}</span>
 	</>
 }
@@ -63,7 +82,7 @@ export function createMessage(
 			width: '100%',
 			// 因为这个 container 是完整的横条，所以要穿透事件，不要挡住了下面的元素。
 			pointerEvents: 'none',
-			zIndex: 999,
+			zIndex: scen().message().zIndex(),
 		}
 	})
 
@@ -110,10 +129,10 @@ export function createMessage(
 	render(<Message />, container)
 
 	return {
-		success: (text) => show(defaultCreateCommonMessage(text, colors.green())),
-		warning: (text) => show(defaultCreateCommonMessage(text, colors.gold())),
-		error: (text) => show(defaultCreateCommonMessage(text, colors.red())),
-		info: (text) => show(defaultCreateCommonMessage(text, colors.blue())),
+		success: (text) => show(defaultCreateCommonMessage(text, colors.green(), 'success')),
+		warning: (text) => show(defaultCreateCommonMessage(text, colors.gold(), 'warning')),
+		error: (text) => show(defaultCreateCommonMessage(text, colors.red(-1), 'error')),
+		info: (text) => show(defaultCreateCommonMessage(text, colors.blue(), 'info')),
 		show
 	}
 
