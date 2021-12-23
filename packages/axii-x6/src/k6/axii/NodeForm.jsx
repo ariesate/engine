@@ -77,7 +77,6 @@ function NodeForm(props) {
       // 防止watch callback触发之后去destroy组件内的renderProcess，导致组件响应性丢失
       setTimeout(() => {
         formJsonChangedLockSt++;
-        console.log('formJsonChangedLockSt: ', formJsonChangedLockSt);
         if (showConfigForm.value) {
           const cell = insideState.selectedCell;
           const { configJSON, ConfigPanel } = insideState.selectedNodeComponent;
@@ -92,7 +91,6 @@ function NodeForm(props) {
           formJson.value = null;
         }
         formJsonChangedLockEd++;
-        console.log('formJsonChangedLockEd: ', formJsonChangedLockEd);
       });
     });
 
