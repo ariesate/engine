@@ -9,25 +9,3 @@ const items = reactive([
 ])
 
 render(<TabStrip items={items} closable addable/>, document.getElementById('root'))
-
-
-function a() {
-  console.log("a start")
-
-  function b() {
-    Promise.resolve().then(() => {
-      console.log("b resolved===")
-
-      Promise.resolve().then(() => {
-        console.log("inside b resolved===")
-      })
-      console.log("b resolve end")
-    })
-  }
-
-  b()
-
-  console.log("a end")
-}
-a()
-console.log("a outside")

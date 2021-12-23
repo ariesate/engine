@@ -5,7 +5,7 @@ import { Button } from "axii-components";
 function App() {
   return (
     <div>
-      <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: '500px'}}>
         <Button>normal</Button>
         <Button primary>primary</Button>
         <Button danger>danger</Button>
@@ -16,7 +16,7 @@ function App() {
           danger disabled
         </Button>
       </div>
-      <div>
+      <div style={{ margin: '8px 0' }}>
         <Button primary size="large">
           primary big
         </Button>

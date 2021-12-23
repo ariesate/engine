@@ -1,6 +1,6 @@
 /** @jsx createElement */
 import { createElement, render, useRef } from 'axii'
-import Spreadsheet from 'axii-components/spreadsheet'
+import { Spreadsheet, Button } from 'axii-components'
 
 function App() {
 	const editor = useRef()
@@ -10,7 +10,7 @@ function App() {
 
 	return (
 		<div>
-			<button onClick={save}>保存</button>
+			<Button primary onClick={save}>保存</Button>
 			<Spreadsheet ref={editor}/>
 		</div>
 	)

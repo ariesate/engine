@@ -1,6 +1,6 @@
 /** @jsx createElement */
 import { createElement, render, reactive, atomComputed } from 'axii'
-import { Input, useForm } from 'axii-components'
+import { Input, useForm, Button } from 'axii-components'
 
 const { simpleScheme } = useForm
 
@@ -51,14 +51,14 @@ function App() {
         }</span>
       </div>
       <div>
-        <button onClick={form.submit} disabled={form.isSubmitting}>{() => form.isSubmitting.value ? '提交中': '提交'}</button>
-        <button onClick={() => {
+        <Button onClick={form.submit} disabled={form.isSubmitting}>{() => form.isSubmitting.value ? '提交中': '提交'}</Button>
+        <Button onClick={() => {
           form.reset()
           form.resetValidation()
         }} disabled={form.isSubmitting}>
           重置
-        </button>
-        <button onClick={form.validate} disabled={form.isSubmitting}>校验</button>
+        </Button>
+        <Button onClick={form.validate} disabled={form.isSubmitting}>校验</Button>
       </div>
     </div>
   )

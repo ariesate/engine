@@ -44,9 +44,7 @@ Button.Style = (fragments) => {
 
 		return {
 			borderRadius: colorScen.radius(),
-			borderWidth: hasColor? 'none': '1px',
-			borderStyle: 'solid',
-			borderColor: hasColor ? colorScen.bgColor(0, color) : colorScen.separateColor(),
+      border: hasColor ? 'none' : `1px solid ${colorScen.separateColor()} `,
 			cursor: disabled.value ? 'not-allowed' : 'pointer',
 			color: colorScen.color(0, color),
 			background: colorScen.bgColor(0, color),
