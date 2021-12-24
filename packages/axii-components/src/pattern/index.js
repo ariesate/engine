@@ -113,7 +113,7 @@ const valueRules = {
   lineWidth() {
     return 1
   },
-  outlineWidth({ size }) {
+  outlineWidth() {
     return 2
   },
   fontFamily() {},
@@ -125,7 +125,7 @@ const valueRules = {
       [undefined, zIndexs(-1)],
       [INDEX.zIndex.fixed, zIndexs()],
       [INDEX.zIndex.modal, zIndexs(1)],
-      [INDEX.zIndex.toast, zIndexs(2)],
+      [INDEX.zIndex.message, zIndexs(2)],
       [INDEX.zIndex.popover, zIndexs(3)],
       [INDEX.zIndex.picker, zIndexs(4)],
     ]
