@@ -260,12 +260,16 @@ class NodeManager {
       // 清理next里的当前节点
       currentNode.next.forEach(nextNode => {
         const fi = nextNode.prev.findIndex(n => n.id === currentNode.id);
-        nextNode.prev.splice(fi, 1);
+        if (fi >= 0) {
+          nextNode.prev.splice(fi, 1);
+        }
       });
       // 清理prev的当前节点
       currentNode.prev.forEach(prevNode => {
         const fi = prevNode.next.findIndex(n => n.id === currentNode.id);
-        prevNode.next.splice(fi, 1);
+        if (fi >= 0) {
+          prevNode.next.splice(fi, 1);
+        }
       });
 
       this.nodes.splice(i, 1);
@@ -289,11 +293,13 @@ class NodeManager {
       currentNode.edges.splice(i, 1);
       const removedNextIndex = currentNode.next.findIndex(n => n.id === targetNodeId);
       const nextNode = currentNode.next[removedNextIndex];
-      const removedPrevInNextNodeIndex = nextNode.prev.findIndex(n => n.id === currentNode.id);
-      // 清理next的prev
-      nextNode.prev.splice(removedPrevInNextNodeIndex, 1);
-      // 清理next
-      currentNode.next.splice(removedNextIndex, 1);
+      if (nextNode) {
+        const removedPrevInNextNodeIndex = nextNode.prev.findIndex(n => n.id === currentNode.id);
+        // 清理next的prev
+        nextNode.prev.splice(removedPrevInNextNodeIndex, 1);
+        // 清理next
+        currentNode.next.splice(removedNextIndex, 1);
+      }
       return true;
     }
   }
