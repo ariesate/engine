@@ -364,16 +364,14 @@ class DataManager extends EventEmiter{
       const newEdge = {
         ...edge,
         data: reactive(edge.data || {}),
+        id: null,
       };
-      this.nm.addEdge(nodeId, newEdge);
-      node.edges.push(newEdge);
-
       const r = await this.notifyShapeComponent(node, newEdge, 'add', {});
-      if (r) {
-        newEdge.id = r.id;
-        return r.id;
-      }
-    }
+      newEdge.id = r.id;
+
+      this.nm.addEdge(nodeId, newEdge);
+      return r.id;
+  }
   }
   /**
    * 更新DM中的边数据
@@ -499,17 +497,6 @@ class DataManager extends EventEmiter{
   async notifyShapeComponent(node: IDataNode, edge: IEdgeData, event: INodeComponentEvent, data: any) {
     const [nodeComponent, _, edgeComponent] = this.getShapeComponent(node.shape);
 
-    if (edge) {
-      const newEdgeConfig = edgeComponent({ node, edge });
-      const model = this.dmx6.Graph.updateEdge(edge, newEdgeConfig);
-      Object.assign(edge, model, {
-        data: edge.data,
-      });
-      if (edge.remoteId) {
-        edge = Object.assign({}, edge, { id: edge.remoteId });
-      }
-    }
-    
     const oldConfigData = this.insideState.cacheSelected.cell?.data || {};
 
     let targetComponent = !!edge ? edgeComponent : nodeComponent;

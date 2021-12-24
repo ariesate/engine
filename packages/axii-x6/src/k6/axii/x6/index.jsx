@@ -62,14 +62,28 @@ export const Register = {
       const shareContextValue = dm.shareContextValue;
       const RegisterPort = PortCpt.RegisterPort ? PortCpt.RegisterPort : () => <></>;
 
-      const renderController = render(<ShareContext.Provider value={shareContextValue} >
-        <NodeCpt
-          node={nodeConfig}
-          state={dm.insideState}
-          RegisterPort={RegisterPort}
-          onRemove={() => dm.removeIdOrCurrent(node.id)}
-        />
-      </ShareContext.Provider>, wrap);
+      const effectCallbacks = [];
+
+      function TopNodeRender() {
+        useViewEffect(() => {
+          const unEffectArr = effectCallbacks.map(fn => fn());
+          return () => {
+            unEffectArr.forEach((fn) => typeof fn === 'function' ? fn() : '');
+          };
+        });
+        return (
+          <ShareContext.Provider value={shareContextValue} >
+            <NodeCpt
+              node={nodeConfig}
+              state={dm.insideState}
+              RegisterPort={RegisterPort}
+              onRemove={() => dm.removeIdOrCurrent(node.id)}
+            />
+          </ShareContext.Provider>
+        );
+      }
+
+      const renderController = render(<TopNodeRender />, wrap);
 
       dm.once('dispose', () => {
         renderController.destroy();
@@ -137,13 +151,15 @@ export const Register = {
             const edgeIns = graph.addEdge({
               ...c,
             });
-
             // 监听并动态修改label
-            const [_, token] = watch(() => edgeConfig.label, () => {
+            const [_, token] = watch(() => [edgeConfig.label, edgeConfig.lineColor], () => {
               setTimeout(() => {
                 const c = assignDefaultEdge(edgeConfig, edge);
                 delete c.id;
                 edgeIns.setLabels([c.label]);
+                if (edgeConfig.lineColor !== undefined) {
+                  edgeIns.setAttrs(c.attrs);
+                }
               });
             });
             watchTokens.push(token);
@@ -153,23 +169,27 @@ export const Register = {
         });
       }
 
-      watch(() => traverse(nodeConfig.data), () => {
-        // @TODO:依赖myNode的axii渲染完成之后的动作，先加延时解决
-        setTimeout(() => {
-          refreshNodeSize();
-        }, 25);
-      });
-
-      // @TODO:依赖myNode的axii渲染完成之后的动作，先加延时解决
-      setTimeout(() => {
+      // myNode的axii渲染完成之后的动作
+      effectCallbacks.push(() => {
+        watch(() => traverse(nodeConfig.data), () => {
+          setTimeout(() => {
+            refreshNodeSize();
+          }, 25);
+        });  
+        watch(() => nodeConfig.edges.length, () => {
+          setTimeout(() => {
+            refreshNodeSize();
+          }, 25);
+        });  
         refreshNodeSize();
+
         const portConfigArr = PortCpt.getConfig(nodeConfig.id)
         if (portConfigArr.length) {
           watch(() => portConfigArr.forEach(p => [p.position.x]), () => {
             refreshNodeSize();
           });
         }
-      }, 50);
+      });
 
       return wrap;
     }
@@ -213,6 +233,7 @@ export const Graph = {
       }),
       onAddEdge(nodeId, edge, edgeIns) {
         dm.addNewEdge(nodeId, edge).then(remoteId => {
+          console.log('remoteId: ', remoteId, edgeIns.id);
           edgeIns.setData({ remoteId });
         });
       },
@@ -243,6 +264,7 @@ export const Graph = {
         dm.selectNode(cell.id);
       } else if (cell.isEdge()) {
         const remoteId = cell.getData().remoteId;
+        console.log('remoteId || cell.id: ', remoteId, cell.id);
         dm.selectEdge(remoteId || cell.id);
       }
     });
@@ -259,7 +281,9 @@ export const Graph = {
     });
 
     dm.on('remove', (id) => {
+      console.log('[remove cb] id: ', id);
       const cells = graph.getCells();
+      console.log('[remove cb] cell ids=', cells.map(cell => [cell.id, cell.getData().remoteId]));
       const cell = cells.find(cell => cell.getData().remoteId === id);
       let removedCell;
       if (cell) {
@@ -353,6 +377,7 @@ export const Graph = {
       return e.getData().remoteId === edge.id;
     });
     edgeIns.setLabels(newEdgeConfig.label || '');
+
     return pick(edgeIns, ['target', 'source', 'label', 'name', 'type']);
   },
   dispose() {

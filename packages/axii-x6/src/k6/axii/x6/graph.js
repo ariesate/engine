@@ -103,7 +103,12 @@ export function createFlowGraph(container, initOptions = {}) {
             const allEdges = graph.model.getEdges();
             const edgeIns = allEdges.find(e => e.id === newEdgeId);
             const pickedEdge = pick(edgeIns, ['id', 'target', 'source', 'label', 'name', 'type']);
-            
+            // 说明没有连接到目标
+            if (!pickedEdge.target) {
+              clearInterval(si);
+              return;
+            }
+
             if (pickedEdge.target.cell && !trigger) {
               clearInterval(si);
               trigger = true;
