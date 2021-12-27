@@ -47,7 +47,7 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
       if (activeOptionIndex.value > -1) {
         onActiveOptionChange(activeOptionIndex.value - 1)
       }
-    } else if(e.code === 'Enter') {
+    } else if (e.code === 'Enter') {
       onChange(options[activeOptionIndex.value])
       onBlur()
     }
@@ -152,7 +152,6 @@ Select.Style = (fragments) => {
     width: '100%',
     borderRadius: scen().radius(1),
     overflow: 'hidden',
-    border: 'none'
   })
 }
 
@@ -225,16 +224,7 @@ export function RecommendMode(fragments) {
       // TODO 这里有个问题，如果 input 自己控制 Blur, 那么浮层上面的 onClick 就没法触发，因为 onBlur 发生在前面。浮层已经收起来了。
       // 如果 input 不控制 blur，那么丢失焦点就没用了。先用 nextTick 强行解决一下
       // CAUTION 本质上是"人在脑中的具有英国的事件应该都要发生，并且同时"
-      onKeyDown,
-      onBlur: overwrite(() => {
-        // TODO 这里还一定得是数值足够大 timeout 才行，得等 onClick 触发了，才能 blur。
-        setTimeout(() => {
-          // 如果 focused.value 已经是 false, 说明是 click 了具体的选项，执行了 onBlur。
-          // 如果不是，说明是光标丢失，需要执行 blur。
-          // 这个判断我们得过一段时间才能真正确定是为什么 blur。
-          if (focused.value) onBlur()
-        }, 50)
-      }),
+      onKeyDown
     })
 
   })
