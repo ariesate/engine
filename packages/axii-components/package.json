@@ -22,6 +22,7 @@
     "./toastGrid": "./dist/toastGrid/index.js"
   },
   "scripts": {
+    "play": "pnpm run start & pnpm start --filter \"axii-components-playground\"",
     "start": "rimraf ./dist && pnpm gen & node scripts/build --dev",
     "gen": "node ./scripts/generateIndexEntry.js",
     "build": "rimraf ./dist && pnpm gen & node scripts/build",
