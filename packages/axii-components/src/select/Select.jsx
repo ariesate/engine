@@ -152,6 +152,7 @@ Select.Style = (fragments) => {
     width: '100%',
     borderRadius: scen().radius(1),
     overflow: 'hidden',
+    outline: 'none'
   })
 }
 
@@ -224,9 +225,8 @@ export function RecommendMode(fragments) {
       // TODO 这里有个问题，如果 input 自己控制 Blur, 那么浮层上面的 onClick 就没法触发，因为 onBlur 发生在前面。浮层已经收起来了。
       // 如果 input 不控制 blur，那么丢失焦点就没用了。先用 nextTick 强行解决一下
       // CAUTION 本质上是"人在脑中的具有英国的事件应该都要发生，并且同时"
-      onKeyDown
+      onKeyDown,
     })
-
   })
 }
 
