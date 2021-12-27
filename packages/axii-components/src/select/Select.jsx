@@ -222,10 +222,26 @@ export function RecommendMode(fragments) {
     Object.assign(inputNode.attributes, {
       onFocus: () => onFocus(),
       onChange: onInputChange,
-      // TODO 这里有个问题，如果 input 自己控制 Blur, 那么浮层上面的 onClick 就没法触发，因为 onBlur 发生在前面。浮层已经收起来了。
-      // 如果 input 不控制 blur，那么丢失焦点就没用了。先用 nextTick 强行解决一下
-      // CAUTION 本质上是"人在脑中的具有英国的事件应该都要发生，并且同时"
       onKeyDown,
+      // TODO 这里有个问题，因为为要监听 input 的 onBlur 来实现 blur 时隐藏浮层，但同时要支持点击浮层上的选项后影藏浮层。
+      //  因为 onClick 在时间触发优先级上低于 onBlur。如果在 input onBlur 的瞬间直接调用整个 Select 的
+      //  onBlur (onBlur 内部调用了 focused.value = false)，会使得浮层立刻收起，那么浮层上面的 onClick 就不会被触发。
+      //  如果不使用 input 上的 onBlur，那么丢失焦点时浮层就不能收起来了。
+      // CAUTION 本质上是"人在脑中的具有因果的事件应该都要发生，并且同时"。先利用下面的 onMouseDown 来替代 onClick，因为 onMouseDown 在 onBlur 之前触发。
+      onBlur: overwrite(() => {
+        if (focused.value) onBlur()
+      })
+    })
+  })
+
+  // 看上面的 onBlur 出的注释
+  fragments.optionItem.modify((optionItemNode, {option, onChange, onBlur}) => {
+    Object.assign(optionItemNode.attributes, {
+      onMouseDown: () => {
+        onChange(option)
+        onBlur()
+      },
+      onClick: overwrite(() => {})
     })
   })
 }
