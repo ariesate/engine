@@ -67,7 +67,7 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
           <optionItem
             block
             block-font-size={scen().fontSize()}
-            block-padding={`${scen().spacing(-1)}px ${scen().spacing()}px `}
+            block-padding={`${scen().spacing()}px ${scen().spacing(1)}px `}
             onClick={() => {
               onChange(option)
               onBlur()
@@ -127,7 +127,7 @@ Select.propTypes = {
     value.value = optionToValue(option)
   }),
   onActiveOptionChange: propTypes.callback.default(() => (index, {activeOptionIndex}) => {
-    activeOptionIndex.value = index
+    activeOptionIndex.value = index < 0 ? 0 : index
   }),
 }
 
@@ -150,8 +150,9 @@ Select.Style = (fragments) => {
     zIndex: scen().picker().zIndex(),
     background: scen().active().bgColor(),
     width: '100%',
-    borderRadius: 4,
+    borderRadius: scen().radius(1),
     overflow: 'hidden',
+    border: 'none'
   })
 }
 
@@ -274,7 +275,6 @@ RecommendMode.propTypes = {
 export function MultipleMode(fragments) {
   fragments.optionItem.modify((item, { onChange, match, value, option, index }) => {
     const checked = atom(match(value, option))
-    console.log(checked.value)
     const onClick = (option, index) => {
       checked.value = !checked.value
       onChange(option, checked.value, index)
