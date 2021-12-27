@@ -4,6 +4,7 @@ import {
   createPortal,
   createElement,
   reactive,
+  watch
 } from 'axii'
 import { nextTick } from "../util";
 
@@ -65,9 +66,14 @@ export default function useLayer(nodeInPortal, { getContainerRect = () => ({}), 
   }
 
   // 通过 ref 来回收 portal element。
+  let child = typeof nodeInPortal === 'function' ? nodeInPortal(sourceRef) : nodeInPortal
   const node = createPortal(<portal style={style} ref={receivePortal}>
-    {typeof nodeInPortal === 'function' ? nodeInPortal(sourceRef) : nodeInPortal}
+    {child}
   </portal>, portalRoot)
+
+  watch(() => sourceRef.current, () => {
+    child = typeof nodeInPortal === 'function' ? nodeInPortal(sourceRef) : nodeInPortal
+  })
 
   return {
     source: inputSourceRef ? undefined : (ref) => {

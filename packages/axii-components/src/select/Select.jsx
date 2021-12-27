@@ -30,7 +30,7 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
 
   const getContainerRect = ({top, left, height}) => {
     return {
-      top: height + top,
+      top: height + top + 6,
       left,
     }
   }
@@ -57,7 +57,7 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
     return (
       <optionList
         inline
-        inline-min-width={atomComputed(() => `${sourceRef.value ? sourceRef.value.offsetWidth : 0}px`)}
+        inline-min-width={atomComputed(() => `${sourceRef.current ? sourceRef.current.offsetWidth : 0}px`)}
         tabindex={-1}
         onKeyDown={onKeyDown}
         onFocusOut={() => onBlur()}
@@ -148,7 +148,10 @@ Select.Style = (fragments) => {
   fragments.root.elements.optionList.style({
     boxShadow: scen().elevate().shadow(),
     zIndex: scen().picker().zIndex(),
-    background: scen().active().bgColor()
+    background: scen().active().bgColor(),
+    width: '100%',
+    borderRadius: 4,
+    overflow: 'hidden',
   })
 }
 
