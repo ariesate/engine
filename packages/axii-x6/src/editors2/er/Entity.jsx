@@ -60,33 +60,6 @@ export const EntityPort = createComponent((() => {
       return s;
     });
   };
-  const configArr = [];
-  PortRender.getConfig = (nodeId) => configArr.filter(c => c.nodeId === nodeId || !nodeId);
-  PortRender.RegisterPort = (props = {}) => {
-    
-    const config = {
-      nodeId: props.nodeId,
-      portId: props.id,
-      position: {
-        x: props.position.x,
-        y: props.position.y,
-      },
-      size: {
-        width: 20,
-        height: 20,
-      },
-    };
-    configArr.push(config);
-
-    useViewEffect(() => {
-      return () => {
-        const i = configArr.indexOf(config);
-        configArr.splice(i, 1);
-      };
-    });
-
-    return '';
-  }
 
   return createComponent(PortRender);
 })());
@@ -129,6 +102,10 @@ export const EntityNode = createComponent((() => {
       fieldPosition.height = height;
     }, 0);
 
+    useViewEffect(() => {
+      console.log('Entity.Field did');
+    });
+
     return (
       <field block id={fieldId} block-padding-10px>
         <name>{() => field.name}</name>
@@ -164,7 +141,11 @@ export const EntityNode = createComponent((() => {
 
       watch(() => data.fields.length, () => {
         console.log('new field or delete field');
-    }, 15);
+      }, 15);
+    });
+
+    useViewEffect(() => {
+      console.log('Entity did');
     });
 
     return (

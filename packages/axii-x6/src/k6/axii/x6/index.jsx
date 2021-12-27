@@ -3,6 +3,8 @@ import { createFlowGraph } from './graph';
 import { Graph as X6Graph, Markup } from '@antv/x6'
 import merge from 'lodash/merge';
 import pick from 'lodash/pick';
+import debounce from 'lodash/debounce';
+
 import {
   Fragment,
   tryToRaw,
@@ -15,7 +17,7 @@ import {
   destroyComputed,
 } from "axii";
 import ShareContext from '../ShareContext';
-
+import { getRegisterPort } from '../Port';
 import { DEFAULT_SHAPE } from '../../Node';
 
 function assignDefaultEdge(customEdge = {}, edge) {
@@ -60,7 +62,12 @@ export const Register = {
       // nodeConfig is reactive
       const nodeConfig = dm.findNode(node.id);
       const shareContextValue = dm.shareContextValue;
-      const RegisterPort = PortCpt.RegisterPort ? PortCpt.RegisterPort : () => <></>;
+      let { RegisterPort, getConfig: getPortConfig } = PortCpt;
+      if (!RegisterPort && !getPortConfig) {
+        const defaultCpt = getRegisterPort();
+        RegisterPort = defaultCpt.RegisterPort,
+        getPortConfig = defaultCpt.getConfig;
+      }
 
       const effectCallbacks = [];
 
@@ -90,8 +97,9 @@ export const Register = {
         wrap.innerHTML = '';
       });
 
+      // @TODO：约2帧的debounce
       let watchTokens = [];
-      function refreshNodeSize(){
+      const refreshNodeSize = debounce(function refreshNodeSize(){
         watchTokens.forEach(token => destroyComputed(token));
         watchTokens = [];
 
@@ -100,8 +108,8 @@ export const Register = {
         node.setProp({ width: width + 2, height: height + 2 });
 
         // render port
-        if (PortCpt.getConfig) {
-          const portConfigArr = PortCpt.getConfig(nodeConfig.id);
+        if (getPortConfig) {
+          const portConfigArr = getPortConfig(nodeConfig.id);
           const ports = {
             groups: portConfigArr.map((portConfig, index) => {
               const { portId, position, size } = portConfig;
@@ -167,15 +175,17 @@ export const Register = {
             edgeIns.setData({ remoteId }, { silent: true });
           });
         });
-      }
+      }, 30);
 
       // myNode的axii渲染完成之后的动作
       effectCallbacks.push(() => {
+        // 节点数据修改
         watch(() => traverse(nodeConfig.data), () => {
           setTimeout(() => {
             refreshNodeSize();
           }, 25);
-        });  
+        });
+        // 新增连接
         watch(() => nodeConfig.edges.length, () => {
           setTimeout(() => {
             refreshNodeSize();
@@ -183,7 +193,14 @@ export const Register = {
         });  
         refreshNodeSize();
 
-        const portConfigArr = PortCpt.getConfig(nodeConfig.id)
+        const portConfigArr = getPortConfig(nodeConfig.id);
+        // 为了有新增的异步Port, @TODO: 如何从设计上消除"删除"的影响？
+        watch(() => portConfigArr.length, () => {
+          setTimeout(() => {
+            refreshNodeSize();
+          });
+        });
+        // 节点的连接点位置变动
         if (portConfigArr.length) {
           watch(() => portConfigArr.forEach(p => [p.position.x]), () => {
             refreshNodeSize();
