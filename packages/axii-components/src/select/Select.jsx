@@ -30,7 +30,7 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
 
   const getContainerRect = ({top, left, height}) => {
     return {
-      top: height + top,
+      top: height + top + 6,
       left,
     }
   }
@@ -47,7 +47,7 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
       if (activeOptionIndex.value > -1) {
         onActiveOptionChange(activeOptionIndex.value - 1)
       }
-    } else if(e.code === 'Enter') {
+    } else if (e.code === 'Enter') {
       onChange(options[activeOptionIndex.value])
       onBlur()
     }
@@ -57,7 +57,7 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
     return (
       <optionList
         inline
-        inline-min-width={atomComputed(() => `${sourceRef.value ? sourceRef.value.offsetWidth : 0}px`)}
+        inline-min-width={atomComputed(() => `${sourceRef.current ? sourceRef.current.offsetWidth : 0}px`)}
         tabindex={-1}
         onKeyDown={onKeyDown}
         onFocusOut={() => onBlur()}
@@ -67,7 +67,7 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
           <optionItem
             block
             block-font-size={scen().fontSize()}
-            block-padding={`${scen().spacing(-1)}px ${scen().spacing()}px `}
+            block-padding={`${scen().spacing()}px ${scen().spacing(1)}px `}
             onClick={() => {
               onChange(option)
               onBlur()
@@ -127,7 +127,7 @@ Select.propTypes = {
     value.value = optionToValue(option)
   }),
   onActiveOptionChange: propTypes.callback.default(() => (index, {activeOptionIndex}) => {
-    activeOptionIndex.value = index
+    activeOptionIndex.value = index < 0 ? 0 : index
   }),
 }
 
@@ -148,7 +148,11 @@ Select.Style = (fragments) => {
   fragments.root.elements.optionList.style({
     boxShadow: scen().elevate().shadow(),
     zIndex: scen().picker().zIndex(),
-    background: scen().active().bgColor()
+    background: scen().active().bgColor(),
+    width: '100%',
+    borderRadius: scen().radius(1),
+    overflow: 'hidden',
+    outline: 'none'
   })
 }
 
@@ -222,17 +226,7 @@ export function RecommendMode(fragments) {
       // 如果 input 不控制 blur，那么丢失焦点就没用了。先用 nextTick 强行解决一下
       // CAUTION 本质上是"人在脑中的具有英国的事件应该都要发生，并且同时"
       onKeyDown,
-      onBlur: overwrite(() => {
-        // TODO 这里还一定得是数值足够大 timeout 才行，得等 onClick 触发了，才能 blur。
-        setTimeout(() => {
-          // 如果 focused.value 已经是 false, 说明是 click 了具体的选项，执行了 onBlur。
-          // 如果不是，说明是光标丢失，需要执行 blur。
-          // 这个判断我们得过一段时间才能真正确定是为什么 blur。
-          if (focused.value) onBlur()
-        }, 50)
-      }),
     })
-
   })
 }
 
@@ -271,7 +265,6 @@ RecommendMode.propTypes = {
 export function MultipleMode(fragments) {
   fragments.optionItem.modify((item, { onChange, match, value, option, index }) => {
     const checked = atom(match(value, option))
-    console.log(checked.value)
     const onClick = (option, index) => {
       checked.value = !checked.value
       onChange(option, checked.value, index)

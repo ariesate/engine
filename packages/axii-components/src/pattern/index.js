@@ -8,7 +8,8 @@ import {
   backgroundColors,
   zIndexs,
   shadows,
-  fontWeights
+  fontWeights,
+  borderRadius
 } from './basic.js';
 import { INDEX } from './case.js'
 
@@ -117,8 +118,8 @@ const valueRules = {
     return 2
   },
   fontFamily() {},
-  radius() {
-    return 2
+  radius({}, offset = 0) {
+    return borderRadius(offset)
   },
   zIndex({ zIndex }) {
     const matrix = [
