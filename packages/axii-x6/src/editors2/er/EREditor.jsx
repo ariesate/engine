@@ -13,21 +13,6 @@ function ER2Editor({ data }) {
   data = reactive(data);
   const graphRef = useRef();
 
-  function addNewNode() {
-    const newNode = {
-      "id": Math.random(),"name":"Page",
-      "data":[
-        {"id":"f1","name":"title","type":"rel"},
-      ],
-      "view":{"position":{"x":30,"y":30}}
-    };
-    graphRef.current.addNode(newNode);
-  }
-  function exportData() {
-    const graphData = graphRef.current.exportData();
-    console.log('graphData: ', graphData);
-  }
-
   return (
     <container block>
       <K6 layout:block layout:flex-display>
@@ -40,13 +25,9 @@ function ER2Editor({ data }) {
           <Graph data={data} ref={graphRef}>
           </Graph>
         </k6base> 
-        <operations block block-margin="16px">
-          <NodeForm />
-          <MiniMap />
-          <p>
-            <button onClick={exportData} >export Data</button>
-          </p>
-        </operations>
+        {{
+            nodeForm: <NodeForm />
+          }}
       </K6>
     </container>
   );

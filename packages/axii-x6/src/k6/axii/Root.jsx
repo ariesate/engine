@@ -49,7 +49,9 @@ function Root({ children, height, ref }, frags) {
     dm.registerShareValue(shareContext);
   }
 
-  ref.current = dm;
+  if (ref) {
+    ref.current = dm;
+  }
   window.dm = dm;
 
   const rootContext = {
