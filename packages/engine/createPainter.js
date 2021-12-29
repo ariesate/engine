@@ -225,8 +225,15 @@ function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, cnode, col
   } else {
     // 如果是普通节点，对比 attribute 的变化，之后 digest 的时候对 element 进行更新。
     patchNode.diff = diffNodeDetail(lastVnode, vnode)
+    // children === undefined 是纯文字等叶子结点，肯定也不会有 ref ，不用考虑
     if (vnode.children !== undefined) {
-      if (vnode.ref) remainedRefs[vnode.id] = patchNode
+      if (vnode.ref) {
+        if (lastVnode.ref === vnode.ref) {
+          remainedRefs[vnode.id] = patchNode
+        } else {
+          newRefs[vnode.id] = patchNode
+        }
+      }
       // 继续递归 diff
       /* eslint-disable no-use-before-define */
       const childDiffResult = diff(lastVnode.children, vnode.children, cnode, nextTransferKeyedVnodes, utils)
