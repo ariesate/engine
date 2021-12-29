@@ -225,6 +225,9 @@ function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, cnode, col
   } else {
     // 如果是普通节点，对比 attribute 的变化，之后 digest 的时候对 element 进行更新。
     patchNode.diff = diffNodeDetail(lastVnode, vnode)
+    if (lastVnode.ref !== vnode.ref) {
+      newRefs[vnode.id] = vnode
+    }
     if (vnode.children !== undefined) {
       if (vnode.ref) remainedRefs[vnode.id] = patchNode
       // 继续递归 diff
