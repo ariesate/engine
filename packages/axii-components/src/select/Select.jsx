@@ -30,7 +30,7 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
 
   const getContainerRect = ({top, left, height}) => {
     return {
-      top: height + top,
+      top: height + top + 6,
       left,
     }
   }
@@ -47,7 +47,7 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
       if (activeOptionIndex.value > -1) {
         onActiveOptionChange(activeOptionIndex.value - 1)
       }
-    } else if(e.code === 'Enter') {
+    } else if (e.code === 'Enter') {
       onChange(options[activeOptionIndex.value])
       onBlur()
     }
@@ -57,18 +57,17 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
     return (
       <optionList
         inline
-        inline-min-width={atomComputed(() => `${sourceRef.value ? sourceRef.value.offsetWidth : 0}px`)}
+        inline-min-width={atomComputed(() => `${sourceRef.current ? sourceRef.current.offsetWidth : 0}px`)}
         tabindex={-1}
         onKeyDown={onKeyDown}
         onFocusOut={() => onBlur()}
-        style={{background: "#fff", zIndex: 99}}
         ref={optionListRef}
       >
         {() => options.map((option, index) => fragments.optionItem({ option, index })(
           <optionItem
             block
             block-font-size={scen().fontSize()}
-            block-padding={`${scen().spacing(-1)}px ${scen().spacing()}px `}
+            block-padding={`${scen().spacing()}px ${scen().spacing(1)}px `}
             onClick={() => {
               onChange(option)
               onBlur()
@@ -87,7 +86,7 @@ export function Select({value, options, onChange, renderOption, onActiveOptionCh
     <container block flex-display-inline>
       <selectInput
         layout:inline
-        layout:inline-max-width="100%"
+        layout:inline-width="100%"
         use={Input}
         ref={composeRef(ref,  source)}
         onFocus={onInputFocus}
@@ -128,7 +127,7 @@ Select.propTypes = {
     value.value = optionToValue(option)
   }),
   onActiveOptionChange: propTypes.callback.default(() => (index, {activeOptionIndex}) => {
-    activeOptionIndex.value = index
+    activeOptionIndex.value = index < 0 ? 0 : index
   }),
 }
 
@@ -147,7 +146,13 @@ Select.Style = (fragments) => {
   })
 
   fragments.root.elements.optionList.style({
-    boxShadow: scen().elevate().shadow()
+    boxShadow: scen().elevate().shadow(),
+    zIndex: scen().picker().zIndex(),
+    background: scen().active().bgColor(),
+    width: '100%',
+    borderRadius: scen().radius(1),
+    overflow: 'hidden',
+    outline: 'none'
   })
 }
 
@@ -217,21 +222,27 @@ export function RecommendMode(fragments) {
     Object.assign(inputNode.attributes, {
       onFocus: () => onFocus(),
       onChange: onInputChange,
-      // TODO 这里有个问题，如果 input 自己控制 Blur, 那么浮层上面的 onClick 就没法触发，因为 onBlur 发生在前面。浮层已经收起来了。
-      // 如果 input 不控制 blur，那么丢失焦点就没用了。先用 nextTick 强行解决一下
-      // CAUTION 本质上是"人在脑中的具有英国的事件应该都要发生，并且同时"
       onKeyDown,
+      // TODO 这里有个问题，因为为要监听 input 的 onBlur 来实现 blur 时隐藏浮层，但同时要支持点击浮层上的选项后影藏浮层。
+      //  因为 onClick 在时间触发优先级上低于 onBlur。如果在 input onBlur 的瞬间直接调用整个 Select 的
+      //  onBlur (onBlur 内部调用了 focused.value = false)，会使得浮层立刻收起，那么浮层上面的 onClick 就不会被触发。
+      //  如果不使用 input 上的 onBlur，那么丢失焦点时浮层就不能收起来了。
+      // CAUTION 本质上是"人在脑中的具有因果的事件应该都要发生，并且同时"。先利用下面的 onMouseDown 来替代 onClick，因为 onMouseDown 在 onBlur 之前触发。
       onBlur: overwrite(() => {
-        // TODO 这里还一定得是数值足够大 timeout 才行，得等 onClick 触发了，才能 blur。
-        setTimeout(() => {
-          // 如果 focused.value 已经是 false, 说明是 click 了具体的选项，执行了 onBlur。
-          // 如果不是，说明是光标丢失，需要执行 blur。
-          // 这个判断我们得过一段时间才能真正确定是为什么 blur。
-          if (focused.value) onBlur()
-        }, 50)
-      }),
+        if (focused.value) onBlur()
+      })
     })
+  })
 
+  // 看上面的 onBlur 出的注释
+  fragments.optionItem.modify((optionItemNode, {option, onChange, onBlur}) => {
+    Object.assign(optionItemNode.attributes, {
+      onMouseDown: () => {
+        onChange(option)
+        onBlur()
+      },
+      onClick: overwrite(() => {})
+    })
   })
 }
 
@@ -270,7 +281,6 @@ RecommendMode.propTypes = {
 export function MultipleMode(fragments) {
   fragments.optionItem.modify((item, { onChange, match, value, option, index }) => {
     const checked = atom(match(value, option))
-    console.log(checked.value)
     const onClick = (option, index) => {
       checked.value = !checked.value
       onChange(option, checked.value, index)

@@ -15,7 +15,7 @@ import useLayer from "../hooks/useLayer";
 import {nextTick} from "../util";
 import Input from "../input/Input";
 import scen from "../pattern";
-
+import Down from 'axii-icons/Down';
 
 function renderOptionList(options, openedIds, index, props, fragments) {
 		return (
@@ -89,7 +89,6 @@ export function Cascader(props, fragments) {
 				flex-display
 				tabindex={-1}
 				onFocusOut={() => props.onBlur()}
-				style={{background: "#fff", zIndex: 99}}
 				ref={optionContainerRef}
 			>
 				{fragments.optionList({ items: options })(
@@ -119,6 +118,9 @@ export function Cascader(props, fragments) {
 				onBlur={() => false}
 				value={atomComputed(() => renderValue(value))}
 			>
+        {{
+          after: <Down />
+        }}
 			</selectInput>
 			{optionContainerNode}
 		</>
@@ -169,7 +171,7 @@ Cascader.Style = (fragments) => {
 		const opened = openedIds.includes(option.id)
 
 		return {
-			background: opened?
+			background: opened ?
 				scen().inverted().active().bgColor() :
 				scen().active().bgColor(),
 			color: opened ? scen().interactable().active().inverted().color() : scen().color(),
@@ -177,8 +179,10 @@ Cascader.Style = (fragments) => {
 		}
 	})
 
-	fragments.root.elements.optionContainer.style({
-		boxShadow: scen().elevate().shadow(0),
+  fragments.root.elements.optionContainer.style({
+		boxShadow: scen().elevate().shadow(),
+    zIndex: scen().picker().zIndex(),
+    background: scen().active().bgColor()
 	})
 }
 

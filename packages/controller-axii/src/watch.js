@@ -1,4 +1,4 @@
-import {createComputed, isReactiveLike, isAtom, destroyComputed} from './reactive';
+import { createComputed, isReactiveLike, isAtom, destroyComputed } from './reactive';
 import { TYPE } from './reactive/effect';
 import { deferred } from "./util";
 
@@ -7,13 +7,18 @@ export default function watch(computation, callback, runAtOnce) {
   let result
   let isFirstRun = true
   const token = createComputed((lastValue, watchAnyMutation) => {
-    if (isFirstRun) {
-      result = computation(watchAnyMutation)
-      isFirstRun = false
-      if (runAtOnce) callback(result)
-    } else {
-      computation(watchAnyMutation)
+    result = computation(watchAnyMutation)
+
+    if (!isFirstRun || runAtOnce) {
+      // TODO callback 中发生的数据变化不应该影响当前的 computation ，使用 deferred ？
+      //  deferred 会使时序变化。增加参数使当前 frame 不要 callback 中的依赖就行了？
+      //  目前用 deferred 测试用例会有很多失败。
+      // deferred(() => callback(result))
       callback(result)
+    }
+
+    if (isFirstRun) {
+      isFirstRun = false
     }
   }, TYPE.TOKEN)
   return [result, token]

@@ -45,17 +45,25 @@ import { defaultNormalizeLeaf, shallowCloneElement } from './createElement'
  * Diff the detail of two non-component vnode.
  */
 function defaultDiffNodeDetail(lastVnode, vnode) {
+  // 文本节点
   if (lastVnode.type === String && lastVnode.value !== vnode.value) {
     return {
       value: vnode.value,
     }
   }
 
-  if (!shallowEqual(lastVnode.attributes, vnode.attributes)) {
-    return {
-      attributes: vnode.attributes,
-    }
-  }
+  // 非文本节点，要比较 attributes 和 portal
+  const attributesEqual = shallowEqual(lastVnode.attributes, vnode.attributes)
+  const portalEqual = vnode.portalRoot === lastVnode.portalRoot
+
+  if (attributesEqual && portalEqual) return
+
+  const result = {}
+  if (!attributesEqual) result.attributes = vnode.attributes
+  if (!portalEqual) result.portalRoot = vnode.portalRoot
+
+  return result
+
 }
 
 
@@ -225,8 +233,15 @@ function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, cnode, col
   } else {
     // 如果是普通节点，对比 attribute 的变化，之后 digest 的时候对 element 进行更新。
     patchNode.diff = diffNodeDetail(lastVnode, vnode)
+    // children === undefined 是纯文字等叶子结点，肯定也不会有 ref ，不用考虑
     if (vnode.children !== undefined) {
-      if (vnode.ref) remainedRefs[vnode.id] = patchNode
+      if (vnode.ref) {
+        if (lastVnode.ref === vnode.ref) {
+          remainedRefs[vnode.id] = patchNode
+        } else {
+          newRefs[vnode.id] = patchNode
+        }
+      }
       // 继续递归 diff
       /* eslint-disable no-use-before-define */
       const childDiffResult = diff(lastVnode.children, vnode.children, cnode, nextTransferKeyedVnodes, utils)

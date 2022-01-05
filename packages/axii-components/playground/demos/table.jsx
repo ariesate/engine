@@ -1,5 +1,5 @@
 import { createElement, render, reactive } from 'axii'
-import { Table } from 'axii-components'
+import { Table, Button } from 'axii-components'
 
 const columns = [
   {
@@ -87,7 +87,7 @@ const columns = [
     title: 'Action',
     dataIndex: 'key',
     render() {
-      return <button>delete</button>
+      return <Button primary>delete</Button>
     }
   },
 ];

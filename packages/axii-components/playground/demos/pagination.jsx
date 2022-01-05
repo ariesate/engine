@@ -1,6 +1,6 @@
 /** @jsx createElement */
 import { createElement, atom, render, debounceComputed } from 'axii'
-import { Pagination } from "axii-components";
+import { Pagination, Button } from "axii-components";
 
 const { useInfinitePageHelper } = Pagination
 
@@ -36,8 +36,8 @@ function InfinitePagination() {
 
 	return <div>
 		<Pagination {...pageProps} onChange={onPageChange}/>
-		<button onClick={() => total.value = 80}>patchTotalTo 80</button>
-		<button onClick={() => total.value = 91}>patchTotalTo 91</button>
+		<Button primary onClick={() => total.value = 80}>patchTotalTo 80</Button>
+		<Button primary onClick={() => total.value = 91}>patchTotalTo 91</Button>
 	</div>
 }
 

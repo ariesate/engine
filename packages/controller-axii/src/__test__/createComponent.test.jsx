@@ -1,6 +1,7 @@
 /** @jsxFrag Fragment */
-import { createElement, render, atom } from '../index';
+import { createElement, render, atom, useRef } from '../index';
 import createComponent from '../component/createComponent'
+import { nextTask } from "../util"
 import $ from 'jquery'
 
 describe('Style test', () => {
@@ -26,7 +27,6 @@ describe('Style test', () => {
   test('dynamic style', () => {
 
     const base = atom(1)
-
     function Base() {
       return <container />
     }
@@ -45,6 +45,49 @@ describe('Style test', () => {
     base.value = 2
     expect(root.children[0]).toHaveStyle({ color: 'blue'})
   })
+
+  // TODO jest 无法确定是 jest 无法正确模拟 focus 状态还是测试用例有问题
+  //  在 playground 中手动测试已通过
+  // test('pseudo class', (done) => {
+  //
+  //   const base = atom(1)
+  //   const inputRef = useRef()
+  //
+  //   function Base() {
+  //     return <input ref={inputRef}/>
+  //   }
+  //
+  //   Base.Style = (fragments) => {
+  //     fragments.root.elements.input.style({
+  //       color: 'black',
+  //     })
+  //
+  //     fragments.root.elements.input.match.focus.style(() => ({
+  //       color: base.value === 1 ? 'red' : 'blue'
+  //     }))
+  //   }
+  //
+  //   const BaseComponent = createComponent(Base)
+  //   const root = document.createElement('div')
+  //   document.body.appendChild(root)
+  //   render(<BaseComponent />, root)
+  //
+  //   nextTask(() => {
+  //     expect(inputRef.current).toHaveStyle({ color: 'black'})
+  //
+  //     inputRef.current.focus()
+  //     expect(document.activeElement).toBe(inputRef.current)
+  //     expect(inputRef.current).toHaveStyle({ color: 'red'})
+  //
+  //     inputRef.current.blur()
+  //     expect(inputRef.current).toHaveStyle({ color: 'black'})
+  //     base.value = 2
+  //     inputRef.current.focus()
+  //     expect(inputRef.current).toHaveStyle({ color: 'blue'})
+  //     done()
+  //   })
+  // })
+
 })
 
 

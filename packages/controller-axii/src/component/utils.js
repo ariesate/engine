@@ -105,12 +105,12 @@ function createElementProxy() {
           get(target, pseudoClass) {
             return {
               style(rules) {
-                pseudoClassStyles.push({name: pseudoClass, rules})
+                pseudoClassStyles.push({ name: pseudoClass, rules })
               }
             }
           }
         })
-      } else if (/^on/.test(key.toString())){
+      } else if (/^on/.test(key.toString())) {
         return value => {
           if (!listeners[key]) listeners[key] = []
           listeners[key].push(value)
@@ -172,7 +172,7 @@ function createActionCollector(name, container, globalConfigs) {
       if (instruments[key]) return (...argv) => instruments[key](target, ...argv)
       if (key in attributes) return attributes[key]
       // anonymous 作为保留的名字，是用来给框架处理 function/vnodeComputed 节点的。
-      const fragmentName = key === 'anonymous'? '$$' : key
+      const fragmentName = key === 'anonymous' ? '$$' : key
 
       if (!target.$$fragments[fragmentName]) target.$$fragments[fragmentName] = createFragmentActionReceiver(fragmentName, collector, globalConfigs)
       return target.$$fragments[fragmentName]
@@ -204,7 +204,7 @@ export function createIndexContainer() {
         // 用 setter 伪装成了 VNode，得到 vnode 上的所有属性。针对 attributes，生成 merge proxy。这样用户直接往 attribute 上设置值就行了。
         // TODO 会不会因为 fragment 刷新，对一个 vnode attributes 执行过多次修改？？
         target[key] = (ref) => {
-          Object.assign(target[key], ref, { attributes: createMergeProxy(ref.attributes)})
+          Object.assign(target[key], ref, { attributes: createMergeProxy(ref.attributes) })
         }
       }
       return target[key]
@@ -342,7 +342,7 @@ export function zipObject(keys, fn) {
   return keys.reduce((result, current) => {
     return {
       ...result,
-      [current] : fn(current)
+      [current]: fn(current)
     }
   }, {})
 }
@@ -401,11 +401,17 @@ export function computeDynamicObject(obj, ...argv) {
   return (typeof obj === 'function') ? obj(...argv) : mapValues(obj, (v) => v(...argv))
 }
 
+export function camelToKebab(str) {
+  return str.replace(/[A-Z]/g, (char) => {
+    return `-${char.toLowerCase()}`
+  })
+}
 
 export function appendRule(stylesheet, className, name, rules) {
   const rulesStr = Object.entries(rules).map(([k, v]) => {
-    return `${k}: ${normalizeStyleValue(k, v)} !important`
+    return `${camelToKebab(k)}: ${normalizeStyleValue(k, v)} !important`
   }).join(';')
   // TODO 驼峰转 - 写法
-  stylesheet.sheet.insertRule(`.${className}:${name} {${rulesStr}}`)
+  // CAUTION 最后一个参数，一定要插入到尾部。默认是插到头部，会导致不能覆盖。做成一个链表? 这样就可以删除已有的了。
+  stylesheet.sheet.insertRule(`.${className}:${name} {${rulesStr}}`, stylesheet.sheet.cssRules.length)
 }

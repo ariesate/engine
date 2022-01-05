@@ -9,7 +9,7 @@ import {
   atomComputed,
   vnodeComputed,
   watchReactive,
-  createRef,
+  createRef, computed,
 } from 'axii';
 import scen from '../pattern'
 
@@ -26,7 +26,7 @@ export function Input({value, onChange, children, placeholder, ref: parentRef, .
   const prefixLikeProps = {
     'flex-display-inline': true,
     'flex-align-items-center': true,
-    'inline-padding': `0 ${scen().spacing()}px`
+    'inline-padding': `0 ${scen().spacing(1)}px`
   }
 
   const prefixVnode = fragments.prefix()(() => {
@@ -48,24 +48,22 @@ export function Input({value, onChange, children, placeholder, ref: parentRef, .
   return (
     <container inline flex-display-inline block-border-width-1px flex-align-items-stretch>
       {prefixVnode}
-      <middle inline flex-display-inline flex-grow-1 flex-align-items-stretch inline-max-width="100%">
-        {beforeVnode}
-        <input
-          flex-grow-1
-          inline
-          inline-border-width-0
-          inline-max-width="100%"
-          inline-box-sizing="border-box"
-          inline-font-size={scen().fontSize()}
-          inline-padding={`${scen().spacing()}px ${scen().spacing()}px `}
-          value={value}
-          onInput={onChange}
-          placeholder={placeholder}
-          ref={parentRef}
-          {...rest}
-        />
-        {afterVnode}
-      </middle>
+      {beforeVnode}
+      <input
+        flex-grow-1
+        inline
+        inline-border-width-0
+        inline-width='100%'
+        inline-box-sizing="border-box"
+        inline-font-size={scen().fontSize()}
+        inline-padding={`${scen().spacing(-1)}px ${scen().spacing(1)}px `}
+        value={value}
+        onInput={onChange}
+        placeholder={placeholder}
+        ref={parentRef}
+        {...rest}
+      />
+      {afterVnode}
       {suffixVnode}
     </container>
   )
@@ -97,45 +95,41 @@ Input.Style = (fragments) => {
     onBlur()
   })
 
-  rootElements.container.style(({focused}) => {
+  rootElements.container.style(({ focused }) => {
     return {
       borderStyle: 'solid',
       borderWidth: 1,
       borderRadius: scen().radius(),
-      borderColor: focused.value ?
-        scen().interactable().active().color() :
-        scen().separateColor(),
+      borderColor: focused.value ? scen().interactable().active().color(-1) : scen().separateColor(),
       boxShadow: focused.value ?
         `0 0 0 ${scen().outlineWidth()}px ${scen().interactable().active().shadowColor()}` :
-        undefined
+        undefined,
     }
   })
 
-  rootElements.input.style(() => ({
-    color: scen().color(),
-    lineHeight: `${scen().lineHeight()}px`,
-    outline: 0
-  }))
-
-  const commonPrefixStyle = {
-    color: scen().color(),
-    backgroundColor: scen().fieldColor(),
-    borderStyle: 'solid',
-    borderColor: scen().separateColor(),
-    borderWidth: 0,
-  }
-
-  fragments.prefix.elements.prefix.style(commonPrefixStyle)
-  fragments.suffix.elements.suffix.style(commonPrefixStyle)
-
-  const commonAfterStyle = {
+  const commonStyle = {
     color: scen().color(),
     borderStyle: 'solid',
     borderWidth: 0,
     borderColor: scen().separateColor()
   }
-  fragments.before.elements.before.style(commonAfterStyle)
-  fragments.after.elements.after.style(commonAfterStyle)
+
+  rootElements.input.style(() => ({
+    color: scen().color(),
+    lineHeight: scen().lineHeight(),
+    outline: 0,
+  }))
+
+  const commonPrefixStyle = {
+    ...commonStyle,
+    backgroundColor: scen().fieldColor(),
+  }
+
+  fragments.prefix.elements.prefix.style({ ...commonPrefixStyle, borderRight: 1})
+  fragments.suffix.elements.suffix.style({ ...commonPrefixStyle, borderLeft: 1})
+
+  fragments.before.elements.before.style(commonStyle)
+  fragments.after.elements.after.style(commonStyle)
 }
 
 Input.Style.propTypes = {

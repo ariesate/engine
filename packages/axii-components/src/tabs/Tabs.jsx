@@ -115,6 +115,10 @@ Tabs.Style = (fragments) => {
     cursor: 'pointer'
   }))
 
+  fragments.tabHeader.elements.tabHeader.match.hover.style(() => ({
+    color: scen().interactable().active().interact().color()
+  }))
+
 }
 
 export default createComponent(Tabs, [])

@@ -5,7 +5,7 @@ import {
   propTypes
 } from 'axii'
 import scen from '../pattern'
-
+// TODO 替换成 dayjs
 import moment from 'moment';
 
 export function Calendar({ value, current, onSelect, onSelectNextMonth, onSelectLastMonth, onSelectLastYear, onSelectNextYear, onChange }, fragments) {
@@ -136,6 +136,12 @@ Calendar.propTypes = {
 Calendar.Style = (fragments) => {
   fragments.root.elements.container.style({
     background: scen().active().bgColor()
+  })
+
+  fragments.header.elements.header.style({
+    lineHeight: '40px',
+    padding: `0 ${scen().spacing()}px`,
+    borderBottom: `1px solid ${scen().separateColor()}`
   })
 
   fragments.header.elements.month.style({

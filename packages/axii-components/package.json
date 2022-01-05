@@ -1,6 +1,6 @@
 {
   "name": "axii-components",
-  "version": "1.3.20",
+  "version": "1.3.25",
   "author": "sskyy <skyking_H@hotmail.com>",
   "license": "MIT",
   "type": "module",
@@ -22,6 +22,7 @@
     "./toastGrid": "./dist/toastGrid/index.js"
   },
   "scripts": {
+    "play": "pnpm run start & pnpm start --filter \"axii-components-playground\"",
     "start": "rimraf ./dist && pnpm gen & node scripts/build --dev",
     "gen": "node ./scripts/generateIndexEntry.js",
     "build": "rimraf ./dist && pnpm gen & node scripts/build",

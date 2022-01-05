@@ -5,7 +5,7 @@
 ### atom(any: any)/reactive(obj: array|object)
 
 这两个 API 是用来创建 reactive 类型的数据的，区别在于 `reactive()` 创建的数组或者对象可以实现深度监听，在使用的时也是按照正常的对象来读取和赋值。
-而 `ref()` 则主要是用来创建非对象类型的数据，例如 number/string/undefined 等。如果某些对象不想要深度监听，也可以使用 ref。在读取和赋值时都是使用 `.value` 。
+而 `atom()` 则主要是用来创建非对象类型的数据，例如 number/string/undefined 等。如果某些对象不想要深度监听，也可以使用 atom。在读取和赋值时都是使用 `.value` 。
 
 ```jsx
 import { reactive, atom } from 'axii'
@@ -137,7 +137,7 @@ render(<App />, document.getElementById('root'))
 ### delegateLeaf
 
 为了保持对象操作的一致性， reactive 不会把对象的叶子节点自动转成 atom。这也使得当我们希望把叶子节点的数据委托给其他组件来修改时，需要一个机制来保持修改的是原 reactive 对象。
-再不使用 delegateLeaf 之前，我们可以写成：
+在不使用 delegateLeaf 之前，我们可以写成：
 
 ```jsx
 // 注意这里节点还要写成函数的形式，因为 source[index] 是个普通值，不是 reactive 对象，axii 检测不到，数据更新后找不到相应的 dom 更新。
@@ -187,7 +187,7 @@ function App() {
 ### 语义化标签 & layout attributes & use
 
 在 axii 中鼓励使用用户自定义的有语义的标签名，不再使用 div/span 等原生标签。同时推荐在标签上直接使用 layout attributes。如果只使用自定义的标签名，浏览器会默认认为是 inline 布局。
-使用了语义化标签后，还可以通过 `use` attribute 来指定要使用的原生标签。例如我们有多个 input，像给它语义化明明，但还是使用原生 input 组件。
+使用了语义化标签后，还可以通过 `use` attribute 来指定要使用的原生标签。例如我们有多个 input，像给它语义化命名，但还是使用原生 input 组件渲染。
 
 ```jsx
 function App() {
@@ -300,8 +300,8 @@ export default createComponent(BaseComponent, [AddIcon])
 
 ### fragments\[name\].elements\[eventName\]
 
-可以在 feature 中监听节点事件
+可以在 feature 中监听节点事件。
 
 ### scen
 
-design pattern 的实现。
+design pattern 的实现。参见组件库中 `/style/pattern.js` 和组件中的用法。

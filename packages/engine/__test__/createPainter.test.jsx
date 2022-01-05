@@ -404,6 +404,83 @@ describe('repaint key diff', () => {
     expect(diffResult.patch[0].children[0].children[1]).toMatchObject(firstKeySpan)
   })
 
+  test('new ref', () => {
+    let count = 0
+    const ref1 = { current: null }
+    const ref2 = { current: null }
+    const App = {
+      render() {
+
+        const result = <div ref={count === 0 ? ref1 : ref2} />
+        count++
+        return result
+      }
+    }
+
+    const ctree = painter.createCnode(<App/>)
+    const paintResult = painter.paint(ctree)
+    const firstNewRefsValues = Object.values(paintResult.newRefs)
+    expect(firstNewRefsValues.length).toBe(1)
+    expect(firstNewRefsValues[0].ref).toBe(ref1)
+
+    const diffResult = painter.repaint(ctree)
+
+    const newRefsValues = Object.values(diffResult.newRefs)
+    expect(newRefsValues.length).toBe(1)
+    expect(newRefsValues[0].ref).toBe(ref2)
+  })
+
+  test('remained ref', () => {
+    let count = 0
+    const ref1 = { current: null }
+    const App = {
+      render() {
+
+        const result = <div ref={ref1} />
+        count++
+        return result
+      }
+    }
+
+    const ctree = painter.createCnode(<App/>)
+    const paintResult = painter.paint(ctree)
+    const firstNewRefsValues = Object.values(paintResult.newRefs)
+    expect(firstNewRefsValues.length).toBe(1)
+    expect(firstNewRefsValues[0].ref).toBe(ref1)
+
+    const diffResult = painter.repaint(ctree)
+
+    const remainedRefs = Object.values(diffResult.remainedRefs)
+    expect(remainedRefs.length).toBe(1)
+    expect(remainedRefs[0].ref).toBe(ref1)
+  })
+
+  test('disposed ref', () => {
+    let count = 0
+    const ref1 = { current: null }
+    const App = {
+      render() {
+        const result = <div ref={count === 0 ? ref1 : undefined} />
+        count++
+        return result
+      }
+    }
+
+    const ctree = painter.createCnode(<App/>)
+    const paintResult = painter.paint(ctree)
+    const firstNewRefsValues = Object.values(paintResult.newRefs)
+    expect(firstNewRefsValues.length).toBe(1)
+    expect(firstNewRefsValues[0].ref).toBe(ref1)
+
+    const diffResult = painter.repaint(ctree)
+
+    const disposedRefs = Object.values(diffResult.disposedRefs)
+    expect(disposedRefs.length).toBe(1)
+    expect(Object.values(diffResult.remainedRefs).length).toBe(0)
+    expect(Object.values(diffResult.newRefs).length).toBe(0)
+    expect(disposedRefs[0].ref).toBe(ref1)
+  })
+
   // test('diff with null vnode', () => {
   //   let isFirst = true
   //   const App = {
