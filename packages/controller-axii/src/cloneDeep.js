@@ -45,7 +45,7 @@ const isPlainObject = (obj) => {
  * @param obj {any} 用于判断的数据
  */
 const isBufferOrBlobOTypeArrayOrBigArray = (obj) => /^\[object (((Big)?(Int|Uint|Float)\d+)?(Clamped|Shared)?Array(Buffer)?|Blob)\]$/.test(getNativeType(obj))
-const isNull = (obj) => obj === null
+const isUndef = (obj) => obj === null || obj === undefined
 // 复制
 const copyObjectString = (strObj) => new String(strObj)
 const copyObjectNumber = (numObj) => new Number(numObj)
@@ -126,8 +126,8 @@ const deepCopy = (obj, target, key, typeToHandle) => {
       catchItem.copy = copyDataView(obj)
     } else if (isBufferOrBlobOTypeArrayOrBigArray(obj)) {
       catchItem.copy = copyBufferOrBlobOTypeArrayOrBigArray(obj)
-    } else if (isNull(obj)) {
-      catchItem.copy = null;
+    } else if (isUndef(obj)) {
+      catchItem.copy = obj;
     } else {
       const handle = typeToHandle.get(obj.constructor)
       catchItem.copy = handle ? handle(obj) : obj
