@@ -212,6 +212,9 @@ export default function createComponent(Base, featureDefs=[]) {
     head.appendChild(stylesheet);
   }
 
+  Component.Base = Base
+  Component.displayName = Base.displayName || Base.name
+
   return Component
 }
 

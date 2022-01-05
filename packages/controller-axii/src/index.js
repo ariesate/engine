@@ -33,7 +33,7 @@ export { default as watch, traverse, watchReactive, watchOnce, autorun } from '.
 export { StyleEnum, StyleRule } from './StyleManager'
 export { default as createFlatChildrenProxy } from './createFlatChildrenProxy'
 export { isComponentVnode, useViewEffect, useContext, createContext } from './controller'
-export { createSmartProp, overwrite, disableDraft } from './controller/ComponentNode'
+export { createSmartProp, overwrite, disableDraft, DIRTY } from './controller/ComponentNode'
 export { invariant, tryToRaw, shallowEqual, createBufferedRef, deferred } from './util'
 export { default as createComponent} from './component/createComponent'
 export { flattenChildren } from './component/utils'

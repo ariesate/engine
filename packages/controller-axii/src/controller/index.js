@@ -153,6 +153,8 @@ function defaultShouldComponentUpdate(cnode) {
 	if (Object.entries(props).some(([propName, propValue]) => {
 		// 如果是 callback，那么默认认为是相同的，我们在处理 callback 的时候进行了优化。
 		if (type.propTypes && type.propTypes[propName] && type.propTypes[propName].is(propTypes.callback)) return false
+		// 如果是 function，也不进行 render，我们在处理 prop 的时候已经做了一个替换引用的操作了，除非手动标记。
+		if (type.propTypes && type.propTypes[propName] && type.propTypes[propName].is(propTypes.function) && !propValue.isDirty) return false
 		return propValue !== lastProps[propName]
 	})) return true
 

@@ -213,7 +213,7 @@ function createInjectedProps(cnode) {
 
 	// 对两种类型props 特殊处理：
 	// 2. 随 smartProp 进行回调处理
-	// 3. 开始对其中的 mutation 回调 prop 进行注入。
+	// 3. 开始对其中的 callback 回调 prop 进行注入。
 	// TODO 考虑用户不需要 produce 的场景，能不能提前声明？虽然传入的是 ref，但是某些事件就是不要 apply，不是动态决定的，是提前就决定好的。
 	// TODO 虽然已经有 overwrite 了，但是还是会去 produce。连这一步也不要有？性能影响到底大不大？
 	const transformedProps = mapValues(thisPropTypes || {}, (propType, propName) => {
@@ -223,8 +223,13 @@ function createInjectedProps(cnode) {
 			return prop(propType, propName)
 		}
 
-		// 下面只针对 callback 类型进行处理
-		if (!propType.is(propTypes.callback)) return prop
+		if (!propType.is(propTypes.callback) && !propType.is(propTypes.function)) return prop
+
+		// CAUTION 增加了对 function 的缓存处理，我们认为整个系统应该只随着数据变化而变化。
+		//  函数变化不应该引起重新 render，除非手动标记。
+		if (propType.is(propTypes.function)) return cnode.props[propName] ? (...argv) => cnode.props[propName](...argv) : prop
+
+		// 下面是针对 callback 类型进行补全参数等操作
 		return (event, ...restArgv) => {
 			// CAUTION 参数判断非常重要，用户既有可能把这个函数直接传给 onClick 作为回调，也可能在其他函数中手动调用。
 			// 当直接传给事件回调时，由于事件回调会补足 event，而我们不需要，因此在这里判断一下。
@@ -306,6 +311,12 @@ export function overwrite(fn) {
 	return fn
 }
 
+// 这个标记未来是可以通过编译工具处理，所以全用大写。
+export function DIRTY(fn) {
+	fn.isDirty = true
+	return fn
+}
+
 export function disableDraft(fn) {
 	fn.disableDraft = true
 	return fn
@@ -338,7 +349,7 @@ function filterFixedValueChanges(changes, values) {
  */
 export function useViewEffect(fn) {
 	const cnode = getCurrentWorkingCnode()
-	invariant(cnode, 'can only use useEffect in component render function')
+	invariant(cnode, 'can only use useViewEffect in component render function')
 	cnode.viewEffects.push(fn)
 }
 
