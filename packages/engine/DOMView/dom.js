@@ -124,7 +124,15 @@ export function updateElement(vnode, element, invoke) {
   if (vnode.type === String) {
     element.nodeValue = vnode.value
   } else {
-    setAttributes(vnode.attributes, element, vnode.isSVG, invoke)
-    setData(vnode.dataset, element)
+    // TODO 对于局部更新的节点只上报了 vnode，没有做 diff，未来要优化，先兼容一下。
+    const diffFrom = vnode
+    if (diffFrom.attributes) {
+      setAttributes(diffFrom.attributes, element, vnode.isSVG, invoke)
+      setData(vnode.dataset, element)
+    }
+
+    if (diffFrom.portalRoot && (diffFrom.portalRoot !== element.parentNode)) {
+      diffFrom.portalRoot.appendChild(element)
+    }
   }
 }

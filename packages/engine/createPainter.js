@@ -45,17 +45,25 @@ import { defaultNormalizeLeaf, shallowCloneElement } from './createElement'
  * Diff the detail of two non-component vnode.
  */
 function defaultDiffNodeDetail(lastVnode, vnode) {
+  // 文本节点
   if (lastVnode.type === String && lastVnode.value !== vnode.value) {
     return {
       value: vnode.value,
     }
   }
 
-  if (!shallowEqual(lastVnode.attributes, vnode.attributes)) {
-    return {
-      attributes: vnode.attributes,
-    }
-  }
+  // 非文本节点，要比较 attributes 和 portal
+  const attributesEqual = shallowEqual(lastVnode.attributes, vnode.attributes)
+  const portalEqual = vnode.portalRoot === lastVnode.portalRoot
+
+  if (attributesEqual && portalEqual) return
+
+  const result = {}
+  if (!attributesEqual) result.attributes = vnode.attributes
+  if (!portalEqual) result.portalRoot = vnode.portalRoot
+
+  return result
+
 }
 
 
