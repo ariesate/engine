@@ -104,7 +104,7 @@ export function filterOut(list, itemsToFilter) {
 }
 
 export function isPlainObject(value) {
-  return (typeof value === 'object') && (Object.getPrototypeOf(value) === null || Object === value.constructor)
+  return (typeof value === 'object' && value !== null) && (Object.getPrototypeOf(value) === null || Object === value.constructor)
 }
 
 export function isNaiveValue(value) {
