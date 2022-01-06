@@ -175,8 +175,8 @@ class NodeManager {
 
       sourceNode.edges.forEach(edge => {
         const targetId = edge.target.cell;
-        if (targetId) {
-          const targetRelation = relations[targetId];
+        const targetRelation = relations[targetId];
+        if (targetId && targetRelation) {
           sourceRelation.next.add(targetId);
           targetRelation.prev.add(sourceNode.id);
         }
