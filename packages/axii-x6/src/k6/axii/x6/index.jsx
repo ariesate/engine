@@ -250,8 +250,9 @@ export const Graph = {
       }),
       onAddEdge(nodeId, edge, edgeIns) {
         dm.addNewEdge(nodeId, edge).then(remoteId => {
-          console.log('remoteId: ', remoteId, edgeIns.id);
-          edgeIns.setData({ remoteId });
+          if (remoteId) {
+            edgeIns.setData({ remoteId });
+          }
         });
       },
     });

@@ -15,7 +15,7 @@ function ER2Editor({ data, onSave }) {
   const graphRef = useRef();
 
   function saveER() {
-    const d = graphRef.current.export()
+    const d = graphRef.current.export('x6')
     onSave && onSave(d)
   }
 

@@ -1,7 +1,7 @@
 /** @jsx createElement */
 import {
   createElement,
-  createComponent,
+  tryToRaw,
   useContext,
   useViewEffect,
   reactive,
@@ -25,9 +25,14 @@ function Graph({ data, height, toolbarExtra }, ref) {
         dm.addNode(n);
         x6.Graph.addNode(n);
       },
-      export() {
+      export(format) {
         const nodes = dm.nm.nodes
-        console.log('nodes: ', nodes);
+        if (format === 'x6') {
+          return {
+            nodes: tryToRaw(nodes.slice()),
+            edges: nodes.map(n => tryToRaw(n.edges).slice()).flat(),
+          }
+        }
         return nodes;
       }
     };  

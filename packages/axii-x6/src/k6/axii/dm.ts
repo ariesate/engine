@@ -369,10 +369,13 @@ class DataManager extends EventEmiter{
         id: null,
       };
       const r = await this.notifyShapeComponent(node, newEdge, 'add', {});
-      newEdge.id = r.id;
 
+      newEdge.id = r ? r.id : edge.id;
       this.nm.addEdge(nodeId, newEdge);
-      return r.id;
+
+      if (r) {
+        return r.id;
+      }
   }
   }
   /**
