@@ -16,7 +16,6 @@ import {useElementPosition, manualTrigger as createManualTrigger } from 'axii-co
 import EntityConfigJSON from './Entity.k6.json';
 import RelationConfigJSON from './Relation.k6.json';
 
-
 export const EntityEdge = ({ edge }) => {
   // 兼容旧ER数据
   const ee = Object.assign({}, edge);
@@ -103,7 +102,6 @@ export const EntityNode = createComponent((() => {
     }, 0);
 
     useViewEffect(() => {
-      console.log('Entity.Field did');
     });
 
     return (
@@ -140,12 +138,10 @@ export const EntityNode = createComponent((() => {
 
 
       watch(() => data.fields.length, () => {
-        console.log('new field or delete field');
       }, 15);
     });
 
     useViewEffect(() => {
-      console.log('Entity did');
     });
 
     return (

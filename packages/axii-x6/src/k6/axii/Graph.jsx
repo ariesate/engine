@@ -25,8 +25,10 @@ function Graph({ data, height, toolbarExtra }, ref) {
         dm.addNode(n);
         x6.Graph.addNode(n);
       },
-      exportData() {
-        return x6.Graph.exportData();
+      export() {
+        const nodes = dm.nm.nodes
+        console.log('nodes: ', nodes);
+        return nodes;
       }
     };  
   }

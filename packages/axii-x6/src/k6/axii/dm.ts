@@ -42,10 +42,10 @@ interface ITopState {
 type INodeComponentEvent = 'change' | 'save' | 'remove' | 'add';
 
 export interface IInsideState {
-  selectedCell: IDataNode;
-  selectedComponent: INodeComponent;
-  // selectedConfigJsonOrJsx: IK6DataConfig | null;
-  // selectedConfigData: { [k: string]: any };
+  selected: {
+    cell: IDataNode;
+    nodeComponent: INodeComponent
+  }
   cacheSelected: {
     cell: { [k: string]: any }; // 镜像版本，用以对比数据
   },
@@ -310,8 +310,10 @@ class DataManager extends EventEmiter{
   nodeShapeComponentMap: Map<string, ShapeComponent> = new Map();
   data: ITopState | null = null;
   insideState:IInsideState = reactive({
-    selectedCell: null,
-    selectedComponent: null,
+    selected: {
+      cell: null,
+      nodeComponent: null,  
+    },
     cacheSelected: {
       cell: null,
     },
@@ -446,10 +448,12 @@ class DataManager extends EventEmiter{
     return sc;  
   }
   selectNode (id: string) {
-    if (!id || this.insideState.selectedCell?.id === id) {
+    if (!id || this.insideState.selected.cell?.id === id) {
       Object.assign(this.insideState, {
-        selectedCell: null,
-        selectedNodeComponent: null,
+        selected: {
+          cell: null,
+          nodeComponent: null,
+        },
         cacheSelected: {
           cell: null,
         },
@@ -459,18 +463,22 @@ class DataManager extends EventEmiter{
     const node = this.findNode(id);
     const [nodeComponent] = this.getShapeComponent(node.shape);
     Object.assign(this.insideState, {
-      selectedCell: node,
-      selectedNodeComponent: nodeComponent,
+      selected: {
+        cell: node,
+        nodeComponent: nodeComponent,  
+      },
       cacheSelected: {
         cell: cloneDeep(node),
       },
     });
   }
   selectEdge(id: string) {
-    if (!id || this.insideState.selectedCell?.id === id) {
+    if (!id || this.insideState.selected.cell?.id === id) {
       Object.assign(this.insideState, {
-        selectedCell: null,
-        selectedNodeComponent: null,
+        selected: {
+          cell: null,
+          nodeComponent: null,  
+        },
         cacheSelected: {
           cell: null,
         },
@@ -482,8 +490,10 @@ class DataManager extends EventEmiter{
     if (node) {
       const [ _1, _2, edgeComponent ] = this.getShapeComponent(node.shape);
       Object.assign(this.insideState, {
-        selectedCell: edge,
-        selectedNodeComponent: edgeComponent,
+        selected: {
+          cell: edge,
+          nodeComponent: edgeComponent,  
+        },
         cacheSelected: {
           cell: cloneDeep(edge),
         },
@@ -491,7 +501,7 @@ class DataManager extends EventEmiter{
     }
   }
   triggerCurrentEvent(event: INodeComponentEvent, data: any) {
-    this.triggerEvent(this.insideState.selectedCell?.id, event, data);      
+    this.triggerEvent(this.insideState.selected.cell?.id, event, data);      
   }
 
   async notifyShapeComponent(node: IDataNode, edge: IEdgeData, event: INodeComponentEvent, data: any) {
@@ -528,7 +538,7 @@ class DataManager extends EventEmiter{
     this.notifyShapeComponent(node, edge, event, data);
   }
   removeIdOrCurrent(targetId: string) {
-    const currentCellId = targetId ? targetId : this.insideState.selectedCell.id;
+    const currentCellId = targetId ? targetId : this.insideState.selected.cell.id;
     const [node, edge] = this.findNodeAndEdge(currentCellId);
     const [nodeComponent, _, edgeComponent] = this.getShapeComponent(node.shape);
 

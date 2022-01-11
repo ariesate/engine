@@ -1,5 +1,6 @@
 /** @jsx createElement */
 import {
+  draft,
   tryToRaw,
   createElement,
   createComponent,
@@ -12,6 +13,7 @@ import {
   traverse,
   atom,
   computed,
+  atomComputed,
   debounceComputed,
 } from 'axii';
 
@@ -48,10 +50,6 @@ function NodeForm(props) {
 
   window.formJson = formJson;
 
-  const showConfigForm = computed(() => {
-    return !!context.dm.insideState.selectedCell;
-  });
-
   function onSave(rawSelectedData) {    
     const r = onChange(rawSelectedData);  
     if (r) {
@@ -60,79 +58,85 @@ function NodeForm(props) {
   }
 
   function onChange(rawSelectedData) {
-    const { selectedCell, selectedNodeComponent } = context.dm.insideState;
-    if (selectedCell && selectedNodeComponent) {
+    const { cell, nodeComponent } = context.dm.insideState.selected;
+    if (cell && nodeComponent) {
+      console.log('[onChange] rawSelectedData: ', rawSelectedData);
       // 用merge防止主数据的某些字段被覆盖
-      merge(selectedCell.data, rawSelectedData);
-      context.dm.triggerCurrentEvent('change', selectedCell.data);
-      return selectedCell.data;
+      merge(cell.data, rawSelectedData);
+      context.dm.triggerCurrentEvent('change', cell.data);
+      return cell.data;
     }
   }
 
-  useViewEffect(() => {
-    const insideState = context.dm.insideState;
-    let formJsonChangedLockSt = 0;
-    let formJsonChangedLockEd = 0;
-    watch(() => insideState.selectedCell, () => {
-      // 防止watch callback触发之后去destroy组件内的renderProcess，导致组件响应性丢失
-      setTimeout(() => {
-        formJsonChangedLockSt++;
-        if (showConfigForm.value) {
-          const cell = insideState.selectedCell;
-          const { configJSON, ConfigPanel } = insideState.selectedNodeComponent;
-          const data = cell.data;
-          if (configJSON) {
-            const mergedJson = mergeJsonAndData(configJSON, data);
-            formJson.value = mergedJson;  
-          } else {
-            formJson.value = data;
-          }
-        } else {
-          formJson.value = null;
-        }
-        formJsonChangedLockEd++;
-      });
-    });
-
-    // 只监听在form里面会修改的value的部分，不会监听到 selectedConfigData的原始部分
-    watch(() => {
-      if (formJson.value && formJson.value.properties) {
-        // 不读取第一层的value
-        formJson.value.properties.forEach(prop => traverseSelectJSON(prop))
+  const formJson2 = computed(() => {
+    const { cell, nodeComponent } = context.dm.insideState.selected;
+    if (cell && nodeComponent) {
+      const { data } = cell;
+      const { configJSON, ConfigPanel } = nodeComponent;
+      if (configJSON) {
+        // TIP：tryToRaw避免这个computed依赖data
+        // 避免：form修改json -> re compute -> new draft -> rerender form
+        console.log('[computed] mergeJsonAndData from data')
+        const mergedJson = mergeJsonAndData(configJSON, tryToRaw(data));
+        debugger;
+        return mergedJson;
       } else {
-        traverse(formJson.value)
+        return data;
       }
-    }, () => {
-      if (formJsonChangedLockSt !== formJsonChangedLockEd) {
-        return;
+    }
+    // TODO：构造一个带Key的对象，以便能追踪变化
+    return { _blank: true };
+  });
+  
+
+  const formJsonDraft = draft(formJson2);
+  window.formJsonDraft = formJsonDraft;
+
+  useViewEffect(() => {
+
+    function handleDisplayValueChanged() {
+      const displayValue = formJsonDraft.displayValue
+      console.log('[watch Callback] displayValue: ', displayValue);
+      if (!displayValue._blank) {
+        const rawData = fallbackEditorDataToNormal(displayValue);
+        onChange(rawData);
       }
-      // 确保这个watch callback不会依赖 selectedXX 相关数据的变更
-      setTimeout(() => {
-        if (formJson.value) {
-          const rawData = fallbackEditorDataToNormal(formJson.value);
-          onChange(rawData);          
-        }  
-      });
-    });
+      watchDisplayOnce()
+    }
+
+    function watchDisplayOnce() {
+      watch(() => {
+        // 只监听在form里面会修改的value的部分，不会监听到 selectedConfigData的原始部分
+        const displayValue = formJsonDraft.displayValue
+        if (displayValue && displayValue.properties) {
+          // 不读取第一层的value
+          displayValue.properties.forEach(prop => traverseSelectJSON(prop))
+        }
+      }, handleDisplayValueChanged);  
+    }
+
+    watchDisplayOnce()
   });
 
   return (
     <nodeForm block block-width="400px">
       {(() => {
-        const insideState = context.dm.insideState;
-        if (!formJson.value || !insideState.selectedCell) {
+        const { cell, nodeComponent } = context.dm.insideState.selected;
+        const draftValue = formJsonDraft.draftValue;
+        console.log('[render Form] draftValue: ', draftValue);
+        if (draftValue._blank) {
           return;
         }
-        if (insideState.selectedNodeComponent.configJSON) {
-          return (<DataConfig jsonWithData={formJson.value} onSave={onSave}></DataConfig>);  
+        if (nodeComponent.configJSON) {
+          return (<DataConfig jsonWithData={draftValue} onSave={onSave}></DataConfig>);  
         }
-        if (insideState.selectedNodeComponent.ConfigPanel) {
-          return createElement(insideState.selectedNodeComponent.ConfigPanel, {
-            node: insideState.selectedCell,
-            data: formJson.value,
-            onSave,
-          });
-        }
+        // if (nodeComponent.ConfigPanel) {
+        //   return createElement(nodeComponent.ConfigPanel, {
+        //     node: cell,
+        //     data: draftValue.value,
+        //     onSave,
+        //   });
+        // }
       })}
     </nodeForm>
   )

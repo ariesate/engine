@@ -81,13 +81,13 @@ function Toolbar(props) {
           <ZoomOut onClick={() => context.dm.zoomOut()} />
         </Item>
         <Item>
-          {() => 
+          {() =>
             <text inline inline-padding-bottom="2px">{parseInt(context.dm.insideState.graph.zoom * 100) + '%'}</text>
           }
         </Item>
         <Split />
         {() => {
-          let enabled = context.dm.insideState.selectedCell;
+          let enabled = context.dm.insideState.selected.cell;
           return (
             <Item disabled={!enabled} onClick={() => context.dm.removeIdOrCurrent()}>
               <DeleteOne />

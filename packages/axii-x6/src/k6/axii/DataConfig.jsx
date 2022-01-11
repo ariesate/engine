@@ -25,8 +25,9 @@ const simpleTypes = ['string', 'number', 'boolean', 'enum'];
 
 const SimpleFormField = createComponent((() => {
   function FormField({ item, onChange }) {
+    console.log('item: ', item);
+    window[`item_${item.name}`] = item;
     const itemValue = delegateLeaf(item).value;
-
     return (
       <formField>
         <fieldName>{item.description}</fieldName>
@@ -35,15 +36,15 @@ const SimpleFormField = createComponent((() => {
             switch (item.type) {
               case 'string':
                 return (
-                  <Input onChange={onChange} layout:block value={itemValue} />
+                  <Input layout:block value={itemValue} />
                 );
               case 'number':
                 return (
-                  <Input onChange={onChange}  layout:block type="number" value={itemValue} />
+                  <Input layout:block type="number" value={itemValue} />
                 );
               case 'boolean':
                 return (
-                  <Checkbox onChange={onChange} value={itemValue} />
+                  <Checkbox value={itemValue} />
                 );
               case 'enum':
                 {
@@ -62,7 +63,6 @@ const SimpleFormField = createComponent((() => {
                       if (!optionToValue) return
                       value.value = optionToValue(option)
                       item.value = value.value.id;
-                      onChange();
                     }}/>
                   );  
                 }
@@ -94,11 +94,9 @@ const HigherFormField = createComponent((() => {
           [p.name]: null,
         }
       }).reduce((p, n) => Object.assign(p, n), {});      
-      // item.value.push(newObj);
-      const newValueArr = item.value.concat(newObj);
+      const newValueArr = [(newObj)];
       const newChildren = rebuildArrayValue2ReactiveChildren(item, newValueArr);
-      item.children = merge(newChildren, item.children);
-      onChange();
+      item.children.push(newChildren[0])
     }
 
     function genClickOnItemHeader(i) {
@@ -115,7 +113,6 @@ const HigherFormField = createComponent((() => {
       return () => {
         item.value.splice(index, 1);
         children.splice(index, 1);        
-        onChange();
       };
     }
 
@@ -137,7 +134,8 @@ const HigherFormField = createComponent((() => {
               <icon1 onClick={genRemoveItem(children, index)}><Delete fill="#ff4d4f" /></icon1>
             </itemBox>
             {() => (index === expandIndex.value) ? (
-              <DataConfigForm layout:block-padding="16px" json={item} onChange={onChange} />
+              window.expandItem = item,
+              <DataConfigForm layout:block-padding="16px" json={item} />
             ) : ''}
           </itemContainer>
         );
@@ -160,13 +158,16 @@ const HigherFormField = createComponent((() => {
             </itemHeader>
           </itemBox>
           {() => (0 === expandIndex.value) ? (
-            <DataConfigForm layout:block-padding="16px" json={item} onChange={onChange} />
+            <DataConfigForm layout:block-padding="16px" json={item} />
           ) : ''}
         </itemContainer>
       );
     }
 
     useViewEffect(() => {
+      watch(() => traverse(item.children), () => {
+        console.log('item.children: ', item.children[item.children.length - 1]);
+      });
     });
 
     return (
@@ -174,6 +175,7 @@ const HigherFormField = createComponent((() => {
         <fieldName>{item.description}</fieldName>
         <fieldValue block block-margin="4px 0px 8px 0">
           {() => {
+            console.log('?')
             switch (item.type) {
               case 'object':
                 {
@@ -185,6 +187,7 @@ const HigherFormField = createComponent((() => {
                 }
               case 'array':
                 {
+                  window.itemChildren = item.children
                   return (
                     <itemList>
                       {renderItemList(item.children)}
@@ -262,7 +265,7 @@ export function mergeJsonAndData(json, data) {
     return json;
   }
   // 原始的json应该是一个固定的json结构
-  const clonedJson = reactive(cloneDeep(json));
+  const clonedJson = (json);
 
   function traverseJson(obj, path) {
     const cur = path.concat(obj.name);
@@ -334,20 +337,20 @@ const DataConfigForm = createComponent((() => {
     
     return (
       <dataConfigForm block block-width="100%" block-box-sizing="border-box" >
-        {() => json.properties?.map(item => {
+        {() => (console.log('json.properties:', json.properties), json.properties?.map(item => {
           const isSimple = simpleTypes.includes(item.type);
           const isHigher = ['array', 'object'].includes(item.type);
           if (isSimple) {
             return (
-              <SimpleFormField item={item} onChange={onChange} />
+              <SimpleFormField item={item} />
             );
           }
           if (isHigher) {
             return (
-              <HigherFormField item={item} onChange={onChange} />
+              <HigherFormField item={item} />
             );
           }
-        })}
+        }))}
       </dataConfigForm>
     );
   }
@@ -361,29 +364,12 @@ const DataConfigForm = createComponent((() => {
 })());
 
 /**
- * layout模式
- * 默认不指定的情况下是根据node.x.y的绝对定位
- * 指定的情况下可以是根据相关Layout（这让我想起了安卓的xml
+ * 渲染Form
  */
 function DataConfig({ jsonWithData, onChange, onSave }) {
 
   const myJson = (jsonWithData);
   window.myJson = myJson;
-
-  function clickOnSave() {
-    setTimeout(() => {
-      const rawData = fallbackEditorDataToNormal(myJson);
-      onSave && onSave(rawData);
-    });
-  }
-
-  // @TODO 先不主动触发，让外界通过watch监听
-  function dataChanged(v) {
-    // setTimeout(() => {
-    //   const rawData = fallbackEditorDataToNormal(myJson);      
-    //   onChange && onChange(rawData);
-    // });
-  }
 
   return (
     <dataCofnig block block-width="100%" style={{
@@ -394,11 +380,7 @@ function DataConfig({ jsonWithData, onChange, onSave }) {
       <content block block-padding="16px">
         <DataConfigForm
           json={myJson}
-          onChange={dataChanged}
         />
-        {/* <actions block flex-display flex-justify-content="right" block-padding-right="0">
-          <Button layout:block-margin-top="8px" primary onClick={clickOnSave}>保存</Button>
-        </actions> */}
       </content>
     </dataCofnig>
   );

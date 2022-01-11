@@ -5,13 +5,19 @@ import {
   reactive,
   useRef,
 } from 'axii';
+import { Button } from 'axii-components'
 
 import { K6, Register, Graph, NodeForm, MiniMap } from '../../k6';
 import { EntityNode, EntityPort, EntityEdge, data as dataFunc } from './Entity';
 
-function ER2Editor({ data }) {
+function ER2Editor({ data, onSave }) {
   data = reactive(data);
   const graphRef = useRef();
+
+  function saveER() {
+    const d = graphRef.current.export()
+    onSave && onSave(d)
+  }
 
   return (
     <container block>
@@ -22,9 +28,16 @@ function ER2Editor({ data }) {
           <Register node={EntityNode} port={EntityPort} edge={EntityEdge}>
           </Register>
           
-          <Graph data={data} ref={graphRef}>
+          <Graph data={data} ref={graphRef} toolbarExtra={[
+            <Button size="small" primary onClick={saveER} >
+              保存
+            </Button>,
+          <Button key="add" size="small" primary k6-add-node >
+              新增Entity
+            </Button>
+          ]}>
           </Graph>
-        </k6base> 
+        </k6base>
         {{
             nodeForm: <NodeForm />
           }}
