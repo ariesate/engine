@@ -12,8 +12,14 @@ export interface Atom<T> {
   value?: T;
 }
 export namespace Atom {
+  /**
+   * 获取atom数据的值类型
+   */
   export type Unwrap<T> = T extends Atom<infer P> ? P : T;
-  export type Props<P> = { [K in keyof P]: Atom<P[K]> };
+  /**
+   * 获取数据的atom类型(基础类型atom化，复杂类型不变)
+   */
+  export type Atomify<T> = T extends SimpleType ? Atom<T> : T;
 }
 export type DelegatedSource<T> = T extends Array<infer P>
   ? Array<Atom<P>>
@@ -48,7 +54,10 @@ export function asAtom<T, P>(item: T, parent: P, key: keyof P): Atom<T>;
  * @param isComputed 是否为计算属性
  * @returns 响应式的对象状态
  */
-export function reactive<T>(value: T, isComputed?: boolean): T extends SimpleType? never: T;
+export function reactive<T>(
+  value: T,
+  isComputed?: boolean
+): T extends SimpleType ? never : T;
 /**
  * 判断一个值是否为reactive对象
  * @param value 值
@@ -142,8 +151,8 @@ export function useRef<T = any>(): RefObject<T>;
 export function createRef<T = any>(): RefObject<T>;
 export function createContext<T>(defaultValue?: T): Context<T>;
 export function useContext<T>(context: Context<T>): T;
-export function batchOperation<T>(source: T, op: (source: T) => void): void
-export function isDraft(data: any): boolean
+export function batchOperation<T>(source: T, op: (source: T) => void): void;
+export function isDraft(data: any): boolean;
 
 // TODO:
 export const createComputed: any;

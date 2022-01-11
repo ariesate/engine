@@ -33,8 +33,11 @@ export namespace PropTypes {
   }
 }
 
+export type FeatureProps<P> = { [K in keyof P]: Atom.Atomify<P[K]> };
+export type AbstractProps<P> = { [K in keyof P]: Atom.Atomify<P[K]> | P[K] };
+
 export interface FunctionComponent<P = {}> extends FeatureBase<P> {
-  (props: Atom.Props<P>): JSX.Element;
+  (props: FeatureProps<P>): JSX.Element;
   /**
    * 默认特性
    */
@@ -42,7 +45,7 @@ export interface FunctionComponent<P = {}> extends FeatureBase<P> {
 }
 export type FC<P = {}> = FunctionComponent<P>;
 interface AbstractComponent<P = {}> {
-  (props: Atom.Props<P>): JSX.Element;
+  (props: AbstractProps<P>): JSX.Element;
 }
 export interface Component<P = {}> extends AbstractComponent<P> {
   /**
@@ -116,7 +119,7 @@ export namespace Feature {
   }
 }
 export interface Feature<P = {}, S = {}> extends FeatureBase<P> {
-  (fragments: Feature.Fragments<Atom.Props<P>, S>): void;
+  (fragments: Feature.Fragments<FeatureProps<P>, S>): void;
 }
 interface FeatureBase<P> {
   /**
@@ -132,7 +135,7 @@ interface FeatureBase<P> {
    * @description 请勿在函数中使用`atom.value`进行比较
    * @example DarkFeature.match = ({ dark }) => dark;
    */
-  match?: (props: Atom.Props<P>) => boolean | Atom<boolean>;
+  match?: (props: FeatureProps<P>) => boolean | Atom<boolean>;
   methods?: any;
 }
 
