@@ -78,7 +78,6 @@ function NodeForm(props) {
         // 避免：form修改json -> re compute -> new draft -> rerender form
         console.log('[computed] mergeJsonAndData from data')
         const mergedJson = mergeJsonAndData(configJSON, tryToRaw(data));
-        debugger;
         return mergedJson;
       } else {
         return data;
