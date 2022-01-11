@@ -19,4 +19,6 @@ localRawData.edges.forEach(e => {
   }
 });
 
-render(<EREditor2 data={localRawData} ref={editorRef} />, root);
+render(<EREditor2 data={localRawData} ref={editorRef} onSave={(d) => {
+  console.log('保存数据', d)
+}} />, root);

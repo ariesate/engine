@@ -49,7 +49,7 @@ function NodeForm(props) {
   window.formJson = formJson;
 
   const showConfigForm = computed(() => {
-    return !!context.dm.insideState.selectedCell;
+    return !!context.dm.insideState.selected.cell;
   });
 
   function onSave(rawSelectedData) {    
@@ -60,12 +60,12 @@ function NodeForm(props) {
   }
 
   function onChange(rawSelectedData) {
-    const { selectedCell, selectedNodeComponent } = context.dm.insideState;
-    if (selectedCell && selectedNodeComponent) {
+    const { cell, nodeComponent } = context.dm.insideState.selected;
+    if (cell && nodeComponent) {
       // 用merge防止主数据的某些字段被覆盖
-      merge(selectedCell.data, rawSelectedData);
-      context.dm.triggerCurrentEvent('change', selectedCell.data);
-      return selectedCell.data;
+      merge(cell.data, rawSelectedData);
+      context.dm.triggerCurrentEvent('change', cell.data);
+      return cell.data;
     }
   }
 
@@ -73,13 +73,13 @@ function NodeForm(props) {
     const insideState = context.dm.insideState;
     let formJsonChangedLockSt = 0;
     let formJsonChangedLockEd = 0;
-    watch(() => insideState.selectedCell, () => {
+    watch(() => insideState.selected, () => {
       // 防止watch callback触发之后去destroy组件内的renderProcess，导致组件响应性丢失
       setTimeout(() => {
         formJsonChangedLockSt++;
         if (showConfigForm.value) {
-          const cell = insideState.selectedCell;
-          const { configJSON, ConfigPanel } = insideState.selectedNodeComponent;
+          const cell = insideState.selected.cell;
+          const { configJSON, ConfigPanel } = insideState.selected.nodeComponent;
           const data = cell.data;
           if (configJSON) {
             const mergedJson = mergeJsonAndData(configJSON, data);
@@ -119,16 +119,16 @@ function NodeForm(props) {
   return (
     <nodeForm block block-width="400px">
       {(() => {
-        const insideState = context.dm.insideState;
-        if (!formJson.value || !insideState.selectedCell) {
+        const { cell, nodeComponent } = context.dm.insideState.selected;
+        if (!formJson.value || !cell) {
           return;
         }
-        if (insideState.selectedNodeComponent.configJSON) {
+        if (nodeComponent.configJSON) {
           return (<DataConfig jsonWithData={formJson.value} onSave={onSave}></DataConfig>);  
         }
-        if (insideState.selectedNodeComponent.ConfigPanel) {
-          return createElement(insideState.selectedNodeComponent.ConfigPanel, {
-            node: insideState.selectedCell,
+        if (nodeComponent.ConfigPanel) {
+          return createElement(nodeComponent.ConfigPanel, {
+            node: cell,
             data: formJson.value,
             onSave,
           });
