@@ -38,6 +38,7 @@ function splitChildren (children) {
 }
 
 function Root({ children, height, ref, readOnly }, frags) {
+  console.log('height: ', height);
   const {slots, realChildren} = splitChildren(children);
   const shareContext = useContext(ShareContext);
 
@@ -76,7 +77,7 @@ function Root({ children, height, ref, readOnly }, frags) {
     if (r) {
       x6.Graph.init(elementRefs.graph, dm, {
         width: elementRefs.graph.offsetWidth,
-        height,
+        height: height.value,
         minimap: elementRefs.miniMap,
       });
       x6.Graph.renderNodes(dm.nm.nodes);
