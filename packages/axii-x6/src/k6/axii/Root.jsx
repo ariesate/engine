@@ -7,7 +7,6 @@ import {
   createContext,
   useContext,
   reactive,
-  watch,
   atom,
 } from 'axii';
 import * as x6 from './x6';

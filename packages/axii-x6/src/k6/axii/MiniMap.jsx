@@ -1,9 +1,8 @@
+/** @jsx createElement */
 import {
   computed,
   createElement,
   createComponent,
-  createContext,
-  reactive,
   useContext,
   useRef,
   useViewEffect,

@@ -3,10 +3,10 @@ import {
   reactive,
 } from 'axii';
 import EventEmiter from 'eventemitter3';
-import { IBBox, IX6Cell, IX6Node, IX6Edge } from '../basicTypes';
-import { K6Edge, K6EdgeChild, INodeEdge } from '../Edge';
-import { IK6DataConfig, K6Node, K6NodeChild, INodeComponent } from '../Node';
-import { K6Port, K6PortChild, IRegisterPortConfigProps, INodePort } from '../Port';
+import { IX6Node, IX6Edge } from '../basicTypes';
+import { INodeEdge } from '../Edge';
+import { IK6DataConfig, INodeComponent } from '../Node';
+import { INodePort } from '../Port';
 import merge from 'lodash/merge';
 import cloneDeep from 'lodash/cloneDeep';
 

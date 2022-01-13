@@ -1,21 +1,18 @@
 /** @jsx createElement */
-import { createFlowGraph } from './graph';
-import { Graph as X6Graph, Markup } from '@antv/x6'
-import merge from 'lodash/merge';
-import pick from 'lodash/pick';
-import debounce from 'lodash/debounce';
-
 import {
-  Fragment,
   tryToRaw,
   createElement,
   render,
-  useRef,
   watch,
   traverse,
   useViewEffect,
   destroyComputed,
 } from "axii";
+import { createFlowGraph } from './graph';
+import { Graph as X6Graph, Markup } from '@antv/x6'
+import merge from 'lodash/merge';
+import pick from 'lodash/pick';
+import debounce from 'lodash/debounce';
 import ShareContext from '../ShareContext';
 import { getRegisterPort } from '../Port';
 import { DEFAULT_SHAPE } from '../../Node';

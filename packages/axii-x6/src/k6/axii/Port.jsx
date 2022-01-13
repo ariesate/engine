@@ -1,16 +1,7 @@
 /** @jsx createElement */
 import {
-  isReactive,
-  createElement,
-  createComponent,
   useViewEffect,
-  propTypes,
-  useRef,
   reactive,
-  watch,
-  traverse,
-  computed,
-  useContext,
 } from 'axii';
 
 

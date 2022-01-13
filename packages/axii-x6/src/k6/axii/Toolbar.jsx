@@ -1,15 +1,14 @@
-import { Input, Select, Button, Checkbox } from 'axii-components'
+/** @jsx createElement */
 import {
   createElement,
   createComponent,
   useContext,
   useViewEffect,
 } from 'axii';
-
+import { Button } from 'axii-components'
 import ZoomIn from 'axii-icons/ZoomIn';
 import ZoomOut from 'axii-icons/ZoomOut';
 import DeleteOne from 'axii-icons/DeleteOne';
-import Mouse from 'axii-icons/Mouse';
 
 import { RootContext } from './Root';
 

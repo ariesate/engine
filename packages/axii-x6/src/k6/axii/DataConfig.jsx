@@ -3,18 +3,13 @@ import {
   tryToRaw,
   createElement,
   createComponent,
-  createContext,
   reactive,
   useViewEffect,
-  useContext,
-  watch,
   delegateLeaf,
-  traverse,
   atom,
-  computed,
 } from 'axii';
 
-import { Input, Select, Button, Checkbox } from 'axii-components'
+import { Input, Select, Checkbox } from 'axii-components'
 import cloneDeep from 'lodash/cloneDeep';
 import Right from 'axii-icons/Right';
 import Delete from 'axii-icons/Delete';
