@@ -38,7 +38,6 @@ function splitChildren (children) {
 }
 
 function Root({ children, height, ref, readOnly }, frags) {
-  console.log('height: ', height);
   const {slots, realChildren} = splitChildren(children);
   const shareContext = useContext(ShareContext);
 

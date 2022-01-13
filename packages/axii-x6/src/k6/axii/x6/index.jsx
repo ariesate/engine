@@ -100,6 +100,12 @@ export const Register = {
         watchTokens.forEach(token => destroyComputed(token));
         watchTokens = [];
 
+        // TIP: 由于延时，组件有可能已经被卸载了
+        if (!wrap.children[0]) {
+          renderController.destroy();
+          return
+        }
+        
         const { width, height } = (wrap.children[0].getBoundingClientRect());
         // @TIP: +2 是为了包含dom border
         node.setProp({ width: width + 2, height: height + 2 });
