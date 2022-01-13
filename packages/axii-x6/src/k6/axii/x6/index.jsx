@@ -244,7 +244,8 @@ export const Graph = {
 
   init(container, dm, config) {
     const graph = createFlowGraph(container, {
-      ...config, 
+      ...config,
+      getReadOnly: () => dm.readOnly.value,
       onPortRendered: Register.registerPortRender({
         getDm: () => this.dm,
       }),

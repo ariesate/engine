@@ -111,7 +111,7 @@ function NodeForm(props) {
         if (formJson.value) {
           const rawData = fallbackEditorDataToNormal(formJson.value);
           onChange(rawData);          
-        }  
+        }
       });
     });
   });

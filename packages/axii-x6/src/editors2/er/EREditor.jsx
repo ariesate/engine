@@ -4,6 +4,7 @@ import {
   createComponent,
   reactive,
   useRef,
+  atom,
 } from 'axii';
 import { Button } from 'axii-components'
 
@@ -19,9 +20,12 @@ function ER2Editor({ data, onSave }) {
     onSave && onSave(d)
   }
 
+  const readOnly = atom(true)
+  window.editorReadOnly = readOnly
+  
   return (
     <container block>
-      <K6 layout:block layout:flex-display>
+      <K6 layout:block layout:flex-display readOnly={readOnly} >
         <k6base flex-grow="1" block>
           <Register globalData={dataFunc}>
           </Register>

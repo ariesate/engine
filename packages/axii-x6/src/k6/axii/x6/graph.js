@@ -39,7 +39,9 @@ class SimpleNodeView extends NodeView {
 }
 ///////////////////
 export function createFlowGraph(container, initOptions = {}) {
-  const {connectingValidate = {}, width = 1000, height = 800, onPortRendered, onAddEdge} = initOptions;
+  const {
+    getReadOnly,
+    connectingValidate = {}, width = 1000, height = 800, onPortRendered, onAddEdge} = initOptions;
 
   const graph = new Graph({
     container,
@@ -77,7 +79,9 @@ export function createFlowGraph(container, initOptions = {}) {
     //   anchor: 'center',
     //   connector: 'rounded',
     //   connectionPoint: 'boundary',
-    //   ...connectingValidate,
+      validateConnection () {
+        return !getReadOnly()
+      },
       createEdge(args) {
 
         const newEdge = new Shape.Edge({

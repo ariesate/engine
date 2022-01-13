@@ -1,4 +1,5 @@
 import {
+  atom,
   reactive,
 } from 'axii';
 import EventEmiter from 'eventemitter3';
@@ -305,6 +306,30 @@ class NodeManager {
   }
 }
 
+/**
+ * 在readonly下阻断函数的执行
+ */
+function disabledByReadOnly (target, name, descriptor) {
+  const old = descriptor.value
+
+  if (old.constructor.name === "Function") {
+    descriptor.value = function (...args: any[]) {
+      if (this.readOnly.value) {
+        return
+      }
+      return old.apply(this, args)
+    }  
+  } else if (old.constructor.name === "AsyncFunction") {
+    descriptor.value = async function (...args: any[]) {
+      if (this.readOnly.value) {
+        return
+      }
+      return old.apply(this, args)
+    }
+  }
+  return descriptor
+}
+
 class DataManager extends EventEmiter{
   nm  = new NodeManager();
   nodeShapeComponentMap: Map<string, ShapeComponent> = new Map();
@@ -324,6 +349,7 @@ class DataManager extends EventEmiter{
   // x6/index.jsx
   dmx6: any;
   shareContextValue: any = null;
+  readOnly = atom(false)
   constructor() {
     super();
     // @ts-ignore
@@ -331,6 +357,9 @@ class DataManager extends EventEmiter{
   }
   setX6(x6: any) {
     this.dmx6 = x6;
+  }
+  setReadOnly(readOnly: boolean) {
+    this.readOnly = readOnly
   }
   registerShareValue(shareContextValue: any) {
     this.shareContextValue = shareContextValue;
@@ -344,6 +373,7 @@ class DataManager extends EventEmiter{
   readEdgesData(edges: IEdgeData[]) {
     this.nm.readEdges(edges)
   }
+  @disabledByReadOnly
   async addNode(initNode?: { x?:number, y?:number }) {
     // 先默认只支持一种
     if (1) {
@@ -360,6 +390,7 @@ class DataManager extends EventEmiter{
       this.emit('addNode', newNode);
     }
   }
+  @disabledByReadOnly
   async addNewEdge(nodeId: string, edge: IEdgeData) {
     const node = this.findNode(nodeId);
     if (node) {
@@ -450,6 +481,7 @@ class DataManager extends EventEmiter{
     }
     return sc;  
   }
+  @disabledByReadOnly
   selectNode (id: string) {
     if (!id || this.insideState.selected.cell?.id === id) {
       Object.assign(this.insideState, {
@@ -475,6 +507,7 @@ class DataManager extends EventEmiter{
       },
     });
   }
+  @disabledByReadOnly
   selectEdge(id: string) {
     if (!id || this.insideState.selected.cell?.id === id) {
       Object.assign(this.insideState, {

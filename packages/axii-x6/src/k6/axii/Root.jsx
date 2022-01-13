@@ -1,11 +1,14 @@
+/** @jsx createElement */
 import {
-  useViewEffect,
   createElement,
+  useViewEffect,
+  propTypes,
   createComponent,
   createContext,
   useContext,
   reactive,
   watch,
+  atom,
 } from 'axii';
 import * as x6 from './x6';
 import DM from './dm';
@@ -14,11 +17,8 @@ import ShareContext from './ShareContext';
 export const RootContext = createContext()
 
 /**
- * layout模式
- * 默认不指定的情况下是根据node.x.y的绝对定位
- * 指定的情况下可以是根据相关Layout（这让我想起了安卓的xml
+ * 提取slot
  */
-
 function splitChildren (children) {
   const slots = [];
   const realChildren = [];
@@ -38,12 +38,13 @@ function splitChildren (children) {
   };
 }
 
-function Root({ children, height, ref }, frags) {
+function Root({ children, height, ref, readOnly }, frags) {
   const {slots, realChildren} = splitChildren(children);
   const shareContext = useContext(ShareContext);
 
   const dm = new DM();
   dm.setX6(x6);
+  dm.setReadOnly(readOnly);
 
   if (shareContext) {
     dm.registerShareValue(shareContext);
@@ -62,6 +63,7 @@ function Root({ children, height, ref }, frags) {
       miniMap: null,
       graph: null,
     }),
+    readOnly,
   };
 
 
@@ -75,7 +77,7 @@ function Root({ children, height, ref }, frags) {
     if (r) {
       x6.Graph.init(elementRefs.graph, dm, {
         width: elementRefs.graph.offsetWidth,
-        height: height || 800,
+        height,
         minimap: elementRefs.miniMap,
       });
       x6.Graph.renderNodes(dm.nm.nodes);
@@ -136,6 +138,11 @@ Root.Style = (frag) => {
   el.nodeFormContainer.style(genStyle({
     top: '16px',
   }));
+}
+
+Root.propTypes = {
+  readOnly: propTypes.bool.default(() => atom(false)),
+  height: propTypes.number.default(() => 800)
 }
 
 Root.forwardRef = true;

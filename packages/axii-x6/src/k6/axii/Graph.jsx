@@ -55,9 +55,11 @@ function Graph({ data, height, toolbarExtra }, ref) {
 
   return (
     <graphContainer block >
-      <toolbarBox block >
-        <Toolbar extra={toolbarExtra} />
-      </toolbarBox>
+      {() => rootContext.readOnly.value ? '' : (
+        <toolbarBox block >
+          <Toolbar extra={toolbarExtra} />
+        </toolbarBox>
+      )}
       <graph block ref={graphRef} style={{ backgroundColor: '#fff' }}>
 
       </graph>
