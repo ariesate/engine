@@ -1,7 +1,7 @@
 {
-  "name": "IExample",
+  "name": "ER",
   "type": "object",
-  "description": "IExample",
+  "description": "ER",
   "properties": [
     {
       "name": "name",

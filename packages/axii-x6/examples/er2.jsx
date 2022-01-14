@@ -40,4 +40,6 @@ const circularConfig = {
   radius: 300
 }
 
-render(<EREditor2 data={localRawData} layoutConfig={dagreConfig} ref={editorRef} />, root);
+render(<EREditor2 data={localRawData} layoutConfig={dagreConfig} ref={editorRef} onSave={(d) => {
+  console.log('保存数据', d)
+}} />, root);

@@ -1,3 +1,4 @@
+/** @jsx createElement */
 import {
   createElement,
   createComponent,
