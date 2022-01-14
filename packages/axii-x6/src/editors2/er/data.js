@@ -71,6 +71,13 @@ const data = {
           { "id": "_f", "name": "f", "type": "rel" }, { "id": "_c", "name": "content", "type": "string" }, { "id": "_d", "name": "comments", "type": "rel" }
         ]
       }
+    }, {
+      "id": "_g", "name": "Comment", "view": { "x": 710, "y": 390 }, "data": {
+        "name": "Comment",
+        "fields": [
+          { "id": "_g", "name": "g", "type": "rel" }, { "id": "_c", "name": "content", "type": "string" }, { "id": "_d", "name": "comments", "type": "rel" }
+        ]
+      }
     }
   ],
   "edges": [
@@ -112,6 +119,11 @@ const data = {
       "id": "r6", "name": "has", "type": "1:n", 
       "source": { "cell": "_2", "port": "_a-right" }, 
       "target": { "cell": "_f", "port": "_b-left" }
+    },
+    { 
+      "id": "r7", "name": "has", "type": "1:n", 
+      "source": { "cell": "_b", "port": "_a-right" }, 
+      "target": { "cell": "_g", "port": "_b-left" }
     }
   ]
 };
