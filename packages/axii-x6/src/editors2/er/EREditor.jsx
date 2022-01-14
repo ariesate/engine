@@ -4,49 +4,47 @@ import {
   createComponent,
   reactive,
   useRef,
+  atom,
 } from 'axii';
+import { Button } from 'axii-components'
 
 import { K6, Register, Graph, NodeForm, MiniMap } from '../../k6';
 import { EntityNode, EntityPort, EntityEdge, data as dataFunc } from './Entity';
 
-function ER2Editor({ data }) {
+function ER2Editor({ data, onSave }) {
   data = reactive(data);
   const graphRef = useRef();
 
-  function addNewNode() {
-    const newNode = {
-      "id": Math.random(),"name":"Page",
-      "data":[
-        {"id":"f1","name":"title","type":"rel"},
-      ],
-      "view":{"position":{"x":30,"y":30}}
-    };
-    graphRef.current.addNode(newNode);
-  }
-  function exportData() {
-    const graphData = graphRef.current.exportData();
-    console.log('graphData: ', graphData);
+  function saveER() {
+    const d = graphRef.current.export('x6')
+    onSave && onSave(d)
   }
 
+  const readOnly = atom(true)
+  window.editorReadOnly = readOnly
+  
   return (
     <container block>
-      <K6 layout:block layout:flex-display>
+      <K6 layout:block layout:flex-display readOnly={readOnly} >
         <k6base flex-grow="1" block>
           <Register globalData={dataFunc}>
           </Register>
           <Register node={EntityNode} port={EntityPort} edge={EntityEdge}>
           </Register>
           
-          <Graph data={data} ref={graphRef}>
+          <Graph data={data} ref={graphRef} toolbarExtra={[
+            <Button size="small" primary onClick={saveER} >
+              保存
+            </Button>,
+          <Button key="add" size="small" primary k6-add-node >
+              新增Entity
+            </Button>
+          ]}>
           </Graph>
-        </k6base> 
-        <operations block block-margin="16px">
-          <NodeForm />
-          <MiniMap />
-          <p>
-            <button onClick={exportData} >export Data</button>
-          </p>
-        </operations>
+        </k6base>
+        {{
+            nodeForm: <NodeForm />
+          }}
       </K6>
     </container>
   );

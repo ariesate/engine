@@ -1,9 +1,11 @@
-import { IX6Cell, IX6Edge, X6Edge } from "./basicTypes";
+import { Axii, IX6Cell, IX6Edge, X6Edge } from "./basicTypes";
 import { IK6DataConfig, ITopState, K6Node } from './Node';
 
 export interface INodeEdge extends Function {
+  (arg: { node: IX6Cell, edge: IX6Edge }): { label: string };
   shapeName: string;
   configJSON: IK6DataConfig;
+  ConfigPanel: Axii.Component;
   onChange: (node: IX6Cell, edge: IX6Edge, data: any, oldData: any) => void;
   onSave: (node: IX6Cell, edge: IX6Edge, data: any, oldData: any) => void;
   onRemove: (node: IX6Cell, edge: IX6Edge) => void

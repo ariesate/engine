@@ -1,4 +1,4 @@
-export default interface IExample {
+export default interface ER {
   /**
    * 字段
    */
