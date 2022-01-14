@@ -11,7 +11,7 @@ import { Button } from 'axii-components'
 import { K6, Register, Graph, NodeForm, MiniMap } from '../../k6';
 import { EntityNode, EntityPort, EntityEdge, data as dataFunc } from './Entity';
 
-function ER2Editor({ data, onSave }) {
+function ER2Editor({ data, layoutConfig={}, onSave }) {
   data = reactive(data);
   const graphRef = useRef();
 
@@ -32,7 +32,7 @@ function ER2Editor({ data, onSave }) {
           <Register node={EntityNode} port={EntityPort} edge={EntityEdge}>
           </Register>
           
-          <Graph data={data} ref={graphRef} toolbarExtra={[
+          <Graph data={data} layoutConfig={layoutConfig} ref={graphRef} toolbarExtra={[
             <Button size="small" primary onClick={saveER} >
               保存
             </Button>,

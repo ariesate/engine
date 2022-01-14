@@ -27,6 +27,7 @@
     "prepare": "pnpm run build"
   },
   "dependencies": {
+    "@antv/layout": "^0.1.31",
     "@antv/x6": "^1.20.0",
     "axii-components": "workspace:^1.0.32",
     "axii-icons": "workspace:^1.0.2",

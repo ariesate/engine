@@ -18,7 +18,28 @@ localRawData.edges.forEach(e => {
     type: e.type,
   }
 });
+// 测试分层布局
+const dagreConfig = {
+  type:'dagre',
+  rankdir: 'TB',
+  align: 'UL',
+  ranksep: 80,
+  nodesep: 100,
+}
+// 测试网格布局
+const gridConfig = {
+  type:'grid',
+  begin:[0,0],
+  preventOverlap: true,
+  preventOverlapPadding: 230
+}
+// 测试圆形布局
+const circularConfig = {
+  type: 'circular',
+  center: [300,300],
+  radius: 300
+}
 
-render(<EREditor2 data={localRawData} ref={editorRef} onSave={(d) => {
+render(<EREditor2 data={localRawData} layoutConfig={dagreConfig} ref={editorRef} onSave={(d) => {
   console.log('保存数据', d)
 }} />, root);
