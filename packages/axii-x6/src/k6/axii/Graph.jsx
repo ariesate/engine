@@ -11,13 +11,19 @@ import {
 import { RootContext } from './Root';
 import Toolbar from './Toolbar';
 import * as x6 from './x6';
+import { generateLayout } from './Layout'
 
-function Graph({ data, height }, ref) {
+function Graph({ data, height, layoutConfig={} }, ref) {
   const rootContext = useContext(RootContext);
   const { nodes, edges } = reactive(data);
   const graphRef = useRef();
 
   const dm = rootContext.dm;
+
+    // 判断是否需要使用布局
+    if(layoutConfig.type) {
+      generateLayout(layoutConfig, data)
+    }
 
   if (ref) {
     ref.current = {

@@ -9,7 +9,7 @@ import {
 import { K6, Register, Graph, NodeForm, MiniMap } from '../../k6';
 import { EntityNode, EntityPort, EntityEdge, data as dataFunc } from './Entity';
 
-function ER2Editor({ data }) {
+function ER2Editor({ data, layoutConfig={} }) {
   data = reactive(data);
   const graphRef = useRef();
 
@@ -37,7 +37,7 @@ function ER2Editor({ data }) {
           <Register node={EntityNode} port={EntityPort} edge={EntityEdge}>
           </Register>
           
-          <Graph data={data} ref={graphRef}>
+          <Graph data={data} layoutConfig={layoutConfig} ref={graphRef}>
           </Graph>
         </k6base> 
         <operations block block-margin="16px">
