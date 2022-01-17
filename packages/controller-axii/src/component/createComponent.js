@@ -1,18 +1,18 @@
-import { invariant, mapValues, createUniqueIdGenerator } from '../util'
+import {invariant, mapValues, createUniqueIdGenerator, flatten, isObject, isPlainObject} from '../util'
 import { isAtom, atomComputed } from '../reactive'
 import vnodeComputed, {isVnodeComputed} from '../vnodeComputed'
 import {
   createDefaultMatch,
-  createActionCollectorContainer,
   createNamedChildrenSlotProxy,
   walkVnodes,
-  FragmentDynamic,
   createStylesheet,
   normalizeStyleValue,
   isDynamicObject,
-  computeDynamicObject, appendRule
+  computeDynamicObject,
+  appendRule
 } from './utils'
-import { Fragment, normalizeLeaf, VNode, watch } from '../index';
+import { createFragmentAgentContainer, FragmentDynamic } from './fragment'
+import {Fragment as FragmentVnode, isComponentVnode, normalizeLeaf, VNode, watch} from '../index';
 
 
 function filterActiveFeatures(features, props) {
@@ -20,6 +20,15 @@ function filterActiveFeatures(features, props) {
     const match = Feature.match || createDefaultMatch(Feature.propTypes)
     return match(props)
   })
+}
+
+function concatArgvStack(argv, argvStack) {
+  const newStack = {...argvStack}
+  Object.entries(argv).forEach(([key, value]) => {
+    if (!newStack[key]) newStack[key] = []
+    newStack[key] = newStack[key].concat(value)
+  })
+  return newStack
 }
 
 /**
@@ -134,40 +143,50 @@ export default function createComponent(Base, featureDefs=[]) {
     const processedProps = { ...restProps }
     // TODO 目前的处理方式要改一下
     if (Base.forwardRef) processedProps.ref = ref
-    processedProps.children = children ? (Base.useNamedChildrenSlot ? createNamedChildrenSlotProxy(children[0] || {}) : children) : undefined
+    const processedPropsWithChildren = {...processedProps, children}
 
     // 1. 找到所有 active 的feature，包括用户在 Props 上动态传进来的。
     // CAUTION Feature 为什么放到 render 函数里而不是外面执行? 因为这样可以用 Feature 函数的作用域为 feature 自身创建一些临时数据。
     // filter active features 不用更担心 feature 会动态变得问题，因为数据引用变化了的话组件肯定重新渲染。
     // CAUTION match 里不能通通过 xxx.value === yyy 来判断，因为这里的判断不是 reactive 的，这样做 feature 不会动态打开。
     const activeFeatures = filterActiveFeatures(FeaturesWithBase, restProps).concat(listeners || [], overwrite)
-      .filter(Feature => Feature.match ? Feature.match(processedProps) : true)
+      .filter(Feature => Feature.match ? Feature.match(processedPropsWithChildren) : true)
 
     // 2. 开始执行所有 active 的 feature。
-    // 为每一个 Feature 创造一个 actionCollectors，作为第一参数传入。在 feature 里通常变量名就叫 fragments。
-    // featureFunctionCollectors 是用来为每个 Feature 生产 fragmentsContainer 的,
-    // fragmentsContainer 用来收集 相应 Feature 对 Fragment 的改动
-    const actionCollectorContainer = createActionCollectorContainer({ props: processedProps, useNamedChildrenSlot: Base.useNamedChildrenSlot })
+    // 为每一个 Feature 创造一个 fragmentAgent，作为第一参数传入。在 feature 里通常变量名就叫 fragments。
+    // fragmentAgent 在组件 Base 里就是用来定义有局部变量上下文的片段的，例如 repeat 循环会产生 item 和 index。
+    const fragmentAgentContainer = createFragmentAgentContainer({ props: processedPropsWithChildren })
+
 
     activeFeatures.forEach(Feature => {
-      const actionCollectorNamedAsFragments = actionCollectorContainer.derive(Feature)
-      // 进行 mutations/style/listener 收集。
-      Feature(actionCollectorNamedAsFragments)
+      const fragmentAgent = fragmentAgentContainer.derive(Feature)
+      // 进行 fragment[fragmentName].mutations 等方式收集。
+      Feature(fragmentAgent)
     })
+
+    // 为了实现在 base 中也能使用 f 注册，这里变成了直接改 frag 的各种 proxy 直接改summary 不再需要手动 summarize
+    // fragmentAgentContainer.summarize()
+
+    // TODO 应该可以得到一个缓存结构加快之后渲染 fragment 的过程。
+    //  现在是 frag render 的每个节点都要遍历一次为所有 feature 生成 frag 去获取相关信息。
+    //  至少可以缓存成按照 frag - el 名字作为索引得到的 style/pseudo/listener/modifier 的结构。
 
     // 5. 开始渲染。fragment(vars)(fnOrVnode) 会返回一个所有拼装好 vnodeComputed/vnode。
     // 渲染过程中 actionCollector 会自动 invoke 所有的 feature actions。
-    const baseActionCollector = actionCollectorContainer.derive(BaseAsFeature)
+    const baseFragmentAgent = fragmentAgentContainer.derive(BaseAsFeature)
 
     // 得到一个叫做 root 的 FragmentDynamic 对象。
-    const rootFragment = baseActionCollector[ROOT_FRAGMENT_NAME](processedProps)(() => Base(processedProps, baseActionCollector, selfHandleRef))
+    const rootFragment = baseFragmentAgent[ROOT_FRAGMENT_NAME](processedProps)(() => Base(processedPropsWithChildren, baseFragmentAgent, selfHandleRef))
     // CAUTION base 是 nonReactive 的，因为如果数据引用变了，会自动从上面刷新。注意这里会印象到后面的 ref 处理。
     rootFragment.nonReactive = true
-    const result = renderFragments(rootFragment, processedProps, selfHandleRef, actionCollectorContainer, processedProps, Base.useNamedChildrenSlot, baseActionCollector, { stylesheet, componentId, instanceId })
+    const argvStack = mapValues(processedProps, (prop) => ([prop]))
+
+    const result = renderFragments(rootFragment, selfHandleRef, fragmentAgentContainer, processedPropsWithChildren, argvStack, baseFragmentAgent, { stylesheet, componentId, instanceId })
 
     // 6. TODO 自动 forward ref， 如果有 forwardRef 说明组件自己处理。在这里处理还是在 Base 里？？？
+    //      应该是要劫持到组件的渲染过程才有可能得到最真实的最外层 dom。
     if (ref && !Base.forwardRef) {
-      if (result.type === Fragment) {
+      if (result.type === FragmentVnode) {
         invariant(typeof ref === 'function', 'component root is a Fragment, you can only use function ref' )
         result.children.forEach((child) => {
           // TODO 还有 fragment 怎么办？暂时没有考虑。
@@ -175,10 +194,11 @@ export default function createComponent(Base, featureDefs=[]) {
         })
       } else {
         // CAUTION 这里和 ref 的实现有点耦合，直接打在了 vnode 上。
-        // TODO 这里还有很多其他复杂情况，比如组件直接就放回了 vnodeComputed。
+        // TODO 这里还有很多其他复杂情况，比如组件直接就返回了 vnodeComputed。
         result.ref = ref
       }
     }
+
 
     return result
   }
@@ -233,8 +253,10 @@ export default function createComponent(Base, featureDefs=[]) {
  */
 export const GLOBAL_NAME = 'global'
 const staticClassNamesByComponentId = {}
-function renderFragments(fragment, props, selfHandleRef, actionCollectorContainer, upperArgv, useNamedChildrenSlot, baseActionCollector, misc) {
+
+function renderFragments(fragment, selfHandleRef, fragmentAgentContainer, upperArgv, upperArgvStack, baseFragmentAgent, misc) {
   const { stylesheet, instanceId, componentId } = misc
+  const sourceFragmentName = fragment.extend || fragment.name
   /**
    * 整个流程是后续遍历。做四件事。
    * 0。 渲染当前节点
@@ -258,37 +280,29 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
     // resumeComputed()
     let renderResultToWalk = Array.isArray(renderResult) ? renderResult : [renderResult]
 
-
     // 2. 在当前作用域下的参数合集，包括 上层的参数、当前 fragment 上定义的参数。这就是当前 fragment 下所有能用到的变量。
     const commonArgv = {...upperArgv, ...fragment.localVars}
+    // 因为允许 localVars 和 upperArgv 同名的情况，例如递归的场景，所以提供了 stack 来获取所有上层同名参数。
+    const commonArgvStack = concatArgvStack(fragment.localVars || {}, upperArgvStack)
 
     // 在渲染子 component 之前，我们可以先有个 prepare 函数，这对要提前进行一些变量计算非常有用。
-    actionCollectorContainer.forEach(actionCollector => {
-      const preparations = actionCollector[fragment.name].getPreparations()
-      if (preparations) {
-        preparations.forEach((prepare) => {
-          const dynamicVars = prepare(commonArgv)
-          if (dynamicVars) {
-            // 不允许动态覆盖参数，容易出问题，职能用修改 vnode 结果的方式来改。
-            invariant(Object.keys(dynamicVars).every(key => !(key in commonArgv)), `do not overwrite var in prepare function ${Object.keys(dynamicVars)}`)
-            Object.assign(commonArgv, dynamicVars)
-          }
-        })
+    fragmentAgentContainer.summary[fragment.name]?.preparations.forEach((prepare) => {
+      const dynamicVars = prepare(commonArgv, commonArgvStack)
+      if (dynamicVars) {
+        // 不允许动态覆盖参数，容易出问题，职能用修改 vnode 结果的方式来改。
+        invariant(Object.keys(dynamicVars).every(key => !(key in commonArgv)), `do not overwrite var in prepare function ${Object.keys(dynamicVars)}`)
+        Object.assign(commonArgv, dynamicVars)
       }
     })
 
+
     // 3. 开始执行每个 feature 中的 mutations。
-    actionCollectorContainer.forEach(featureFunctionCollector => {
-      const modifications = featureFunctionCollector[fragment.name].getModifications()
-      if (modifications) {
-        // 如果有返回值，就要替换原节点。因为有时候 modification 写起来没有直接写想要的结构来得方便。
-        modifications.forEach((modify) => {
-          const alterResult = modify(renderResult, commonArgv)
-          if (alterResult) {
-            renderResult = alterResult
-            renderResultToWalk = Array.isArray(renderResult) ? renderResult : [renderResult]
-          }
-        })
+    fragmentAgentContainer.summary[fragment.name]?.modifications.forEach((modify) => {
+      // 如果有返回值，就要替换原节点。因为有时候 modification 写起来没有直接写想要的结构来得方便。
+      const alterResult = modify(renderResult, commonArgv, commonArgvStack)
+      if (alterResult) {
+        renderResult = alterResult
+        renderResultToWalk = Array.isArray(renderResult) ? renderResult : [renderResult]
       }
     })
 
@@ -300,35 +314,61 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
      * 3. 如果遇到 fragment，就递归渲染。
      */
     //
-    // TODO 这里可以改善一下性能，先取出所有有定义的 elements，再在遍历中去匹配，而不是每个节点都试探去取一次。
-    walkVnodes(renderResultToWalk, (walkChildren, originVnode, vnodes) => {
+    // TODO 这里可以通过编译工具改善一下性能？，先取出所有有定义的 elements，再在遍历中去匹配，而不是每个节点都试探去取一次。
+    walkVnodes(renderResultToWalk, (walkChildren, originVnode, vnodes, parentVnode) => {
+      const inspectors = [
+        ...fragmentAgentContainer.summary[sourceFragmentName]?.inspectors || [],
+        ...fragmentAgentContainer.summary[GLOBAL_NAME]?.inspectors || [],
+      ]
+
+      // TODO inspect 这里也改成上层 node 的 stack 比较好，可以获取全部的递归栈。
+      inspectors.forEach(inspect => inspect(originVnode, parentVnode, commonArgv, commonArgvStack))
+
+      // 以下几种情况先处理
+      // 0. 遇到空节点了，直接退出
       if (!originVnode) return
-      // 如果是数组或者 Fragment，也继续递归
-      if (originVnode.type === Array || originVnode.type === Fragment) {
+      // 1 如果是上层组件传进来的 children，也不要动了，我们的 feature 只处理自己 render 过程中产生元素。
+      if (originVnode.isChildren) return
+
+      // 2. 如果是数组或者 Fragment，也继续递归
+      if (originVnode.type === Array || originVnode.type === FragmentVnode) {
         return walkChildren(originVnode.children)
       }
 
+      // 3. 任何可以遍历的结构都需要遍历，因为我们在这里拿到的是没有 normalize 的数据。
+      //  可能直接就是数组，或者是传给子组件的 结构化 的 children。
+      if (Array.isArray(originVnode)) return walkChildren(originVnode)
+      if (isPlainObject(originVnode)) return walkChildren(Object.values(originVnode))
 
-      // 如果是 fragment，就递归渲染
+      // 3. 如果是 fragment，就递归渲染
       // 如果碰到函数或者 lazyVnodeComputed 就要替换成能继续驱动的
       if (originVnode instanceof FragmentDynamic || typeof originVnode === 'function' || isVnodeComputed(originVnode)) {
+        // TODO 后面这个 originVnode.computation 判断还需要吗？
         invariant(!(isVnodeComputed(originVnode) && !originVnode.computation), 'do not use vnodeComputed in fragment, use function instead')
         const isTrueFragment = originVnode instanceof FragmentDynamic
+        // 如果是个匿名函数，那么就封装成一个匿名 fragment。这样还可以继续整个 renderFragment 过程，确保匿名函数里面的 fragment 也会正确劫持。
+        // TODO 这里要交给外部识别一下看是不是一个 RP。也有可能知识一个动态结构。
+        //  怎么知道是 RP 还是动态结构呢？因为其实是可能变的。还是让用户自己取名字吧，有名字的优先展示。
         const subFragmentToRender = isTrueFragment ?
           originVnode :
-          baseActionCollector.anonymous()(originVnode)
+          baseFragmentAgent.anonymous()(originVnode)
 
         if (!isTrueFragment) {
           // 如果是我们伪造的 fragment，只是为了在 vnodeComputed 重新计算时正确执行，那么就要在 extend 上记录上，因为还要复用 style 和 listener。
           subFragmentToRender.extend = fragment.name
         }
-        vnodes[vnodes.indexOf(originVnode)] = renderFragments(subFragmentToRender, props, selfHandleRef, actionCollectorContainer, commonArgv, useNamedChildrenSlot, baseActionCollector, misc)
+
+        vnodes[vnodes.indexOf(originVnode)] = renderFragments(subFragmentToRender, selfHandleRef, fragmentAgentContainer, commonArgv, commonArgvStack, baseFragmentAgent, misc)
         return
       }
 
-      // 剩下的只处理普通的节点了，null/字符串 都不处理了。
+
+      // 4. null/字符串的叶子结点都不处理了。
+      if (!originVnode instanceof VNode) return
+
+      // 5. 只处理普通结点和component结点
+      if (!(typeof originVnode.type === 'string' || isComponentVnode(originVnode))) return
       // CAUTION 以下的处理都是用 node.name 来匹配的了。type 是真实使用的 dom/Component 类型，name 是 tagName。
-      if (!originVnode instanceof VNode || typeof originVnode.type !== 'string') return
 
       const originStyle = originVnode.attributes.style || {}
       const isOriginStyleRef = isAtom(originStyle)
@@ -336,26 +376,72 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
       const isOriginClassNameRef = isAtom(originClassName)
       const matchedStyles = []
       const matchedPseudoClassStyles = []
+      const matchedModifiers = []
+      const matchedProxyListeners = []
       const listenersByEventName = {}
 
-      const sourceFragmentName = fragment.extend || fragment.name
-      actionCollectorContainer.forEach(collector => {
-        // 收集样式
-        matchedStyles.push(
-          ...collector[GLOBAL_NAME].elements[originVnode.name].getStyle(),
-          ...collector[sourceFragmentName].elements[originVnode.name].getStyle()
-        )
 
-        // TODO 收集 PseudoClassNames
-        matchedPseudoClassStyles.push(...collector[sourceFragmentName].elements[originVnode.name].getPseudoClassStyle())
 
-        // 收集 listeners
-        Object.entries(collector[sourceFragmentName].elements[originVnode.name].getListeners()).forEach(([eventName, listeners ]) => {
+      const matchedDynamicSummary = [...(fragmentAgentContainer.summary[sourceFragmentName]?.dynamicElements.entries() || [])].filter(([matcher]) => {
+        return matcher(originVnode)
+      }).map(([matcher, summary]) => summary)
+
+      const matchedGlobalDynamicSummary = [...(fragmentAgentContainer.summary[GLOBAL_NAME]?.dynamicElements.entries() || [])].filter(([matcher, summary]) => {
+        return matcher(originVnode)
+      }).map(([matcher, summary]) => summary)
+
+
+      // 收集匹配的样式
+      matchedStyles.push(
+        ...fragmentAgentContainer.summary[sourceFragmentName]?.elements[originVnode.name]?.styles || [],
+        ...fragmentAgentContainer.summary[GLOBAL_NAME]?.elements[originVnode.name]?.styles || [],
+        ...flatten(matchedDynamicSummary.map(s => s.styles)),
+        ...flatten(matchedGlobalDynamicSummary.map(s => s.styles))
+      )
+
+      // 收集匹配的PseudoClassNames
+      matchedPseudoClassStyles.push(
+        ...fragmentAgentContainer.summary[sourceFragmentName]?.elements[originVnode.name]?.pseudoClassStyle || [],
+        ...fragmentAgentContainer.summary[GLOBAL_NAME]?.elements[originVnode.name]?.pseudoClassStyle || [],
+        ...flatten(matchedDynamicSummary.map(s => s.pseudoClassStyles)),
+        ...flatten(matchedGlobalDynamicSummary.map(s => s.pseudoClassStyles))
+      )
+
+      // 收集匹配的 modifier
+      matchedModifiers.push(
+        ...fragmentAgentContainer.summary[sourceFragmentName]?.elements[originVnode.name]?.modifiers || [],
+        ...fragmentAgentContainer.summary[GLOBAL_NAME]?.elements[originVnode.name]?.modifiers || [],
+        ...flatten(matchedDynamicSummary.map(s => s.modifiers)),
+        ...flatten(matchedGlobalDynamicSummary.map(s => s.modifiers))
+      )
+
+      // 收集匹配的 listeners
+      matchedProxyListeners.push(
+        fragmentAgentContainer.summary[sourceFragmentName]?.elements[originVnode.name]?.listeners || {},
+        fragmentAgentContainer.summary[GLOBAL_NAME]?.elements[originVnode.name]?.listeners || {},
+        ...flatten(matchedDynamicSummary.map(s => s.listeners)),
+        ...flatten(matchedGlobalDynamicSummary.map(s => s.listeners))
+      )
+
+      matchedProxyListeners.forEach(proxyListeners => {
+        Object.entries(proxyListeners).forEach(([eventName, listeners]) => {
           if (!listenersByEventName[eventName]) listenersByEventName[eventName] = []
           listenersByEventName[eventName].push(...listeners)
         })
       })
 
+
+      // 优先处理 modify
+      let modifiedVnode = originVnode
+      if (matchedModifiers.length) {
+        modifiedVnode = matchedModifiers.reduce((last, currentModify) => {
+          // TODO 参数增加 fragment 的路径
+          const currentModifiedVnode = currentModify(last, commonArgv, commonArgvStack)
+          return currentModifiedVnode === undefined ? last : currentModifiedVnode
+        }, originVnode)
+        vnodes[vnodes.indexOf(originVnode)] = modifiedVnode
+      }
+      
       // 挂载 样式
       // TODO 未来考虑将"静态的"样式生成 css rule 来防止元素上 style 爆炸。
       if (matchedStyles.length) {
@@ -364,19 +450,19 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
           const partialStyle = Object.assign({}, ...matchedStyles.map(style => {
             // 支持对象中局部有函数的情况,
             return (typeof style === 'function') ?
-              style(commonArgv) :
+              style(commonArgv, commonArgvStack) :
               mapValues(style, (rule, name) => {
-                return typeof rule === 'function' ? rule(commonArgv, name) : rule
+                return typeof rule === 'function' ? rule(commonArgv, name, commonArgvStack) : rule
               })
           }))
 
           return Object.assign({}, isOriginStyleRef ? originStyle.value : originStyle, partialStyle)
         }
 
-        originVnode.attributes.style = shouldStyleBeReactive ? atomComputed(getNextStyle) : getNextStyle()
+        modifiedVnode.attributes.style = shouldStyleBeReactive ? atomComputed(getNextStyle) : getNextStyle()
       }
 
-      // 伪类
+      // 处理伪类
       if (matchedPseudoClassStyles.length) {
         let shouldClassNameBeReactive = isOriginClassNameRef
         const makeClassName = (instanceId, pseudoName) => `${instanceId}-${pseudoName}`
@@ -406,7 +492,7 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
           }
         })
 
-        originVnode.attributes.className = shouldClassNameBeReactive ? atomComputed(getNextClassName) : getNextClassName()
+        modifiedVnode.attributes.className = shouldClassNameBeReactive ? atomComputed(getNextClassName) : getNextClassName()
       }
 
       // TODO 伪元素
@@ -414,21 +500,15 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
       // 挂载监听事件
       if (Object.keys(listenersByEventName).length ){
         Object.entries(listenersByEventName).forEach(([eventName, listeners]) => {
-          const originListener =  originVnode.attributes[eventName]
+          const originListener =  modifiedVnode.attributes[eventName]
           // 这样写就能支持 originListener 为 undefined | function | [function] 。
-          originVnode.attributes[eventName] = ([]).concat(originListener || [], ...listeners.map(listener => (...argv) => listener(...argv, commonArgv)))
+          modifiedVnode.attributes[eventName] = ([]).concat(originListener || [], ...listeners.map(listener => (...argv) => listener(...argv, commonArgv, commonArgvStack)))
         })
       }
-      // 5. 开始执行 replace slot。replaceSlot 内部必须保证不要再穿透 vnodeComputed。
-      // CAUTION slot children 并没有区分 fragments.
-      if(useNamedChildrenSlot && originVnode.attributes.slot && props.children[originVnode.name]) {
-        const slotChild = props.children[originVnode.name]
-        originVnode.children = [normalizeLeaf((typeof slotChild === 'function') ? slotChild(commonArgv) : slotChild)]
-      }
 
-      if (originVnode.children) {
-        invariant(Array.isArray(originVnode.children), 'something wrong, children is not a Array')
-        walkChildren(originVnode.children)
+      if (modifiedVnode.children) {
+        invariant(Array.isArray(modifiedVnode.children), 'something wrong, children is not a Array')
+        walkChildren(modifiedVnode.children)
       }
     })
     // 递归处理结束
@@ -436,9 +516,10 @@ function renderFragments(fragment, props, selfHandleRef, actionCollectorContaine
     return renderResult
   }
 
-  // 当为了解约性能并且明确 fragment 不会变化的时候可以标记为 nonReactive。
+  // 当为了节约性能并且明确 fragment 不会变化的时候可以标记为 nonReactive。
+  //  应该会很少用到，因为我们无法确定后来的 feature 会不会 modify 成依赖 reactive 的，除非组件和 feature 有约定。
   if (fragment.render) {
-    renderProcess.displayName = `fragment-${fragment.render.displayName || fragment.render.name || fragment.name}`
+    renderProcess.displayName = `FRAG-${fragment.render.displayName || fragment.render.name || fragment.name}`
   }
 
   return fragment.nonReactive ? renderProcess() : vnodeComputed(renderProcess)

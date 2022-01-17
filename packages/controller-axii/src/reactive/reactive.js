@@ -103,6 +103,7 @@ export function atom(raw, isComputed) {
   // CAUTION  取消了 convert。
   const r = {
     _isAtom: true,
+    _isComputed: isComputed,
     get value() {
       track(r, TrackOpTypes.GET, 'value')
       return raw

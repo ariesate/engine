@@ -1,5 +1,5 @@
 /** @jsxFrag Fragment */
-import { createElement, render, atom, useRef } from '../index';
+import { createElement, render, atom, propTypes } from '../index';
 import createComponent from '../component/createComponent'
 import { nextTask } from "../util"
 import $ from 'jquery'
@@ -44,6 +44,37 @@ describe('Style test', () => {
 
     base.value = 2
     expect(root.children[0]).toHaveStyle({ color: 'blue'})
+  })
+
+  test('style component children', () => {
+
+    const base = atom(1)
+
+    function Child({ children }) {
+      return <div>{children}</div>
+    }
+
+    function Base() {
+      return <container>
+        <Child>
+          <passinchild/>
+        </Child>
+      </container>
+    }
+
+    Base.Style = (fragments) => {
+      fragments.root.elements.passinchild.style(() => ({
+        color: base.value === 1 ? 'red' : 'blue'
+      }))
+    }
+
+    const BaseComponent = createComponent(Base)
+    const root = document.createElement('div')
+    render(<BaseComponent />, root)
+    expect(root.children[0].children[0].children[0]).toHaveStyle({ color: 'red'})
+
+    base.value = 2
+    expect(root.children[0].children[0].children[0]).toHaveStyle({ color: 'blue'})
   })
 
   // TODO jest 无法确定是 jest 无法正确模拟 focus 状态还是测试用例有问题
@@ -116,12 +147,16 @@ describe('create component', () => {
     expect(callbackCalled).toBe(true)
   })
 
-  test('slot children', () => {
-    function Base() {
-      return <container><child slot/></container>
+  test('use object children', () => {
+    function Base({ children }) {
+      return <container><child>{children.child}</child></container>
     }
 
-    Base.useNamedChildrenSlot = true
+    Base.propTypes = {
+      children: propTypes.shapeOf({
+        child: propTypes.element()
+      })
+    }
 
     const BaseComponent = createComponent(Base)
     const root = document.createElement('div')
@@ -192,52 +227,6 @@ describe('Feature based', () => {
     expect(receivedEventVars).toMatchObject([2, 3, 1])
 
   })
-
-  test('render fragments right and pass right local vars to slot children', () => {
-    function Base({items }, fragments) {
-      return <container>
-        {fragments.list()(() => {
-          return <list>
-            {items.map(item => {
-              return fragments.item({item})(() => {
-                return <item slot/>
-              })
-            })}
-          </list>
-        })}
-      </container>
-    }
-
-   Base.useNamedChildrenSlot = true
-
-    const BaseComponent = createComponent(Base)
-    const root = document.createElement('div')
-    const items = [1,2,3]
-    render(<BaseComponent items={items}>
-      {{
-        item({ item }) {
-          return <span>{item+1}</span>
-        }
-      }}
-    </BaseComponent>, root)
-
-
-    expect(root.children[0]).partialMatchDOM(<container>
-        <list>
-          <item>
-            <span>2</span>
-          </item>
-          <item>
-            <span>3</span>
-          </item>
-          <item>
-            <span>4</span>
-          </item>
-        </list>
-      </container>
-    )
-  })
-
 
   test('use mutations', () => {
     function Base({items }, fragments) {

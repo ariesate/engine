@@ -33,9 +33,11 @@ function createGetter(isReadonly = false, shallow = false) {
     if (isSymbol(key) && builtInSymbols.has(key)) {
       return res
     }
-    //TODO 如果是 ref 为什么要直接 return res.value????
+
     if (isAtom(res)) {
-      return res.value
+      return res
+      //CAUTION 在vue3 中是把 atom 给拆了，但 axii 中默认 atom 是基本数据结构，所以不拆。
+      // return res.value
     }
 
     // 如果是数组需要 debounced 的操作
