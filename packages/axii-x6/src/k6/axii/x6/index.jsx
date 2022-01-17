@@ -329,6 +329,14 @@ export const Graph = {
     dm.on('notifyComponent', () => {
       this.syncMiniMap();
     });
+    dm.on('node:changed', props => {
+      const nodes = graph.model.getNodes()
+      nodes.forEach(n => {
+        if (n.id === props.id) {
+          n.setProp(props)
+        }
+      })
+    })
 
     this.graph = graph;
     this.dm = dm;

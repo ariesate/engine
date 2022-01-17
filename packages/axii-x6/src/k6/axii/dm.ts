@@ -425,7 +425,7 @@ class DataManager extends EventEmiter{
    * @param nodeId 
    * @param props 
    */
-  syncNode(nodeId: string, props: { [k in INodePropKeys]: any }) {
+  syncNode(nodeId: string, props: { [k in INodePropKeys]: any }, syncToGraph = false) {
     const node = this.findNode(nodeId);
     if (node) {
       const propKeys = Object.keys(props || {});
@@ -436,6 +436,12 @@ class DataManager extends EventEmiter{
         }});
       } else {
         merge(node, props);
+      }
+      if (syncToGraph) {
+        this.emit('node:changed', {
+          ...props,
+          id: nodeId
+        })
       }
     }
   }
