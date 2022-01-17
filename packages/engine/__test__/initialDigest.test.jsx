@@ -1,5 +1,5 @@
 
-import createElement from '../createElement'
+import createElement, {createRecursiveNormalize} from '../createElement'
 import createPainter from '../createPainter'
 import createDOMView from '../DOMView/createDOMView'
 import {
@@ -15,12 +15,13 @@ describe('initialDigest', () => {
   let painter
   let view
   let rootElement
+  let normalize = createRecursiveNormalize()
   const renderer = {
     rootRender(cnode) {
-      return cnode.type.render()
+      return normalize(cnode.type.render())
     },
     initialRender(cnode) {
-      return cnode.type.render()
+      return normalize(cnode.type.render())
     }
   }
 

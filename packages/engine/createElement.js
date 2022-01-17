@@ -1,6 +1,17 @@
 import VNode from './VNode'
 import {invariant} from "./util";
 
+export function createRecursiveNormalize(normalizeLeaf = defaultNormalizeLeaf) {
+  function normalize(vnode) {
+    const current = normalizeLeaf(vnode)
+    if (current.children) current.children = current.children.map(normalize)
+    return current
+  }
+
+  return normalize
+}
+
+
 // 会进行递归的 normalize
 export function defaultNormalizeLeaf(rawChild) {
   if (rawChild instanceof VNode) return rawChild
@@ -12,8 +23,9 @@ export function defaultNormalizeLeaf(rawChild) {
     child = { type: null }
   } else if (Array.isArray(rawChild)) {
     // Array 要把 raw 传过去。arrayComputed 要用.
-    child = { type: Array, children: rawChild.map(defaultNormalizeLeaf), raw:rawChild }
-    // child = { type: Array, children: normalizeChildren(rawChild)}
+    // CAUTION 不再递归，这个 normalize 知识纯工具。
+    child = { type: Array, children: rawChild, raw:rawChild }
+    // child = { type: Array, children: rawChild.map(defaultNormalizeLeaf), raw:rawChild }
   } else if (typeof rawChild === 'number' || typeof rawChild === 'string' || typeof rawChild === 'boolean') {
     child = { type: String, value: rawChild.toString() }
   }
@@ -81,7 +93,9 @@ export function createCreateElement(normalizeLeaf = defaultNormalizeLeaf) {
       delete node.attributes.forceUpdate
     }
 
-    node.children = childrenToAttach.map(normalizeLeaf)
+    // node.children = childrenToAttach.map(normalizeLeaf)
+    // CAUTION 外部自己递归处理。
+    node.children = childrenToAttach
 
     if (typeof node.type === 'string') {
       // 用于支持 data-* 自定义属性
@@ -126,6 +140,7 @@ export function createCreateElement(normalizeLeaf = defaultNormalizeLeaf) {
     cloneElement,
     shallowCloneElement,
     normalizeLeaf,
+    recursiveNormalize: createRecursiveNormalize(normalizeLeaf)
   }
 }
 
