@@ -9,7 +9,6 @@ import {
   atomComputed,
   atom,
   createRef,
-  flattenChildren
 } from 'axii'
 import LeftIcon from 'axii-icons/Left.js'
 import RightIcon from 'axii-icons/Right.js'
@@ -20,13 +19,12 @@ import scen from '../pattern'
  * tab 左右移动的代码怎么写，需要判断渲染后的宽度
  */
 function Tabs({ children, activeKey, onChangeActiveKey }, fragments) {
-  const flattenedChildren = flattenChildren(children)
 
   const visibleKey = atomComputed(() => {
-    if (activeKey.value && flattenedChildren.some((child) => child.props.tabKey === activeKey.value)) {
+    if (activeKey.value && children.some((child) => child.props.tabKey === activeKey.value)) {
       return activeKey.value
     } else {
-      return flattenedChildren[0]?.props.tabKey
+      return children[0]?.props.tabKey
     }
   })
 
@@ -59,7 +57,7 @@ function Tabs({ children, activeKey, onChangeActiveKey }, fragments) {
         </tabHeaderScrollLeft>
         <tabHeaders block block-white-space-nowrap block-overflow-x-hidden flex-grow-1 ref={headerRef}>
           {fragments.tabHeaders({visibleKey})(() => {
-            return flattenedChildren.map(child =>
+            return children.map(child =>
               fragments.tabHeader({ tabKey: child.props.tabKey})(() =>
                 <tabHeader inline inline-padding={scen().spacing()} onClick={() => onChangeActiveKey(child.props.tabKey) }>{child.props.title}</tabHeader>
               )
@@ -72,7 +70,7 @@ function Tabs({ children, activeKey, onChangeActiveKey }, fragments) {
       </tabHeadersContainer>
       <tabContents block>
         {fragments.tabContents()(() => {
-          return flattenedChildren.map(child => {
+          return children.map(child => {
             const hidden = atomComputed(() => child.props.tabKey !== visibleKey.value)
             return <tabContent block block-visible-none={hidden} key={child.props.tabKey}>{child.children}</tabContent>
           })
@@ -88,7 +86,8 @@ Tabs.propTypes = {
   activeKey: propTypes.string.default(() => atom()),
   onChangeActiveKey: propTypes.callback.default(() => (key, { activeKey }) => {
     activeKey.value = key
-  })
+  }),
+  children: propTypes.arrayOf(propTypes.element()),
 }
 
 
