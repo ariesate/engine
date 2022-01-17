@@ -29,7 +29,7 @@ function EditorjsComponent({ref: parentRef, data, ...options}) {
       console.log("ready render", data.value)
       data.value && editorRef.render(data.value)
     })
-    return () => editorRef.destroy()
+    return () => editorRef?.destroy()
   })
 
   if (parentRef) {
