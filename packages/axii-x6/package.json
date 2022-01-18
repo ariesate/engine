@@ -1,6 +1,6 @@
 {
   "name": "axii-x6",
-  "version": "1.2.9",
+  "version": "1.2.10",
   "author": "sskyy <skyking_H@hotmail.com>",
   "license": "MIT",
   "type": "module",
@@ -23,7 +23,7 @@
     "start": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode=development",
-    "release": "pnpm run build && bump --commit \"release: axii-x6 v%s\" --push && pnpm publish --no-git-checks",
+    "release": "node scripts/build.js && bump --commit \"release: axii-x6 v%s\" --push && pnpm publish --no-git-checks",
     "prepare": "pnpm run build"
   },
   "dependencies": {
