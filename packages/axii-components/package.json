@@ -54,6 +54,6 @@
     "vite": "^2.5.0"
   },
   "peerDependencies": {
-    "axii": "workspace:^1.1.4"
+    "axii": "workspace:^1.5.0"
   }
 }
