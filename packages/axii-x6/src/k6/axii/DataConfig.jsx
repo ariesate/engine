@@ -10,11 +10,11 @@ import {
 } from 'axii';
 
 import { Input, Select, Checkbox } from 'axii-components'
-import cloneDeep from 'lodash/cloneDeep';
+import cloneDeep from 'lodash-es/cloneDeep';
 import Right from 'axii-icons/Right';
 import Delete from 'axii-icons/Delete';
-import get from 'lodash/get';
-import merge from 'lodash/merge';
+import get from 'lodash-es/get';
+import merge from 'lodash-es/merge';
 
 const simpleTypes = ['string', 'number', 'boolean', 'enum'];
 

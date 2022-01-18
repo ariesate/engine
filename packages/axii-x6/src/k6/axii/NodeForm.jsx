@@ -12,8 +12,8 @@ import {
 
 import { RootContext } from './Root';
 import DataConfig, { mergeJsonAndData, fallbackEditorDataToNormal } from './DataConfig';
-import merge from 'lodash/merge';
-import isFunction from 'lodash/isFunction';
+import merge from 'lodash-es/merge';
+import isFunction from 'lodash-es/isFunction';
 
 function isPlainObj(jsonOrJsx) {
   return !!jsonOrJsx && typeof jsonOrJsx === 'object' && !isFunction(jsonOrJsx);

@@ -1,5 +1,5 @@
 import { Graph, Addon, FunctionExt, Shape, NodeView } from '@antv/x6'
-import pick from 'lodash/pick';
+import pick from 'lodash-es/pick';
 
 class SimpleNodeView extends NodeView {
   init() {

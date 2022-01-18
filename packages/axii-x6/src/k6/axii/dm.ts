@@ -7,8 +7,8 @@ import { IX6Node, IX6Edge } from '../basicTypes';
 import { INodeEdge } from '../Edge';
 import { IK6DataConfig, INodeComponent } from '../Node';
 import { INodePort } from '../Port';
-import merge from 'lodash/merge';
-import cloneDeep from 'lodash/cloneDeep';
+import merge from 'lodash-es/merge';
+import cloneDeep from 'lodash-es/cloneDeep';
 
 type IDataNode = IX6Node & {
   data?: {
