@@ -1,3 +1,4 @@
+import './layoutFix'
 export { default as K6 } from './axii/Root';
 export { default as Root } from './axii/Root';
 export { default as Graph } from './axii/Graph';
