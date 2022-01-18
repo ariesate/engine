@@ -1,3 +1,5 @@
+import {createRecursiveNormalize} from "../createElement";
+
 /** @jsx createElement */
 const createElement = require('../createElement').default
 const { default: createPainter }= require('../createPainter')
@@ -16,15 +18,16 @@ describe('array', () => {
   let painter
   let view
   let rootElement
+  let normalize = createRecursiveNormalize()
   const renderer = {
     rootRender(cnode) {
-      return cnode.type.render()
+      return normalize(cnode.type.render())
     },
     initialRender(cnode) {
-      return cnode.type.render()
+      return normalize(cnode.type.render())
     },
     updateRender(cnode) {
-      return cnode.type.render()
+      return normalize(cnode.type.render())
     }
   }
 

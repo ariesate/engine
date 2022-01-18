@@ -1,4 +1,5 @@
 import { isReactiveLike, toRaw } from './reactive';
+import {createVnodePath} from "./common";
 
 export function compact(path = []) {
   // only positive values
@@ -283,6 +284,14 @@ export function isObject(a) {
   return typeof a === 'object' && !Array.isArray(a) && a !== null
 }
 
+export function isPlainObject(a) {
+  return typeof a === 'object' && a.constructor === Object
+}
+
+export function isFunction(b) {
+  return typeof b === 'function'
+}
+
 export function walk(obj, childrenName, handler, path = []) {
   handler(obj, path)
   if (obj[childrenName] !== undefined && Array.isArray(obj[childrenName])) {
@@ -390,6 +399,7 @@ export function ensureArray(o) {
 }
 
 export function replaceItem(arr, prev, next) {
+  if(!arr.indexOf) debugger
   const index = arr.indexOf(prev)
   if (index !== -1) {
     arr[index] = next
@@ -492,6 +502,18 @@ export function createBufferedRef() {
   })
 }
 
+export function composeRef(...refReceivers) {
+  return (ref) => {
+    refReceivers.forEach(receiver => {
+      if (typeof receiver === 'object') {
+        receiver.current = ref
+      } else if (typeof receiver === 'function'){
+        receiver(ref)
+      }
+    })
+  }
+}
+
 /**
  * CAUTION TODO 理论上我们应该完整的对时序进行管理:
  * 1. 提供 defer， 实现跳出当前栈的能力。主要是 watch 在用，因为 watch 是用 createComputed 实现的。
@@ -508,4 +530,19 @@ export function deferred(fn) {
 
 export function nextTask(callback) {
   setTimeout(callback, 0)
+}
+
+export function walkVnodes(vnodes, handle, parent, parentPath = []) {
+  vnodes.forEach((vnode, index) => {
+    const currentPath = createVnodePath(vnode, parentPath, index)
+    const runChildren = (children) => walkVnodes(children, handle, vnode, currentPath)
+
+    if (handle) {
+      // 这里面由 handle 自己决定要不要 runChildren
+      handle(runChildren, vnode, vnodes, parent, currentPath)
+    } else {
+      runChildren(vnode.children)
+    }
+
+  })
 }

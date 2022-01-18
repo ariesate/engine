@@ -45,6 +45,7 @@ export interface IK6DataConfig {
 export interface INodeComponent extends Function {
   shape: string;
   configJSON: IK6DataConfig;
+  ConfigPanel: Axii.Component;
   onChange:(node: IX6Cell, data: any, oldData: any) => void;
   onSave: (node: IX6Cell, data: any, oldData: any) => void;
   onRemove: (node: IX6Cell) => void;

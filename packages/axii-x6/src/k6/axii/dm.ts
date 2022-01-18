@@ -1,11 +1,12 @@
 import {
+  atom,
   reactive,
 } from 'axii';
 import EventEmiter from 'eventemitter3';
-import { IBBox, IX6Cell, IX6Node, IX6Edge } from '../basicTypes';
-import { K6Edge, K6EdgeChild, INodeEdge } from '../Edge';
-import { IK6DataConfig, K6Node, K6NodeChild, INodeComponent } from '../Node';
-import { K6Port, K6PortChild, IRegisterPortConfigProps, INodePort } from '../Port';
+import { IX6Node, IX6Edge } from '../basicTypes';
+import { INodeEdge } from '../Edge';
+import { IK6DataConfig, INodeComponent } from '../Node';
+import { INodePort } from '../Port';
 import merge from 'lodash/merge';
 import cloneDeep from 'lodash/cloneDeep';
 
@@ -16,6 +17,8 @@ type IDataNode = IX6Node & {
     y: number;
   };
   edges: IEdgeData[];
+  prev: IDataNode[];
+  next: IDataNode[];
 };
 type IEdgeData = IX6Edge & {
   remoteId?: string | number;
@@ -40,11 +43,12 @@ interface ITopState {
 type INodeComponentEvent = 'change' | 'save' | 'remove' | 'add';
 
 export interface IInsideState {
-  selectedCellId: string;
-  selectedConfigJSON: IK6DataConfig | null;
-  selectedConfigData: { [k: string]: any };
+  selected: {
+    cell: IDataNode;
+    nodeComponent: INodeComponent
+  }
   cacheSelected: {
-    configData: { [k: string]: any }; // 镜像版本
+    cell: { [k: string]: any }; // 镜像版本，用以对比数据
   },
   graph: {
     zoom: number,
@@ -78,13 +82,15 @@ export function fallbackEditorDataToNormal(myJson: IK6DataConfig) {
     return obj;
   }
   const result = {};
-  task(myJson.properties, result);
+  if (myJson) {
+    task(myJson.properties, result);
+  }
   return result;
 }
 
 let newAddIndex = 1;
 
-function generateNodeByConfig(k6Node: INodeComponent) {
+function generateNodeByConfig(k6Node: INodeComponent, initNodeProp?: { x?:number, y?:number }) {
   const data: any = fallbackEditorDataToNormal(k6Node.configJSON);
 
   if (Reflect.has(data, 'x') || Reflect.has(data, 'y')) {
@@ -100,9 +106,15 @@ function generateNodeByConfig(k6Node: INodeComponent) {
     },
     x:30 * newAddIndex,
     y:30 * newAddIndex,
-  edges: [],
+    edges: [],
+    prev: [],
+    next: [],
   };
   newAddIndex++;
+
+  if (initNodeProp) {
+    Object.assign(newNode, initNodeProp);
+  }
 
   Object.assign(newNode.data, {
     x: newNode.x,
@@ -112,36 +124,10 @@ function generateNodeByConfig(k6Node: INodeComponent) {
   return newNode;
 }
 
-class DataManager extends EventEmiter{
+class NodeManager {
   nodes: IDataNode[] = [];
-  nodeShapeComponentMap: Map<string, ShapeComponent> = new Map();
-  data: ITopState | null = null;
-  insideState:IInsideState = reactive({
-    selectedCellId: '', // 包含节点和边
-    selectedConfigJSON: null,
-    selectedConfigData: null,
-    cacheSelected: {
-      dataConfig: null,
-    },
-    graph: {
-      zoom: 1,
-    },
-  });
-  // x6/index.jsx
-  dmx6: any;
-  constructor() {
-    super();
-    // @ts-ignore
-    window.dm = this;
-  }
-  setX6(x6: any) {
-    this.dmx6 = x6;
-  }
-  readState(obj: object) {
-    this.data = reactive(obj);
-  }
-  readNodesData(nodes: (IDataNode & { x:number; y:number })[]) {
 
+  readNodes(nodes: (IDataNode & { x:number; y:number })[]) {
     this.nodes = nodes.map(n => {
       const p = {
         x: n.x,
@@ -152,11 +138,13 @@ class DataManager extends EventEmiter{
       return {
         ...n,
         data: reactive(data),
-        edges: [],
+        edges: reactive([]),
+        prev: reactive([]),
+        next: reactive([]),
       }
     });
   }
-  readEdgesData(edges: IEdgeData[]) {
+  readEdges(edges: IEdgeData[]) {
     this.nodes.forEach(node => {
       const id = node.id;
       edges.forEach(edge => {
@@ -169,12 +157,228 @@ class DataManager extends EventEmiter{
         }
       });
     });
+
+    this.initNodeLinkNet();
   }
-  async addNode() {
+  initNodeLinkNet() {
+    // 确保情况
+    const relations = this.nodes.map((n) => {
+      return {
+        [n.id]: {
+          prev: new Set<string>(),
+          next: new Set<string>(),  
+        }
+      };
+    }).reduce((p, n) => Object.assign(p, n), {});
+
+    this.nodes.forEach(sourceNode => {
+      const sourceRelation = relations[sourceNode.id];
+
+      sourceNode.edges.forEach(edge => {
+        const targetId = edge.target.cell;
+        const targetRelation = relations[targetId];
+        if (targetId && targetRelation) {
+          sourceRelation.next.add(targetId);
+          targetRelation.prev.add(sourceNode.id);
+        }
+      });
+    });
+
+    this.nodes.forEach(n => {
+      const relation = relations[n.id];
+      n.prev = reactive([...relation.prev].map(id => this.findNode(id, false)));
+      n.next = reactive([...relation.next].map(id => this.findNode(id, false)));
+    });
+  }
+
+  addNewNode(n: IDataNode){
+    n.data = reactive(n.data);
+    n.prev = reactive(n.prev);
+    n.next = reactive(n.next);
+    this.nodes.push(n);
+  }
+  addEdge(nodeId: string, edge: IEdgeData) {
+    const n = this.findNode(nodeId, false);
+    n.edges.push(edge);
+
+    const nextNode = this.findNode(edge.target.cell, false);
+    if (nextNode) {
+      nextNode.prev.push(n);
+      n.next.push(nextNode);  
+    }
+  }
+  findEdgeById(edgeId: string): IEdgeData | null {
+    let edge = null;
+    this.nodes.forEach(n => {
+      const e = n.edges.find(e => e.id === edgeId);
+      if (e) {
+        edge = e;
+      }
+    });
+    return edge;
+  }
+  findEdges(id: string) {
+    const edges = [];
+    this.nodes.forEach(n => {
+      if (n.id === id) {
+        edges.push(...n.edges);
+      } else {
+        n.edges.forEach(e => {
+          if (e.target.cell === id) {
+            edges.push(e);
+          }
+        });
+      }
+    });
+    return edges;
+  }
+  findNode(id: string, clone = true) {
+    const n = this.nodes.find(n => n.id === id);
+    if (!n) {
+      return null
+    }
+    return clone ? {
+      ...n,
+    } : n;
+  }
+  findNodeAndEdge(id: string): [IDataNode?, IEdgeData?] {
+    let edge: IEdgeData;
+    const n = this.nodes.find(n => {      
+      edge = n.edges.find(e => e.id === id);
+      return !!edge || n.id === id;
+    });
+    return n ? [n, edge] : [];
+  }
+  removeNode(id: string): boolean {
+    let i = -1;
+    this.nodes.forEach((n, fi) => {
+      if (n.id === id) {
+        i = fi;
+      }
+    });
+    if (i >= 0) {
+      const currentNode = this.nodes[i];
+      // 清理next里的当前节点
+      currentNode.next.forEach(nextNode => {
+        const fi = nextNode.prev.findIndex(n => n.id === currentNode.id);
+        if (fi >= 0) {
+          nextNode.prev.splice(fi, 1);
+        }
+      });
+      // 清理prev的当前节点
+      currentNode.prev.forEach(prevNode => {
+        const fi = prevNode.next.findIndex(n => n.id === currentNode.id);
+        if (fi >= 0) {
+          prevNode.next.splice(fi, 1);
+        }
+      });
+
+      this.nodes.splice(i, 1);
+      return true;
+    }
+  }
+  removeEdge(edgeId: string): boolean {
+    let i = -1;
+    let targetNodeId
+    const currentNode = this.nodes.find(n => {      
+      return n.edges.find((e, fi) => {
+        const r = e.id === edgeId;
+        if (r) {
+          i = fi;
+          targetNodeId = e.target.cell;
+        }
+        return r;
+      });
+    });
+    if (currentNode && i >= 0) {
+      currentNode.edges.splice(i, 1);
+      const removedNextIndex = currentNode.next.findIndex(n => n.id === targetNodeId);
+      const nextNode = currentNode.next[removedNextIndex];
+      if (nextNode) {
+        const removedPrevInNextNodeIndex = nextNode.prev.findIndex(n => n.id === currentNode.id);
+        // 清理next的prev
+        nextNode.prev.splice(removedPrevInNextNodeIndex, 1);
+        // 清理next
+        currentNode.next.splice(removedNextIndex, 1);
+      }
+      return true;
+    }
+  }
+}
+
+/**
+ * 在readonly下阻断函数的执行
+ */
+function disabledByReadOnly (target, name, descriptor) {
+  const old = descriptor.value
+
+  if (old.constructor.name === "Function") {
+    descriptor.value = function (...args: any[]) {
+      if (this.readOnly.value) {
+        return
+      }
+      return old.apply(this, args)
+    }  
+  } else if (old.constructor.name === "AsyncFunction") {
+    descriptor.value = async function (...args: any[]) {
+      if (this.readOnly.value) {
+        return
+      }
+      return old.apply(this, args)
+    }
+  }
+  return descriptor
+}
+
+class DataManager extends EventEmiter{
+  nm  = new NodeManager();
+  nodeShapeComponentMap: Map<string, ShapeComponent> = new Map();
+  data: ITopState | null = null;
+  insideState:IInsideState = reactive({
+    selected: {
+      cell: null,
+      nodeComponent: null,  
+    },
+    cacheSelected: {
+      cell: null,
+    },
+    graph: {
+      zoom: 1,
+    },
+  });
+  // x6/index.jsx
+  dmx6: any;
+  shareContextValue: any = null;
+  readOnly = atom(false)
+  constructor() {
+    super();
+    // @ts-ignore
+    window.dm = this;
+  }
+  setX6(x6: any) {
+    this.dmx6 = x6;
+  }
+  setReadOnly(readOnly: boolean) {
+    this.readOnly = readOnly
+  }
+  registerShareValue(shareContextValue: any) {
+    this.shareContextValue = shareContextValue;
+  }
+  readState(obj: object) {
+    this.data = reactive(obj);
+  }
+  readNodesData(nodes: (IDataNode & { x:number; y:number })[]) {
+    this.nm.readNodes(nodes);
+  }
+  readEdgesData(edges: IEdgeData[]) {
+    this.nm.readEdges(edges)
+  }
+  @disabledByReadOnly
+  async addNode(initNode?: { x?:number, y?:number }) {
     // 先默认只支持一种
     if (1) {
       const nodeComponent: ShapeComponent = this.nodeShapeComponentMap.values().next().value;
-      const n = generateNodeByConfig(nodeComponent[0]);
+      const n = generateNodeByConfig(nodeComponent[0], initNode);
       const newNode = {
         ...n,
       };
@@ -182,23 +386,38 @@ class DataManager extends EventEmiter{
       const notifiedNode = await this.notifyShapeComponent(n, null, 'add', newNode.data);
       merge(newNode, notifiedNode);
 
-      newNode.data = reactive(newNode.data);
-
-      this.nodes.push(newNode);
+      this.nm.addNewNode(newNode);
       this.emit('addNode', newNode);
     }
   }
+  @disabledByReadOnly
   async addNewEdge(nodeId: string, edge: IEdgeData) {
     const node = this.findNode(nodeId);
     if (node) {
       const newEdge = {
         ...edge,
         data: reactive(edge.data || {}),
+        id: null,
       };
-      node.edges.push(newEdge);
-
       const r = await this.notifyShapeComponent(node, newEdge, 'add', {});
-      newEdge.remoteId = r.id;
+
+      newEdge.id = r ? r.id : edge.id;
+      this.nm.addEdge(nodeId, newEdge);
+
+      if (r) {
+        return r.id;
+      }
+  }
+  }
+  /**
+   * 更新DM中的边数据
+   * @param nodeId 
+   * @param props 
+   */
+  syncEdge(edgeId: string, props: { id?: string }) {
+    let edge = this.nm.findEdgeById(edgeId);
+    if (edge) {
+      merge(edge, props);
     }
   }
   /**
@@ -220,24 +439,22 @@ class DataManager extends EventEmiter{
       }
     }
   }
+  findEdges(id: string) {
+    return this.nm.findEdges(id);
+  }
   findNode(id: string) {
-    const n = this.nodes.find(n => n.id === id);
-    return n ? {
-      ...n,
-    } : null;
+    return this.nm.findNode(id);
   }
   findNodeAndEdge(id: string): [IDataNode?, IEdgeData?] {
-    let edge: IEdgeData;
-    const n = this.nodes.find(n => {      
-      edge = n.edges.find(e => e.id === id);
-      return !!edge || n.id === id;
-    });
-    return n ? [n, edge] : [];
+    return this.nm.findNodeAndEdge(id);
   }
   readComponents(groups: Group[]) {
     groups.forEach(group => {
       const [NodeCpt, PortCpt, EdgeFunc] = group;
 
+      if (!NodeCpt.shape) {
+        throw new Error(`[Node Componnet] ${NodeCpt.name} must have 'shape' prop`);
+      }
       this.nodeShapeComponentMap.set(NodeCpt.shape, [
         NodeCpt,
         PortCpt,
@@ -264,38 +481,43 @@ class DataManager extends EventEmiter{
     }
     return sc;  
   }
+  @disabledByReadOnly
   selectNode (id: string) {
-    if (!id || this.insideState.selectedCellId === id) {
+    if (!id || this.insideState.selected.cell?.id === id) {
       Object.assign(this.insideState, {
-        selectedConfigJSON: null,
-        selectedConfigData: null,
-        selectedCellId: '',
+        selected: {
+          cell: null,
+          nodeComponent: null,
+        },
         cacheSelected: {
-          configData: null
-        }
+          cell: null,
+        },
       });
       return;
     }
     const node = this.findNode(id);
     const [nodeComponent] = this.getShapeComponent(node.shape);
     Object.assign(this.insideState, {
-      selectedConfigJSON: nodeComponent.configJSON,
-      selectedConfigData: node.data,
-      selectedCellId: id,
-      cacheSelected: {
-        configData: cloneDeep(node.data),
+      selected: {
+        cell: node,
+        nodeComponent: nodeComponent,  
       },
-  });
+      cacheSelected: {
+        cell: cloneDeep(node),
+      },
+    });
   }
+  @disabledByReadOnly
   selectEdge(id: string) {
-    if (!id || this.insideState.selectedCellId === id) {
+    if (!id || this.insideState.selected.cell?.id === id) {
       Object.assign(this.insideState, {
-        selectedConfigJSON: null,
-        selectedConfigData: null,
-        selectedCellId: '',
+        selected: {
+          cell: null,
+          nodeComponent: null,  
+        },
         cacheSelected: {
-          configData: null,
-        }
+          cell: null,
+        },
       });
       return;
     }
@@ -304,37 +526,27 @@ class DataManager extends EventEmiter{
     if (node) {
       const [ _1, _2, edgeComponent ] = this.getShapeComponent(node.shape);
       Object.assign(this.insideState, {
-        selectedConfigJSON: edgeComponent.configJSON,
-        selectedConfigData: edge.data,
-        selectedCellId: id,
+        selected: {
+          cell: edge,
+          nodeComponent: edgeComponent,  
+        },
         cacheSelected: {
-          configData: cloneDeep(edge.data),
+          cell: cloneDeep(edge),
         },
       });
     }
   }
   triggerCurrentEvent(event: INodeComponentEvent, data: any) {
-    this.triggerEvent(this.insideState.selectedCellId, event, data);      
+    this.triggerEvent(this.insideState.selected.cell?.id, event, data);      
   }
 
   async notifyShapeComponent(node: IDataNode, edge: IEdgeData, event: INodeComponentEvent, data: any) {
     const [nodeComponent, _, edgeComponent] = this.getShapeComponent(node.shape);
 
-    if (edge) {
-      const newEdgeConfig = edgeComponent(node, edge);
-      const model = this.dmx6.Graph.updateEdge(edge, newEdgeConfig);
-      Object.assign(edge, model, {
-        data: edge.data,
-      });
-      if (edge.remoteId) {
-        edge = Object.assign({}, edge, { id: edge.remoteId });
-      }
-    }
-    
-    const oldConfigData = this.insideState.cacheSelected.configData;
+    const oldConfigData = this.insideState.cacheSelected.cell?.data || {};
 
     let targetComponent = !!edge ? edgeComponent : nodeComponent;
-    let args: any[] = !!edge ? [node, edge, data, oldConfigData] : [node, edge, data, oldConfigData];
+    let args: any[] = !!edge ? [node, edge, data, oldConfigData] : [node, data, oldConfigData];
     // 有edge，说明仅仅是针对边的修改
     switch (event) {
       case 'change':
@@ -361,22 +573,20 @@ class DataManager extends EventEmiter{
 
     this.notifyShapeComponent(node, edge, event, data);
   }
-  removeCurrent() {
-    const currentCellId = this.insideState.selectedCellId;
+  removeIdOrCurrent(targetId: string) {
+    const currentCellId = targetId ? targetId : this.insideState.selected.cell.id;
     const [node, edge] = this.findNodeAndEdge(currentCellId);
     const [nodeComponent, _, edgeComponent] = this.getShapeComponent(node.shape);
 
     if (edge) {
-      const i = node.edges.indexOf(edge);
-      if (i >= 0) {
-        node.edges.splice(i, 1);
-        edgeComponent && edgeComponent.onRemove(node, edge);
+      const removed = this.nm.removeEdge(edge.id);
+      if (removed) {
+        edgeComponent && edgeComponent.onRemove && edgeComponent.onRemove(node, edge);
       }
     } else {
-      const i = this.nodes.indexOf(node);
-      if (i >= 0) {
-        this.nodes.splice(i, 1);
-        nodeComponent && nodeComponent.onRemove(node);
+      const removed = this.nm.removeNode(node.id);
+      if (removed) {
+        nodeComponent && edgeComponent.onRemove && nodeComponent.onRemove(node);
       }  
     }
     this.emit('remove', currentCellId);

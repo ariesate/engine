@@ -30,19 +30,19 @@ export function Input({value, onChange, children, placeholder, ref: parentRef, .
   }
 
   const prefixVnode = fragments.prefix()(() => {
-    return children.prefix ? <prefix slot inline {...prefixLikeProps} inline-border-right-width-1px/> : null
+    return children.prefix ? <prefix inline {...prefixLikeProps} inline-border-right-width-1px>{children.prefix}</prefix> : null
   })
 
   const suffixVnode = fragments.suffix()(() => {
-    return children.suffix ? <suffix slot inline {...prefixLikeProps} inline-border-left-width-1px/> : null
+    return children.suffix ? <suffix inline {...prefixLikeProps} inline-border-left-width-1px>{children.suffix}</suffix> : null
   })
 
   const beforeVnode = fragments.before()(() => {
-    return children.before ? <before slot inline {...prefixLikeProps} inline-border-right-width-1px/> : null
+    return children.before ? <before inline {...prefixLikeProps} inline-border-right-width-1px>{children.before}</before> : null
   })
 
   const afterVnode = fragments.after()(() => {
-    return children.after ? <after slot inline {...prefixLikeProps} inline-border-left-width-1px/> : null
+    return children.after ? <after inline {...prefixLikeProps} inline-border-left-width-1px>{children.after}</after> : null
   })
 
   return (
@@ -70,7 +70,6 @@ export function Input({value, onChange, children, placeholder, ref: parentRef, .
 }
 
 // Input.useChildrenSlot
-Input.useNamedChildrenSlot = true
 Input.forwardRef = true
 
 Input.propTypes = {
@@ -81,6 +80,12 @@ Input.propTypes = {
   // 外部也同样推荐这种模式。
   onChange: propTypes.callback.default(() => ({value}, props, e) => {
     value.value = e.target.value
+  }),
+  children: propTypes.shapeOf({
+    prefix: propTypes.element(),
+    suffix: propTypes.element(),
+    before: propTypes.element(),
+    after: propTypes.element(),
   })
 }
 

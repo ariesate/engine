@@ -229,6 +229,7 @@ function handleRemainLikePatchNode(lastVnode = {}, vnode, actionType, cnode, col
   if (isComponentVnode(vnode)) {
     toRemain[vnode.id] = cnode.next[vnode.id]
     // update Props
+    // 不继续递归了，传给组件的 children，就是它的 props，它来决定。
     updateCnodeByVnode(cnode.next[vnode.id], vnode)
   } else {
     // 如果是普通节点，对比 attribute 的变化，之后 digest 的时候对 element 进行更新。
@@ -532,7 +533,7 @@ export default function createPainter(renderer, isComponentVnode = defaultIsComp
 
   function createCnode(vnode, parent) {
     const cnode = new ComponentNode(vnode.type)
-
+    if (!vnode.type) debugger
     warn(!(vnode.ref  && !vnode.type.forwardRef), `${vnode.type.displayName || vnode.type.name } do not accept ref, but you passed ref prop to it.`)
     Object.assign(cnode, {
       type: vnode.type,
@@ -559,6 +560,7 @@ export default function createPainter(renderer, isComponentVnode = defaultIsComp
 
   return {
     paint: (cnode) => {
+      if (!cnode.type) debugger
       if (cnode.isPainted) throw new Error(`cnode already painted ${cnode.type.displayName}`)
       return paint(cnode, renderer, utils)
     },

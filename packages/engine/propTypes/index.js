@@ -221,7 +221,7 @@ export const arrayOf = createTypeClass({
 })
 
 
-export const shape = createTypeClass({
+export const shapeOf = createTypeClass({
   check(v) {
     return true
   },
@@ -273,11 +273,16 @@ export default {
   elementType,
   // instanceOf
 
+  // 枚举值
   oneOf,
+  // 枚举类型
   oneOfType,
+  // 数组类型，里面的值应该只能跟类型
   arrayOf,
   // objectOf,
-  shape,
+  // 对象结构的嵌套类型。shape + arrayOf + oneOfType + any 可以描述任何 schema。
+  shapeOf,
+  // map 类型，就是简单的 kv，应该是  shape 的子集。
   map,
   // exact,
   // customProps/customArrayProps

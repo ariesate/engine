@@ -39,7 +39,9 @@ class SimpleNodeView extends NodeView {
 }
 ///////////////////
 export function createFlowGraph(container, initOptions = {}) {
-  const {connectingValidate = {}, width = 1000, height = 800, onPortRendered, onAddEdge} = initOptions;
+  const {
+    getReadOnly,
+    connectingValidate = {}, width = 1000, height = 800, onPortRendered, onAddEdge} = initOptions;
 
   const graph = new Graph({
     container,
@@ -47,21 +49,20 @@ export function createFlowGraph(container, initOptions = {}) {
     height,
     grid: true,
     panning: true,
-    // scroller: true,
-    minimap: initOptions.minimap ? {
-      enabled: true,
-      container: initOptions.minimap,
-      width: 400,
-      height: 200,
-      graphOptions: {
-        async: true,
-        getCellView(cell) {
-          if (cell.isNode()) {
-            return SimpleNodeView
-          }
-        }
-      },
-    } : undefined,
+    // minimap: initOptions.minimap ? {
+    //   enabled: true,
+    //   container: initOptions.minimap,
+    //   width: 400,
+    //   height: 200,
+    //   graphOptions: {
+    //     async: true,
+    //     getCellView(cell) {
+    //       if (cell.isNode()) {
+    //         return SimpleNodeView
+    //       }
+    //     }
+    //   },
+    // } : undefined,
     onPortRendered: onPortRendered,
     // selecting: {
     //   enabled: true,
@@ -78,7 +79,9 @@ export function createFlowGraph(container, initOptions = {}) {
     //   anchor: 'center',
     //   connector: 'rounded',
     //   connectionPoint: 'boundary',
-    //   ...connectingValidate,
+      validateConnection () {
+        return !getReadOnly()
+      },
       createEdge(args) {
 
         const newEdge = new Shape.Edge({
@@ -104,11 +107,16 @@ export function createFlowGraph(container, initOptions = {}) {
             const allEdges = graph.model.getEdges();
             const edgeIns = allEdges.find(e => e.id === newEdgeId);
             const pickedEdge = pick(edgeIns, ['id', 'target', 'source', 'label', 'name', 'type']);
-            
+            // 说明没有连接到目标
+            if (!pickedEdge.target) {
+              clearInterval(si);
+              return;
+            }
+
             if (pickedEdge.target.cell && !trigger) {
               clearInterval(si);
               trigger = true;
-              onAddEdge(args.sourceCell.id, pickedEdge);  
+              onAddEdge(args.sourceCell.id, pickedEdge, newEdge);
             } else {
               // console.log('pickedEdge.target:', pickedEdge.target);
             }

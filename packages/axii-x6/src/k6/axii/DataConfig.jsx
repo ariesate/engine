@@ -3,20 +3,15 @@ import {
   tryToRaw,
   createElement,
   createComponent,
-  createContext,
   reactive,
   useViewEffect,
-  useContext,
-  watch,
   delegateLeaf,
-  traverse,
   atom,
-  computed,
 } from 'axii';
 
-import { Input, Select, Button, Checkbox } from 'axii-components'
+import { Input, Select, Checkbox } from 'axii-components'
 import cloneDeep from 'lodash/cloneDeep';
-import Down from 'axii-icons/Down';
+import Right from 'axii-icons/Right';
 import Delete from 'axii-icons/Delete';
 import get from 'lodash/get';
 import merge from 'lodash/merge';
@@ -132,7 +127,7 @@ const HigherFormField = createComponent((() => {
                 <text flex-grow="1" >
                   {() => item.properties[0] ? item.properties[0].value : ''}
                 </text>
-                <icon2><Down /></icon2>
+                <icon2><Right /></icon2>
               </itemHeader>
               <icon1 onClick={genRemoveItem(children, index)}><Delete fill="#ff4d4f" /></icon1>
             </itemBox>
@@ -156,7 +151,7 @@ const HigherFormField = createComponent((() => {
               <text flex-grow="1" >
                 {firstValue(item.value)}
               </text>
-              <icon2><Down /></icon2>
+              <icon2><Right /></icon2>
             </itemHeader>
           </itemBox>
           {() => (0 === expandIndex.value) ? (
@@ -189,7 +184,11 @@ const HigherFormField = createComponent((() => {
                     <itemList>
                       {renderItemList(item.children)}
                       <actions block flex-display flex-justify-content="right" block-padding-right="0">
-                        <Button layout:block-width="100%" layout:block-margin-top="8px" primary onClick={addItem}>+</Button>
+                        <addBtn
+                          block block-padding="4px 0" block-width="100%" block-margin-top="8px" onClick={addItem}
+                          style={{ border: '1px solid #999', textAlign: 'center', cursor: 'pointer' }}>
+                          +
+                        </addBtn>
                       </actions>
                     </itemList>
                   );
@@ -317,7 +316,11 @@ export function fallbackEditorDataToNormal(myJson) {
     return obj;
   }
   const result = {};
-  task(myJson.properties, result);
+  if (myJson.properties) {
+    task(myJson.properties, result);
+  } else {
+    Object.assign(result, myJson);
+  }
   return result;
 }
 
@@ -326,7 +329,7 @@ const DataConfigForm = createComponent((() => {
     
     return (
       <dataConfigForm block block-width="100%" block-box-sizing="border-box" >
-        {() => json.properties.map(item => {
+        {() => json.properties?.map(item => {
           const isSimple = simpleTypes.includes(item.type);
           const isHigher = ['array', 'object'].includes(item.type);
           if (isSimple) {
@@ -378,15 +381,19 @@ function DataConfig({ jsonWithData, onChange, onSave }) {
   }
 
   return (
-    <dataCofnig block block-width="100%" style={{ backgroundColor: '#fff' }}>
+    <dataCofnig block block-width="100%" style={{
+      border: '1px solid #aaa',
+      backgroundColor: '#fff',
+      overflow: 'hidden',
+    }} >
       <content block block-padding="16px">
         <DataConfigForm
           json={myJson}
           onChange={dataChanged}
         />
-        <actions block flex-display flex-justify-content="right" block-padding-right="0">
+        {/* <actions block flex-display flex-justify-content="right" block-padding-right="0">
           <Button layout:block-margin-top="8px" primary onClick={clickOnSave}>保存</Button>
-        </actions>
+        </actions> */}
       </content>
     </dataCofnig>
   );

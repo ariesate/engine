@@ -16,11 +16,9 @@ import {useElementPosition, manualTrigger as createManualTrigger } from 'axii-co
 import EntityConfigJSON from './Entity.k6.json';
 import RelationConfigJSON from './Relation.k6.json';
 
-
-export const EntityEdge = (nodeConfig, edge) => {
+export const EntityEdge = ({ edge }) => {
   // 兼容旧ER数据
   const ee = Object.assign({}, edge);
-  delete ee.view;
 
   const config = {
     ...ee,
@@ -61,33 +59,6 @@ export const EntityPort = createComponent((() => {
       return s;
     });
   };
-  const configArr = [];
-  PortRender.getConfig = (nodeId) => configArr.filter(c => c.nodeId === nodeId || !nodeId);
-  PortRender.RegisterPort = (props = {}) => {
-    
-    const config = {
-      nodeId: props.nodeId,
-      portId: props.id,
-      position: {
-        x: props.position.x,
-        y: props.position.y,
-      },
-      size: {
-        width: 20,
-        height: 20,
-      },
-    };
-    configArr.push(config);
-
-    useViewEffect(() => {
-      return () => {
-        const i = configArr.indexOf(config);
-        configArr.splice(i, 1);
-      };
-    });
-
-    return '';
-  }
 
   return createComponent(PortRender);
 })());
@@ -130,6 +101,9 @@ export const EntityNode = createComponent((() => {
       fieldPosition.height = height;
     }, 0);
 
+    useViewEffect(() => {
+    });
+
     return (
       <field block id={fieldId} block-padding-10px>
         <name>{() => field.name}</name>
@@ -164,8 +138,10 @@ export const EntityNode = createComponent((() => {
 
 
       watch(() => data.fields.length, () => {
-        console.log('new field or delete field');
-    }, 15);
+      }, 15);
+    });
+
+    useViewEffect(() => {
     });
 
     return (

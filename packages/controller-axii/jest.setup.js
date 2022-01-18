@@ -14,9 +14,9 @@ expect.extend({
     return {
       pass,
       message: () => `
-expect:
+received:
 ${prettyData.xml(received.outerHTML)} 
-toMatch:
+expect:
 ${prettyData.json(JSON.stringify(toMatch))}  
 `
     }

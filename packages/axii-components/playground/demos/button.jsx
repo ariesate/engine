@@ -1,30 +1,21 @@
 /** @jsx createElement */
-import { createElement, render } from "axii";
+import { createElement, render, atom } from "axii";
 import { Button } from "axii-components";
 
 function App() {
+  const a = atom(false)
+  setTimeout(() => {
+    a.value = true
+  }, 1000)
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', width: '500px'}}>
-        <Button>normal</Button>
-        <Button primary>primary</Button>
-        <Button danger>danger</Button>
-        <Button primary disabled>
-          primary disabled
-        </Button>
-        <Button danger disabled>
-          danger disabled
-        </Button>
+        <Button>{() => a.value ? ([<span>1</span>,<span>2</span>]) : [<span>1</span>]}</Button>
+
       </div>
       <div style={{ margin: '8px 0' }}>
-        <Button primary size="large">
-          primary big
-        </Button>
       </div>
       <div>
-        <Button primary size="small">
-          primary small
-        </Button>
       </div>
     </div>
   );

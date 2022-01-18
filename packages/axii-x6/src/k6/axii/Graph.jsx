@@ -1,7 +1,7 @@
 /** @jsx createElement */
 import {
   createElement,
-  createComponent,
+  tryToRaw,
   useContext,
   useViewEffect,
   reactive,
@@ -11,13 +11,19 @@ import {
 import { RootContext } from './Root';
 import Toolbar from './Toolbar';
 import * as x6 from './x6';
+import { generateLayout } from './Layout'
 
-function Graph({ data, height }, ref) {
+function Graph({ data, height, layoutConfig={}, toolbarExtra }, ref) {
   const rootContext = useContext(RootContext);
   const { nodes, edges } = reactive(data);
   const graphRef = useRef();
 
   const dm = rootContext.dm;
+
+    // 判断是否需要使用布局
+    if(layoutConfig.type) {
+      generateLayout(layoutConfig, data)
+    }
 
   if (ref) {
     ref.current = {
@@ -25,8 +31,15 @@ function Graph({ data, height }, ref) {
         dm.addNode(n);
         x6.Graph.addNode(n);
       },
-      exportData() {
-        return x6.Graph.exportData();
+      export(format) {
+        const nodes = dm.nm.nodes
+        if (format === 'x6') {
+          return {
+            nodes: tryToRaw(nodes.slice()),
+            edges: nodes.map(n => tryToRaw(n.edges).slice()).flat(),
+          }
+        }
+        return nodes;
       }
     };  
   }
@@ -48,9 +61,11 @@ function Graph({ data, height }, ref) {
 
   return (
     <graphContainer block >
-      <toolbarBox block >
-        <Toolbar />
-      </toolbarBox>
+      {() => rootContext.readOnly.value ? '' : (
+        <toolbarBox block >
+          <Toolbar extra={toolbarExtra} />
+        </toolbarBox>
+      )}
       <graph block ref={graphRef} style={{ backgroundColor: '#fff' }}>
 
       </graph>

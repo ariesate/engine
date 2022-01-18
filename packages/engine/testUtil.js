@@ -39,8 +39,9 @@ export function partialMatchDOM(inputDomNodes, inputVnode) {
     const currentDomNode = $(context[currentPath[currentPath.length -1]]).get(0)
     if (!currentDomNode) throw new Error(`no match dom for path ${currentPath.join('.')}`)
     // TODO 要考虑多个字符合并的情况？？？
-    if (vnode.type === String) {
-      if (vnode.value !== currentDomNode.textContent) throw new Error(`content not match: ${vnode.value} | ${currentDomNode.textContent}`)
+    if (vnode.type === String || typeof vnode === 'string' || typeof vnode === 'number') {
+      const toMatch = vnode.type ? vnode.value : vnode
+      if (toMatch !== currentDomNode.textContent) throw new Error(`content not match: ${toMatch} | ${currentDomNode.textContent}`)
 
     } else {
       // compare node name

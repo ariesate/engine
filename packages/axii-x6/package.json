@@ -1,6 +1,6 @@
 {
   "name": "axii-x6",
-  "version": "1.1.0-beta.3",
+  "version": "1.2.6",
   "author": "sskyy <skyking_H@hotmail.com>",
   "license": "MIT",
   "type": "module",
@@ -27,6 +27,7 @@
     "prepare": "pnpm run build"
   },
   "dependencies": {
+    "@antv/layout": "^0.1.31",
     "@antv/x6": "^1.20.0",
     "axii-components": "workspace:^1.0.32",
     "axii-icons": "workspace:^1.0.2",
@@ -47,6 +48,6 @@
     "vite": "^2.1.5"
   },
   "peerDependencies": {
-    "axii": "workspace:^1.1.7"
+    "axii": "workspace:^1.4.0"
   }
 }

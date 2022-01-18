@@ -4,9 +4,6 @@ import {
   propTypes,
   createElement,
   Fragment,
-  cloneElement,
-  vnodeComputed,
-  flattenChildren
 } from 'axii';
 import { Table, tdStyle, thStyle } from './Table'
 

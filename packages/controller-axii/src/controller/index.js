@@ -363,7 +363,7 @@ export default function createAxiiController(rootElement) {
 				// CAUTION removeChild 会触发 onBlur 事件，这不是我们想要的情况。
 				// 这里两个判断都要，后面按个是兼容 Portal。
 				if (!rootElement.contains(e.target) && !document.body.contains(e.target)) {
-					console.warn('element is remove, should not call callbacks', e)
+					console.warn('element is removed, should not call callbacks', e)
 					return false
 				}
 
