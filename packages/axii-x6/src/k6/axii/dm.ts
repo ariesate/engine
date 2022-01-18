@@ -7,8 +7,8 @@ import { IX6Node, IX6Edge } from '../basicTypes';
 import { INodeEdge } from '../Edge';
 import { IK6DataConfig, INodeComponent } from '../Node';
 import { INodePort } from '../Port';
-import merge from 'lodash/merge';
-import cloneDeep from 'lodash/cloneDeep';
+import merge from 'lodash-es/merge';
+import cloneDeep from 'lodash-es/cloneDeep';
 
 type IDataNode = IX6Node & {
   data?: {
@@ -425,7 +425,7 @@ class DataManager extends EventEmiter{
    * @param nodeId 
    * @param props 
    */
-  syncNode(nodeId: string, props: { [k in INodePropKeys]: any }) {
+  syncNode(nodeId: string, props: { [k in INodePropKeys]: any }, syncToGraph = false) {
     const node = this.findNode(nodeId);
     if (node) {
       const propKeys = Object.keys(props || {});
@@ -436,6 +436,12 @@ class DataManager extends EventEmiter{
         }});
       } else {
         merge(node, props);
+      }
+      if (syncToGraph) {
+        this.emit('node:changed', {
+          ...props,
+          id: nodeId
+        })
       }
     }
   }

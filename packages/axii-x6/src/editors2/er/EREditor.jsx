@@ -14,18 +14,20 @@ import { EntityNode, EntityPort, EntityEdge, data as dataFunc } from './Entity';
 function ER2Editor({ data, layoutConfig={}, onSave }) {
   data = reactive(data);
   const graphRef = useRef();
+  const dmRef = useRef();
+  window.dmRef = dmRef
 
   function saveER() {
     const d = graphRef.current.export('x6')
     onSave && onSave(d)
   }
 
-  const readOnly = atom(true)
+  const readOnly = atom(false)
   window.editorReadOnly = readOnly
   
   return (
     <container block>
-      <K6 layout:block layout:flex-display readOnly={readOnly} >
+      <K6 layout:block layout:flex-display readOnly={readOnly} ref={dmRef}>
         <k6base flex-grow="1" block>
           <Register globalData={dataFunc}>
           </Register>

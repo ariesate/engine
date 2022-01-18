@@ -10,9 +10,9 @@ import {
 } from "axii";
 import { createFlowGraph } from './graph';
 import { Graph as X6Graph, Markup } from '@antv/x6'
-import merge from 'lodash/merge';
-import pick from 'lodash/pick';
-import debounce from 'lodash/debounce';
+import merge from 'lodash-es/merge';
+import pick from 'lodash-es/pick';
+import debounce from 'lodash-es/debounce';
 import ShareContext from '../ShareContext';
 import { getRegisterPort } from '../Port';
 import { DEFAULT_SHAPE } from '../../Node';
@@ -329,6 +329,14 @@ export const Graph = {
     dm.on('notifyComponent', () => {
       this.syncMiniMap();
     });
+    dm.on('node:changed', props => {
+      const nodes = graph.model.getNodes()
+      nodes.forEach(n => {
+        if (n.id === props.id) {
+          n.setProp(props)
+        }
+      })
+    })
 
     this.graph = graph;
     this.dm = dm;

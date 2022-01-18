@@ -4,7 +4,6 @@
  */
 /** @jsx createElement */
 import { createElement, render, useRef } from "axii";
-import { debounce } from "lodash-es";
 
 import { EREditor2 } from "../src/index";
 import localRawData from "../src/editors2/er/data";
