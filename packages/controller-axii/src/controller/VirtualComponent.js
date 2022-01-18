@@ -117,18 +117,24 @@ export function replaceVnodeComputedAndWatchReactive(renderResult, collectChange
 	walkVnodes(container, (walkChildren, vnode, vnodes, parentVnode, currentPath) => {
 		// 组件也是不允许返回 undefined 的，所以如果有，那么是 walkChildren 的时候来的，可以直接返回
 		if (vnode === undefined) return
-		// 1 不递归处理传给组件的 children。
-		if(isComponentVnode(vnode)) return
 
-		// 2. 这是当前组件的作用域，先解开children。
+		const vnodeIndex = vnodes.indexOf(vnode)
+
+		// 1. 这是当前组件的作用域，先解开children。
 		const vnodeToHandle = vnode?.isChildren ? vnode.raw : vnode
+		// 只要发现不是原来的节点，不管后面处理还是不处理，先替换一下。确保引用正确。
+		// CAUTION 后面还要替换的话都用 vnodes[vnodes.indexOf(vnode)]
+		if (vnodeToHandle !== vnode) vnodes[vnodeIndex] = vnodeToHandle
+
+		// 2. 不递归处理 component 节点，直接替换并结束流程
+		if(isComponentVnode(vnodeToHandle)) return
 
 		// 2 先检查要不要 normalize，如果需要 normalize，那么替换掉原来的引用，直接递归 children。
 		//  因为没有 normalize 的节点只有 string/null/undefined/array，上面没有办法添加 reactive 信息。
 		if( !(vnodeToHandle instanceof VNode )) {
 			const normalizedVnode = normalizeLeaf(vnodeToHandle)
 			if (normalizedVnode instanceof VNode)	{
-				vnodes[vnodes.indexOf(vnode)] = normalizedVnode
+				vnodes[vnodeIndex] = normalizedVnode
 				return normalizedVnode.children && walkChildren(normalizedVnode.children)
 			}
 		}
@@ -143,14 +149,15 @@ export function replaceVnodeComputedAndWatchReactive(renderResult, collectChange
 		}
 
 		if (isAtom(vnodeToHandle, true) || typeof vnodeToHandle === 'function'){
-			vnodes[vnodes.indexOf(vnode)] = createVirtualCnodeForComputedVnodeOrText(vnodeToHandle, cnode, currentPath)
+			if(!vnodes.indexOf) debugger
+			vnodes[vnodeIndex] = createVirtualCnodeForComputedVnodeOrText(vnodeToHandle, cnode, currentPath)
 			// 替换成 VC 以后不用管了，他会被当成组件之后处理。
 			return
 		}
 
 		// 非严格模式，可以检测到传入的静态值伪装成 atom 的节点，这是为了组件在处理的时候都当成 atom 处理，不用特殊判断。
 		if (isAtom(vnodeToHandle)) {
-			vnodes[vnodes.indexOf(vnode)] = normalizeLeaf(vnodeToHandle.value)
+			vnodes[vnodeIndex] = normalizeLeaf(vnodeToHandle.value)
 			return
 		}
 

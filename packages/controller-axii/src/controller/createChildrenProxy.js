@@ -1,10 +1,11 @@
 import { isAtom } from '../reactive';
 import propTypes from "../propTypes";
 import {isFunction, walkVnodes} from '../util'
+import {isVnodeComputed} from "../vnodeComputed";
 
-import { normalizeLeaf } from "../createElement";
-import vnodeComputed, {isVnodeComputed} from "../vnodeComputed";
-
+function isComputed(vnode) {
+  return isFunction(vnode) || isVnodeComputed(vnode)
+}
 
 
 function getByPath(base, path) {
