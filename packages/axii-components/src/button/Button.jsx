@@ -22,6 +22,7 @@ export function Button({ children, size, onClick, disabled }) {
 Button.propTypes = {
 	onClick: propTypes.function,
 	disabled: propTypes.bool.default(() => atom(false)),
+	children: propTypes.arrayOf(propTypes.element())
 }
 
 Button.Style = (fragments) => {

@@ -21,12 +21,20 @@ export function walkRawVnodes(vnodes, handler, parentPath = [], context) {
   vnodes.forEach((vnode, index) => {
     const currentPath = createVnodePath(vnode, parentPath, index)
     if (Array.isArray(vnode)) {
-      walkRawVnodes(vnode, handler, currentPath)
+      walkRawVnodes(vnode, handler, currentPath, context)
     } else {
-      const shouldStop = handler(vnode, currentPath, vnodes)
-
-      if (vnode && !shouldStop && vnode.children !== undefined) {
-        walkRawVnodes(vnode.children, handler, currentPath)
+      const handlerReturn = handler(vnode, currentPath, vnodes, context)
+      let nextContext = context
+      let shouldStop = false
+      if (Array.isArray(handlerReturn)) {
+        shouldStop = handlerReturn[0]
+        // CAUTION 注意这里 handle 可能返回 undefined，这时候不要覆盖
+        if (handlerReturn[1]) nextContext = handlerReturn[1]
+      }
+      // CAUTION 这里应该重新用 index 读一下，因为 handler 可能替换了原来的 vnode，使得不可递归的现在可以了
+      // if (vnode && !shouldStop && vnode.children !== undefined) {
+      if (vnodes[index] && !shouldStop && vnodes[index].children !== undefined) {
+        walkRawVnodes(vnodes[index].children, handler, currentPath, nextContext)
       }
     }
   })

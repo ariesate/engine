@@ -2,8 +2,9 @@
 import {createElement, useImperativeHandle, createComponent, useViewEffect, propTypes, atom, watchReactive} from 'axii'
 import Editorjs from '@editorjs/editorjs'
 import './Editorjs.less'
-import ImageEditorPlugin from './imageEditorPlugin';
+import ImageEditorPlugin from './imageEditorPlugin'
 import TablePlugin from 'editorjs-table'
+import ListPlugin from '@editorjs/nested-list'
 
 function EditorjsComponent({ref: parentRef, data, ...options}) {
   const editorId = `editorjs-${Date.now()}-${Math.random().toFixed(7).slice(2)}`
@@ -29,7 +30,9 @@ function EditorjsComponent({ref: parentRef, data, ...options}) {
       console.log("ready render", data.value)
       data.value && editorRef.render(data.value)
     })
-    return () => editorRef?.destroy()
+    return () => {
+      if (editorRef?.destroy) editorRef.destroy()
+    }
   })
 
   if (parentRef) {
@@ -63,5 +66,6 @@ EditorjsComponent.forwardRef = true
 const StyledEditorjsComponent = createComponent(EditorjsComponent)
 StyledEditorjsComponent.ImageEditorPlugin = ImageEditorPlugin
 StyledEditorjsComponent.TablePlugin = TablePlugin
+StyledEditorjsComponent.ListPlugin = ListPlugin
 
 export default StyledEditorjsComponent

@@ -6,6 +6,7 @@ import {applyPatches, produce} from "../produce";
 import { replaceVnodeComputedAndWatchReactive } from './VirtualComponent'
 import watch from "../watch";
 import {isComponentVnode, layoutManager} from "./index";
+import {createChildrenProxy, smartCreateChildrenProxy} from "./createChildrenProxy";
 
 const seenTypes = new WeakSet()
 
@@ -186,11 +187,11 @@ function processLayoutAttributes(cnode, result) {
 
 function createInjectedProps(cnode) {
 	const { props, localProps } = cnode
-	const { propTypes: thisPropTypes } = cnode.type
-
+	const {children, ...propsWithoutChildren} = props
+	const { children: childrenPropType, ...propTypesWithoutChildren} = cnode.type.propTypes || {}
 	const fixedProps = {}
 
-	Object.entries(thisPropTypes || {}).forEach(([propName, propType]) => {
+	Object.entries(propTypesWithoutChildren || {}).forEach(([propName, propType]) => {
 		if (!(propName in props)) {
 			// 这里和 propTypes 有约定，每次读 defaultValue 时都会用定义的 createDefaultValue 创造新的对象，
 			// 所以不用担心引用的问题。
@@ -208,17 +209,31 @@ function createInjectedProps(cnode) {
 		}
 	})
 
-
-	const mergedProps = { ...props, ...localProps, ...fixedProps }
+	/**
+	 * 创建 children proxy 的主要目的是：
+	 * 1. 希望组件在使用 children 的时候可以不用自己去判断其中的 vnodeComputed。全部当成静态的来用。
+	 *   1.1 直接使用 index 获取子元素 children[0] || children.body
+	 *   1.2 使用 map/reduce 等任意变换。
+	 * 2. 增加 isChildren 标记。使得组件的 feature 在递归处理每个节点的时候只处理自己的，
+	 *   这才是符合 feature 开发心智的做法——组件的 feature 只处理组件自己 render 的部分，
+	 *   把 children 渲染出来的部分不属于自己。
+	 */
+	const childrenProp = smartCreateChildrenProxy(children, childrenPropType)
+	const mergedPropsWithoutChildren = {
+		...propsWithoutChildren,
+		...localProps,
+		...fixedProps,
+	}
 
 	// 对两种类型props 特殊处理：
 	// 2. 随 smartProp 进行回调处理
 	// 3. 开始对其中的 callback 回调 prop 进行注入。
 	// TODO 考虑用户不需要 produce 的场景，能不能提前声明？虽然传入的是 ref，但是某些事件就是不要 apply，不是动态决定的，是提前就决定好的。
 	// TODO 虽然已经有 overwrite 了，但是还是会去 produce。连这一步也不要有？性能影响到底大不大？
-	const transformedProps = mapValues(thisPropTypes || {}, (propType, propName) => {
-		const prop = mergedProps[propName]
+	const transformedProps = mapValues(propTypesWithoutChildren || {}, (propType, propName) => {
+		const prop = mergedPropsWithoutChildren[propName]
 		if (!propType) return prop
+
 		if (isSmartProp(prop)) {
 			return prop(propType, propName)
 		}
@@ -241,14 +256,15 @@ function createInjectedProps(cnode) {
 
 			// 注意这里，defaultMutateFn 可以拿到 props 的引用，这样我们就不用在调用的时候去往第一个参数去传了。
 			const defaultMutateFn = propType.createDefaultValue(props)
-			const valueProps = filter(mergedProps, isReactiveLike)
+			const valueProps = filter(mergedPropsWithoutChildren, isReactiveLike)
 			// CAUTION 这里的 Immer draft 是支持 moment 等类型的，要更新 moment 的话，用户自己 new 一个新的并整体赋值。
 			let draftChanges = []
 			let shouldStopApply
+
+			const extraArgv = [{...mergedPropsWithoutChildren, children: childrenProp}, activeEvent.getCurrentEvent()]
 			// CAUTION，把 runtime argv 也 draft 一下，这样就可以实现通过第一参数传递 reactive 对象，同时也能 return false 阻止了。
-			const extraArgv = [mergedProps, activeEvent.getCurrentEvent()]
 			// CAUTION 这里 map 和 mapValues 回调都不要简写，因为 tryToRaw 有第二参数，简写会传递第二参数
-			const argvToDraft = runtimeArgv.map(argv => tryToRaw(argv)).concat(mapValues(mergedProps, prop => tryToRaw(prop)))
+			const argvToDraft = runtimeArgv.map(argv => tryToRaw(argv)).concat(mapValues(mergedPropsWithoutChildren, prop => tryToRaw(prop)))
 			produce(
 				argvToDraft, draftArgv => {
 					// 我们为开发者补足三个参数，这里和 react 不一样，我们把 event 放在了最后，这是我们按照实践中的权重判断的。
@@ -272,7 +288,6 @@ function createInjectedProps(cnode) {
 				(patches) => draftChanges.push(...patches)
 			)
 
-
 			if (shouldStopApply) {
 				activeEvent.preventCurrentEventDefault()
 			} else {
@@ -283,10 +298,12 @@ function createInjectedProps(cnode) {
 				applyPatches(values, changesExcludeFixedValues)
 			}
 		}
-
 	})
 
-	return Object.assign(mergedProps, transformedProps)
+	// 要合并到 mergedPropsWithoutChildren，才能保证上面的回调参数都是覆盖过的
+	Object.assign(mergedPropsWithoutChildren, transformedProps)
+
+	return  {...mergedPropsWithoutChildren, children: childrenProp}
 }
 
 /**

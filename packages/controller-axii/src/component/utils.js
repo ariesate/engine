@@ -1,10 +1,8 @@
 import VNode from '@ariesate/are/VNode'
 import { normalizeLeaf } from '../createElement'
-import createFlatChildrenProxy from '../createFlatChildrenProxy'
 import { isComponentVnode } from '../controller'
 import { invariant, mapValues } from '../util'
 import { isAtom } from '../reactive'
-import { createFragmentActionReceiver } from './fragment'
 
 
 /**
@@ -75,125 +73,6 @@ import { createFragmentActionReceiver } from './fragment'
  *
  */
 
-export class FragmentDynamic {
-  constructor(name, render, localVars, nonReactive) {
-    this.name = name
-    this.render = render
-    this.localVars = localVars
-    this.nonReactive = nonReactive
-  }
-}
-
-
-function createElementProxy() {
-  const styles = []
-  const pseudoClassStyles = []
-  const listeners = {}
-  const instruments = {
-    getStyle() { return styles },
-    getPseudoClassStyle() { return pseudoClassStyles },
-    getListeners() { return listeners }
-  }
-  return new Proxy({}, {
-    get(target, key) {
-      if (instruments[key]) return (...argv) => instruments[key](target, ...argv)
-
-      if (key === 'style') {
-        return value => styles.push(value)
-      } else if (key === 'match') {
-        return new Proxy({}, {
-          get(target, pseudoClass) {
-            return {
-              style(rules) {
-                pseudoClassStyles.push({ name: pseudoClass, rules })
-              }
-            }
-          }
-        })
-      } else if (/^on/.test(key.toString())) {
-        return value => {
-          if (!listeners[key]) listeners[key] = []
-          listeners[key].push(value)
-        }
-      } else {
-        throw new Error(`unknown action: key: ${key} value: ${value}`)
-      }
-    }
-  })
-}
-
-/**
- * 1. style 设置
- * fragments[name].elements.input.style = {}
- * 2. listener 设置
- * fragments[name].elements.input.onFocus = function() {}
- * 3. 获取
- * fragments[name].elements.input.getStyle()
- * fragments[name].elements.input.getListeners()
- */
-export function createElementsContainer() {
-  const container = {}
-
-  return new Proxy(container, {
-    get(target, key) {
-      if (!container[key]) container[key] = createElementProxy()
-      return container[key]
-    },
-    set() {
-      return false
-    }
-  })
-}
-
-
-/**
- * actionCollector 存着当前 feature 对所有 fragments 的 action。
- * 真正去收集的是 fragmentLevelCollector。
- * 这个对象通常传到 feature 中变量名叫做 fragments。使用时就是: fragments.root.modify(xxx)
- */
-function createActionCollector(name, container, globalConfigs) {
-  const collector = {
-    $$fragments: {},
-    $$argv: new WeakMap()
-  }
-
-  const instruments = {
-    forEach(target, fn) {
-      Object.entries(target.$$fragments).forEach(fn)
-    },
-  }
-
-  const attributes = {
-    name
-  }
-
-  return new Proxy(collector, {
-    get(target, key) {
-      if (instruments[key]) return (...argv) => instruments[key](target, ...argv)
-      if (key in attributes) return attributes[key]
-      // anonymous 作为保留的名字，是用来给框架处理 function/vnodeComputed 节点的。
-      const fragmentName = key === 'anonymous' ? '$$' : key
-
-      if (!target.$$fragments[fragmentName]) target.$$fragments[fragmentName] = createFragmentActionReceiver(fragmentName, collector, globalConfigs)
-      return target.$$fragments[fragmentName]
-    }
-  })
-}
-
-
-export function createActionCollectorContainer(globalConfigs) {
-  const container = new Map()
-  return {
-    derive(key) {
-      let featureFunctionCollector = container.get(key)
-      if (!featureFunctionCollector) container.set(key, (featureFunctionCollector = createActionCollector(key.displayName || key.name, container, globalConfigs)))
-      return featureFunctionCollector
-    },
-    forEach(handle) {
-      return container.forEach(handle)
-    }
-  }
-}
 
 
 export function createIndexContainer() {
@@ -278,15 +157,15 @@ export function createWalker() {
 }
 
 
-export function walkVnodes(vnodes, handle) {
+export function walkVnodes(vnodes, handle, parent) {
   vnodes.forEach((vnode) => {
-    const runChildren = (children) => walkVnodes(children, handle)
+    const runChildren = (children) => walkVnodes(children, handle, vnode)
 
     if (handle) {
       // 这里面由 handle 自己决定要不要 runChildren
-      handle(runChildren, vnode, vnodes)
+      handle(runChildren, vnode, vnodes, parent)
     } else {
-      runChildren(vnode.children, handle)
+      runChildren(vnode.children)
     }
 
   })
@@ -299,9 +178,6 @@ export function createDefaultMatch(featurePropsTypes) {
   }
 }
 
-export function flattenChildren(children) {
-  return createFlatChildrenProxy(children)
-}
 
 export function packChildren(name, children) {
   children.name = name
@@ -309,8 +185,9 @@ export function packChildren(name, children) {
 }
 
 // CAUTION slots 本身这个对象不能作为 reactive。
-export function createNamedChildrenSlotProxy(slots) {
-  return new Proxy(slots, {
+// TODO 应该要改成可以的才行。不然传过来的 children 就没法动态化了。
+export function createNamedChildrenSlotProxy(namedChildren) {
+  return new Proxy(namedChildren, {
     get(target, key) {
       return isAtom(target[key]) ? target[key].value : target[key]
     }

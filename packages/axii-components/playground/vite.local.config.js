@@ -9,6 +9,9 @@ const PACKAGE_ROOT_PATH = makePath('../../')
 
 export default {
   ...siteConfig,
+  define: {
+    __DEV__: true,
+  },
   resolve: {
     alias: [
       {find: 'axii', replacement: path.resolve(PACKAGE_ROOT_PATH, './controller-axii/src')},

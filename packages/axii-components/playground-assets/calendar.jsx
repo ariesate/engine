@@ -1,0 +1,1 @@
+export const content = `%2F**%20%40jsx%20createElement%20*%2F%0Aimport%20%7B%20createElement%2C%20render%7D%20from%20'axii'%0Aimport%20Calendar%20from%20'..%2Fsrc%2Fcalendar%2FCalendar.jsx'%0A%0Arender(%0A%20%20%3Cdiv%3E%0A%20%20%20%20%3CCalendar%20%2F%3E%0A%20%20%3C%2Fdiv%3E%2C%0A%20%20document.getElementById('root')%0A)%0A`

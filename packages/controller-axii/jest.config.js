@@ -7,7 +7,8 @@ const config = {
       "esbuild-jest",
       {
         "jsxFactory": "createElement",
-        "jsxFragment": "Fragment"
+        "jsxFragment": "Fragment",
+        "sourcemap": 'inline',
       }
     ]
   },

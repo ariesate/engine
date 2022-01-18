@@ -1,12 +1,12 @@
 // CAUTION 为了写得更加便捷，我们允许用户直接写个 function 节点，自动转成 vnodeComputed。
 // 这也让我们直接放弃了 render props
 import {isReactiveLike, isAtom} from "../reactive";
-import {invariant, isComponentVnode, createElement, normalizeLeaf} from "../index";
+import {invariant, isComponentVnode, createElement, normalizeLeaf, isVnodeComputed, VNode} from "../index";
 import watch, {traverse} from "../watch";
-import {walkRawVnodes} from "../common";
+import {createVnodePath, walkRawVnodes} from "../common";
 import { getCurrentWorkingCnode } from '../renderContext'
 import { isCollectingComputed } from "../reactive/effect";
-import { replaceItem} from "../util";
+import { walkVnodes } from "../util";
 import vnodeComputed from "../vnodeComputed";
 
 const virtualComponentCacheByCnode = new WeakMap()
@@ -63,7 +63,7 @@ const reservedAttrNames = ['key', 'ref']
 /**
  * 这个函数是在 render 时被调用的，每次 render 都会销毁上一次里面创建的 computed， 所以这里放心 watch 没有关系。在组件销毁或者更新时，上一次的 watch 会被自动销毁。
  */
-export function watchReactiveAttributesVnode(vnode, currentPath, reportChangedVnode, cnode) {
+export function watchReactiveAttributesVnode(vnode, reportChangedVnode) {
 	const reactiveAttributes = Object.entries(vnode.attributes).filter(([attrName, attr]) => {
 		return isReactiveLike(attr) && !reservedAttrNames.includes(attrName)
 	})
@@ -78,47 +78,155 @@ export function watchReactiveAttributesVnode(vnode, currentPath, reportChangedVn
 }
 
 
-function replaceVnodeWith(vnode, matchAndReplace) {
-	// return vnode
-	const isArray = Array.isArray(vnode)
-	const start = isArray ? vnode : [vnode]
-	walkRawVnodes(start, (vnode, currentPath, parentCollection) => {
-		const [shouldStop, vnodeToReplace] = matchAndReplace(vnode, currentPath)
-		if (vnodeToReplace) replaceItem(parentCollection, vnode, vnodeToReplace)
-		return shouldStop
-	})
-	return isArray ? vnode : start[0]
-}
+// function replaceVnodeWith(vnode, matchAndReplace) {
+// 	// return vnode
+// 	const isArray = Array.isArray(vnode)
+// 	const start = isArray ? vnode : [vnode]
+// 	walkRawVnodes(start, (vnode, currentPath, parentCollection, context) => {
+// 		const [shouldStop, vnodeToReplace, nextContext] = matchAndReplace(vnode, currentPath, context)
+// 		if (vnodeToReplace) replaceItem(parentCollection, vnode, vnodeToReplace)
+// 		return [shouldStop, nextContext]
+// 	})
+// 	return isArray ? vnode : start[0]
+// }
 
+// TODO 增加 path 信息，修改 proxy 里面的信息。
 
+/**
+ * 渲染出来的例子：
+ * <div>
+ *   {children}   <-- 上层传过来的 children。放在我的作用域里，表示我决定要渲染了，那么应该解开。
+ *   <div>{() => children.map(child => child)}</div>  <-- 我进行了处理的，还在我的作用域里，也表示我要渲染，要解开。
+ *   <Sub>
+ *     <div>xxx</div> <-- 我传给子组件的 children，就跟 props 一样，子组件是渲染、丢弃、再传递给子组件，都和我无关了。
+ *     {children} <-- 透传进去的，至于子组件是否决定渲染，我不管了
+ *   </Sub>
+ * </div>
+ *
+ * 所以总结一下
+ * 1. 只有我决定要渲染的才有解开、替换的必要。其他的都原封不动的丢给子组件去。
+ * 2. 所以我收到的 children proxy，解开里面也应该还是 基本类型/函数，没有变成 vnode/vnodeComputed.
+ *
+ */
 
 export function replaceVnodeComputedAndWatchReactive(renderResult, collectChangePatchNode, cnode) {
-	if (typeof renderResult !== 'object') return renderResult
+	const rootVnode = (renderResult instanceof VNode) ? renderResult : normalizeLeaf(renderResult)
 
-	const currentWorkingCnode = getCurrentWorkingCnode()
-	invariant(currentWorkingCnode === cnode, 'you can only call watch reactive props from cnode self')
-	invariant(isCollectingComputed(), 'you are not collecting computed, can not watch reactive prop vnode')
-	return replaceVnodeWith(renderResult, (vnode, currentPath) => {
-		// 返回的三个参数 [shouldStop, vnodeToReplace]
-		if (!vnode) return [true]
-		// 一旦碰到 component vnode 就要中断掉。里面的 replace 要交给这个组件 render 的时候自己处理。
-		if (isComponentVnode(vnode)) return [true]
-		// 替换为 virtual cnode 之后也要停止 walk，让 virtual cnode render 的时候再处理里面的。
-		// CAUTION 普通的 dom 元素 attribute 除了 style 意外全部都只能接受 "number|string"，所以只能是 ref。只有 style 单独考虑了一下。
-		if (hasRefAttributes(vnode) || isReactiveLike(vnode.attributes?.style)) {
-			watchReactiveAttributesVnode(vnode, currentPath, collectChangePatchNode, cnode)
-			return [false]
-		} else if (isAtom(vnode) || (typeof vnode === 'function') ) {
-			// CAUTION 严格模式也是 ref/vnodeComputed 才替换成真的 VirtualComponent。否则是 refLike。直接取 value 就可以了。
-			const replaceVnode = (isAtom(vnode, true) || (typeof vnode === 'function')) ?
-				createVirtualCnodeForComputedVnodeOrText(vnode, cnode, currentPath) :
-				normalizeLeaf(vnode.value)
-			return [true, replaceVnode]
+	const container = [rootVnode]
+
+	walkVnodes(container, (walkChildren, vnode, vnodes, parentVnode, currentPath) => {
+		// 组件也是不允许返回 undefined 的，所以如果有，那么是 walkChildren 的时候来的，可以直接返回
+		if (vnode === undefined) return
+
+		const vnodeIndex = vnodes.indexOf(vnode)
+
+		// 1. 这是当前组件的作用域，先解开children。
+		const vnodeToHandle = vnode?.isChildren ? vnode.raw : vnode
+		// 只要发现不是原来的节点，不管后面处理还是不处理，先替换一下。确保引用正确。
+		// CAUTION 后面还要替换的话都用 vnodes[vnodes.indexOf(vnode)]
+		if (vnodeToHandle !== vnode) vnodes[vnodeIndex] = vnodeToHandle
+
+		// 2. 不递归处理 component 节点，直接替换并结束流程
+		if(isComponentVnode(vnodeToHandle)) return
+
+		// 2 先检查要不要 normalize，如果需要 normalize，那么替换掉原来的引用，直接递归 children。
+		//  因为没有 normalize 的节点只有 string/null/undefined/array，上面没有办法添加 reactive 信息。
+		if( !(vnodeToHandle instanceof VNode )) {
+			const normalizedVnode = normalizeLeaf(vnodeToHandle)
+			if (normalizedVnode instanceof VNode)	{
+				vnodes[vnodeIndex] = normalizedVnode
+				return normalizedVnode.children && walkChildren(normalizedVnode.children)
+			}
 		}
 
-		return [false]
+		// 3 剩下的节点就全都是 normalized 节点 或者 function 节点了。
+		// 3.1 先处理天然 normalized 节点
+		if( vnodeToHandle instanceof VNode ) {
+			if (hasRefAttributes(vnodeToHandle) || isReactiveLike(vnodeToHandle.attributes?.style)) {
+				watchReactiveAttributesVnode(vnodeToHandle, collectChangePatchNode)
+			}
+			return vnodeToHandle.children && walkChildren(vnodeToHandle.children)
+		}
+
+		if (isAtom(vnodeToHandle, true) || typeof vnodeToHandle === 'function'){
+			if(!vnodes.indexOf) debugger
+			vnodes[vnodeIndex] = createVirtualCnodeForComputedVnodeOrText(vnodeToHandle, cnode, currentPath)
+			// 替换成 VC 以后不用管了，他会被当成组件之后处理。
+			return
+		}
+
+		// 非严格模式，可以检测到传入的静态值伪装成 atom 的节点，这是为了组件在处理的时候都当成 atom 处理，不用特殊判断。
+		if (isAtom(vnodeToHandle)) {
+			vnodes[vnodeIndex] = normalizeLeaf(vnodeToHandle.value)
+			return
+		}
+
+		// 如果还有剩下的情况，那就说明出现了非法的节点
+		console.warn('unknown vnode', vnode)
+
 	})
+
+	// 有可能自身就被替换了，所以写成这样。
+	return container[0]
 }
+
+
+
+// export function replaceVnodeComputedAndWatchReactive1(renderResult, collectChangePatchNode, cnode) {
+// 	// return null 的情况
+// 	if (typeof renderResult !== 'object') return renderResult
+// 	const currentWorkingCnode = getCurrentWorkingCnode()
+// 	invariant(currentWorkingCnode === cnode, 'you can only call watch reactive props from cnode self')
+// 	invariant(isCollectingComputed(), 'you are not collecting computed, can not watch reactive prop vnode')
+// 	return replaceVnodeWith(renderResult, (vnode, currentPath, isInChildComponent) => {
+// 		// 返回的三个参数 [shouldStop, vnodeToReplace]
+// 		if (!vnode) return [true]
+// 		// 如果不是自己创建的节点是外面传进来的，那么已经在外面组件的 replace 过了
+//
+// 		// 把自己拿到的 children 直接透传给子组件的情况我们也不管了
+// 		if (isInChildComponent && vnode.isChildren) return [true]
+//
+// 		// 一旦碰到 component vnode 就要中断掉。里面的 replace 要交给这个组件 render 的时候自己处理。
+// 		// 如果碰到 component 节点，标记一下 context 为 isInChildComponent。仍然继续出来。
+// 		if (isComponentVnode(vnode)) {
+// 			return [false, undefined, true]
+// 		}
+//
+// 		// TODO 碰到 isChildren，并且不在子组件里，那么要解开！！！，当成自己的元素一起处理了。！！！
+// 		const vnodeToReplace = (!isInChildComponent && vnode.isChildren) ? normalizeLeaf(vnode.raw) : vnode
+// 		// 到这里，我们管的是：
+// 		// 1. 自己创建的节点，包括传到子组件里面去的 children。
+// 		// 2. 自己决定于渲染了的（子组件之外的）父组件传过来的 children。
+//
+// 		// 替换为 virtual cnode 之后也要停止 walk，让 virtual cnode render 的时候再处理里面的。
+// 		// CAUTION 普通的 dom 元素 attribute 除了 style 意外全部都只能接受 "number|string"，所以只能是 ref。只有 style 单独考虑了一下。
+// 		if (hasRefAttributes(vnodeToReplace) || isReactiveLike(vnodeToReplace.attributes?.style)) {
+// 			watchReactiveAttributesVnode(vnodeToReplace, currentPath, collectChangePatchNode, cnode)
+// 			return [false, vnodeToReplace]
+// 		} else if (isAtom(vnodeToReplace) || (typeof vnodeToReplace === 'function') ) {
+//
+// 			// 如果还是在自己的作用域内，不管这个节点是自己创建的还是 parent 传进来的 children。
+// 			// 都要创建 VirtualComponent，这表示当前这个节点的 render 已经决定把它真实渲染出来了。
+// 			if (!isInChildComponent) {
+// 				// CAUTION 严格模式也是 ref/vnodeComputed 才替换成真的 VirtualComponent。否则是 refLike。直接取 value 就可以了。
+// 				const replaceVnode = (isAtom(vnodeToReplace, true) || (typeof vnodeToReplace === 'function')) ?
+// 					createVirtualCnodeForComputedVnodeOrText(vnodeToReplace, cnode, currentPath) :
+// 					normalizeLeaf(vnodeToReplace.value)
+// 				return [true, replaceVnode]
+//
+// 			} else {
+// 				// 如果已经到了子组件内，那么我们只是把我们创建的 function 节点替换成 vnodeComputed
+// 				return [true, (typeof vnodeToReplace === 'function') ? vnodeComputed(vnodeToReplace) : undefined]
+// 			}
+// 		} else {
+// 				// TODO !!!!!!!!!!!!!!!!!! normalize 想清楚，究竟什么时候做！！！！！！还要考虑 diff 的问题！！！！
+// 				//  如果这里做，那么 外面也要改，replace 出去的 node 有可能还可以继续 Normalize!!!!
+// 				// 外面的 normalizeLeaf 也要改成默认不递归的！！！！
+// 		}
+//
+// 		return [false, vnode !== vnodeToReplace ? vnodeToReplace : undefined]
+// 	})
+// }
 
 function hasRefAttributes(vnode) {
 	return vnode.attributes && Object.values(vnode.attributes).some(attr => isAtom(attr))

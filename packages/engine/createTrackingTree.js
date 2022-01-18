@@ -1,5 +1,5 @@
 // CAUTION Magic number
-const MAX_CNODE_LEVEL = 100
+const MAX_CNODE_LEVEL = 1000
 
 export default function createTrackingTree() {
   let locked = false

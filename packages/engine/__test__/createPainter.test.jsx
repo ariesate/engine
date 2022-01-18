@@ -9,6 +9,7 @@ import {
   PATCH_ACTION_TO_MOVE,
   DEV_MAX_LOOP,
 } from '../constant'
+import { createRecursiveNormalize } from '../createElement'
 
 
 /*************
@@ -17,12 +18,13 @@ import {
 
 describe('painter paint', () => {
   let painter
+  let normalize = createRecursiveNormalize()
   const renderer = {
     rootRender(cnode) {
-      return cnode.type.render()
+      return normalize(cnode.type.render())
     },
     initialRender(cnode) {
-      return cnode.type.render()
+      return normalize(cnode.type.render())
     }
   }
 
@@ -39,7 +41,7 @@ describe('painter paint', () => {
 
     const ctree = painter.createCnode(<App/>)
     painter.paint(ctree)
-    expect(ctree.ret[0]).toMatchObject(<div>app</div>)
+    expect(ctree.ret[0]).toMatchObject(normalize(<div>app</div>))
   })
 
   test('render with sub component', () => {
@@ -62,7 +64,7 @@ describe('painter paint', () => {
 
     const ctree = painter.createCnode(<App/>)
     painter.paint(ctree)
-    expect(ctree.ret[0]).toMatchObject((
+    expect(ctree.ret[0]).toMatchObject(normalize(
       <div>
         <div>app</div>
         <Sub></Sub>
@@ -86,15 +88,16 @@ describe('painter paint', () => {
 
 describe('painter repaint basic', () => {
   let painter
+  let normalize = createRecursiveNormalize()
   const renderer = {
     rootRender(cnode) {
-      return cnode.type.render()
+      return normalize(cnode.type.render())
     },
     initialRender(cnode) {
-      return cnode.type.render()
+      return normalize(cnode.type.render())
     },
     updateRender(cnode) {
-      return cnode.type.render()
+      return normalize(cnode.type.render())
     }
   }
 
@@ -112,17 +115,17 @@ describe('painter repaint basic', () => {
 
     const ctree = painter.createCnode(<App/>)
     painter.paint(ctree)
-    expect(ctree.ret[0]).toMatchObject(<div>0</div>)
+    expect(ctree.ret[0]).toMatchObject(normalize(<div>0</div>))
 
     count++
     const diffResult = painter.repaint(ctree)
-    expect(ctree.ret[0]).toMatchObject(<div>1</div>)
+    expect(ctree.ret[0]).toMatchObject(normalize(<div>1</div>))
     expect(Object.keys(diffResult.toInitialize)).toHaveLength(0)
     expect(Object.keys(diffResult.toRemain)).toHaveLength(0)
     expect(Object.keys(diffResult.toDestroy)).toHaveLength(0)
     expect(Object.keys(diffResult.toDestroyPatch)).toHaveLength(0)
 
-    const expectPatch = <div>1</div>
+    const expectPatch = normalize(<div>1</div>)
     expectPatch.action = { type: PATCH_ACTION_REMAIN }
     expect(diffResult.patch[0]).toMatchObject(expectPatch)
   })
@@ -136,15 +139,16 @@ describe('painter repaint basic', () => {
 describe('repaint key diff', () => {
 
   let painter
+  let normalize = createRecursiveNormalize()
   const renderer = {
     rootRender(cnode) {
-      return cnode.type.render()
+      return normalize(cnode.type.render())
     },
     initialRender(cnode) {
-      return cnode.type.render()
+      return normalize(cnode.type.render())
     },
     updateRender(cnode) {
-      return cnode.type.render()
+      return normalize(cnode.type.render())
     }
   }
 
@@ -170,7 +174,7 @@ describe('repaint key diff', () => {
     const diffResult = painter.repaint(ctree)
 
     const arr = [<span>1</span>,<span>2</span>]
-    expect(ctree.ret[0]).toMatchObject(<div>{arr}</div>)
+    expect(ctree.ret[0]).toMatchObject(normalize(<div>{arr}</div>))
 
 
     // 第一层
@@ -180,11 +184,11 @@ describe('repaint key diff', () => {
     expect(diffResult.patch[0]).toMatchObject(firstLayerPatch)
 
     // 第二层
-    const firstKeySpan = <span>1</span>
+    const firstKeySpan = normalize(<span>1</span>)
     firstKeySpan.action = { type: PATCH_ACTION_REMAIN }
     expect(diffResult.patch[0].children[0].children[0]).toMatchObject(firstKeySpan)
 
-    const secondKeySpan = <span>2</span>
+    const secondKeySpan = normalize(<span>2</span>)
     secondKeySpan.action = { type: PATCH_ACTION_INSERT }
     expect(diffResult.patch[0].children[0].children.length).toBe(2)
     expect(diffResult.patch[0].children[0].children[1]).toMatchObject(secondKeySpan)
@@ -209,16 +213,16 @@ describe('repaint key diff', () => {
     const diffResult = painter.repaint(ctree)
 
     const arr = [<span>1</span>]
-    expect(ctree.ret[0]).toMatchObject(<div>{arr}</div>)
+    expect(ctree.ret[0]).toMatchObject(normalize(<div>{arr}</div>))
 
     // 第一层
-    const firstLayerPatch = <div></div>
+    const firstLayerPatch = normalize(<div></div>)
     delete firstLayerPatch.children
     firstLayerPatch.action = { type: PATCH_ACTION_REMAIN }
     expect(diffResult.patch[0]).toMatchObject(firstLayerPatch)
 
     // 第二层
-    const firstKeySpan = <span>1</span>
+    const firstKeySpan = normalize(<span>1</span>)
     firstKeySpan.action = { type: PATCH_ACTION_REMAIN }
     expect(diffResult.patch[0].children[0].children[0]).toMatchObject(firstKeySpan)
 
@@ -246,21 +250,21 @@ describe('repaint key diff', () => {
     const diffResult = painter.repaint(ctree)
 
     // 第一层
-    const firstLayerPatch = <div></div>
+    const firstLayerPatch = normalize(<div></div>)
     delete firstLayerPatch.children
     firstLayerPatch.action = { type: PATCH_ACTION_REMAIN }
     expect(diffResult.patch[0]).toMatchObject(firstLayerPatch)
 
     // 第二层
-    const firstKeySpan = <span>1</span>
+    const firstKeySpan = normalize(<span>1</span>)
     firstKeySpan.action = { type: PATCH_ACTION_REMAIN }
     expect(diffResult.patch[0].children[0].children[0]).toMatchObject(firstKeySpan)
 
-    const secondKeySpan = <span>2</span>
+    const secondKeySpan = normalize(<span>2</span>)
     secondKeySpan.action = { type: PATCH_ACTION_INSERT }
     expect(diffResult.patch[0].children[0].children[1]).toMatchObject(secondKeySpan)
 
-    const thirdKeySpan = <span>3</span>
+    const thirdKeySpan = normalize(<span>3</span>)
     thirdKeySpan.action = { type: PATCH_ACTION_REMAIN}
     expect(diffResult.patch[0].children[0].children.length).toBe(3)
     expect(diffResult.patch[0].children[0].children[2]).toMatchObject(thirdKeySpan)
@@ -284,13 +288,13 @@ describe('repaint key diff', () => {
     const diffResult = painter.repaint(ctree)
 
     // 第一层
-    const firstLayerPatch = <div></div>
+    const firstLayerPatch = normalize(<div></div>)
     delete firstLayerPatch.children
     firstLayerPatch.action = { type: PATCH_ACTION_REMAIN }
     expect(diffResult.patch[0]).toMatchObject(firstLayerPatch)
 
     // 第二层
-    const firstKeySpan = <span>1</span>
+    const firstKeySpan = normalize(<span>1</span>)
     firstKeySpan.action = { type: PATCH_ACTION_REMAIN }
     expect(diffResult.patch[0].children[0].children[0]).toMatchObject(firstKeySpan)
 
@@ -298,7 +302,7 @@ describe('repaint key diff', () => {
     secondKeySpan.action = { type: PATCH_ACTION_REMOVE }
     expect(diffResult.patch[0].children[0].children[1]).toMatchObject(secondKeySpan)
 
-    const thirdKeySpan = <span>3</span>
+    const thirdKeySpan = normalize(<span>3</span>)
     thirdKeySpan.action = { type: PATCH_ACTION_REMAIN}
     expect(diffResult.patch[0].children[0].children.length).toBe(3)
     expect(diffResult.patch[0].children[0].children[2]).toMatchObject(thirdKeySpan)
@@ -322,17 +326,17 @@ describe('repaint key diff', () => {
     const diffResult = painter.repaint(ctree)
 
     // 第一层
-    const firstLayerPatch = <div></div>
+    const firstLayerPatch = normalize(<div></div>)
     delete firstLayerPatch.children
     firstLayerPatch.action = { type: PATCH_ACTION_REMAIN }
     expect(diffResult.patch[0]).toMatchObject(firstLayerPatch)
 
     // 第二层
-    const firstKeySpan = <span>1</span>
+    const firstKeySpan = normalize(<span>1</span>)
     firstKeySpan.action = { type: PATCH_ACTION_INSERT}
     expect(diffResult.patch[0].children[0].children[0]).toMatchObject(firstKeySpan)
 
-    const secondKeySpan = <span>2</span>
+    const secondKeySpan = normalize(<span>2</span>)
     secondKeySpan.action = { type: PATCH_ACTION_REMAIN}
     expect(diffResult.patch[0].children[0].children.length).toBe(2)
     expect(diffResult.patch[0].children[0].children[1]).toMatchObject(secondKeySpan)
@@ -356,7 +360,7 @@ describe('repaint key diff', () => {
     const diffResult = painter.repaint(ctree)
 
     // 第一层
-    const firstLayerPatch = <div></div>
+    const firstLayerPatch = normalize(<div></div>)
     delete firstLayerPatch.children
     firstLayerPatch.action = { type: PATCH_ACTION_REMAIN }
     expect(diffResult.patch[0]).toMatchObject(firstLayerPatch)
@@ -366,7 +370,7 @@ describe('repaint key diff', () => {
     firstKeySpan.action = { type: PATCH_ACTION_REMOVE}
     expect(diffResult.patch[0].children[0].children[0]).toMatchObject(firstKeySpan)
 
-    const secondKeySpan = <span>2</span>
+    const secondKeySpan = normalize(<span>2</span>)
     secondKeySpan.action = { type: PATCH_ACTION_REMAIN}
     expect(diffResult.patch[0].children[0].children.length).toBe(2)
     expect(diffResult.patch[0].children[0].children[1]).toMatchObject(secondKeySpan)
@@ -390,13 +394,13 @@ describe('repaint key diff', () => {
     const diffResult = painter.repaint(ctree)
 
     // 第一层
-    const firstLayerPatch = <div></div>
+    const firstLayerPatch = normalize(<div></div>)
     delete firstLayerPatch.children
     firstLayerPatch.action = { type: PATCH_ACTION_REMAIN }
     expect(diffResult.patch[0]).toMatchObject(firstLayerPatch)
 
     // 第二层
-    const firstKeySpan = <span>2</span>
+    const firstKeySpan = normalize(<span>2</span>)
     firstKeySpan.action = { type: PATCH_ACTION_INSERT}
     expect(diffResult.patch[0].children[0].children.length).toBe(2)
     expect(diffResult.patch[0].children[0].children[0].action.type).toBe('patch.remove')

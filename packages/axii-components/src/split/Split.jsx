@@ -25,17 +25,28 @@ export default function Split({ children, gutterSize, asideSize, vertical, onCha
   const position = vertical ? 'top' : 'left'
   const positionEnd = vertical ? 'bottom' : 'right'
 
-
   const gutterStyle = computed(() => ({
-    background: `url(${GUTTER_IMAGE}) no-repeat center center #eee`,
     cursor: vertical.value ? 'row-resize' : 'col-resize',
     width: vertical.value ? 'auto' : gutterSize.value,
+    height: vertical.value ? gutterSize.value : 'auto',
+    position: 'relative',
+    flexShrink: 0,
+    textAlign: 'center',
+    display: 'flex',
+    flexDirection: vertical.value ? 'column' : 'row',
+    justifyContent: 'center',
+    alignItems: 'stretch',
+  }))
+
+  const gutterLineStyle = computed(() => ({
+    background: `#eee`,
+    cursor: vertical.value ? 'row-resize' : 'col-resize',
+    width: vertical.value ? 'auto' : 1,
     flexShrink: 0,
     textAlign: 'center',
     position: 'relative',
-    height: vertical.value ? gutterSize.value : 'auto',
+    height: vertical.value ? 1 : 'auto',
   }))
-
 
   const getRelativeMousePosition = (e) => {
     const current = vertical.value ? e['clientY'] : e['clientX']
@@ -153,9 +164,11 @@ export default function Split({ children, gutterSize, asideSize, vertical, onCha
 
 
   return <container block flex-display flex-align-items-stretch>
-    <main inline flex-grow={leftFlexGrow} flex-shrink={leftFlexShrink} flex-basis={leftFlexBasis} ref={mainRef}>{children[0]}</main>
-    <gutter inline style={gutterStyle} onMouseDown={startDrag}/>
-    <aside inline flex-grow={rightFlexGrow} flex-shrink={rightFlexShrink} flex-basis={rightFlexBasis} ref={asideRef}>{children[1]}</aside>
+    <main inline flex-grow={leftFlexGrow} flex-shrink={leftFlexShrink} flex-basis={leftFlexBasis} ref={mainRef} inline-overflow-x-auto>{children[0]}</main>
+    <gutter inline style={gutterStyle} onMouseDown={startDrag}>
+      <gutterLine style={gutterLineStyle}/>
+    </gutter>
+    <aside inline flex-grow={rightFlexGrow} flex-shrink={rightFlexShrink} flex-basis={rightFlexBasis} ref={asideRef} inline-overflow-x-auto>{children[1]}</aside>
   </container>
 }
 
@@ -167,4 +180,8 @@ Split.propTypes = {
   onChange: propTypes.callback.default(() => (nextAsideSize, { asideSize }) => {
     asideSize.value = nextAsideSize
   }),
+  children: propTypes.shapeOf([
+    propTypes.element(),
+    propTypes.element(),
+  ])
 }
