@@ -1,7 +1,8 @@
 /** @jsx createElement */
 import { createElement, render, useRef } from "axii";
-import { Button } from "axii-components";
-import Editorjs from 'axii-components/editorjs'
+import { Button, Editor } from "axii-components";
+
+const data = { blocks: [{ type: 'paragraph', data: { text: '' } }] }
 
 function App() {
   const editorRef = useRef();
@@ -18,19 +19,23 @@ function App() {
 
   const tools = {
     table: {
-      class: Editorjs.TablePlugin,
+      class: Editor.TablePlugin,
     },
     image: {
-      class: Editorjs.ImageEditorPlugin,
+      class: Editor.ImageEditorPlugin,
       config: {
         collectResource,
       },
     },
+    list: {
+      class: Editor.ListPlugin,
+      inlineToolbar: true
+    }
   };
 
   return (
     <div>
-      <Editorjs ref={editorRef} tools={tools} placeholder="写点什么吧" />
+      <Editor ref={editorRef} tools={tools} data={data} placeholder="写点什么吧" />
       <Button primary onClick={save}>
         保存
       </Button>
