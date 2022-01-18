@@ -1,3 +1,4 @@
+import { Component } from "./component";
 import { VNode, AxiiElement, Ref, RefObject } from "./runtime-dom";
 
 type SimpleType =
@@ -36,7 +37,10 @@ export interface DraftData<T> {
    */
   displayValue: Readonly<T>;
 }
-export class Context<T> {}
+export class Context<T> {
+  static readonly Provider: Component<{ value?: T }>;
+  static readonly Consumer: Component<{ children?: (value: T) => AxiiElement }>;
+}
 
 /**
  * 创建独立的响应式值
@@ -45,7 +49,7 @@ export class Context<T> {}
  * @returns 可变的响应式对象
  */
 export function atom<T>(initial: T, isComputed?: boolean): Atom<Atom.Unwrap<T>>;
-export function isAtom(value: any, strict?: boolean): boolean;
+export function isAtom(value: any, strict?: boolean): value is Atom<any>;
 export function atomLike<T>(value: T): Atom<T>;
 export function asAtom<T, P>(item: T, parent: P, key: keyof P): Atom<T>;
 /**
@@ -153,6 +157,7 @@ export function createContext<T>(defaultValue?: T): Context<T>;
 export function useContext<T>(context: Context<T>): T;
 export function batchOperation<T>(source: T, op: (source: T) => void): void;
 export function isDraft(data: any): boolean;
+export function isComponentVnode(vnode: any): vnode is VNode;
 
 // TODO:
 export const createComputed: any;
@@ -177,7 +182,6 @@ export const autorun: any;
 export const StyleEnum: any;
 export const StyleRule: any;
 export const createFlatChildrenProxy: any;
-export const isComponentVnode: any;
 export const createSmartProp: any;
 export const overwrite: any;
 export const disableDraft: any;
