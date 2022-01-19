@@ -11,7 +11,7 @@
   "author": "ariesate@outlook.com",
   "license": "MIT",
   "dependencies": {
-    "butterfly-dag": "^4.0.38"
+    "butterfly-dag": "^4.1.23"
   },
   "devDependencies": {
     "@ariesate/are": "workspace:*",
