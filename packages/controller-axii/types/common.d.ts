@@ -38,8 +38,8 @@ export interface DraftData<T> {
   displayValue: Readonly<T>;
 }
 export class Context<T> {
-  static readonly Provider: Component<{ value?: T }>;
-  static readonly Consumer: Component<{ children?: (value: T) => AxiiElement }>;
+  readonly Provider: Component<{ value?: T }>;
+  readonly Consumer: Component<{ children?: (value: T) => AxiiElement }>;
 }
 
 /**

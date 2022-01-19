@@ -152,7 +152,17 @@ export function createElement(
   name: string,
   attributes?: any,
   ...children: any[]
-): any;
+): JSX.Element;
+export function createElement<P>(
+  type: FunctionComponent<P>,
+  props?: Partial<P>,
+  ...children: any[]
+): JSX.Element;
+export function createElement<P>(
+  type: AbstractComponent<P>,
+  props?: Partial<P>,
+  ...children: any[]
+): JSX.Element;
 
 /**
  * 创建组件
