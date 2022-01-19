@@ -29,7 +29,7 @@
   "dependencies": {
     "@antv/layout": "^0.1.31",
     "@antv/x6": "^1.20.0",
-    "axii-components": "workspace:^1.0.32",
+    "axii-components": "workspace:^1.4.0",
     "axii-icons": "workspace:^1.0.2",
     "axios": "^0.21.1",
     "copy-text-to-clipboard": "^2.2.0",
@@ -47,6 +47,6 @@
     "vite": "^2.1.5"
   },
   "peerDependencies": {
-    "axii": "workspace:^1.4.0"
+    "axii": "workspace:^1.5.0"
   }
 }
