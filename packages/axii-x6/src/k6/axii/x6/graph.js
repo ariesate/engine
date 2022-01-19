@@ -41,7 +41,7 @@ class SimpleNodeView extends NodeView {
 export function createFlowGraph(container, initOptions = {}) {
   const {
     getReadOnly,
-    connectingValidate = {}, width = 1000, height = 800, onPortRendered, onAddEdge} = initOptions;
+    connectingValidate = {}, width = 1000, height = 800, onPortRendered, onAddEdge, graphConfig} = initOptions;
 
   const graph = new Graph({
     container,
@@ -71,6 +71,7 @@ export function createFlowGraph(container, initOptions = {}) {
     //   movable: true,
     //   showNodeSelectionBox: true,
     // },
+    ...graphConfig,
     connecting: {
     //   snap: true,
       allowBlank: false,
@@ -97,6 +98,9 @@ export function createFlowGraph(container, initOptions = {}) {
           },
           router: {
             name: 'manhattan',
+          },
+          position: {
+            distance: -0.5,
           },
         });
         setTimeout(() => {

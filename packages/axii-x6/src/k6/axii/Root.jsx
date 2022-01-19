@@ -37,7 +37,7 @@ function splitChildren (children) {
   };
 }
 
-function Root({ children, height, ref, readOnly }, frags) {
+function Root({ children, height, ref, readOnly, graphConfig={} }, frags) {
   const {slots, realChildren} = splitChildren(children);
   const shareContext = useContext(ShareContext);
 
@@ -78,6 +78,7 @@ function Root({ children, height, ref, readOnly }, frags) {
         width: elementRefs.graph.offsetWidth,
         height: height.value,
         minimap: elementRefs.miniMap,
+        graphConfig
       });
       x6.Graph.renderNodes(dm.nm.nodes);
     } 

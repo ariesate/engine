@@ -24,10 +24,20 @@ function ER2Editor({ data, layoutConfig={}, onSave }) {
 
   const readOnly = atom(false)
   window.editorReadOnly = readOnly
+
+  const graphConfig = {
+    snapline: {
+      enabled: true
+    },
+    grid: {
+      size: 15,
+      visible: true
+    }
+  }
   
   return (
     <container block>
-      <K6 layout:block layout:flex-display readOnly={readOnly} ref={dmRef}>
+      <K6 layout:block layout:flex-display readOnly={readOnly} graphConfig={graphConfig} ref={dmRef}>
         <k6base flex-grow="1" block>
           <Register globalData={dataFunc}>
           </Register>

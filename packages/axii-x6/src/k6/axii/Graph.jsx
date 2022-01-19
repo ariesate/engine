@@ -20,10 +20,10 @@ function Graph({ data, height, layoutConfig={}, toolbarExtra }, ref) {
 
   const dm = rootContext.dm;
 
-    // 判断是否需要使用布局
-    if(layoutConfig.type) {
-      generateLayout(layoutConfig, data)
-    }
+  // 判断是否需要使用布局
+  if(layoutConfig.type) {
+    generateLayout(layoutConfig, data)
+  }
 
   if (ref) {
     ref.current = {
