@@ -1,0 +1,14 @@
+import {atom, useRef} from 'axii'
+export default function useFocus(createRef) {
+  const focused = atom(false)
+  return {
+    focused,
+    ref: createRef ? useRef(): undefined,
+    onFocusin() {
+      focused.value = true
+    },
+    onFocusout() {
+      focused.value = false
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "name": "yrden",
+  "version": "0.0.1",
+  "description": "",
+  "author": "sskyy <skyking_H@hotmail.com>",
+  "license": "MIT",
+  "type": "module",
+  "types": "./types/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "types"
+  ],
+  "main": "./dist/yrden.umd.js",
+  "module": "./dist/yrden.es.js",
+  "exports": {
+    ".": {
+      "import": "./dist/yrden.es.js",
+      "require": "./dist/yrden.umd.js"
+    }
+  },
+  "scripts": {
+    "start": "vite build --mode=development",
+    "build": "vite build",
+    "release": "pnpm run build && bump --commit \"release: yrden v%s\" --push && pnpm publish --no-git-checks",
+    "test": "jest",
+    "coverage": "jest --coverage",
+    "prepare": "pnpm build"
+  },
+  "dependencies": {
+    "csstype": "^3.0.10",
+    "fast-json-patch": "^3.0.0-1",
+    "immer": "^9.0.1"
+  },
+  "devDependencies": {
+    "@jest/types": "^27.2.5",
+    "@jsdevtools/version-bump-prompt": "^6.1.0",
+    "@testing-library/jest-dom": "^5.11.10",
+    "command-line-args": "^5.1.1",
+    "esbuild-jest": "^0.5.0",
+    "jest": "^27.2.5",
+    "jest-environment-jsdom": "^27.3.0",
+    "vite": "^2.1.5"
+  },
+  "peerDependencies": {
+    "axii": "workspace:*"
+  }
+}

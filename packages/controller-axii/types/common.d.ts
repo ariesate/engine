@@ -177,7 +177,6 @@ export const tryToRaw: any;
 export const shallowEqual: any;
 export const createBufferedRef: any;
 export const deferred: any;
-export const flattenChildren: any;
 export const Scenario: any;
 export const createRange: any;
 export const matrixMatch: any;
