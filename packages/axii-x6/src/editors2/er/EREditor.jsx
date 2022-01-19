@@ -11,7 +11,7 @@ import { Button } from 'axii-components'
 import { K6, Register, Graph, NodeForm, MiniMap } from '../../k6';
 import { EntityNode, EntityPort, EntityEdge, data as dataFunc } from './Entity';
 
-function ER2Editor({ data, layoutConfig={}, onSave }) {
+function ER2Editor({ data, layoutConfig={}, onSave, graphConfig={} }) {
   data = reactive(data);
   const graphRef = useRef();
   const dmRef = useRef();
@@ -24,16 +24,6 @@ function ER2Editor({ data, layoutConfig={}, onSave }) {
 
   const readOnly = atom(false)
   window.editorReadOnly = readOnly
-
-  const graphConfig = {
-    snapline: {
-      enabled: true
-    },
-    grid: {
-      size: 15,
-      visible: true
-    }
-  }
   
   return (
     <container block>
