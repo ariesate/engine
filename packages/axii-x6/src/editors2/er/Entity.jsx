@@ -32,19 +32,7 @@ export const EntityEdge = ({ edge }) => {
         },
       },
     },
-    // labels: [`${edge.data.name} ${edge.data.type}`],
-    labels:[
-      {
-        attrs:{
-          label:{
-            text:`${edge.data.name} ${edge.data.type}`
-          }
-        },
-        position:{
-          distance:-80
-        }
-      }
-    ]
+    labels: [`${edge.data.name} ${edge.data.type}`]
   };
   return config;
 };

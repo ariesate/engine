@@ -98,10 +98,7 @@ export function createFlowGraph(container, initOptions = {}) {
           },
           router: {
             name: 'manhattan',
-          },
-          position: {
-            distance: -0.5,
-          },
+          }
         });
         setTimeout(() => {
           let si;
