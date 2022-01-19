@@ -135,6 +135,10 @@ export function replaceVnodeComputedAndWatchReactive(renderResult, collectChange
 			const normalizedVnode = normalizeLeaf(vnodeToHandle)
 			if (normalizedVnode instanceof VNode)	{
 				vnodes[vnodeIndex] = normalizedVnode
+				// 如果 children 整体就是 isChildren，也要解开，不然引用就不正确了
+				if (normalizedVnode.children?.isChildren) {
+					normalizedVnode.children = normalizedVnode.children.raw
+				}
 				return normalizedVnode.children && walkChildren(normalizedVnode.children)
 			}
 		}
@@ -144,6 +148,9 @@ export function replaceVnodeComputedAndWatchReactive(renderResult, collectChange
 		if( vnodeToHandle instanceof VNode ) {
 			if (hasRefAttributes(vnodeToHandle) || isReactiveLike(vnodeToHandle.attributes?.style)) {
 				watchReactiveAttributesVnode(vnodeToHandle, collectChangePatchNode)
+			}
+			if (vnodeToHandle.children?.isChildren) {
+				vnodeToHandle.children = vnodeToHandle.children.raw
 			}
 			return vnodeToHandle.children && walkChildren(vnodeToHandle.children)
 		}
