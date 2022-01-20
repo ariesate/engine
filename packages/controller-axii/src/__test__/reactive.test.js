@@ -2,7 +2,22 @@ const { atom, reactive, atomComputed, computed } = require('../reactive/index.js
 
 describe('basic reactive', () => {
 
-  test('ref & atomComputed', () => {
+  test('atom & reactive', () => {
+    // reactive 下可以继续 set reactive，但是会被 toRaw
+    const a = reactive({})
+    const b = reactive({ d: {}})
+    a.child = b
+    expect(a.child).toBe(b)
+    expect(a.child.d).toBe(b.d)
+
+    // reactive 下可以有 atom, 并且不会 toRaw，而是保持引用
+    const c = atom({ e: {} })
+    a.atomChild = c
+    expect(a.atomChild).toBe(c)
+    expect(a.atomChild.value.e).toBe(c.value.e)
+  })
+
+  test('atom & atomComputed', () => {
     const base = atom(1)
     const computed = atomComputed(() => {
       return base.value + 1
@@ -16,7 +31,7 @@ describe('basic reactive', () => {
     expect(computed.value).toBe(3)
   })
 
-  test('ref & computed', () => {
+  test('atom & computed', () => {
     const base = atom(1)
     const base2 = atom(1)
 
@@ -37,7 +52,7 @@ describe('basic reactive', () => {
     expect(computedValue.minusRes).toBe(-1)
   })
 
-  test('ref & array computed', () => {
+  test('atom & array computed', () => {
     const base = atom(1)
     const base2 = atom(1)
 
@@ -215,13 +230,15 @@ describe('basic reactive', () => {
     base2.value += 1
     expect(innerRun).toBe(3)
   })
+
+  // TODO hou直接调用 destroyComputed 也应该销毁 innerComputed。
 })
 
 
 describe('compute performance test', () => {
   // TODO 各种 computed 的计算次数
-  const a = reactive([1])
-  const b = computed(() => a.map(i => i+1))
-  a.splice(0, 1)
+  const a = reactive([1, 2])
+  // const b = computed(() => a.map(i => i+1))
+  a.splice(1, 1, 1, 3)
 })
 

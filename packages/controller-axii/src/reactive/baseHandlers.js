@@ -1,8 +1,7 @@
-import { reactive, toRaw, isAtom } from './reactive'
+import {reactive, toRaw, isAtom, isReactive} from './reactive'
 import { TrackOpTypes, TriggerOpTypes } from './operations'
 import { track, trigger, ITERATE_KEY, debounceComputed } from './effect'
 import { isObject, hasOwn, isSymbol, hasChanged } from './util'
-import { tryToRaw } from '../util';
 
 const builtInSymbols = new Set(
   Object.getOwnPropertyNames(Symbol)
@@ -34,11 +33,10 @@ function createGetter(isReadonly = false, shallow = false) {
       return res
     }
 
-    // TODO 下面的 setter 中默认是无法指向 atom 的，应该怎么处理？？？
+    // CAUTION 下面的 setter 允许了可以指向 atom，但是不能指向 reactive。
+    // CAUTION 在vue3 中是把 atom 给拆了，但 axii 中默认 atom 是基本数据结构，所以不拆。
     if (isAtom(res)) {
       return res
-      //CAUTION 在vue3 中是把 atom 给拆了，但 axii 中默认 atom 是基本数据结构，所以不拆。
-      // return res.value
     }
 
     // 如果是数组需要 debounced 的操作
@@ -65,10 +63,9 @@ function createSetter() {
 
     // debugger
     const oldValue = target[key]
-    // CAUTION 不允许 reactive 下嵌套 reactive/ref，所以全部都 tryToRaw，并且针对 ref 要展开。
-    // TODO 当成指针来用呢？？？指向一个已有的 reactive 对象？？？
-    // CAUTION 内部的 toRaw 只处理 reactive, tryToRaw 才同时处理了 ref。
-    const rawValue = tryToRaw(value, true)
+    // CAUTION reactive 下面不允许嵌套 reactive，但是可以指向 atom。所以这里是用严格 isReactive 判断。
+    //  要注意上面的 getter 也判断了是不是 atom，如果是，不要生成新的 reactive proxy.
+    const rawValue = isReactive(value) ? toRaw(value) : value
     const hadKey = hasOwn(target, key)
     let result = true
     try {

@@ -148,6 +148,11 @@ export function destroyComputed(computed) {
 
       // 最后标记一下，可以用于调试等
       computation.deleted = true
+
+      // 如果有 innerComputed 呢？
+      // 如果是 computation 重新执行，那么在执行的代码中已经处理了 innerComputed，并且是递归处理的。
+      // 如果是手动调用 destroyComputed。目前应该只有在 watch 中调用了。
+      // TODO 要不要统一改成递归 destroyComputed？
     }
     reactiveToPayloads.delete(toRaw(computed))
   } else {
