@@ -116,7 +116,7 @@ function NodeForm(props) {
       {(() => {
         const { cell, nodeComponent } = context.dm.insideState.selected;
         if (!formJson.value || !cell) {
-          return;
+          return null;
         }
         if (nodeComponent.configJSON) {
           return (<DataConfig jsonWithData={formJson.value} onSave={onSave}></DataConfig>);  
