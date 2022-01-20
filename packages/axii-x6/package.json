@@ -20,7 +20,7 @@
     }
   },
   "scripts": {
-    "start": "vite",
+    "start": "rm -rf node_modules/.vite && vite",
     "build": "node scripts/build.js",
     "build:dev": "vite build --mode=development",
     "release": "node scripts/build.js && bump --commit \"release: axii-x6 v%s\" --push && pnpm publish --no-git-checks",
