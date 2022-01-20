@@ -114,11 +114,10 @@ export function replaceVnodeComputedAndWatchReactive(renderResult, collectChange
 
 	const container = [rootVnode]
 
-	walkVnodes(container, (walkChildren, vnode, vnodes, parentVnode, currentPath) => {
+	walkVnodes(container, (walkChildren, vnode, vnodes, vnodeIndex, parentVnode, currentPath) => {
 		// 组件也是不允许返回 undefined 的，所以如果有，那么是 walkChildren 的时候来的，可以直接返回
+		// 如果是 null 的话，需要下面的 normalize.
 		if (vnode === undefined) return
-
-		const vnodeIndex = vnodes.indexOf(vnode)
 
 		// 1. 这是当前组件的作用域，先解开children。
 		const vnodeToHandle = vnode?.isChildren ? vnode.raw : vnode

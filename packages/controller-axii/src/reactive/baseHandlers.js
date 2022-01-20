@@ -34,6 +34,7 @@ function createGetter(isReadonly = false, shallow = false) {
       return res
     }
 
+    // TODO 下面的 setter 中默认是无法指向 atom 的，应该怎么处理？？？
     if (isAtom(res)) {
       return res
       //CAUTION 在vue3 中是把 atom 给拆了，但 axii 中默认 atom 是基本数据结构，所以不拆。
@@ -65,6 +66,7 @@ function createSetter() {
     // debugger
     const oldValue = target[key]
     // CAUTION 不允许 reactive 下嵌套 reactive/ref，所以全部都 tryToRaw，并且针对 ref 要展开。
+    // TODO 当成指针来用呢？？？指向一个已有的 reactive 对象？？？
     // CAUTION 内部的 toRaw 只处理 reactive, tryToRaw 才同时处理了 ref。
     const rawValue = tryToRaw(value, true)
     const hadKey = hasOwn(target, key)
@@ -82,7 +84,7 @@ function createSetter() {
       if (!hadKey) {
         trigger(target, TriggerOpTypes.ADD, key, extraInfo)
       } else {
-        // 在这里不处理性能优化，又要有操作都通知外面。用参数告诉外面变化了没有
+        // 在这里不处理性能优化，所有有操作都通知外面。用参数告诉外面变化了没有
         trigger(target, TriggerOpTypes.SET, key, !hasChanged(oldValue, rawValue))
       }
     }

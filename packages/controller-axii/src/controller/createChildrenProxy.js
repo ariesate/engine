@@ -1,6 +1,6 @@
 import { isAtom } from '../reactive';
 import propTypes from "../propTypes";
-import {isFunction, walkVnodes} from '../util'
+import {isFunction} from '../util'
 import {isVnodeComputed} from "../vnodeComputed";
 
 function isComputed(vnode) {

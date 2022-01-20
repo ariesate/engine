@@ -220,5 +220,8 @@ describe('basic reactive', () => {
 
 describe('compute performance test', () => {
   // TODO 各种 computed 的计算次数
+  const a = reactive([1])
+  const b = computed(() => a.map(i => i+1))
+  a.splice(0, 1)
 })
 

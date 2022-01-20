@@ -13,6 +13,21 @@ import $ from 'jquery'
 const {  } = require('../reactive/index.js')
 
 describe('basic render', () => {
+  test('render basic vnode types', () => {
+    function App() {
+      return <div>
+        <span>string</span>
+        <span>{1}</span>
+        <span>{null}</span>
+      </div>
+    }
+
+    const root = document.createElement('div')
+    render(<App />, root)
+
+    expect($(root).children().get(0)).partialMatchDOM(<div><span>string</span><span>1</span><span></span></div>)
+  })
+
 
   test('reactive text', () => {
     const name = atom('tim')

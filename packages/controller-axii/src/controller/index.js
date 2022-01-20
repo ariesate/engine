@@ -96,7 +96,7 @@ function diffNodeDetail(lastVnode, vnode) {
 }
 
 export function isComponentVnode(vnode) {
-	return (typeof vnode.type === 'function') && vnode.type !== String && vnode.type !== Array && vnode.type !== Fragment
+	return (typeof vnode?.type === 'function') && vnode?.type !== String && vnode?.type !== Array && vnode.type !== Fragment
 }
 
 function defaultShouldComponentUpdate(cnode) {
