@@ -114,11 +114,10 @@ export function replaceVnodeComputedAndWatchReactive(renderResult, collectChange
 
 	const container = [rootVnode]
 
-	walkVnodes(container, (walkChildren, vnode, vnodes, parentVnode, currentPath) => {
+	walkVnodes(container, (walkChildren, vnode, vnodes, vnodeIndex, parentVnode, currentPath) => {
 		// 组件也是不允许返回 undefined 的，所以如果有，那么是 walkChildren 的时候来的，可以直接返回
+		// 如果是 null 的话，需要下面的 normalize.
 		if (vnode === undefined) return
-
-		const vnodeIndex = vnodes.indexOf(vnode)
 
 		// 1. 这是当前组件的作用域，先解开children。
 		const vnodeToHandle = vnode?.isChildren ? vnode.raw : vnode
@@ -135,6 +134,10 @@ export function replaceVnodeComputedAndWatchReactive(renderResult, collectChange
 			const normalizedVnode = normalizeLeaf(vnodeToHandle)
 			if (normalizedVnode instanceof VNode)	{
 				vnodes[vnodeIndex] = normalizedVnode
+				// 如果 children 整体就是 isChildren，也要解开，不然引用就不正确了
+				if (normalizedVnode.children?.isChildren) {
+					normalizedVnode.children = normalizedVnode.children.raw
+				}
 				return normalizedVnode.children && walkChildren(normalizedVnode.children)
 			}
 		}
@@ -144,6 +147,9 @@ export function replaceVnodeComputedAndWatchReactive(renderResult, collectChange
 		if( vnodeToHandle instanceof VNode ) {
 			if (hasRefAttributes(vnodeToHandle) || isReactiveLike(vnodeToHandle.attributes?.style)) {
 				watchReactiveAttributesVnode(vnodeToHandle, collectChangePatchNode)
+			}
+			if (vnodeToHandle.children?.isChildren) {
+				vnodeToHandle.children = vnodeToHandle.children.raw
 			}
 			return vnodeToHandle.children && walkChildren(vnodeToHandle.children)
 		}

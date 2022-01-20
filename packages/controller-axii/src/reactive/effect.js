@@ -42,7 +42,7 @@ function getFromMap(collection, key, createIfUndefined) {
  *
  * source|computed: Reactive
  *   - $$payload.keys: Map<keyName, key>
- *   - $$payload.computation : ?Computation
+ *   - $$payload.computation : ?Computation  只有 computed 才有这个字段
  *
  * key: KeyNode
  *   - key: key name

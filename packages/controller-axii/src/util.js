@@ -539,7 +539,7 @@ export function walkVnodes(vnodes, handle, parent, parentPath = []) {
 
     if (handle) {
       // 这里面由 handle 自己决定要不要 runChildren
-      handle(runChildren, vnode, vnodes, parent, currentPath)
+      handle(runChildren, vnode, vnodes, index, parent, currentPath)
     } else {
       runChildren(vnode.children)
     }

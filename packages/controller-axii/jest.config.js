@@ -18,7 +18,10 @@ const config = {
   setupFilesAfterEnv: [
     "./jest.setup.js"
   ],
-  testEnvironment: 'jsdom'
+  testEnvironment: 'jsdom',
+  globals: {
+    __DEV__: true
+  }
 }
 
 export default config

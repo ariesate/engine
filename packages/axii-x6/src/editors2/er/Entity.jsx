@@ -32,7 +32,7 @@ export const EntityEdge = ({ edge }) => {
         },
       },
     },
-    label: `${edge.data.name} ${edge.data.type}`,
+    labels: [`${edge.data.name} ${edge.data.type}`]
   };
   return config;
 };
