@@ -39,6 +39,16 @@ const circularConfig = {
   radius: 300
 }
 
-render(<EREditor2 data={localRawData} layoutConfig={dagreConfig} ref={editorRef} onSave={(d) => {
+const graphConfig = {
+  snapline: {
+    enabled: true
+  },
+  grid: {
+    size: 15,
+    visible: true
+  }
+}
+
+render(<EREditor2 data={localRawData} layoutConfig={dagreConfig} ref={editorRef} graphConfig={graphConfig} onSave={(d) => {
   console.log('保存数据', d)
 }} />, root);
