@@ -46,8 +46,19 @@ const graphConfig = {
   grid: {
     size: 15,
     visible: true
+  },
+  selecting: {
+    enabled: true,
+    multiple: true,
+    rubberband: true,
+    movable: true,
+    modifiers: 'shift',
+    showNodeSelectionBox: true
   }
 }
+
+
+
 
 render(<EREditor2 data={localRawData} layoutConfig={dagreConfig} ref={editorRef} graphConfig={graphConfig} onSave={(d) => {
   console.log('保存数据', d)
