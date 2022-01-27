@@ -414,10 +414,16 @@ class DataManager extends EventEmiter{
    * @param nodeId 
    * @param props 
    */
-  syncEdge(edgeId: string, props: { id?: string }) {
+  syncEdge(edgeId: string, props: { id?: string }, syncToGraph: boolean) {
     let edge = this.nm.findEdgeById(edgeId);
     if (edge) {
       merge(edge, props);
+      if (syncToGraph) {
+        this.emit('node:changed', {
+          ...props,
+          id: edgeId
+        })
+      }
     }
   }
   /**
@@ -425,7 +431,7 @@ class DataManager extends EventEmiter{
    * @param nodeId 
    * @param props 
    */
-  syncNode(nodeId: string, props: { [k in INodePropKeys]: any }, syncToGraph = false) {
+  syncNode(nodeId: string, props: { [k in INodePropKeys]: any }, syncToGraph: boolean) {
     const node = this.findNode(nodeId);
     if (node) {
       const propKeys = Object.keys(props || {});

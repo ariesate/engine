@@ -81,7 +81,8 @@ function Root({ children, height, ref, readOnly, graphConfig={} }, frags) {
         graphConfig
       });
       x6.Graph.renderNodes(dm.nm.nodes);
-    } 
+    }
+    console.log('Root mounted')
     return () => {
       // @TODO: dispose会触发其它render的卸载，当此时当前这个render并没有卸载完成
       setTimeout(() => {
