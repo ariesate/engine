@@ -34,14 +34,17 @@ function ER2Editor({ data, layoutConfig={}, onSave, graphConfig={} }) {
           <Register node={EntityNode} port={EntityPort} edge={EntityEdge}>
           </Register>
           
-          <Graph data={data} layoutConfig={layoutConfig} ref={graphRef} toolbarExtra={[
-            <Button size="small" primary onClick={saveER} >
-              保存
-            </Button>,
-          <Button key="add" size="small" primary k6-add-node >
-              新增Entity
-            </Button>
-          ]}>
+          <Graph data={data} layoutConfig={layoutConfig} ref={graphRef} toolbarProps={{
+            extra: [
+              <Button size="small" primary onClick={saveER} >
+                保存
+              </Button>,
+              <Button key="add" size="small" primary k6-add-node >
+                新增Entity
+              </Button>
+            ],
+            tip: '双击空白可新增'
+          }} >
           </Graph>
         </k6base>
         {{
