@@ -35,7 +35,8 @@ function Split() {
 const AddNodeTAG = 'k6-add-node';
 
 function Toolbar(props) {
-  let { extra = [] } = props;
+  console.log('props: ', props);
+  let { extra = [], tip = '双击空白处可新增节点' } = props;
   const context = useContext(RootContext);
 
   // 覆写addNode
@@ -95,7 +96,7 @@ function Toolbar(props) {
         }}
       </quickKeys>
       <extraActions block flex-display flex-align-items="center">
-        双击空白处可新增节点
+        {tip}
       </extraActions>
     </k6Toolbar>
   );

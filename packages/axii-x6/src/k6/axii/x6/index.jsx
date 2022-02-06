@@ -161,7 +161,7 @@ export const Register = {
             delete c.id;
             const edgeIns = graph.addEdge({
               ...c,
-            });
+            }); 
             // 监听并动态修改label
             const [_, token] = watch(() => [edgeConfig.label, edgeConfig.lineColor], () => {
               setTimeout(() => {
@@ -330,9 +330,10 @@ export const Graph = {
       this.syncMiniMap();
     });
     dm.on('node:changed', props => {
-      const nodes = graph.model.getNodes()
+      const nodes = graph.model.getCells()
       nodes.forEach(n => {
-        if (n.id === props.id) {
+        const { remoteId } = n.getData() || {};
+        if (n.id === props.id || remoteId === props.id) {
           n.setProp(props)
         }
       })

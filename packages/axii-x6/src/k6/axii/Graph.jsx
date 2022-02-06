@@ -13,7 +13,7 @@ import Toolbar from './Toolbar';
 import * as x6 from './x6';
 import { generateLayout } from './Layout'
 
-function Graph({ data, height, layoutConfig={}, toolbarExtra }, ref) {
+function Graph({ data, height, layoutConfig={}, toolbarExtra, toolbarProps = {} }, ref) {
   const rootContext = useContext(RootContext);
   const { nodes, edges } = reactive(data);
   const graphRef = useRef();
@@ -63,7 +63,7 @@ function Graph({ data, height, layoutConfig={}, toolbarExtra }, ref) {
     <graphContainer block >
       {() => rootContext.readOnly.value ? '' : (
         <toolbarBox block >
-          <Toolbar extra={toolbarExtra} />
+          <Toolbar extra={toolbarExtra} {...toolbarProps}/>
         </toolbarBox>
       )}
       <graph block ref={graphRef} style={{ backgroundColor: '#fff' }}>
