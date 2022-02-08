@@ -333,7 +333,8 @@ export const Graph = {
       const nodes = graph.model.getCells()
       nodes.forEach(n => {
         const { remoteId } = n.getData() || {};
-        if (n.id === props.id || remoteId === props.id) {
+        // TIP： 边 || 节点
+        if (remoteId === props.id || n.id === props.id && n.isNode()) {
           n.setProp(props)
         }
       })
