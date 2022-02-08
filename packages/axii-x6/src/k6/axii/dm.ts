@@ -420,7 +420,8 @@ class DataManager extends EventEmiter{
       merge(edge, props);
       if (syncToGraph) {
         this.emit('node:changed', {
-          ...props,
+          prop: props,
+          type: 'edge',
           id: edgeId
         })
       }
@@ -445,7 +446,8 @@ class DataManager extends EventEmiter{
       }
       if (syncToGraph) {
         this.emit('node:changed', {
-          ...props,
+          prop: props,
+          type: 'node',
           id: nodeId
         })
       }

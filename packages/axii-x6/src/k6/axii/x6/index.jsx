@@ -334,8 +334,8 @@ export const Graph = {
       nodes.forEach(n => {
         const { remoteId } = n.getData() || {};
         // TIP： 边 || 节点
-        if (remoteId === props.id || n.id === props.id && n.isNode()) {
-          n.setProp(props)
+        if ((remoteId === props.id && props.type === 'edge')|| (n.id === props.id && props.type === 'node')) {
+          n.setProp(props.prop)
         }
       })
     })
