@@ -162,8 +162,8 @@ function defaultShouldComponentUpdate(cnode) {
 	if (Object.keys(children).length !== Object.keys(lastChildren).length ) return true
 	if (Object.entries(children).some(([childIndex, child]) => {
 		// 针对 string(number 也是 string)|null 等简单结构进行的优化。
-		if (child.type === String) return child.value !== lastChildren[childIndex].value
-		if (child.type === null) return child.type !== lastChildren[childIndex].type
+		if (child?.type === String) return child.value !== lastChildren[childIndex].value
+		if (child?.type === null) return child.type !== lastChildren[childIndex].type
 
 		return child !== lastChildren[childIndex]
 	})) return true
