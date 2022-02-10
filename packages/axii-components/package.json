@@ -25,7 +25,7 @@
     "start": "rimraf ./dist && pnpm gen & node scripts/build --dev",
     "gen": "node ./scripts/generateIndexEntry.js",
     "build": "rimraf ./dist && pnpm gen & node scripts/build",
-    "release": "pnpm run build && bump --commit \"release: axii-components v%s\" --push && pnpm publish --no-git-checks",
+    "release": "bump --commit \"release: axii-components v%s\" --push && pnpm publish --no-git-checks",
     "prepare": "pnpm build"
   },
   "dependencies": {
