@@ -61,8 +61,8 @@ function Toolbar(props) {
     }).flat();
   }
 
-  async function deleteOne () {
-    const canRemove = await onBeforeRemove()
+  async function deleteOne (cell) {
+    const canRemove = await onBeforeRemove(cell)
     canRemove && context.dm.removeIdOrCurrent()
   }
 
@@ -91,9 +91,9 @@ function Toolbar(props) {
         </Item>
         <Split />
         {() => {
-          let enabled = context.dm.insideState.selected.cell;
+          let selectedCell = context.dm.insideState.selected.cell;
           return (
-            <Item disabled={!enabled} onClick={() => enabled && deleteOne()}>
+            <Item disabled={!selectedCell} onClick={() => selectedCell && deleteOne(selectedCell)}>
               <DeleteOne />
             </Item>  
           );
