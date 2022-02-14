@@ -33,7 +33,7 @@ const data = {
   ],
   "edges": [
     {
-      "id": "r1", "name": "has", "type": "1:n",
+      "id": "_1", "name": "has", "type": "1:n",
       "source": { "cell": "_1", "port": "f3-right" },
       "target": { "cell": "_2", "port": "_b-left" }
     }

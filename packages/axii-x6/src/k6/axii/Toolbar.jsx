@@ -35,8 +35,7 @@ function Split() {
 const AddNodeTAG = 'k6-add-node';
 
 function Toolbar(props) {
-  console.log('props: ', props);
-  let { extra = [], tip = '双击空白处可新增节点' } = props;
+  let { extra = [], tip = '双击空白处可新增节点', onBeforeRemove = () => true} = props;
   const context = useContext(RootContext);
 
   // 覆写addNode
@@ -60,6 +59,11 @@ function Toolbar(props) {
       }
       return [vNode, <Split />];
     }).flat();
+  }
+
+  async function deleteOne (cell) {
+    const canRemove = await onBeforeRemove(cell)
+    canRemove && context.dm.removeIdOrCurrent()
   }
 
   useViewEffect(() => {
@@ -87,9 +91,9 @@ function Toolbar(props) {
         </Item>
         <Split />
         {() => {
-          let enabled = context.dm.insideState.selected.cell;
+          let selectedCell = context.dm.insideState.selected.cell;
           return (
-            <Item disabled={!enabled} onClick={() => context.dm.removeIdOrCurrent()}>
+            <Item disabled={!selectedCell} onClick={() => selectedCell && deleteOne(selectedCell)}>
               <DeleteOne />
             </Item>  
           );
