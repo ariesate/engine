@@ -1,5 +1,6 @@
 /** @jsx createElement */
 import {
+  atomComputed,
   createElement,
   createComponent,
   useContext,
@@ -71,8 +72,14 @@ function Toolbar(props) {
     };
   });
 
+  const toolbarStyle = atomComputed(() => {
+    return {
+      display: context.readOnly.value ? 'none' : 'flex'
+    }
+  })
+
   return (
-    <k6Toolbar block flex-display block-padding="8px 8px">
+    <k6Toolbar block flex-display block-padding="8px 8px" style={toolbarStyle}>
       <quickKeys block flex-grow="1" flex-display flex-align-items="center">
         <extraActions inline flex-display >
           {extra.length ? extra : (<Button primary onClick={() => context.dm.addNode() } >新增</Button>)}            
