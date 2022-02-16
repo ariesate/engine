@@ -9,7 +9,7 @@ import {
   destroyComputed,
 } from "axii";
 import { createFlowGraph } from './graph';
-import { Graph as X6Graph, Markup } from '@antv/x6'
+import { Graph as X6Graph, Markup, Shape } from '@antv/x6'
 import merge from 'lodash-es/merge';
 import pick from 'lodash-es/pick';
 import debounce from 'lodash-es/debounce';
@@ -107,7 +107,7 @@ export const Register = {
         }
         
         const { width, height } = (wrap.children[0].getBoundingClientRect());
-        node.setProp({ width: width, height: height });
+        node.setProp({ width: width|| '240', height: height || '220' });
 
         // render port
         if (getPortConfig) {
@@ -298,8 +298,17 @@ export const Graph = {
       dm.syncNode(node.id, { x, y });
     });
     graph.on('blank:dblclick', ({ e, x, y}) => {
-      dm.addNode({ x, y })
+      const nodeId = dm.addNode({ x, y })
+      dm.selectNode(nodeId)
     });
+    graph.on('selection:changed', ({added,removed,selected}) => {
+      added.forEach(c=>{
+        dm.syncNode(c.id,{data:{selected:true}},true)
+      })
+      removed.forEach(c=>{
+        dm.syncNode(c.id,{data:{selected:false}},true)
+      })
+    })
 
     dm.on('remove', (id) => {
       console.log('[remove cb] id: ', id);
@@ -320,7 +329,13 @@ export const Graph = {
       graph.zoom(-v);
     });
     dm.on('addNode', (n) => {
-      this.addNode(n);
+      const nodeId = this.addNode(n);
+      dm.selectNode(nodeId)
+    });
+    dm.on('addChildNode',props=>{
+      const targetId = this.addNode(props.childNode)
+      this.addEdge(props.id,targetId)
+      dm.selectNode(targetId)
     });
     dm.once('dispose', () => {
       this.dispose();
@@ -388,6 +403,33 @@ export const Graph = {
     });
 
     const x6NodeInstance = this.graph.addNode(node);
+    console.log('x6NodeInstance',x6NodeInstance)
+    return x6NodeInstance
+  },
+  addEdge(sourceId,targetId){
+    const newEdge = new Shape.Edge({
+      attrs: {
+        line: {
+          stroke: '#5F95FF',
+          strokeWidth: 1,
+          targetMarker: {
+            name: 'classic',
+            size: 8,
+          },
+        },
+      },
+      router: {
+        name: 'manhattan',
+      },
+      source: {cell: sourceId},
+      target: {cell: targetId}
+    });
+    const pickedEdge = pick(newEdge, ['id', 'target', 'source', 'label', 'name', 'type']);
+    dm.addNewEdge(sourceId, pickedEdge).then(remoteId => {
+      if (remoteId) {
+        newEdge.setData({ remoteId });
+      }
+    });
   },
   exportData() {
     return this.graph.toJSON();

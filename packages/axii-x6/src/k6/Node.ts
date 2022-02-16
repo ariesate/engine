@@ -42,10 +42,16 @@ export interface IK6DataConfig {
   properties?: Array<IK6DataConfig>; // 嵌套结构
 }
 
+export interface IK6Size {
+  width: number;
+  height: number;
+}
+
 export interface INodeComponent extends Function {
   shape: string;
   configJSON: IK6DataConfig;
   ConfigPanel: Axii.Component;
+  size: IK6Size
   onChange:(node: IX6Cell, data: any, oldData: any) => void;
   onSave: (node: IX6Cell, data: any, oldData: any) => void;
   onRemove: (node: IX6Cell) => void;
@@ -58,7 +64,7 @@ export abstract class K6Node {
   shape: INodeShape;
   bbox: IBBox = { x: 10, y: 10 };
   ports: K6Port[] = [];
-  size: number[] = [0, 0];
+  size: IK6Size = { width: 240, height: 218};
   configJSON: IK6DataConfig | null = null;
   workNode: IX6Node = null;
   port: K6Port | null = null; // 在Port Constructor中反向注入
@@ -79,7 +85,7 @@ export abstract class K6Node {
   }
   
   setSize(args: { width:number, height:number }) {
-    this.size = [args.width, args.height];
+    this.size = {width: args.width, height: args.height};
   }
 
   abstract getComponent(nodeConfig?: INodeViewProps): Axii.Component;

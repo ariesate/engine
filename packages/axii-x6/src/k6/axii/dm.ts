@@ -374,7 +374,7 @@ class DataManager extends EventEmiter{
     this.nm.readEdges(edges)
   }
   @disabledByReadOnly
-  async addNode(initNode?: { x?:number, y?:number }) {
+  async addNode(initNode?: { x?:number, y?:number }, parentId: string = null) {
     // 先默认只支持一种
     if (1) {
       const nodeComponent: ShapeComponent = this.nodeShapeComponentMap.values().next().value;
@@ -387,7 +387,34 @@ class DataManager extends EventEmiter{
       merge(newNode, notifiedNode);
 
       this.nm.addNewNode(newNode);
-      this.emit('addNode', newNode);
+      if(!!parentId){
+        this.emit('addChildNode',{childNode:newNode,id:parentId})
+      }else{
+        this.emit('addNode', newNode);
+      }
+      console.log('newNode',newNode.id)
+    }
+  }
+  @disabledByReadOnly
+  // 新增子节点
+  async addChildNode(id: string) {
+    const parentNode = this.findNode(id)
+    if(parentNode){
+      const childNum = parentNode.next.length+1
+      await this.addNode({x:parentNode.x+200*childNum,y:parentNode.y+200+10*childNum},id)
+    }
+  }
+  @disabledByReadOnly
+  // 新增兄弟节点
+  async addBroNode(id: string) {
+    const broNode = this.findNode(id)
+    if(broNode){
+      const parentNode = broNode.prev.length>0?broNode.prev[0]:null
+      if(parentNode){
+        await this.addChildNode(parentNode.id)
+      } else {
+        await this.addNode()
+      }
     }
   }
   @disabledByReadOnly
