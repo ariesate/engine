@@ -107,7 +107,7 @@ export const Register = {
         }
         
         const { width, height } = (wrap.children[0].getBoundingClientRect());
-        node.setProp({ width: width|| '240', height: height || '220' });
+        node.setProp({ width: width, height: height });
 
         // render port
         if (getPortConfig) {
