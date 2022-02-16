@@ -404,7 +404,7 @@ export const Graph = {
 
     const x6NodeInstance = this.graph.addNode(node);
     console.log('x6NodeInstance',x6NodeInstance)
-    return x6NodeInstance
+    return x6NodeInstance.id
   },
   addEdge(sourceId,targetId){
     const newEdge = new Shape.Edge({
