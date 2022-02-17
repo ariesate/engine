@@ -106,7 +106,9 @@ export const Register = {
           return
         }
         
-        const { width, height } = (wrap.children[0].getBoundingClientRect());
+        let { width, height } = (wrap.children[0].getBoundingClientRect());
+        if(!!nodeConfig.width) width = nodeConfig.width
+        if(!!nodeConfig.height) height = nodeConfig.height
         node.setProp({ width: width, height: height });
 
         // render port
@@ -314,7 +316,7 @@ export const Graph = {
       const { cell } = e;
       dm.addChildNode(cell.id)
     })
-    
+
     graph.on('blank:click', (arg) => {      
       dm.selectNode();
     });
@@ -446,8 +448,8 @@ export const Graph = {
       router: {
         name: 'manhattan',
       },
-      source: {cell: sourceId},
-      target: {cell: targetId}
+      source: {cell: sourceId,port: null},
+      target: {cell: targetId,port:null}
     });
     const pickedEdge = pick(newEdge, ['id', 'target', 'source', 'label', 'name', 'type']);
     dm.addNewEdge(sourceId, pickedEdge).then(remoteId => {

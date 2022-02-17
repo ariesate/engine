@@ -28,7 +28,9 @@ const data = {
           { "id": "_b", "name": "comments", "type": "rel" }
         ]
       },
-      "view": { "x": 660, "y": 140 }
+      "view": { "x": 660, "y": 140 },
+      "height":200,
+      "width":200
     }
   ],
   "edges": [
