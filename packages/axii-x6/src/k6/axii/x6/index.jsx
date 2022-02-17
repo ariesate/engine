@@ -301,14 +301,14 @@ export const Graph = {
       const nodeId = dm.addNode({ x, y })
       dm.selectNode(nodeId)
     });
-    graph.on('selection:changed', ({added,removed,selected}) => {
-      added.forEach(c=>{
-        dm.syncNode(c.id,{data:{selected:true}},true)
-      })
-      removed.forEach(c=>{
-        dm.syncNode(c.id,{data:{selected:false}},true)
-      })
-    })
+    // graph.on('selection:changed', ({added,removed,selected}) => {
+    //   added.forEach(c=>{
+    //     dm.syncNode(c.id,{data:{selected:true}},true)
+    //   })
+    //   removed.forEach(c=>{
+    //     dm.syncNode(c.id,{data:{selected:false}},true)
+    //   })
+    // })
 
     dm.on('remove', (id) => {
       console.log('[remove cb] id: ', id);
