@@ -54,7 +54,8 @@ const graphConfig = {
     movable: true,
     modifiers: 'shift',
     showNodeSelectionBox: true
-  }
+  },
+  keyboard: true
 }
 
 

@@ -392,7 +392,6 @@ class DataManager extends EventEmiter{
       }else{
         this.emit('addNode', newNode);
       }
-      console.log('newNode',newNode.id)
     }
   }
   @disabledByReadOnly

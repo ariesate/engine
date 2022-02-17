@@ -279,6 +279,26 @@ export const Graph = {
       }));  
     });
 
+    graph.bindKey('tab', (e) => {
+      const cellConfig = dm.insideState.selected.cell
+      if(!cellConfig) return 
+      const cells = graph.getCells();
+      const cell = cells.find(c=>c.id === cellConfig.id)
+      if(cell.isNode()){
+        dm.addChildNode(cell.id)
+      }
+    })
+
+    graph.bindKey('enter', (e) => {
+      const cellConfig = dm.insideState.selected.cell
+      if(!cellConfig) return 
+      const cells = graph.getCells();
+      const cell = cells.find(c=>c.id === cellConfig.id)
+      if(cell.isNode()){
+        dm.addBroNode(cell.id)
+      }
+    })
+
     graph.on('cell:click', (e) => {
       const { cell } = e;
       if (cell.isNode()) {
@@ -289,6 +309,12 @@ export const Graph = {
         dm.selectEdge(remoteId || cell.id);
       }
     });
+
+    graph.on('node:contextmenu', (e)=>{
+      const { cell } = e;
+      dm.addChildNode(cell.id)
+    })
+    
     graph.on('blank:click', (arg) => {      
       dm.selectNode();
     });
@@ -403,7 +429,6 @@ export const Graph = {
     });
 
     const x6NodeInstance = this.graph.addNode(node);
-    console.log('x6NodeInstance',x6NodeInstance)
     return x6NodeInstance.id
   },
   addEdge(sourceId,targetId){
