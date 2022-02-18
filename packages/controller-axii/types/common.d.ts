@@ -149,7 +149,7 @@ export function useViewEffect(fn: () => void): void;
 export function useViewEffect(fn: () => () => void): void;
 export function useImperativeHandle<T>(
   ref: Ref<T>,
-  getter: () => Record<string, any>
+  getter: () => T
 ): void;
 export function useRef<T = any>(): RefObject<T>;
 export function createRef<T = any>(): RefObject<T>;

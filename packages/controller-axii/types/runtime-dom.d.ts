@@ -440,7 +440,8 @@ type EventHandlers<E> = {
 };
 
 interface DOMAttributes {
-  children?: AxiiElement | undefined;
+  children?: AxiiElement;
+  dangerouslySetInnerHTML?: { __html: string };
 }
 
 export interface HTMLAttributes
