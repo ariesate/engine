@@ -287,6 +287,7 @@ export const Graph = {
       const cells = graph.getCells();
       const cell = cells.find(c=>c.id === cellConfig.id)
       if(cell.isNode()){
+        console.log('port',cell.getPorts())
         dm.addChildNode(cell.id)
       }
     })
@@ -380,6 +381,12 @@ export const Graph = {
           n.setProp(props.prop)
         }
       })
+    })
+    graph.on('node:change:visible',(props)=>{
+      const {node, current} = props;
+      if(!current){
+        node.removePorts()
+      }
     })
 
     this.graph = graph;
