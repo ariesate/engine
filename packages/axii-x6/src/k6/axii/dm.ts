@@ -271,6 +271,13 @@ class NodeManager {
         if (fi >= 0) {
           prevNode.next.splice(fi, 1);
         }
+        const resovedEdges = prevNode.edges.filter(e => e.target.cell === currentNode.id)
+        resovedEdges.forEach(removedEdge => {
+          const ei = prevNode.edges.findIndex(e => e.id === removedEdge.id) 
+          if(ei >=0){
+            prevNode.edges.splice(ei, 1)
+          }
+        })
       });
 
       this.nodes.splice(i, 1);
