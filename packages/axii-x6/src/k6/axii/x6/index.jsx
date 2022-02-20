@@ -331,10 +331,10 @@ export const Graph = {
     });
     graph.on('selection:changed', ({added,removed,selected}) => {
       added.forEach(c=>{
-        if(c.isNode()) dm.syncNode(c.id,{selected:true},true)
+        if(c.isNode()) dm.syncNode(c.id,{data:{selected:true}})
       })
       removed.forEach(c=>{
-        if(c.isNode()) dm.syncNode(c.id,{selected:false},true)
+        if(c.isNode()) dm.syncNode(c.id,{data:{selected:false}})
       })
       if(selected.length > 0){
         const cell = selected[0];

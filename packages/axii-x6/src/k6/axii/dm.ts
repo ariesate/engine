@@ -16,7 +16,6 @@ type IDataNode = IX6Node & {
     x: number;
     y: number;
   };
-  selected: boolean;
   edges: IEdgeData[];
   prev: IDataNode[];
   next: IDataNode[];
@@ -476,10 +475,10 @@ class DataManager extends EventEmiter{
           x: props.x,
           y: props.y,
         }});
-      } else if(propKeys.includes('selected')){
-        merge(node, props, { data: {
-          selected: props.selected,
-        }});
+      // } else if(propKeys.includes('selected')){
+      //   merge(node, props, { data: {
+      //     selected: props.selected,
+      //   }});
       } else {
         merge(node, props);
       }

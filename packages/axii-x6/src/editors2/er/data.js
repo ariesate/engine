@@ -18,7 +18,6 @@ const data = {
         
       },
       "view": { "position": { "x": 100, "y": 100 } },
-      'selected':false
     },
     {
       "id": "_2", "name": "Post",
@@ -34,7 +33,6 @@ const data = {
       "view": { "x": 660, "y": 140 },
       "height":200,
       "width":200,
-      'selected':false
     }
   ],
   "edges": [
