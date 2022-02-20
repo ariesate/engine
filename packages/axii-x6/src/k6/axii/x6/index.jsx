@@ -287,7 +287,6 @@ export const Graph = {
       const cells = graph.getCells();
       const cell = cells.find(c=>c.id === cellConfig.id)
       if(cell.isNode()){
-        console.log('port',cell.getPorts())
         dm.addChildNode(cell.id)
       }
     })
@@ -302,16 +301,16 @@ export const Graph = {
       }
     })
 
-    graph.on('cell:click', (e) => {
-      const { cell } = e;
-      if (cell.isNode()) {
-        dm.selectNode(cell.id);
-      } else if (cell.isEdge()) {
-        const remoteId = cell.getData().remoteId;
-        console.log('remoteId || cell.id: ', remoteId, cell.id);
-        dm.selectEdge(remoteId || cell.id);
-      }
-    });
+    // graph.on('cell:click', (e) => {
+    //   const { cell } = e;
+    //   if (cell.isNode()) {
+    //     dm.selectNode(cell.id);
+    //   } else if (cell.isEdge()) {
+    //     const remoteId = cell.getData().remoteId;
+    //     console.log('remoteId || cell.id: ', remoteId, cell.id);
+    //     dm.selectEdge(remoteId || cell.id);
+    //   }
+    // });
 
     graph.on('node:contextmenu', (e)=>{
       const { cell } = e;
@@ -330,14 +329,24 @@ export const Graph = {
       const nodeId = dm.addNode({ x, y })
       dm.selectNode(nodeId)
     });
-    // graph.on('selection:changed', ({added,removed,selected}) => {
-    //   added.forEach(c=>{
-    //     dm.syncNode(c.id,{data:{selected:true}},true)
-    //   })
-    //   removed.forEach(c=>{
-    //     dm.syncNode(c.id,{data:{selected:false}},true)
-    //   })
-    // })
+    graph.on('selection:changed', ({added,removed,selected}) => {
+      added.forEach(c=>{
+        if(c.isNode()) dm.syncNode(c.id,{selected:true},true)
+      })
+      removed.forEach(c=>{
+        if(c.isNode()) dm.syncNode(c.id,{selected:false},true)
+      })
+      if(selected.length > 0){
+        const cell = selected[0];
+        if (cell.isNode()) {
+          dm.selectNode(cell.id);
+        } else if (cell.isEdge()) {
+          const remoteId = cell.getData().remoteId;
+          console.log('remoteId || cell.id: ', remoteId, cell.id);
+          dm.selectEdge(remoteId || cell.id);
+        }
+      }
+    })
 
     dm.on('remove', (id) => {
       console.log('[remove cb] id: ', id);

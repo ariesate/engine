@@ -14,9 +14,11 @@ const data = {
         ],
         "d": {
           "d1": "123"
-        }
+        },
+        
       },
-      "view": { "position": { "x": 100, "y": 100 } }
+      "view": { "position": { "x": 100, "y": 100 } },
+      'selected':false
     },
     {
       "id": "_2", "name": "Post",
@@ -26,11 +28,13 @@ const data = {
           { "id": "f1", "name": "content", "type": "string" },
           { "id": "f3", "name": "page", "type": "rel" },
           { "id": "_b", "name": "comments", "type": "rel" }
-        ]
+        ],
+        
       },
       "view": { "x": 660, "y": 140 },
       "height":200,
-      "width":200
+      "width":200,
+      'selected':false
     }
   ],
   "edges": [

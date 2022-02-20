@@ -16,6 +16,7 @@ type IDataNode = IX6Node & {
     x: number;
     y: number;
   };
+  selected: boolean;
   edges: IEdgeData[];
   prev: IDataNode[];
   next: IDataNode[];
@@ -109,6 +110,7 @@ function generateNodeByConfig(k6Node: INodeComponent, initNodeProp?: { x?:number
     edges: [],
     prev: [],
     next: [],
+    selected: false
   };
   newAddIndex++;
 
@@ -474,6 +476,10 @@ class DataManager extends EventEmiter{
           x: props.x,
           y: props.y,
         }});
+      } else if(propKeys.includes('selected')){
+        merge(node, props, { data: {
+          selected: props.selected,
+        }});
       } else {
         merge(node, props);
       }
@@ -530,7 +536,7 @@ class DataManager extends EventEmiter{
   }
   @disabledByReadOnly
   selectNode (id: string) {
-    if (!id || this.insideState.selected.cell?.id === id) {
+    if (!id ) {
       Object.assign(this.insideState, {
         selected: {
           cell: null,
