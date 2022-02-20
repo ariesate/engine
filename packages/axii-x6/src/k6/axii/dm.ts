@@ -467,6 +467,7 @@ class DataManager extends EventEmiter{
    * @param props 
    */
   syncNode(nodeId: string, props: { [k in INodePropKeys]: any }, syncToGraph: boolean) {
+    debugger
     const node = this.findNode(nodeId);
     if (node) {
       const propKeys = Object.keys(props || {});

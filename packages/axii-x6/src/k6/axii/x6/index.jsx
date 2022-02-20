@@ -331,10 +331,10 @@ export const Graph = {
     });
     graph.on('selection:changed', ({added,removed,selected}) => {
       added.forEach(c=>{
-        if(c.isNode()) dm.syncNode(c.id,{data:{selected:true}})
+        // if(c.isNode()) dm.syncNode(c.id,{data:{selected:true}})
       })
       removed.forEach(c=>{
-        if(c.isNode()) dm.syncNode(c.id,{data:{selected:false}})
+        // if(c.isNode()) dm.syncNode(c.id,{data:{selected:false}})
       })
       if(selected.length > 0){
         const cell = selected[0];
@@ -386,16 +386,11 @@ export const Graph = {
       nodes.forEach(n => {
         const { remoteId } = n.getData() || {};
         // TIP： 边 || 节点
+        debugger
         if ((remoteId === props.id && props.type === 'edge')|| (n.id === props.id && props.type === 'node')) {
           n.setProp(props.prop)
         }
       })
-    })
-    graph.on('node:change:visible',(props)=>{
-      const {node, current} = props;
-      if(!current){
-        node.removePorts()
-      }
     })
 
     this.graph = graph;
