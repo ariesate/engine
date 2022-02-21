@@ -408,7 +408,6 @@ export const Graph = {
           if(edge.getVertices().length>0){
             edge.setVertexAt(1,{x: x+node.verticesX, y: y+node.verticesY})
           }
-          console.log('vertices',edge.getVertices())
         })
       }
     })
