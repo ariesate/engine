@@ -105,7 +105,6 @@ export const Register = {
           renderController.destroy();
           return
         }
-        
         let { width, height } = (wrap.children[0].getBoundingClientRect());
         if(!!nodeConfig.width) width = nodeConfig.width
         if(!!nodeConfig.height) height = nodeConfig.height
@@ -175,7 +174,6 @@ export const Register = {
               });
             });
             watchTokens.push(token);
-
             edgeIns.setData({ remoteId }, { silent: true });
           });
         });
@@ -301,16 +299,16 @@ export const Graph = {
       }
     })
 
-    // graph.on('cell:click', (e) => {
-    //   const { cell } = e;
-    //   if (cell.isNode()) {
-    //     dm.selectNode(cell.id);
-    //   } else if (cell.isEdge()) {
-    //     const remoteId = cell.getData().remoteId;
-    //     console.log('remoteId || cell.id: ', remoteId, cell.id);
-    //     dm.selectEdge(remoteId || cell.id);
-    //   }
-    // });
+    graph.on('cell:click', (e) => {
+      const { cell } = e;
+      if (cell.isNode()) {
+        dm.selectNode(cell.id);
+      } else if (cell.isEdge()) {
+        const remoteId = cell.getData().remoteId;
+        console.log('remoteId || cell.id: ', remoteId, cell.id);
+        dm.selectEdge(remoteId || cell.id);
+      }
+    });
 
     graph.on('node:contextmenu', (e)=>{
       const { cell } = e;
@@ -325,28 +323,36 @@ export const Graph = {
       const { x, y } = node.position();
       dm.syncNode(node.id, { x, y });
     });
+
     graph.on('blank:dblclick', ({ e, x, y}) => {
       const nodeId = dm.addNode({ x, y })
       dm.selectNode(nodeId)
     });
-    graph.on('selection:changed', ({added,removed,selected}) => {
-      added.forEach(c=>{
-        // if(c.isNode()) dm.syncNode(c.id,{data:{selected:true}})
-      })
-      removed.forEach(c=>{
-        // if(c.isNode()) dm.syncNode(c.id,{data:{selected:false}})
-      })
-      if(selected.length > 0){
-        const cell = selected[0];
-        if (cell.isNode()) {
-          dm.selectNode(cell.id);
-        } else if (cell.isEdge()) {
-          const remoteId = cell.getData().remoteId;
-          console.log('remoteId || cell.id: ', remoteId, cell.id);
-          dm.selectEdge(remoteId || cell.id);
-        }
-      }
-    })
+    // graph.on('selection:changed', ({added,removed,selected}) => {
+    //   debugger
+    //   console.log('added',added)
+    //   console.log('removed',removed)
+    //   if(selected.length > 0){
+    //     const cell = selected[0];
+    //     if (cell.isNode()) {
+    //       dm.selectNode(cell.id);
+    //     } else if (cell.isEdge()) {
+    //       const remoteId = cell.getData().remoteId;
+    //       console.log('remoteId || cell.id: ', remoteId, cell.id);
+    //       dm.selectEdge(remoteId || cell.id);
+    //     }
+    //   }
+    //   if(added.length > 0){
+    //     added.forEach(c=>{
+    //       if(c.isNode()) dm.syncNode(c.id,{x:0,y:0})
+    //     })
+    //   }
+    //   if(removed.length > 0){
+    //     removed.forEach(c=>{
+    //       if(c.isNode()) dm.syncNode(c.id,{x:10,y:10})
+    //     })
+    //   }
+    // })
 
     dm.on('remove', (id) => {
       console.log('[remove cb] id: ', id);
@@ -383,14 +389,28 @@ export const Graph = {
     });
     dm.on('node:changed', props => {
       const nodes = graph.model.getCells()
-      nodes.forEach(n => {
-        const { remoteId } = n.getData() || {};
+      nodes.forEach(node => {
+        const { remoteId } = node.getData() || {};
         // TIP： 边 || 节点
-        debugger
-        if ((remoteId === props.id && props.type === 'edge')|| (n.id === props.id && props.type === 'node')) {
-          n.setProp(props.prop)
+        if ((remoteId === props.id && props.type === 'edge')|| (node.id === props.id && props.type === 'node')) {
+          node.setProp(props.prop)
         }
       })
+    })
+
+    dm.on('node:position:changed',({node,x,y})=>{
+      if(node.verticesX && node.verticesY){
+        const cells = graph.getCells();
+        const edges = dm.findEdges(node.id)
+        edges.forEach(e=>{
+          if(e.target.cell !== node.id) return
+          const edge = cells.find(cell => cell.getData().remoteId === e.id);
+          if(edge.getVertices().length>0){
+            edge.setVertexAt(1,{x: x+node.verticesX, y: y+node.verticesY})
+          }
+          console.log('vertices',edge.getVertices())
+        })
+      }
     })
 
     this.graph = graph;

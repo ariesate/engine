@@ -15,8 +15,10 @@ const data = {
         "d": {
           "d1": "123"
         },
-        
       },
+      'verticesY':-20,
+      'verticesX':100,
+      'width': 200,
       "view": { "position": { "x": 100, "y": 100 } },
     },
     {
@@ -33,6 +35,8 @@ const data = {
       "view": { "x": 660, "y": 140 },
       "height":200,
       "width":200,
+      'verticesY':-20,
+      'verticesX':100,
     }
   ],
   "edges": [

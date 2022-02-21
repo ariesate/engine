@@ -16,7 +16,7 @@ import {useElementPosition, manualTrigger as createManualTrigger } from 'axii-co
 import EntityConfigJSON from './Entity.k6.json';
 import RelationConfigJSON from './Relation.k6.json';
 
-export const EntityEdge = ({ edge }) => {
+export const EntityEdge = ({ node,edge }) => {
   // 兼容旧ER数据
   const ee = Object.assign({}, edge);
 
@@ -32,7 +32,8 @@ export const EntityEdge = ({ edge }) => {
         },
       },
     },
-    labels: [`${edge.data.name} ${edge.data.type}`]
+    labels: [`${edge.data.name} ${edge.data.type}`],
+    vertices: [{x: node.data.x-10, y:node.data.y-10}]
   };
   return config;
 };

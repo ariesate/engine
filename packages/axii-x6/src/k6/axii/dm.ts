@@ -26,8 +26,8 @@ type IEdgeData = IX6Edge & {
     [key: string]: any;
   };
   view?:{
-    sourcePortSide: 'right' | 'left';
-    targetPortSide: 'left' | 'right';
+    sourcePortSide: 'right' | 'left' | 'top' | 'bottom';
+    targetPortSide: 'left' | 'right' | 'top' | 'bottom';
   }
 };
 type INodePropKeys = keyof IDataNode;
@@ -467,7 +467,6 @@ class DataManager extends EventEmiter{
    * @param props 
    */
   syncNode(nodeId: string, props: { [k in INodePropKeys]: any }, syncToGraph: boolean) {
-    debugger
     const node = this.findNode(nodeId);
     if (node) {
       const propKeys = Object.keys(props || {});
@@ -476,10 +475,7 @@ class DataManager extends EventEmiter{
           x: props.x,
           y: props.y,
         }});
-      // } else if(propKeys.includes('selected')){
-      //   merge(node, props, { data: {
-      //     selected: props.selected,
-      //   }});
+        this.emit('node:position:changed',{node:node,x:props.x,y:props.y})
       } else {
         merge(node, props);
       }
@@ -536,6 +532,10 @@ class DataManager extends EventEmiter{
   }
   @disabledByReadOnly
   selectNode (id: string) {
+    // if(!!this.insideState.selected.cell && id !== this.insideState.selected.cell?.id){
+    //   const preNode = this.findNode(this.insideState.selected.cell?.id)
+    //   preNode.data.selected = false
+    // }
     if (!id ) {
       Object.assign(this.insideState, {
         selected: {
@@ -549,6 +549,7 @@ class DataManager extends EventEmiter{
       return;
     }
     const node = this.findNode(id);
+    // node.data.selected = true
     const [nodeComponent] = this.getShapeComponent(node.shape);
     Object.assign(this.insideState, {
       selected: {

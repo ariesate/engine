@@ -155,12 +155,12 @@ export function createFlowGraph(container, initOptions = {}) {
 }
 
 function initEvent(graph, container) {
-  graph.bindKey('backspace', () => {
-    const cells = graph.getSelectedCells()
-    if (cells.length) {
-      graph.removeCells(cells)
-    }
-  })
+  // graph.bindKey('backspace', () => {
+  //   const cells = graph.getSelectedCells()
+  //   if (cells.length) {
+  //     graph.removeCells(cells)
+  //   }
+  // })
 
   // 监听 node 的文字大小改变
   graph.on('node:change:attrs', ({ options , node, ...rest}) => {
