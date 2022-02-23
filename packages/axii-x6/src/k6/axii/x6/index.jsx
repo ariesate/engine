@@ -263,7 +263,6 @@ export const Graph = {
   },
 
   init(container, dm, config) {
-    debugger
     const graph = createFlowGraph(container, {
       ...config,
       getReadOnly: () => dm.readOnly.value,
@@ -347,6 +346,11 @@ export const Graph = {
       const nodeId = dm.addNode({ x, y })
       dm.selectNode(nodeId)
     });
+
+    graph.on('scale',({sx,sy,ox,oy})=>{
+      dm.insideState.graph.zoom = sx
+      localStorage.setItem('zoom',sx)
+    })
     // graph.on('selection:changed', ({added,removed,selected}) => {
     //   debugger
     //   console.log('added',added)
@@ -403,6 +407,9 @@ export const Graph = {
     dm.once('dispose', () => {
       this.dispose();
     });
+    dm.on('resize', (props)=>{
+      graph.resize(props.width,props.height)
+    })
     dm.on('notifyComponent', () => {
       this.syncMiniMap();
     });
@@ -440,6 +447,13 @@ export const Graph = {
     nodes.forEach(node => {
       this.addNode(tryToRaw(node));      
     });
+    setTimeout(()=>{
+      const zoom = localStorage.getItem('zoom')
+      if(zoom){
+        this.graph.zoom(Number(zoom)-1)
+        this.graph.centerContent()
+      }
+    })
   },
 
   syncMiniMap(img) {

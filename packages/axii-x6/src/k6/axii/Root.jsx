@@ -37,7 +37,7 @@ function splitChildren (children) {
   };
 }
 
-function Root({ children, extraHeight, ref, readOnly, graphConfig={} }, frags) {
+function Root({ children, height, ref, readOnly, graphConfig={} }, frags) {
   const {slots, realChildren} = splitChildren(children);
   const shareContext = useContext(ShareContext);
 
@@ -53,14 +53,6 @@ function Root({ children, extraHeight, ref, readOnly, graphConfig={} }, frags) {
     ref.current = dm;
   }
   window.dm = dm;
-
-  let height = document.body.offsetHeight+extraHeight.value
-  let width = document.body.offsetWidth
-  window.addEventListener('resize', () => {
-    height = document.body.offsetHeight+extraHeight.value
-    width = document.body.offsetWidth
-    initGraph()
-  })
 
   const rootContext = {
     groups: [],
@@ -82,8 +74,8 @@ function Root({ children, extraHeight, ref, readOnly, graphConfig={} }, frags) {
     }
     if (r) {
       x6.Graph.init(elementRefs.graph, dm, {
-        width: width,
-        height: height,
+        width: elementRefs.graph.offsetWidth,
+        height: height.value,
         minimap: elementRefs.miniMap,
         graphConfig
       });
@@ -156,7 +148,7 @@ Root.Style = (frag) => {
 
 Root.propTypes = {
   readOnly: propTypes.bool.default(() => atom(false)),
-  extraHeight: propTypes.number.default(()=>0)
+  height: propTypes.number.default(() => 800)
 }
 
 Root.forwardRef = true;

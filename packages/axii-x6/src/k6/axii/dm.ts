@@ -646,16 +646,18 @@ class DataManager extends EventEmiter{
     this.selectNode(null);
   }
   zoomIn() {
-    this.insideState.graph.zoom += 0.2
     this.emit('zoom-in', 0.2);
   }
   zoomOut(){
-    this.insideState.graph.zoom -= 0.2
     this.emit('zoom-out', 0.2);
   }
 
   dispose() {
     this.emit('dispose');
+  }
+
+  resize(width:number,height:number) {
+    this.emit('resize',{width:width,height:height})
   }
 }
 
