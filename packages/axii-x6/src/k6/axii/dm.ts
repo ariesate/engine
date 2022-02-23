@@ -471,11 +471,11 @@ class DataManager extends EventEmiter{
     if (node) {
       const propKeys = Object.keys(props || {});
       if (propKeys.includes('x') && propKeys.includes('y')) {
+        // this.emit('node:position:changed',{node:node,x:props.x,y:props.y})
         merge(node, props, { data: {
           x: props.x,
           y: props.y,
         }});
-        this.emit('node:position:changed',{node:node,x:props.x,y:props.y})
       } else {
         merge(node, props);
       }
@@ -511,7 +511,6 @@ class DataManager extends EventEmiter{
       ]);
     });
   }
-
   getAllShapeComponents(): ShapeComponent[] {
     return [
       ...this.nodeShapeComponentMap.values(),

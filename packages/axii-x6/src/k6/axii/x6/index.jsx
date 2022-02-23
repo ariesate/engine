@@ -7,6 +7,7 @@ import {
   traverse,
   useViewEffect,
   destroyComputed,
+  debounceComputed
 } from "axii";
 import { createFlowGraph } from './graph';
 import { Graph as X6Graph, Markup, Shape } from '@antv/x6'
@@ -96,6 +97,41 @@ export const Register = {
 
       // @TODO：约2帧的debounce
       let watchTokens = [];
+              // render edge
+      const requestAnimationFrame=(() => {
+        // 先清除“边”
+        graph.model.getEdges().forEach(edgeIns => {
+          if (edgeIns.source.cell === nodeConfig.id) {
+            edgeIns.remove();
+          }
+        });
+
+        // TODO:x6不会添加完全重复的“边”
+        nodeConfig.edges.forEach(edge => {
+          const edgeConfig = EdgeCpt({ node: nodeConfig, edge });
+          const c = assignDefaultEdge(edgeConfig, edge);
+          const remoteId = c.id;
+          delete c.id;
+          const edgeIns = graph.addEdge({
+            ...c,
+          }); 
+          // 监听并动态修改label
+          const [_, token] = watch(() => [edgeConfig.label, edgeConfig.lineColor], () => {
+            setTimeout(() => {
+              debounceComputed(()=>{
+                const c = assignDefaultEdge(edgeConfig, edge);
+                delete c.id;
+                edgeIns.setLabels([c.label]);
+                if (edgeConfig.lineColor !== undefined) {
+                  edgeIns.setAttrs(c.attrs);
+                }
+              })
+            });
+          });
+          watchTokens.push(token);
+          edgeIns.setData({ remoteId }, { silent: true });
+        });
+      });
       const refreshNodeSize = debounce(function refreshNodeSize(){
         watchTokens.forEach(token => destroyComputed(token));
         watchTokens = [];
@@ -106,10 +142,9 @@ export const Register = {
           return
         }
         let { width, height } = (wrap.children[0].getBoundingClientRect());
-        if(!!nodeConfig.width) width = nodeConfig.width
-        if(!!nodeConfig.height) height = nodeConfig.height
+        if(!!nodeConfig.width || !!nodeConfig.size){width = nodeConfig.width || nodeConfig.size.width} 
+        if(!!nodeConfig.height || !!nodeConfig.size){height = nodeConfig.height || nodeConfig.size.height}
         node.setProp({ width: width, height: height });
-
         // render port
         if (getPortConfig) {
           const portConfigArr = getPortConfig(nodeConfig.id);
@@ -143,69 +178,52 @@ export const Register = {
         } else {
           console.error('Register Port getConfig method is undefined');
         }
-
-        // render edge
-        requestAnimationFrame(() => {
-          // 先清除“边”
-          graph.model.getEdges().forEach(edgeIns => {
-            if (edgeIns.source.cell === nodeConfig.id) {
-              edgeIns.remove();
-            }
-          });
-
-          // TODO:x6不会添加完全重复的“边”
-          nodeConfig.edges.forEach(edge => {
-            const edgeConfig = EdgeCpt({ node: nodeConfig, edge });
-            const c = assignDefaultEdge(edgeConfig, edge);
-            const remoteId = c.id;
-            delete c.id;
-            const edgeIns = graph.addEdge({
-              ...c,
-            }); 
-            // 监听并动态修改label
-            const [_, token] = watch(() => [edgeConfig.label, edgeConfig.lineColor], () => {
-              setTimeout(() => {
-                const c = assignDefaultEdge(edgeConfig, edge);
-                delete c.id;
-                edgeIns.setLabels([c.label]);
-                if (edgeConfig.lineColor !== undefined) {
-                  edgeIns.setAttrs(c.attrs);
-                }
-              });
-            });
-            watchTokens.push(token);
-            edgeIns.setData({ remoteId }, { silent: true });
-          });
-        });
+        requestAnimationFrame()
       }, 30);
 
       // myNode的axii渲染完成之后的动作
       effectCallbacks.push(() => {
         // 节点数据修改
-        watch(() => traverse(nodeConfig.data), () => {
+        watch(()=>traverse(nodeConfig.data), () => {
           setTimeout(() => {
-            refreshNodeSize();
-          }, 25);
+            debounceComputed(()=>{
+              refreshNodeSize();
+            })
+          });
         });
         // 新增连接
         watch(() => nodeConfig.edges.length, () => {
           setTimeout(() => {
-            refreshNodeSize();
-          }, 25);
+            debounceComputed(()=>{
+              refreshNodeSize();
+            })
+          });
         });  
         refreshNodeSize();
+
+        if(nodeConfig.next.length>0){
+          watch(() => nodeConfig.next.forEach(n => [n.data.x]), () => {
+            debounceComputed(()=>{
+              requestAnimationFrame()
+            })
+          });
+        }
 
         const portConfigArr = getPortConfig(nodeConfig.id);
         // 为了有新增的异步Port, @TODO: 如何从设计上消除"删除"的影响？
         watch(() => portConfigArr.length, () => {
           setTimeout(() => {
-            refreshNodeSize();
+            debounceComputed(()=>{
+              refreshNodeSize();
+            })
           });
         });
         // 节点的连接点位置变动
         if (portConfigArr.length) {
           watch(() => portConfigArr.forEach(p => [p.position.x]), () => {
-            refreshNodeSize();
+            debounceComputed(()=>{
+              refreshNodeSize();
+            })
           });
         }
       });
@@ -245,6 +263,7 @@ export const Graph = {
   },
 
   init(container, dm, config) {
+    debugger
     const graph = createFlowGraph(container, {
       ...config,
       getReadOnly: () => dm.readOnly.value,
@@ -398,19 +417,19 @@ export const Graph = {
       })
     })
 
-    dm.on('node:position:changed',({node,x,y})=>{
-      if(node.verticesX && node.verticesY){
-        const cells = graph.getCells();
-        const edges = dm.findEdges(node.id)
-        edges.forEach(e=>{
-          if(e.target.cell !== node.id) return
-          const edge = cells.find(cell => cell.getData().remoteId === e.id);
-          if(edge.getVertices().length>0){
-            edge.setVertexAt(1,{x: x+node.verticesX, y: y+node.verticesY})
-          }
-        })
-      }
-    })
+    // dm.on('node:position:changed',({node,x,y})=>{
+    //   if(node.verticesX && node.verticesY){
+    //     const cells = graph.getCells();
+    //     const edges = dm.findEdges(node.id)
+    //     edges.forEach(e=>{
+    //       if(e.target.cell !== node.id) return
+    //       const edge = cells.find(cell => cell.getData().remoteId === e.id);
+    //       if(edge.getVertices().length>0){
+    //         edge.setVertexAt(1,{x: x+node.verticesX, y: y+node.verticesY})
+    //       }
+    //     })
+    //   }
+    // })
 
     this.graph = graph;
     this.dm = dm;

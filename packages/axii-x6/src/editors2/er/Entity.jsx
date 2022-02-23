@@ -20,6 +20,8 @@ export const EntityEdge = ({ node,edge }) => {
   // 兼容旧ER数据
   const ee = Object.assign({}, edge);
 
+  const target = node.next.find(n=>n.id===edge.target.cell)
+
   const config = {
     ...ee,
     attrs: {
@@ -33,7 +35,10 @@ export const EntityEdge = ({ node,edge }) => {
       },
     },
     labels: [`${edge.data.name} ${edge.data.type}`],
-    vertices: [{x: node.data.x-10, y:node.data.y-10}]
+    vertices: [
+      {x: node.data.x-10, y:node.data.y-10},
+      {x: target?.data?.x-10, y:target?.data?.y-10},
+    ]
   };
   return config;
 };

@@ -37,7 +37,7 @@ function splitChildren (children) {
   };
 }
 
-function Root({ children, height, ref, readOnly, graphConfig={} }, frags) {
+function Root({ children, extraHeight, ref, readOnly, graphConfig={} }, frags) {
   const {slots, realChildren} = splitChildren(children);
   const shareContext = useContext(ShareContext);
 
@@ -54,6 +54,14 @@ function Root({ children, height, ref, readOnly, graphConfig={} }, frags) {
   }
   window.dm = dm;
 
+  let height = document.body.offsetHeight+extraHeight.value
+  let width = document.body.offsetWidth
+  window.addEventListener('resize', () => {
+    height = document.body.offsetHeight+extraHeight.value
+    width = document.body.offsetWidth
+    initGraph()
+  })
+
   const rootContext = {
     groups: [],
     states: {}, // 自定义的共享数据源
@@ -65,8 +73,7 @@ function Root({ children, height, ref, readOnly, graphConfig={} }, frags) {
     readOnly,
   };
 
-
-  useViewEffect(() => {
+  const initGraph=()=>{
     const { elementRefs } = rootContext;
 
     let r = !!elementRefs.graph;
@@ -75,8 +82,8 @@ function Root({ children, height, ref, readOnly, graphConfig={} }, frags) {
     }
     if (r) {
       x6.Graph.init(elementRefs.graph, dm, {
-        width: elementRefs.graph.offsetWidth,
-        height: height.value,
+        width: width,
+        height: height,
         minimap: elementRefs.miniMap,
         graphConfig
       });
@@ -90,6 +97,11 @@ function Root({ children, height, ref, readOnly, graphConfig={} }, frags) {
         dm.dispose();
       });
     };
+  }
+
+
+  useViewEffect(() => {
+    initGraph()
   });
 
   return (
@@ -144,7 +156,7 @@ Root.Style = (frag) => {
 
 Root.propTypes = {
   readOnly: propTypes.bool.default(() => atom(false)),
-  height: propTypes.number.default(() => 800)
+  extraHeight: propTypes.number.default(()=>0)
 }
 
 Root.forwardRef = true;
