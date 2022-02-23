@@ -1,4 +1,5 @@
 import { Graph, Addon, FunctionExt, Shape, NodeView } from '@antv/x6'
+import { debounceComputed } from 'axii';
 import pick from 'lodash-es/pick';
 
 class SimpleNodeView extends NodeView {
@@ -41,7 +42,7 @@ class SimpleNodeView extends NodeView {
 export function createFlowGraph(container, initOptions = {}) {
   const {
     getReadOnly,
-    connectingValidate = {}, width = 1000, height = 800, onPortRendered, onAddEdge, graphConfig} = initOptions;
+    connectingValidate = {}, width = 1000, height = 800 , onPortRendered, onAddEdge, graphConfig} = initOptions;
 
   const graph = new Graph({
     container,
@@ -101,28 +102,28 @@ export function createFlowGraph(container, initOptions = {}) {
           }
         });
         setTimeout(() => {
-          let si;
-          let trigger;
-          si = setInterval(() => {
-            const newEdgeId = newEdge.id;
-            const allEdges = graph.model.getEdges();
-            const edgeIns = allEdges.find(e => e.id === newEdgeId);
-            const pickedEdge = pick(edgeIns, ['id', 'target', 'source', 'label', 'name', 'type']);
-            // 说明没有连接到目标
-            if (!pickedEdge.target) {
-              clearInterval(si);
-              return;
-            }
-
-            if (pickedEdge.target.cell && !trigger) {
-              clearInterval(si);
-              trigger = true;
-              onAddEdge(args.sourceCell.id, pickedEdge, newEdge);
-            } else {
-              // console.log('pickedEdge.target:', pickedEdge.target);
-            }
-          }, 500);
-        }, 50);
+          debounceComputed(()=>{
+            let si;
+            let trigger;
+            si = setInterval(() => {
+              const newEdgeId = newEdge.id;
+              const allEdges = graph.model.getEdges();
+              const edgeIns = allEdges.find(e => e.id === newEdgeId);
+              const pickedEdge = pick(edgeIns, ['id', 'target', 'source', 'label', 'name', 'type']);
+              // 说明没有连接到目标
+              if (!pickedEdge.target) {
+                clearInterval(si);
+                return;
+              }
+  
+              if (pickedEdge.target.cell && !trigger) {
+                clearInterval(si);
+                trigger = true;
+                onAddEdge(args.sourceCell.id, pickedEdge, newEdge);
+              } 
+            }, 10);
+          })
+        }, 10);
 
         return newEdge;
       }
@@ -155,12 +156,12 @@ export function createFlowGraph(container, initOptions = {}) {
 }
 
 function initEvent(graph, container) {
-  graph.bindKey('backspace', () => {
-    const cells = graph.getSelectedCells()
-    if (cells.length) {
-      graph.removeCells(cells)
-    }
-  })
+  // graph.bindKey('backspace', () => {
+  //   const cells = graph.getSelectedCells()
+  //   if (cells.length) {
+  //     graph.removeCells(cells)
+  //   }
+  // })
 
   // 监听 node 的文字大小改变
   graph.on('node:change:attrs', ({ options , node, ...rest}) => {

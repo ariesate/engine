@@ -54,7 +54,13 @@ const graphConfig = {
     movable: true,
     modifiers: 'shift',
     showNodeSelectionBox: true
-  }
+  },
+  mousewheel: {
+    enabled: true,
+    modifiers: ['ctrl', 'meta', 'shift'],
+    minScale: 0.1
+  },
+  keyboard: true
 }
 
 

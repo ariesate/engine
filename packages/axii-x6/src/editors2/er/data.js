@@ -14,9 +14,12 @@ const data = {
         ],
         "d": {
           "d1": "123"
-        }
+        },
       },
-      "view": { "position": { "x": 100, "y": 100 } }
+      'verticesY':-20,
+      'verticesX':100,
+      'width': 200,
+      "view": { "position": { "x": 100, "y": 100 } },
     },
     {
       "id": "_2", "name": "Post",
@@ -26,9 +29,14 @@ const data = {
           { "id": "f1", "name": "content", "type": "string" },
           { "id": "f3", "name": "page", "type": "rel" },
           { "id": "_b", "name": "comments", "type": "rel" }
-        ]
+        ],
+        
       },
-      "view": { "x": 660, "y": 140 }
+      "view": { "x": 660, "y": 140 },
+      "height":200,
+      "width":200,
+      'verticesY':-20,
+      'verticesX':100,
     }
   ],
   "edges": [

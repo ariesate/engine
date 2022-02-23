@@ -26,8 +26,8 @@ type IEdgeData = IX6Edge & {
     [key: string]: any;
   };
   view?:{
-    sourcePortSide: 'right' | 'left';
-    targetPortSide: 'left' | 'right';
+    sourcePortSide: 'right' | 'left' | 'top' | 'bottom';
+    targetPortSide: 'left' | 'right' | 'top' | 'bottom';
   }
 };
 type INodePropKeys = keyof IDataNode;
@@ -109,6 +109,7 @@ function generateNodeByConfig(k6Node: INodeComponent, initNodeProp?: { x?:number
     edges: [],
     prev: [],
     next: [],
+    selected: false
   };
   newAddIndex++;
 
@@ -271,6 +272,13 @@ class NodeManager {
         if (fi >= 0) {
           prevNode.next.splice(fi, 1);
         }
+        const resovedEdges = prevNode.edges.filter(e => e.target.cell === currentNode.id)
+        resovedEdges.forEach(removedEdge => {
+          const ei = prevNode.edges.findIndex(e => e.id === removedEdge.id) 
+          if(ei >=0){
+            prevNode.edges.splice(ei, 1)
+          }
+        })
       });
 
       this.nodes.splice(i, 1);
@@ -374,7 +382,7 @@ class DataManager extends EventEmiter{
     this.nm.readEdges(edges)
   }
   @disabledByReadOnly
-  async addNode(initNode?: { x?:number, y?:number }) {
+  async addNode(initNode?: { x?:number, y?:number }, parentId: string = null) {
     // 先默认只支持一种
     if (1) {
       const nodeComponent: ShapeComponent = this.nodeShapeComponentMap.values().next().value;
@@ -387,7 +395,33 @@ class DataManager extends EventEmiter{
       merge(newNode, notifiedNode);
 
       this.nm.addNewNode(newNode);
-      this.emit('addNode', newNode);
+      if(!!parentId){
+        this.emit('addChildNode',{childNode:newNode,id:parentId})
+      }else{
+        this.emit('addNode', newNode);
+      }
+    }
+  }
+  @disabledByReadOnly
+  // 新增子节点
+  async addChildNode(id: string) {
+    const parentNode = this.findNode(id)
+    if(parentNode){
+      const childNum = parentNode.next.length+1
+      await this.addNode({x:parentNode.x+200*childNum,y:parentNode.y+200+10*childNum},id)
+    }
+  }
+  @disabledByReadOnly
+  // 新增兄弟节点
+  async addBroNode(id: string) {
+    const broNode = this.findNode(id)
+    if(broNode){
+      const parentNode = broNode.prev.length>0?broNode.prev[0]:null
+      if(parentNode){
+        await this.addChildNode(parentNode.id)
+      } else {
+        await this.addNode()
+      }
     }
   }
   @disabledByReadOnly
@@ -437,6 +471,7 @@ class DataManager extends EventEmiter{
     if (node) {
       const propKeys = Object.keys(props || {});
       if (propKeys.includes('x') && propKeys.includes('y')) {
+        // this.emit('node:position:changed',{node:node,x:props.x,y:props.y})
         merge(node, props, { data: {
           x: props.x,
           y: props.y,
@@ -476,7 +511,6 @@ class DataManager extends EventEmiter{
       ]);
     });
   }
-
   getAllShapeComponents(): ShapeComponent[] {
     return [
       ...this.nodeShapeComponentMap.values(),
@@ -497,7 +531,11 @@ class DataManager extends EventEmiter{
   }
   @disabledByReadOnly
   selectNode (id: string) {
-    if (!id || this.insideState.selected.cell?.id === id) {
+    // if(!!this.insideState.selected.cell && id !== this.insideState.selected.cell?.id){
+    //   const preNode = this.findNode(this.insideState.selected.cell?.id)
+    //   preNode.data.selected = false
+    // }
+    if (!id ) {
       Object.assign(this.insideState, {
         selected: {
           cell: null,
@@ -510,6 +548,7 @@ class DataManager extends EventEmiter{
       return;
     }
     const node = this.findNode(id);
+    // node.data.selected = true
     const [nodeComponent] = this.getShapeComponent(node.shape);
     Object.assign(this.insideState, {
       selected: {
@@ -607,16 +646,18 @@ class DataManager extends EventEmiter{
     this.selectNode(null);
   }
   zoomIn() {
-    this.insideState.graph.zoom += 0.2
     this.emit('zoom-in', 0.2);
   }
   zoomOut(){
-    this.insideState.graph.zoom -= 0.2
     this.emit('zoom-out', 0.2);
   }
 
   dispose() {
     this.emit('dispose');
+  }
+
+  resize(width:number,height:number) {
+    this.emit('resize',{width:width,height:height})
   }
 }
 
