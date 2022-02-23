@@ -142,7 +142,7 @@ Root.Style = (frag) => {
     ...s,
   });
   el.nodeFormContainer.style(genStyle({
-    top: '16px',
+    top: '40px',
   }));
 }
 
