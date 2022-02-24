@@ -65,7 +65,8 @@ function Root({ children, height, ref, readOnly, graphConfig={} }, frags) {
     readOnly,
   };
 
-  const initGraph=()=>{
+
+  useViewEffect(() => {
     const { elementRefs } = rootContext;
 
     let r = !!elementRefs.graph;
@@ -89,11 +90,6 @@ function Root({ children, height, ref, readOnly, graphConfig={} }, frags) {
         dm.dispose();
       });
     };
-  }
-
-
-  useViewEffect(() => {
-    initGraph()
   });
 
   return (
