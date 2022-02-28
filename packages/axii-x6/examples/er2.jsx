@@ -58,7 +58,8 @@ const graphConfig = {
   mousewheel: {
     enabled: true,
     modifiers: ['ctrl', 'meta', 'shift'],
-    minScale: 0.1
+    minScale: 0.1,
+    maxScale: 1
   },
   keyboard: true
 }

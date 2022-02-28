@@ -35,10 +35,6 @@ export const EntityEdge = ({ node,edge }) => {
       },
     },
     labels: [`${edge.data.name} ${edge.data.type}`],
-    vertices: [
-      {x: node.data.x-10, y:node.data.y-10},
-      {x: target?.data?.x-10, y:target?.data?.y-10},
-    ]
   };
   return config;
 };
