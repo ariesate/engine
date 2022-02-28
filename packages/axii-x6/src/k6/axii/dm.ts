@@ -645,11 +645,11 @@ class DataManager extends EventEmiter{
     this.emit('remove', currentCellId);
     this.selectNode(null);
   }
-  zoomIn() {
-    this.emit('zoom-in', 0.2);
+  zoomIn(v:number=0.2) {
+    this.emit('zoom-in', v);
   }
-  zoomOut(){
-    this.emit('zoom-out', 0.2);
+  zoomOut(v:number=0.2){
+    this.emit('zoom-out', v);
   }
 
   dispose() {

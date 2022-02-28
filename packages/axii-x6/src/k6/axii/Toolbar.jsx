@@ -5,8 +5,10 @@ import {
   createComponent,
   useContext,
   useViewEffect,
+  atom,
+  useRef
 } from 'axii';
-import { Button } from 'axii-components'
+import { Button, message } from 'axii-components'
 import ZoomIn from 'axii-icons/ZoomIn';
 import ZoomOut from 'axii-icons/ZoomOut';
 import DeleteOne from 'axii-icons/DeleteOne';
@@ -38,6 +40,8 @@ const AddNodeTAG = 'k6-add-node';
 function Toolbar(props) {
   let { extra = [], tip = '双击空白处可新增节点', onBeforeRemove = () => true} = props;
   const context = useContext(RootContext);
+  const zoomInputVisible = atom(false)
+  const zoomInputRef = useRef()
 
   // 覆写addNode
   if (extra.length) {
@@ -67,6 +71,26 @@ function Toolbar(props) {
     canRemove && context.dm.removeIdOrCurrent()
   }
 
+  const onClickZoom=()=>{
+    zoomInputVisible.value=true
+    zoomInputRef.current.focus()
+  }
+
+  const onInputZoom=(e)=>{
+    const value = parseInt(e.target.value);
+    zoomInputVisible.value=false
+    if(isNaN(value) || value<1 || value>100){
+      message.error('输入数据不合法，请输入1~100的整数')
+      return 
+    }
+    const zoom = value/100-context.dm.insideState.graph.zoom;
+    if(zoom>=0){
+      context.dm.zoomIn(zoom)
+    } else {
+      context.dm.zoomOut(-zoom)
+    }
+  }
+
   useViewEffect(() => {
     return () => {
     };
@@ -93,7 +117,10 @@ function Toolbar(props) {
         </Item>
         <Item>
           {() =>
-            <text inline inline-padding-bottom="2px">{parseInt(context.dm.insideState.graph.zoom * 100) + '%'}</text>
+            <zoomEdit>
+              <zoomInput style={{display:zoomInputVisible.value?'inline-block':'none'}}><input ref={zoomInputRef} value={parseInt(context.dm.insideState.graph.zoom * 100)} onBlur={onInputZoom} style={{height:'18px',width:'60px'}}/>%</zoomInput>
+              <zoomText inline inline-padding-bottom="2px" onClick={onClickZoom} style={{display:zoomInputVisible.value?'none':'inline-block'}}>{parseInt(context.dm.insideState.graph.zoom * 100) + '%'}</zoomText>
+            </zoomEdit>
           }
         </Item>
         <Split />
@@ -121,6 +148,9 @@ Toolbar.Style = (frag) => {
   el.extraActions.style({
     color: '#999',
   });
+  el.zoomText.style({
+    cursor: 'pointer'
+  })
 };
 
 export default createComponent(Toolbar);

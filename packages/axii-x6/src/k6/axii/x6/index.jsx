@@ -351,31 +351,6 @@ export const Graph = {
       dm.insideState.graph.zoom = sx
       localStorage.setItem('zoom',sx)
     })
-    // graph.on('selection:changed', ({added,removed,selected}) => {
-    //   debugger
-    //   console.log('added',added)
-    //   console.log('removed',removed)
-    //   if(selected.length > 0){
-    //     const cell = selected[0];
-    //     if (cell.isNode()) {
-    //       dm.selectNode(cell.id);
-    //     } else if (cell.isEdge()) {
-    //       const remoteId = cell.getData().remoteId;
-    //       console.log('remoteId || cell.id: ', remoteId, cell.id);
-    //       dm.selectEdge(remoteId || cell.id);
-    //     }
-    //   }
-    //   if(added.length > 0){
-    //     added.forEach(c=>{
-    //       if(c.isNode()) dm.syncNode(c.id,{x:0,y:0})
-    //     })
-    //   }
-    //   if(removed.length > 0){
-    //     removed.forEach(c=>{
-    //       if(c.isNode()) dm.syncNode(c.id,{x:10,y:10})
-    //     })
-    //   }
-    // })
 
     dm.on('remove', (id) => {
       console.log('[remove cb] id: ', id);
@@ -450,7 +425,7 @@ export const Graph = {
     setTimeout(()=>{
       const zoom = localStorage.getItem('zoom')
       if(zoom){
-        this.graph.zoom(Number(zoom)-1)
+        this.graph.zoom((Number(zoom)-1))
         this.graph.centerContent()
       }
     })
