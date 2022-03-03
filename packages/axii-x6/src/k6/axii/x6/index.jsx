@@ -201,13 +201,13 @@ export const Register = {
         });  
         refreshNodeSize();
 
-        if(nodeConfig.next.length>0){
-          watch(() => nodeConfig.next.forEach(n => [n.data.x]), () => {
+        watch(() => nodeConfig.next.forEach(n => [n.data.x]), () => {
+          setTimeout(() => {
             debounceComputed(()=>{
               requestAnimationFrame()
             })
-          });
-        }
+          })
+        });
 
         const portConfigArr = getPortConfig(nodeConfig.id);
         // 为了有新增的异步Port, @TODO: 如何从设计上消除"删除"的影响？
