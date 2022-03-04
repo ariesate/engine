@@ -1,5 +1,5 @@
 import { Atom } from "./common";
-import { VNode, CSSProperties, AxiiElement } from "./runtime-dom";
+import { VNode, CSSProperties, AxiiElement, Ref } from "./runtime-dom";
 
 export interface PropTypes {
   string: PropTypes.WithDefault<string | Atom<string>>;
@@ -11,18 +11,22 @@ export interface PropTypes {
   symbol: PropTypes.WithDefault<symbol>;
   any: PropTypes.WithDefault<any>;
   node: PropTypes.WithDefault<any>;
-  element: PropTypes.WithDefault<any>;
-  elementType: PropTypes.WithDefault<any>;
+  element: PropTypes.WithDefault<AxiiElement>;
+  elementType: PropTypes.WithDefault<
+    string | FunctionComponent | AbstractComponent
+  >;
   oneOf: <T>(...values: T[]) => PropTypes.Base<T>;
   oneOfType: (...types: PropTypes.Base<any>[]) => PropTypes.Base<any[]>;
-  arrayOf: <T>(type: PropTypes.Base<T>) => PropTypes.Base<T>;
+  arrayOf: <T>(type: PropTypes.PropType<T>) => PropTypes.Base<T>;
 }
 export namespace PropTypes {
+  export interface PropType<T> {}
   export interface Base<T> {
     /**
      * 标记为必填
      */
     readonly isRequired: Base<T>;
+    (): PropType<T>;
   }
   export interface WithDefault<T> extends Base<T> {
     /**
@@ -37,7 +41,7 @@ export type FeatureProps<P> = { [K in keyof P]: Atom.Atomify<P[K]> };
 export type AbstractProps<P> = { [K in keyof P]: Atom.Atomify<P[K]> | P[K] };
 
 export interface FunctionComponent<P = {}> extends FeatureBase<P> {
-  (props: FeatureProps<P>): JSX.Element;
+  (props: FeatureProps<P> & { ref?: Ref; children?: AxiiElement }): JSX.Element;
   /**
    * 默认特性
    */
@@ -167,11 +171,16 @@ export function createElement<P>(
 /**
  * 创建组件
  * @param type 组件Base
+ */
+export function createComponent<P>(type: FunctionComponent<P>): Component<P>;
+/**
+ * 创建组件
+ * @param type 组件Base
  * @param features 特性
  */
-export function createComponent<P>(
+export function createComponent<Q, P extends Q>(
   type: FunctionComponent<P>,
-  features?: Feature<P>[]
+  features: Feature<Q>[]
 ): Component<P>;
 
 /**

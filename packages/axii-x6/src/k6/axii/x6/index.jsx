@@ -7,9 +7,10 @@ import {
   traverse,
   useViewEffect,
   destroyComputed,
+  debounceComputed
 } from "axii";
 import { createFlowGraph } from './graph';
-import { Graph as X6Graph, Markup } from '@antv/x6'
+import { Graph as X6Graph, Markup, Shape } from '@antv/x6'
 import merge from 'lodash-es/merge';
 import pick from 'lodash-es/pick';
 import debounce from 'lodash-es/debounce';
@@ -96,6 +97,41 @@ export const Register = {
 
       // @TODO：约2帧的debounce
       let watchTokens = [];
+      // render edge
+      const renderEdge = () => {
+        // 先清除“边”
+        graph.model.getEdges().forEach(edgeIns => {
+          if (edgeIns.source.cell === nodeConfig.id) {
+            edgeIns.remove();
+          }
+        });
+
+        // TODO:x6不会添加完全重复的“边”
+        nodeConfig.edges.forEach(edge => {
+          const edgeConfig = EdgeCpt({ node: nodeConfig, edge });
+          const c = assignDefaultEdge(edgeConfig, edge);
+          const remoteId = c.id;
+          delete c.id;
+          const edgeIns = graph.addEdge({
+            ...c,
+          }); 
+          // 监听并动态修改label
+          const [_, token] = watch(() => [edgeConfig.label, edgeConfig.lineColor], () => {
+            setTimeout(() => {
+              debounceComputed(()=>{
+                const c = assignDefaultEdge(edgeConfig, edge);
+                delete c.id;
+                edgeIns.setLabels([c.label]);
+                if (edgeConfig.lineColor !== undefined) {
+                  edgeIns.setAttrs(c.attrs);
+                }
+              })
+            });
+          });
+          watchTokens.push(token);
+          edgeIns.setData({ remoteId }, { silent: true });
+        });
+      };
       const refreshNodeSize = debounce(function refreshNodeSize(){
         watchTokens.forEach(token => destroyComputed(token));
         watchTokens = [];
@@ -105,10 +141,10 @@ export const Register = {
           renderController.destroy();
           return
         }
-        
-        const { width, height } = (wrap.children[0].getBoundingClientRect());
+        let { width, height } = (wrap.children[0].getBoundingClientRect());
+        if(!!nodeConfig.width || !!nodeConfig.size){width = nodeConfig.width || nodeConfig.size.width} 
+        if(!!nodeConfig.height || !!nodeConfig.size){height = nodeConfig.height || nodeConfig.size.height}
         node.setProp({ width: width, height: height });
-
         // render port
         if (getPortConfig) {
           const portConfigArr = getPortConfig(nodeConfig.id);
@@ -143,69 +179,52 @@ export const Register = {
           console.error('Register Port getConfig method is undefined');
         }
 
-        // render edge
-        requestAnimationFrame(() => {
-          // 先清除“边”
-          graph.model.getEdges().forEach(edgeIns => {
-            if (edgeIns.source.cell === nodeConfig.id) {
-              edgeIns.remove();
-            }
-          });
-
-          // TODO:x6不会添加完全重复的“边”
-          nodeConfig.edges.forEach(edge => {
-            const edgeConfig = EdgeCpt({ node: nodeConfig, edge });
-            const c = assignDefaultEdge(edgeConfig, edge);
-            const remoteId = c.id;
-            delete c.id;
-            const edgeIns = graph.addEdge({
-              ...c,
-            }); 
-            // 监听并动态修改label
-            const [_, token] = watch(() => [traverse(nodeConfig), traverse(edge)], () => {
-              setTimeout(() => {
-                const c = assignDefaultEdge(edgeConfig, edge);
-                delete c.id;
-                edgeIns.setLabels(c.labels);
-                if (edgeConfig.lineColor !== undefined) {
-                  edgeIns.setAttrs(c.attrs);
-                }
-              }, 30);
-            });
-            watchTokens.push(token);
-
-            edgeIns.setData({ remoteId }, { silent: true });
-          });
-        });
+        renderEdge()
       }, 30);
 
       // myNode的axii渲染完成之后的动作
       effectCallbacks.push(() => {
         // 节点数据修改
-        watch(() => traverse(nodeConfig.data), () => {
+        watch(()=>traverse(nodeConfig.data), () => {
           setTimeout(() => {
-            refreshNodeSize();
-          }, 25);
+            debounceComputed(()=>{
+              refreshNodeSize();
+            })
+          });
         });
         // 新增连接
         watch(() => nodeConfig.edges.length, () => {
           setTimeout(() => {
-            refreshNodeSize();
-          }, 25);
+            debounceComputed(()=>{
+              refreshNodeSize();
+            })
+          });
         });  
         refreshNodeSize();
+
+        watch(() => nodeConfig.next.forEach(n => [n.data.x]), () => {
+          setTimeout(() => {
+            debounceComputed(()=>{
+              renderEdge()
+            })
+          })
+        });
 
         const portConfigArr = getPortConfig(nodeConfig.id);
         // 为了有新增的异步Port, @TODO: 如何从设计上消除"删除"的影响？
         watch(() => portConfigArr.length, () => {
           setTimeout(() => {
-            refreshNodeSize();
+            debounceComputed(()=>{
+              refreshNodeSize();
+            })
           });
         });
         // 节点的连接点位置变动
         if (portConfigArr.length) {
           watch(() => portConfigArr.forEach(p => [p.position.x]), () => {
-            refreshNodeSize();
+            debounceComputed(()=>{
+              refreshNodeSize();
+            })
           });
         }
       });
@@ -279,6 +298,26 @@ export const Graph = {
       }));  
     });
 
+    graph.bindKey('tab', (e) => {
+      const cellConfig = dm.insideState.selected.cell
+      if(!cellConfig) return 
+      const cells = graph.getCells();
+      const cell = cells.find(c=>c.id === cellConfig.id)
+      if(cell.isNode()){
+        dm.addChildNode(cell.id)
+      }
+    })
+
+    graph.bindKey('enter', (e) => {
+      const cellConfig = dm.insideState.selected.cell
+      if(!cellConfig) return 
+      const cells = graph.getCells();
+      const cell = cells.find(c=>c.id === cellConfig.id)
+      if(cell.isNode()){
+        dm.addBroNode(cell.id)
+      }
+    })
+
     graph.on('cell:click', (e) => {
       const { cell } = e;
       if (cell.isNode()) {
@@ -289,6 +328,12 @@ export const Graph = {
         dm.selectEdge(remoteId || cell.id);
       }
     });
+
+    graph.on('node:contextmenu', (e)=>{
+      const { cell } = e;
+      dm.addChildNode(cell.id)
+    })
+
     graph.on('blank:click', (arg) => {      
       dm.selectNode();
     });
@@ -297,9 +342,16 @@ export const Graph = {
       const { x, y } = node.position();
       dm.syncNode(node.id, { x, y });
     });
+
     graph.on('blank:dblclick', ({ e, x, y}) => {
-      dm.addNode({ x, y })
+      const nodeId = dm.addNode({ x, y })
+      dm.selectNode(nodeId)
     });
+
+    graph.on('scale',({sx,sy,ox,oy})=>{
+      dm.insideState.graph.zoom = sx
+      localStorage.setItem('zoom',sx)
+    })
 
     dm.on('remove', (id) => {
       console.log('[remove cb] id: ', id);
@@ -320,24 +372,47 @@ export const Graph = {
       graph.zoom(-v);
     });
     dm.on('addNode', (n) => {
-      this.addNode(n);
+      const nodeId = this.addNode(n);
+      dm.selectNode(nodeId)
+    });
+    dm.on('addChildNode',props=>{
+      const targetId = this.addNode(props.childNode)
+      this.addEdge(props.id,targetId)
+      dm.selectNode(targetId)
     });
     dm.once('dispose', () => {
       this.dispose();
     });
+    dm.on('resize', (props)=>{
+      graph.resize(props.width,props.height)
+    })
     dm.on('notifyComponent', () => {
       this.syncMiniMap();
     });
     dm.on('node:changed', props => {
       const nodes = graph.model.getCells()
-      nodes.forEach(n => {
-        const { remoteId } = n.getData() || {};
+      nodes.forEach(node => {
+        const { remoteId } = node.getData() || {};
         // TIP： 边 || 节点
-        if ((remoteId === props.id && props.type === 'edge')|| (n.id === props.id && props.type === 'node')) {
-          n.setProp(props.prop)
+        if ((remoteId === props.id && props.type === 'edge')|| (node.id === props.id && props.type === 'node')) {
+          node.setProp(props.prop)
         }
       })
     })
+
+    // dm.on('node:position:changed',({node,x,y})=>{
+    //   if(node.verticesX && node.verticesY){
+    //     const cells = graph.getCells();
+    //     const edges = dm.findEdges(node.id)
+    //     edges.forEach(e=>{
+    //       if(e.target.cell !== node.id) return
+    //       const edge = cells.find(cell => cell.getData().remoteId === e.id);
+    //       if(edge.getVertices().length>0){
+    //         edge.setVertexAt(1,{x: x+node.verticesX, y: y+node.verticesY})
+    //       }
+    //     })
+    //   }
+    // })
 
     this.graph = graph;
     this.dm = dm;
@@ -348,6 +423,13 @@ export const Graph = {
     nodes.forEach(node => {
       this.addNode(tryToRaw(node));      
     });
+    setTimeout(()=>{
+      const zoom = localStorage.getItem('zoom')
+      if(zoom){
+        this.graph.zoom((Number(zoom)-1))
+        this.graph.centerContent()
+      }
+    })
   },
 
   syncMiniMap(img) {
@@ -388,6 +470,32 @@ export const Graph = {
     });
 
     const x6NodeInstance = this.graph.addNode(node);
+    return x6NodeInstance.id
+  },
+  addEdge(sourceId,targetId){
+    const newEdge = new Shape.Edge({
+      attrs: {
+        line: {
+          stroke: '#5F95FF',
+          strokeWidth: 1,
+          targetMarker: {
+            name: 'classic',
+            size: 8,
+          },
+        },
+      },
+      router: {
+        name: 'manhattan',
+      },
+      source: {cell: sourceId,port: null},
+      target: {cell: targetId,port:null}
+    });
+    const pickedEdge = pick(newEdge, ['id', 'target', 'source', 'label', 'name', 'type']);
+    dm.addNewEdge(sourceId, pickedEdge).then(remoteId => {
+      if (remoteId) {
+        newEdge.setData({ remoteId });
+      }
+    });
   },
   exportData() {
     return this.graph.toJSON();

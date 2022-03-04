@@ -27,7 +27,7 @@ function ER2Editor({ data, layoutConfig={}, onSave, graphConfig={} }) {
   
   return (
     <container block>
-      <K6 layout:block layout:flex-display readOnly={readOnly} graphConfig={graphConfig} ref={dmRef}>
+      <K6 layout:block layout:flex-display readOnly={readOnly} graphConfig={graphConfig} ref={dmRef} extraHeight={-200}>
         <k6base flex-grow="1" block>
           <Register globalData={dataFunc}>
           </Register>
