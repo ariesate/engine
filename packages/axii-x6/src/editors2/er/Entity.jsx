@@ -20,9 +20,7 @@ export const EntityEdge = ({ node,edge }) => {
   // 兼容旧ER数据
   const ee = Object.assign({}, edge);
 
-  const target = node.next.find(n=>n.id===edge.target.cell)
-
-  const config = {
+  const config = computed(() => ({
     ...ee,
     attrs: {
       line: {
@@ -34,10 +32,13 @@ export const EntityEdge = ({ node,edge }) => {
         },
       },
     },
-    labels: [`${edge.data.name} ${edge.data.type}`],
-  };
+    labels: [`${edge.data.name} ${edge.data.type}`]
+  }));
   return config;
 };
+EntityEdge.onChange = (node, edge, data, oldEdgeData) => {
+  console.log('[EntityEdge] onChange: node, edge, data, oldEdgeData: ', node, edge, data, oldEdgeData);
+}
 EntityEdge.configJSON = RelationConfigJSON;
 
 export const EntityPort = createComponent((() => {

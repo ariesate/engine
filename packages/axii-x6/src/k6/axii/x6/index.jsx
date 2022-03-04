@@ -97,8 +97,8 @@ export const Register = {
 
       // @TODO：约2帧的debounce
       let watchTokens = [];
-              // render edge
-      const requestAnimationFrame=(() => {
+      // render edge
+      const renderEdge = () => {
         // 先清除“边”
         graph.model.getEdges().forEach(edgeIns => {
           if (edgeIns.source.cell === nodeConfig.id) {
@@ -131,7 +131,7 @@ export const Register = {
           watchTokens.push(token);
           edgeIns.setData({ remoteId }, { silent: true });
         });
-      });
+      };
       const refreshNodeSize = debounce(function refreshNodeSize(){
         watchTokens.forEach(token => destroyComputed(token));
         watchTokens = [];
@@ -178,7 +178,8 @@ export const Register = {
         } else {
           console.error('Register Port getConfig method is undefined');
         }
-        requestAnimationFrame()
+
+        renderEdge()
       }, 30);
 
       // myNode的axii渲染完成之后的动作
@@ -204,7 +205,7 @@ export const Register = {
         watch(() => nodeConfig.next.forEach(n => [n.data.x]), () => {
           setTimeout(() => {
             debounceComputed(()=>{
-              requestAnimationFrame()
+              renderEdge()
             })
           })
         });
