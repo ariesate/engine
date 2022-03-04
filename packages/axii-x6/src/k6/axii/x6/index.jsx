@@ -162,15 +162,15 @@ export const Register = {
               ...c,
             }); 
             // 监听并动态修改label
-            const [_, token] = watch(() => [edgeConfig.label, edgeConfig.lineColor], () => {
+            const [_, token] = watch(() => [traverse(nodeConfig), traverse(edge)], () => {
               setTimeout(() => {
                 const c = assignDefaultEdge(edgeConfig, edge);
                 delete c.id;
-                edgeIns.setLabels([c.label]);
+                edgeIns.setLabels(c.labels);
                 if (edgeConfig.lineColor !== undefined) {
                   edgeIns.setAttrs(c.attrs);
                 }
-              });
+              }, 30);
             });
             watchTokens.push(token);
 

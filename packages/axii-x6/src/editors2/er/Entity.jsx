@@ -20,7 +20,7 @@ export const EntityEdge = ({ edge }) => {
   // 兼容旧ER数据
   const ee = Object.assign({}, edge);
 
-  const config = {
+  const config = computed(() => ({
     ...ee,
     attrs: {
       line: {
@@ -33,9 +33,12 @@ export const EntityEdge = ({ edge }) => {
       },
     },
     labels: [`${edge.data.name} ${edge.data.type}`]
-  };
+  }));
   return config;
 };
+EntityEdge.onChange = (node, edge, data, oldEdgeData) => {
+  console.log('[EntityEdge] onChange: node, edge, data, oldEdgeData: ', node, edge, data, oldEdgeData);
+}
 EntityEdge.configJSON = RelationConfigJSON;
 
 export const EntityPort = createComponent((() => {
