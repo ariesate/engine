@@ -651,6 +651,9 @@ class DataManager extends EventEmiter{
   zoomOut(v:number=0.2){
     this.emit('zoom-out', v);
   }
+  centerContent() {
+    this.emit('center-content');
+  }
 
   dispose() {
     this.emit('dispose');

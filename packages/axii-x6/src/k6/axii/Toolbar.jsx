@@ -12,6 +12,7 @@ import { Button, message } from 'axii-components'
 import ZoomIn from 'axii-icons/ZoomIn';
 import ZoomOut from 'axii-icons/ZoomOut';
 import DeleteOne from 'axii-icons/DeleteOne';
+import LensAlignment from 'axii-icons/LensAlignment';
 
 import { RootContext } from './Root';
 
@@ -122,6 +123,9 @@ function Toolbar(props) {
               <zoomText inline inline-padding-bottom="2px" onClick={onClickZoom} style={{display:zoomInputVisible.value?'none':'inline-block'}}>{parseInt(context.dm.insideState.graph.zoom * 100) + '%'}</zoomText>
             </zoomEdit>
           }
+        </Item>
+        <Item>
+          <LensAlignment onClick={() => context.dm.centerContent()}/>
         </Item>
         <Split />
         {() => {

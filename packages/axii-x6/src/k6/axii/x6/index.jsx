@@ -371,6 +371,9 @@ export const Graph = {
     dm.on('zoom-out', (v) => {
       graph.zoom(-v);
     });
+    dm.on('center-content',() => {
+      graph.centerContent();
+    })
     dm.on('addNode', (n) => {
       const nodeId = this.addNode(n);
       dm.selectNode(nodeId)
@@ -399,20 +402,6 @@ export const Graph = {
         }
       })
     })
-
-    // dm.on('node:position:changed',({node,x,y})=>{
-    //   if(node.verticesX && node.verticesY){
-    //     const cells = graph.getCells();
-    //     const edges = dm.findEdges(node.id)
-    //     edges.forEach(e=>{
-    //       if(e.target.cell !== node.id) return
-    //       const edge = cells.find(cell => cell.getData().remoteId === e.id);
-    //       if(edge.getVertices().length>0){
-    //         edge.setVertexAt(1,{x: x+node.verticesX, y: y+node.verticesY})
-    //       }
-    //     })
-    //   }
-    // })
 
     this.graph = graph;
     this.dm = dm;
