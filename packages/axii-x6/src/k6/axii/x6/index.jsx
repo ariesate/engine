@@ -116,12 +116,12 @@ export const Register = {
             ...c,
           }); 
           // 监听并动态修改label
-          const [_, token] = watch(() => [edgeConfig.label, edgeConfig.lineColor], () => {
+          const [_, token] = watch(() => traverse(edgeConfig), () => {
             setTimeout(() => {
               debounceComputed(()=>{
                 const c = assignDefaultEdge(edgeConfig, edge);
                 delete c.id;
-                edgeIns.setLabels([c.label]);
+                edgeIns.setLabels(c.labels);
                 if (edgeConfig.lineColor !== undefined) {
                   edgeIns.setAttrs(c.attrs);
                 }
@@ -175,11 +175,11 @@ export const Register = {
           };
           node.setProp('ports', ports);
           window.ports = ports;
+
+          renderEdge()
         } else {
           console.error('Register Port getConfig method is undefined');
         }
-
-        renderEdge()
       }, 30);
 
       // myNode的axii渲染完成之后的动作
