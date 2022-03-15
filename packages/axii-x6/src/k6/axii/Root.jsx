@@ -37,7 +37,7 @@ function splitChildren (children) {
   };
 }
 
-function Root({ children, height, ref, readOnly, graphConfig={} }, frags) {
+function Root({ children, height, ref, readOnly, graphConfig={}, type = '' }, frags) {
   const {slots, realChildren} = splitChildren(children);
   const shareContext = useContext(ShareContext);
 
@@ -80,6 +80,7 @@ function Root({ children, height, ref, readOnly, graphConfig={} }, frags) {
         minimap: elementRefs.miniMap,
         graphConfig
       });
+      dm.insideState.graph.type = type;
       x6.Graph.renderNodes(dm.nm.nodes);
     }
     console.log('Root mounted')

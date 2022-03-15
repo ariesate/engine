@@ -349,8 +349,8 @@ export const Graph = {
     });
 
     graph.on('scale',({sx,sy,ox,oy})=>{
-      dm.insideState.graph.zoom = sx
-      localStorage.setItem('zoom',sx)
+      dm.insideState.graph.zoom = sx.toFixed(2);
+      localStorage.setItem(`${dm.insideState.graph.type}Zoom`,sx.toFixed(2))
     })
 
     dm.on('remove', (id) => {
@@ -413,8 +413,10 @@ export const Graph = {
       this.addNode(tryToRaw(node));      
     });
     setTimeout(()=>{
-      const zoom = localStorage.getItem('zoom')
-      if(zoom){
+      const type = dm.insideState.graph.type
+      const zoom = localStorage.getItem(`${type}Zoom`)
+      // 暂设置架构图保留缩放比例
+      if(type==='struct' && zoom){
         this.graph.zoom((Number(zoom)-1))
         this.graph.centerContent()
       }
