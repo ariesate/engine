@@ -52,6 +52,7 @@ export interface IInsideState {
   },
   graph: {
     zoom: number,
+    type: string,
   }
 }
 
@@ -352,6 +353,7 @@ class DataManager extends EventEmiter{
     },
     graph: {
       zoom: 1,
+      type: '',
     },
   });
   // x6/index.jsx
