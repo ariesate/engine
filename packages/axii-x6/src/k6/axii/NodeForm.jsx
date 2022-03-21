@@ -111,12 +111,28 @@ function NodeForm(props) {
     });
   });
 
+  const createConfigPanel=(ConfigPanel,formJson,cell)=>{
+    return createElement(ConfigPanel, {
+      node: cell,
+      data: formJson.value,
+      onSave,
+    });
+  }
+
   return (
     <nodeForm block block-width="400px">
       {(() => {
         const { cell, nodeComponent } = context.dm.insideState.selected;
         if (!formJson.value || !cell) {
           return null;
+        }
+        if (nodeComponent.configJSON && nodeComponent.ConfigPanel) {
+          debugger
+          return (
+            <config>
+              <DataConfig jsonWithData={formJson.value} onSave={onSave} hasBottom={false}></DataConfig>
+              {createConfigPanel(nodeComponent.ConfigPanel,formJson,cell)}
+            </config>)
         }
         if (nodeComponent.configJSON) {
           return (<DataConfig jsonWithData={formJson.value} onSave={onSave}></DataConfig>);  
