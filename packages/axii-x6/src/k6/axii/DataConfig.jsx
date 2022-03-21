@@ -7,6 +7,7 @@ import {
   useViewEffect,
   delegateLeaf,
   atom,
+  atomComputed,
 } from 'axii';
 
 import { Input, Select, Checkbox } from 'axii-components'
@@ -360,7 +361,8 @@ const DataConfigForm = createComponent((() => {
  * 默认不指定的情况下是根据node.x.y的绝对定位
  * 指定的情况下可以是根据相关Layout（这让我想起了安卓的xml
  */
-function DataConfig({ jsonWithData, onChange, onSave }) {
+function DataConfig({ jsonWithData, onChange, onSave, hasBottom=true }) {
+  debugger
 
   const myJson = (jsonWithData);
   window.myJson = myJson;
@@ -379,13 +381,21 @@ function DataConfig({ jsonWithData, onChange, onSave }) {
     //   onChange && onChange(rawData);
     // });
   }
+  const getStyle=atomComputed(()=>{
+    if(hasBottom){
+      return { border:'1px solid #aaa',backgroundColor:'#fff',overflow:'hidden'}
+    } else {
+      return {
+        border:'1px solid #aaa',
+        borderBottom:'0px solid',
+        backgroundColor: '#fff',
+        overflow:'hidden'
+      }
+    }
+  })
 
   return (
-    <dataCofnig block block-width="100%" style={{
-      border: '1px solid #aaa',
-      backgroundColor: '#fff',
-      overflow: 'hidden',
-    }} >
+    <dataCofnig block block-width="100%" style={getStyle} >
       <content block block-padding="16px">
         <DataConfigForm
           json={myJson}
