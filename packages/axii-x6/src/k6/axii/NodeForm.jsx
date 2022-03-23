@@ -129,8 +129,8 @@ function NodeForm(props) {
         if (nodeComponent.configJSON && nodeComponent.ConfigPanel) {
           return (
             <config>
-              <DataConfig jsonWithData={formJson.value} onSave={onSave} hasBottom={false}></DataConfig>
               {createConfigPanel(nodeComponent.ConfigPanel,formJson,cell)}
+              <DataConfig jsonWithData={formJson.value} onSave={onSave} hasTop={false}></DataConfig>
             </config>)
         }
         if (nodeComponent.configJSON) {
