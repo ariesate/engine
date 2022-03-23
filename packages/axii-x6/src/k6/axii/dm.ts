@@ -656,13 +656,16 @@ class DataManager extends EventEmiter{
   centerContent() {
     this.emit('center-content');
   }
+  centerPoint(x:number,y:number) {
+    this.emit('center-point', {x, y})
+  }
 
   dispose() {
     this.emit('dispose');
   }
 
   resize(width:number,height:number) {
-    this.emit('resize',{width:width,height:height})
+    this.emit('resize', {width:width,height:height})
   }
 }
 

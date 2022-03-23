@@ -374,6 +374,9 @@ export const Graph = {
     dm.on('center-content',() => {
       graph.centerContent();
     })
+    dm.on('center-point', props=>{
+      graph.centerPoint(props.x, props.y)
+    })
     dm.on('addNode', (n) => {
       const nodeId = this.addNode(n);
       dm.selectNode(nodeId)
@@ -415,9 +418,9 @@ export const Graph = {
     setTimeout(()=>{
       const type = dm.insideState.graph.type
       const zoom = localStorage.getItem(`${type}Zoom`)
-      // 暂设置架构图保留缩放比例
+      this.graph.zoom((Number(zoom)-1))
+      // 暂设置架构图自动居中
       if(type==='struct' && zoom){
-        this.graph.zoom((Number(zoom)-1))
         this.graph.centerContent()
       }
     })
