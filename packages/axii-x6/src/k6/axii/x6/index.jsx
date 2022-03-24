@@ -264,6 +264,7 @@ export const Graph = {
   },
 
   init(container, dm, config) {
+    console.log('init Graph', new Date())
     const graph = createFlowGraph(container, {
       ...config,
       getReadOnly: () => dm.readOnly.value,
@@ -412,9 +413,11 @@ export const Graph = {
   },
 
   renderNodes(nodes) {
+    console.log('start renderNodes', new Date())
     nodes.forEach(node => {
       this.addNode(tryToRaw(node));      
     });
+    console.log('end renderNodes', new Date())
     setTimeout(()=>{
       const type = dm.insideState.graph.type
       const zoom = localStorage.getItem(`${type}Zoom`)
