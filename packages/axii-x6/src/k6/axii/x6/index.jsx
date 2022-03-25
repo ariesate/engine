@@ -421,10 +421,12 @@ export const Graph = {
     setTimeout(()=>{
       const type = dm.insideState.graph.type
       const zoom = localStorage.getItem(`${type}Zoom`)
-      this.graph.zoom((Number(zoom)-1))
-      // 暂设置架构图自动居中
-      if(type==='struct' && zoom){
-        this.graph.centerContent()
+      if(zoom){
+        this.graph.zoom((Number(zoom)-1))
+        // 暂设置架构图自动居中
+        if(type==='struct'){
+          this.graph.centerContent()
+        }
       }
     })
   },
