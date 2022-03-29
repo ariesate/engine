@@ -40,6 +40,9 @@ const circularConfig = {
 }
 
 const graphConfig = {
+  panning: {
+    enabled: false
+  },
   snapline: {
     enabled: true
   },
@@ -52,16 +55,16 @@ const graphConfig = {
     multiple: true,
     rubberband: true,
     movable: true,
-    modifiers: 'shift',
     showNodeSelectionBox: true
   },
+  scroller: true,
   mousewheel: {
     enabled: true,
     modifiers: ['ctrl', 'meta', 'shift'],
     minScale: 0.1,
+    factor: 1.1,
     maxScale: 1
-  },
-  keyboard: true
+  }
 }
 
 
