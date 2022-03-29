@@ -354,6 +354,13 @@ export const Graph = {
       localStorage.setItem(`${dm.insideState.graph.type}Zoom`,sx.toFixed(2))
     })
 
+    graph.on('selection:changed',({added,removed,selected})=>{
+      // 处理多选
+      if(selected.length>1){
+        dm.multiSelectNode(selected.map((cell) => cell.id))
+      }
+    })
+
     dm.on('remove', (id) => {
       console.log('[remove cb] id: ', id);
       const cells = graph.getCells();

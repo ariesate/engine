@@ -44,11 +44,13 @@ type INodeComponentEvent = 'change' | 'save' | 'remove' | 'add';
 
 export interface IInsideState {
   selected: {
-    cell: IDataNode;
-    nodeComponent: INodeComponent
+    cell: IDataNode,
+    nodeComponent: INodeComponent,
+    multiCell: IDataNode[]
   }
   cacheSelected: {
     cell: { [k: string]: any }; // 镜像版本，用以对比数据
+    multiCell: { [k: string]: any }[]
   },
   graph: {
     zoom: number,
@@ -346,10 +348,12 @@ class DataManager extends EventEmiter{
   insideState:IInsideState = reactive({
     selected: {
       cell: null,
-      nodeComponent: null,  
+      nodeComponent: null, 
+      multiCell: null
     },
     cacheSelected: {
       cell: null,
+      multiCell: null,
     },
     graph: {
       zoom: 1,
@@ -542,9 +546,11 @@ class DataManager extends EventEmiter{
         selected: {
           cell: null,
           nodeComponent: null,
+          multiCell: null
         },
         cacheSelected: {
           cell: null,
+          multiCell: null
         },
       });
       return;
@@ -556,9 +562,27 @@ class DataManager extends EventEmiter{
       selected: {
         cell: node,
         nodeComponent: nodeComponent,  
+        multiCell: null
       },
       cacheSelected: {
         cell: cloneDeep(node),
+        multiCell: null
+      },
+    });
+  }
+  @disabledByReadOnly
+  multiSelectNode (array: string[]) {
+    const nodeArray = array.map(id=>this.findNode(id))
+    const [nodeComponent] = this.getShapeComponent(nodeArray[0].shape);
+    Object.assign(this.insideState, {
+      selected: {
+        cell: null,
+        nodeComponent: nodeComponent,  
+        multiCell: nodeArray
+      },
+      cacheSelected: {
+        cell: null,
+        multiCell: cloneDeep(nodeArray)
       },
     });
   }
@@ -569,9 +593,11 @@ class DataManager extends EventEmiter{
         selected: {
           cell: null,
           nodeComponent: null,  
+          multiCell: null
         },
         cacheSelected: {
           cell: null,
+          multiCell: null
         },
       });
       return;
@@ -584,9 +610,11 @@ class DataManager extends EventEmiter{
         selected: {
           cell: edge,
           nodeComponent: edgeComponent,  
+          multiCell: null
         },
         cacheSelected: {
           cell: cloneDeep(edge),
+          multiCell: null
         },
       });
     }
