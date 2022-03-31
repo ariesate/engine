@@ -67,10 +67,12 @@ export const EntityPort = createComponent((() => {
 })());
 
 export const EntityNode = createComponent((() => {
+  console.log('EntityNode')
 
   const RawField = ({ nodeId, field, entityPosition, positionTrigger, RegisterPort }) => {
 
     const fieldPosition = reactive({})
+    // console.log('RawField', new Date().valueOf())
 
     const portPosition = computed(() => {
       const result = {};

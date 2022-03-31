@@ -55,6 +55,7 @@ export const Register = {
   },
   registerHTMLComponentRender({ getInject }) {
     return (node) => {
+      console.log('registerHTMLComponentRender', new Date().valueOf())
       const [graph, dm, NodeCpt, PortCpt, EdgeCpt] = getInject();
       const wrap = document.createElement('div')
       // nodeConfig is reactive
@@ -460,6 +461,7 @@ export const Graph = {
   },
 
   addNode(nodeConfig) {
+    console.log('addNode start', nodeConfig.id,new Date().valueOf())
     const htmlKey = this.getHtmlKey(nodeConfig.shape);
     const nodeConfigView = nodeConfig.view;
     delete nodeConfig.view;
@@ -474,8 +476,8 @@ export const Graph = {
       html: htmlKey,
       ports: {},      
     });
-
     const x6NodeInstance = this.graph.addNode(node);
+    console.log('addNode end', new Date().valueOf())
     return x6NodeInstance.id
   },
   addEdge(sourceId,targetId){

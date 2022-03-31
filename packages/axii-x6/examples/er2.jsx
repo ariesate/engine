@@ -6,11 +6,73 @@
 import { createElement, render, useRef } from "axii";
 
 import { EREditor2 } from "../src/index";
-import localRawData from "../src/editors2/er/data";
+import oldData from "../src/editors2/er/data";
+// import localRawData from "../src/editors2/er/data2"
 
 const editorRef = useRef();
 const root = document.getElementById("root");
 
+export function transOldData (data) {
+  let { entities = [], relations = [] } = data
+
+  entities = entities.map(obj => {
+    const result = {}
+    if (obj.view) {
+      result.x = obj.view.x
+      result.y = obj.view.y
+      delete obj.view
+    }
+
+    result.data = {
+      fields: obj.fields,
+      name: obj.name,
+      groupId: obj.groupId
+    }
+
+    delete obj.fields
+
+    return Object.assign(result, obj)
+  })
+
+  relations = relations.map(obj => {
+    const result = {}
+    if (!obj.data) {
+      obj.data = {
+        name: obj.name,
+        type: obj.type
+      }
+    }
+    if (obj.source?.entity) {
+      result.source = {
+        cell: obj.source.entity,
+        port: obj.source.field + (obj.view ? '-' + obj.view.sourcePortSide : '')
+      }
+      delete obj.source
+    }
+    if (obj.target?.entity) {
+      result.target = {
+        cell: obj.target.entity,
+        port: obj.target.field + (obj.view ? '-' + obj.view.targetPortSide : '')
+      }
+      delete obj.target
+    }
+
+    delete obj.view
+
+    return Object.assign(result, obj)
+  }).filter(obj => {
+    const r1 = entities.find(entity => entity.id === obj.source.cell)
+    const r2 = entities.find(entity => entity.id === obj.target.cell)
+    return r1 && r2
+  })
+
+  return {
+    nodes: entities,
+    edges: relations
+  }
+}
+
+const localRawData = transOldData(oldData)
 localRawData.edges.forEach(e => {
   e.data = {
     name: e.name,
@@ -70,6 +132,6 @@ const graphConfig = {
 
 
 
-render(<EREditor2 data={localRawData} layoutConfig={dagreConfig} ref={editorRef} graphConfig={graphConfig} onSave={(d) => {
+render(<EREditor2 data={localRawData} ref={editorRef} graphConfig={graphConfig} onSave={(d) => {
   console.log('保存数据', d)
 }} />, root);
