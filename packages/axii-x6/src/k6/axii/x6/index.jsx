@@ -264,7 +264,6 @@ export const Graph = {
   },
 
   init(container, dm, config) {
-    console.log('init Graph', new Date())
     const graph = createFlowGraph(container, {
       ...config,
       getReadOnly: () => dm.readOnly.value,
@@ -420,11 +419,9 @@ export const Graph = {
   },
 
   renderNodes(nodes) {
-    console.log('start renderNodes', new Date())
     nodes.forEach(node => {
       this.addNode(tryToRaw(node));      
     });
-    console.log('end renderNodes', new Date())
     setTimeout(()=>{
       const type = dm.insideState.graph.type
       const zoom = localStorage.getItem(`${type}Zoom`)
@@ -463,10 +460,13 @@ export const Graph = {
     const htmlKey = this.getHtmlKey(nodeConfig.shape);
     const nodeConfigView = nodeConfig.view;
     delete nodeConfig.view;
-
+    const simpleNodeConfig = {...nodeConfig}
+    // 避免多重深拷贝造成时间消耗
+    delete simpleNodeConfig.next;
+    delete simpleNodeConfig.prev
     const node = merge({
       ...nodeConfigView,
-    }, nodeConfig, {
+    }, simpleNodeConfig, {
       shape: 'html',
       portMarkup: [ Markup.getForeignObjectMarkup() ],
       attrs: {
@@ -474,7 +474,6 @@ export const Graph = {
       html: htmlKey,
       ports: {},      
     });
-
     const x6NodeInstance = this.graph.addNode(node);
     return x6NodeInstance.id
   },
