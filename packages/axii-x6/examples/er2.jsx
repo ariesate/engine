@@ -6,8 +6,8 @@
 import { createElement, render, useRef } from "axii";
 
 import { EREditor2 } from "../src/index";
-import oldData from "../src/editors2/er/data";
-// import localRawData from "../src/editors2/er/data2"
+// import oldData from "../src/editors2/er/data";
+import localRawData from "../src/editors2/er/data2"
 
 const editorRef = useRef();
 const root = document.getElementById("root");
@@ -72,7 +72,7 @@ export function transOldData (data) {
   }
 }
 
-const localRawData = transOldData(oldData)
+// const localRawData = transOldData(oldData)
 localRawData.edges.forEach(e => {
   e.data = {
     name: e.name,
