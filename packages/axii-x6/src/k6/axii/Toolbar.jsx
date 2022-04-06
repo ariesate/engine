@@ -37,6 +37,7 @@ function Split() {
 }
 
 const AddNodeTAG = 'k6-add-node';
+const IsGroupTAG = 'group-node'
 
 function Toolbar(props) {
   let { extra = [], tip = '双击空白处可新增节点', onBeforeRemove = () => true} = props;
@@ -53,7 +54,11 @@ function Toolbar(props) {
           oldClick = vNode.attributes.onClick;
         }
         vNode.attributes.onClick = (e) => {
-          context.dm.addNode();
+          if(vNode.attributes[IsGroupTAG]){
+            context.dm.addNode({isGroupNode: true})
+          } else{
+            context.dm.addNode();
+          }
           oldClick(e);
         };
       }

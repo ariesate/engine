@@ -99,7 +99,6 @@ function generateNodeByConfig(k6Node: INodeComponent, initNodeProp?: { x?:number
   if (Reflect.has(data, 'x') || Reflect.has(data, 'y')) {
     throw new Error('[generateNodeByConfig] x, y is preserved prop name')
   }
-
   const newNode = {
     id: Math.floor(((Math.random() * 10000))).toString(),
     shape: k6Node.shape,
@@ -112,7 +111,8 @@ function generateNodeByConfig(k6Node: INodeComponent, initNodeProp?: { x?:number
     edges: [],
     prev: [],
     next: [],
-    selected: false
+    selected: false,
+    isGroupNode: false
   };
   newAddIndex++;
 
@@ -388,7 +388,7 @@ class DataManager extends EventEmiter{
     this.nm.readEdges(edges)
   }
   @disabledByReadOnly
-  async addNode(initNode?: { x?:number, y?:number }, parentId: string = null) {
+  async addNode(initNode?: { x?:number, y?:number, isGroupNode?:boolean }, parentId: string = null) {
     // 先默认只支持一种
     if (1) {
       const nodeComponent: ShapeComponent = this.nodeShapeComponentMap.values().next().value;
