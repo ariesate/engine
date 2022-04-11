@@ -541,6 +541,7 @@ class DataManager extends EventEmiter{
     //   const preNode = this.findNode(this.insideState.selected.cell?.id)
     //   preNode.data.selected = false
     // }
+    this.cancelSelectNodeOrEdge()
     if (!id ) {
       Object.assign(this.insideState, {
         selected: {
@@ -556,7 +557,6 @@ class DataManager extends EventEmiter{
       return;
     }
     const node = this.findNode(id);
-    // node.data.selected = true
     const [nodeComponent] = this.getShapeComponent(node.shape);
     Object.assign(this.insideState, {
       selected: {
@@ -569,6 +569,7 @@ class DataManager extends EventEmiter{
         multiCell: null
       },
     });
+    nodeComponent.onSelect && nodeComponent.onSelect(node)
   }
   @disabledByReadOnly
   multiSelectNode (array: string[]) {
@@ -588,6 +589,7 @@ class DataManager extends EventEmiter{
   }
   @disabledByReadOnly
   selectEdge(id: string) {
+    this.cancelSelectNodeOrEdge()
     if (!id || this.insideState.selected.cell?.id === id) {
       Object.assign(this.insideState, {
         selected: {
@@ -617,7 +619,13 @@ class DataManager extends EventEmiter{
           multiCell: null
         },
       });
+      edgeComponent.onSelect && edgeComponent.onSelect(edge)
     }
+  }
+  cancelSelectNodeOrEdge(){
+    const {cell, nodeComponent} = this.insideState.selected
+    if(!cell) return 
+    nodeComponent.onCancelSelect && nodeComponent.onCancelSelect(cell)
   }
   triggerCurrentEvent(event: INodeComponentEvent, data: any) {
     this.triggerEvent(this.insideState.selected.cell?.id, event, data);      
