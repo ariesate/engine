@@ -39,6 +39,12 @@ export const EntityEdge = ({ node,edge }) => {
 EntityEdge.onChange = (node, edge, data, oldEdgeData) => {
   console.log('[EntityEdge] onChange: node, edge, data, oldEdgeData: ', node, edge, data, oldEdgeData);
 }
+EntityEdge.onSelect = (edge) => {
+  console.log('[EntityEdge] onSelect: edge', edge)
+}
+EntityEdge.onCancelSelect = (edge) => {
+  console.log('[EntityEdge] onCancelSelect: edge', edge)
+}
 EntityEdge.configJSON = RelationConfigJSON;
 
 export const EntityPort = createComponent((() => {
@@ -175,6 +181,14 @@ export const EntityNode = createComponent((() => {
 
   EntityRender.shape = 'entity-shape';
   EntityRender.configJSON = EntityConfigJSON;
+
+  EntityRender.onSelect = (node)=>{
+    console.log('[EntityNode] onSelect: node',node)
+  }
+
+  EntityRender.onCancelSelect = (node)=>{
+    console.log('[EntityNode] onCancelSelect: node',node)
+  }
 
   return EntityRender;
 })());
