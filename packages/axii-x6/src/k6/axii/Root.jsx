@@ -37,12 +37,13 @@ function splitChildren (children) {
   };
 }
 
-function Root({ children, height, ref, readOnly, graphConfig={}, type = '' }, frags) {
+function Root({ children, height, ref, readOnly, graphConfig={}, type = '', isAllReadOnly }, frags) {
   const {slots, realChildren} = splitChildren(children);
   const shareContext = useContext(ShareContext);
 
   const dm = new DM();
   dm.setX6(x6);
+  // readOnly表示只读，不能对画布进行操作，在isAllReadOnly=true的情况下无toolbar;isAllReadOnly=false时仍然显示toolbar
   dm.setReadOnly(readOnly);
 
   if (shareContext) {
@@ -63,6 +64,7 @@ function Root({ children, height, ref, readOnly, graphConfig={}, type = '' }, fr
       graph: null,
     }),
     readOnly,
+    isAllReadOnly
   };
 
 

@@ -23,11 +23,12 @@ function ER2Editor({ data, layoutConfig={}, onSave, graphConfig={} }) {
   }
 
   const readOnly = atom(false)
+  const isAllReadOnly = atom(false)
   window.editorReadOnly = readOnly
   
   return (
     <container block>
-      <K6 layout:block layout:flex-display readOnly={readOnly} graphConfig={graphConfig} ref={dmRef} extraHeight={-200}>
+      <K6 layout:block layout:flex-display readOnly={readOnly} graphConfig={graphConfig} ref={dmRef} extraHeight={-200} isAllReadOnly={isAllReadOnly}>
         <k6base flex-grow="1" block>
           <Register globalData={dataFunc}>
           </Register>
