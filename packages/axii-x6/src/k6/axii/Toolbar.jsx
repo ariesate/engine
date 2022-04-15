@@ -104,7 +104,7 @@ function Toolbar(props) {
 
   const toolbarStyle = atomComputed(() => {
     return {
-      display: context.readOnly.value ? 'none' : 'flex'
+      display: (context.readOnly.value && context.isAllReadOnly.value) ? 'none' : 'flex'
     }
   })
 

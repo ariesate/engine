@@ -62,7 +62,7 @@ function Graph({ data, height, layoutConfig={}, inlineToolbar, toolbarExtra, too
 
   return (
     <graphContainer block >
-      {() => rootContext.readOnly.value || !inlineToolbar ? '' : (
+      {() => (rootContext.readOnly.value && rootContext.isAllReadOnly.value) || !inlineToolbar ? '' : (
         <toolbarBox block >
           <Toolbar extra={toolbarExtra} {...toolbarProps}/>
         </toolbarBox>
