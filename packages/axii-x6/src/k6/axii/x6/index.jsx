@@ -142,9 +142,13 @@ export const Register = {
           return
         }
         let { width, height } = (wrap.children[0].getBoundingClientRect());
+        const zoom = Number(dm.insideState.graph.zoom)
+        width = width/zoom
+        height = height/zoom
         if(!!nodeConfig.width || !!nodeConfig.size){width = nodeConfig.width || nodeConfig.size.width} 
         if(!!nodeConfig.height || !!nodeConfig.size){height = nodeConfig.height || nodeConfig.size.height}
         node.setProp({ width: width, height: height });
+        // node.resize(width, height)
         // render port
         if (getPortConfig) {
           const portConfigArr = getPortConfig(nodeConfig.id);
