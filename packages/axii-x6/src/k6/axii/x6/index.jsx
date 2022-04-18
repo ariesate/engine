@@ -82,7 +82,7 @@ export const Register = {
               node={nodeConfig}
               state={dm.insideState}
               RegisterPort={RegisterPort}
-              onRemove={() => dm.removeIdOrCurrent(node.id)}
+              onRemove={() => dm.removeIdOrCurrent(node.id, 'node')}
             />
           </ShareContext.Provider>
         );
@@ -364,13 +364,13 @@ export const Graph = {
       }
     })
 
-    dm.on('remove', (id) => {
+    dm.on('remove', ({id, type}) => {
       console.log('[remove cb] id: ', id);
       const cells = graph.getCells();
       console.log('[remove cb] cell ids=', cells.map(cell => [cell.id, cell.getData().remoteId]));
       const cell = cells.find(cell => cell.getData().remoteId === id);
       let removedCell;
-      if (cell) {
+      if (cell && type === 'edge') {
         removedCell = graph.removeCell(cell.id);
       } else {
         removedCell = graph.removeCell(id);
