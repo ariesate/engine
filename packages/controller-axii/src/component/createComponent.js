@@ -175,13 +175,15 @@ export default function createComponent(Base, featureDefs=[]) {
     // 渲染过程中 actionCollector 会自动 invoke 所有的 feature actions。
     const baseFragmentAgent = fragmentAgentContainer.derive(BaseAsFeature)
 
+    const rootFragmentInstance = {}
+
     // 得到一个叫做 root 的 FragmentDynamic 对象。
-    const rootFragment = baseFragmentAgent[ROOT_FRAGMENT_NAME](processedProps)(() => Base(processedPropsWithChildren, baseFragmentAgent, selfHandleRef))
+    const rootFragment = baseFragmentAgent[ROOT_FRAGMENT_NAME](processedProps)(() => Base(processedPropsWithChildren, baseFragmentAgent, selfHandleRef, rootFragmentInstance))
     // CAUTION base 是 nonReactive 的，因为如果数据引用变了，会自动从上面刷新。注意这里会印象到后面的 ref 处理。
     rootFragment.nonReactive = true
     const argvStack = mapValues(processedProps, (prop) => ([prop]))
 
-    const result = renderFragments(rootFragment, selfHandleRef, fragmentAgentContainer, processedPropsWithChildren, argvStack, baseFragmentAgent, { stylesheet, componentId, instanceId })
+    const result = renderFragments(rootFragment, selfHandleRef, fragmentAgentContainer, processedPropsWithChildren, argvStack, baseFragmentAgent, { stylesheet, componentId, instanceId, instance: rootFragmentInstance })
 
     // 6. TODO 自动 forward ref， 如果有 forwardRef 说明组件自己处理。在这里处理还是在 Base 里？？？
     //      应该是要劫持到组件的渲染过程才有可能得到最真实的最外层 dom。
@@ -189,12 +191,12 @@ export default function createComponent(Base, featureDefs=[]) {
       if (result.type === FragmentVnode) {
         invariant(typeof ref === 'function', 'component root is a Fragment, you can only use function ref' )
         result.children.forEach((child) => {
-          // TODO 还有 fragment 怎么办？暂时没有考虑。
+          // TODO 还有 fragment 怎么办？暂时没有考虑。理论上需要 resolveFirstElement
           child.ref = ref
         })
       } else {
         // CAUTION 这里和 ref 的实现有点耦合，直接打在了 vnode 上。
-        // TODO 这里还有很多其他复杂情况，比如组件直接就返回了 vnodeComputed。
+        // TODO 这里还有很多其他复杂情况，比如组件直接就返回了 function 等等。
         result.ref = ref
       }
     }
@@ -287,7 +289,7 @@ function renderFragments(fragment, selfHandleRef, fragmentAgentContainer, upperA
 
     // 在渲染子 component 之前，我们可以先有个 prepare 函数，这对要提前进行一些变量计算非常有用。
     fragmentAgentContainer.summary[fragment.name]?.preparations.forEach((prepare) => {
-      const dynamicVars = prepare(commonArgv, commonArgvStack)
+      const dynamicVars = prepare(commonArgv, commonArgvStack, misc.instance)
       if (dynamicVars) {
         // 不允许动态覆盖参数，容易出问题，职能用修改 vnode 结果的方式来改。
         invariant(Object.keys(dynamicVars).every(key => !(key in commonArgv)), `do not overwrite var in prepare function ${Object.keys(dynamicVars)}`)
@@ -299,7 +301,7 @@ function renderFragments(fragment, selfHandleRef, fragmentAgentContainer, upperA
     // 3. 开始执行每个 feature 中的 mutations。
     fragmentAgentContainer.summary[fragment.name]?.modifications.forEach((modify) => {
       // 如果有返回值，就要替换原节点。因为有时候 modification 写起来没有直接写想要的结构来得方便。
-      const alterResult = modify(renderResult, commonArgv, commonArgvStack)
+      const alterResult = modify(renderResult, commonArgv, commonArgvStack, misc.instance)
       if (alterResult) {
         renderResult = alterResult
         renderResultToWalk = Array.isArray(renderResult) ? renderResult : [renderResult]
@@ -436,7 +438,7 @@ function renderFragments(fragment, selfHandleRef, fragmentAgentContainer, upperA
       if (matchedModifiers.length) {
         modifiedVnode = matchedModifiers.reduce((last, currentModify) => {
           // TODO 参数增加 fragment 的路径
-          const currentModifiedVnode = currentModify(last, commonArgv, commonArgvStack)
+          const currentModifiedVnode = currentModify(last, commonArgv, commonArgvStack, misc.instance)
           return currentModifiedVnode === undefined ? last : currentModifiedVnode
         }, originVnode)
         vnodes[vnodes.indexOf(originVnode)] = modifiedVnode
@@ -502,7 +504,7 @@ function renderFragments(fragment, selfHandleRef, fragmentAgentContainer, upperA
         Object.entries(listenersByEventName).forEach(([eventName, listeners]) => {
           const originListener =  modifiedVnode.attributes[eventName]
           // 这样写就能支持 originListener 为 undefined | function | [function] 。
-          modifiedVnode.attributes[eventName] = ([]).concat(originListener || [], ...listeners.map(listener => (...argv) => listener(...argv, commonArgv, commonArgvStack)))
+          modifiedVnode.attributes[eventName] = ([]).concat(originListener || [], ...listeners.map(listener => (...argv) => listener(...argv, commonArgv, commonArgvStack, misc.instance)))
         })
       }
 

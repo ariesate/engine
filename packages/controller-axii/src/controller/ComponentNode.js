@@ -1,12 +1,12 @@
-import {destroyComputed, isReactiveLike, atomLike, collectReactive, setDisplayName, getComputation} from "../reactive";
+import {destroyComputed, canDestroy, isReactiveLike, atomLike, collectReactive, setDisplayName, getComputation} from "../reactive";
 import {filter, invariant, mapValues, tryToRaw} from "../util";
 import propTypes from "../propTypes";
 import {activeEvent, getCurrentWorkingCnode, reactiveToOwnerScope} from "../renderContext";
 import {applyPatches, produce} from "../produce";
-import { replaceVnodeComputedAndWatchReactive } from './VirtualComponent'
+import { HandleFunctionAndReactiveAndChildren } from './VirtualComponent'
 import watch from "../watch";
 import {isComponentVnode, layoutManager} from "./index";
-import {createChildrenProxy, smartCreateChildrenProxy} from "./createChildrenProxy";
+import {smartCreateChildrenProxy} from "./createChildrenProxy";
 
 const seenTypes = new WeakSet()
 
@@ -41,7 +41,10 @@ export default class ComponentNode {
 	}
 
 	clearComputed()  {
-		this.computed.forEach(computed => destroyComputed(computed))
+		this.computed.forEach(computed => {
+			// 因为会收集到 watchOnce 的 computed， 它会自动销毁，所以要做这个判断。
+			if (canDestroy(computed)) destroyComputed(computed)
+		})
 		this.computed = []
 	}
 	// 组件 render 的过程中产生的所有 computed 都要收集起来！computed 是需要手动销毁的。
@@ -89,6 +92,10 @@ export default class ComponentNode {
 				clearEffect()
 			}
 		})
+		// 3. virtual component 的 watch token
+		if (this.lastWatchToken) {
+			destroyComputed(this.lastWatchToken)
+		}
 	}
 	// AXII lifeCycle: willUpdate。
 	willUpdate() {
@@ -117,7 +124,7 @@ export default class ComponentNode {
 			// 我们允许外部传递 layout:xxx 的属性进来，在这里要 patch 到 result 上，才能被正确 replace 掉
 			processLayoutAttributes(this, renderResult)
 
-			return replaceVnodeComputedAndWatchReactive(
+			return HandleFunctionAndReactiveAndChildren(
 				renderResult,
 				(patchNode) => this.reportChangedVnode(patchNode, this),
 				this
@@ -126,43 +133,39 @@ export default class ComponentNode {
 	}
 	virtualCnodeRender() {
 		/**
-		 * 其实 this.type 并没有重新计算，计算过程再 reactive digest 的时候就已经算出来了，这里只是取出数据而已。
 		 * Virtual 因为更新而产生的的render 有两种不同的来源：
-		 * 1. 由于自身内部依赖的数据变化了，这种情况其实是可以不用再重新 watch 的。
-		 * 2. 父组件重新 render 了，由于创建 Virtual 时做了 Virtual 类型的缓存，希望继续在 Virtual 内部利用 diff。
-		 * 这个时候通过 this.type() 拿到的 result 已经不是上一次的引用了而是上层 render 函数执行时创建的新的 vnodeComputed。
-		 * 这时候就要把上一次的 watch 清理掉
-		 *
-		 * Virtual Component 就是一个壳，内核是里面的 vnodeComputedRef。
+		 * 1. 由于自身内部依赖的数据变化了
+		 * 2. 父组件重新 render 了
+		 * 不管是哪一种，我们都清空上一次的 watch，重新 watch 一次这次的执行
 		 */
-		const vnodeComputedRef = this.type()
 
-
-		if (this.lastVnodeComputedRef !== vnodeComputedRef) {
-
-			// 说明这是来自于父组件 render 的变化，引用已经不一样了。
-			// 这个 vnodeComputed 不需要自己来销毁，因为它是在上层创建的，上层组件在重新渲染时会销毁掉的。
-			// 基本原则是谁创建的 computed，谁负责销毁。
-			this.lastVnodeComputedRef = vnodeComputedRef
-
-			// 这个 watch 是我们创造的，所以要收集和销毁
-			this.clearComputed()
-			this.collectReactive(() => {
-				watch(() => vnodeComputedRef.value, () => this.reportChange(this))
-			})
-		} else {
-			// TODO 需要个检测，看看 value 是否真的变化了，如果发现没变，说明更新机制出问题了
-			// 说明这是来自于内部的变化，也就是 watch 回调中使用 this.reportChange 产生的更新。
-			// 这个时候不用做任何处理。
+		// CAUTION 用 clearComputed 销毁上一次的 watch。为什么不用 watchOnce，因为目前 watchOnce 用例 defer callback，不知道有没有问题。
+		this.clearComputed()
+		if (this.lastWatchToken) {
+			destroyComputed(this.lastWatchToken)
 		}
-		// 不管 vnodeComputedRef 引用有没有变，vnodeComputedRef.value 肯定变化了，这里是最新的，也要进行 reactiveProps watch 和 vnodeComputed 的替换。
-		return this.collectReactive(() => {
-			return replaceVnodeComputedAndWatchReactive(
-				vnodeComputedRef.value,
-				(patchNode) => this.reportChangedVnode(patchNode, this),
-				this
-			)
-		}, getComputation(vnodeComputedRef))
+
+		let renderResult
+		const [_, token] = watch(
+			() => {
+				if (renderResult) {
+					this.reportChange(this)
+				} else {
+					renderResult = this.collectReactive(() => {
+						return HandleFunctionAndReactiveAndChildren(
+							this.type(),
+							(patchNode) => this.reportChangedVnode(patchNode, this),
+							this
+						)
+					}, this.type)
+				}
+			},
+			() => {}
+		)
+
+		this.lastWatchToken = token
+
+		return renderResult
 
 	}
 }

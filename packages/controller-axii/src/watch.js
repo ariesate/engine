@@ -20,7 +20,7 @@ export default function watch(computation, callback, runAtOnce) {
     if (isFirstRun) {
       isFirstRun = false
     }
-  }, TYPE.TOKEN)
+  }, TYPE.TOKEN, computation)
   return [result, token]
 }
 
@@ -57,7 +57,7 @@ export function watchOnce(computation, callback, runAtOnce) {
         destroyComputed(token)
       })
     }
-  }, TYPE.TOKEN)
+  }, TYPE.TOKEN, computation)
   return [result, token]
 }
 

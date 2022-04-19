@@ -79,7 +79,11 @@ export function atomComputed(computation) {
   return createComputed(computation, TYPE.REF)
 }
 
-class ComputedToken {}
+class ComputedToken {
+  constructor(payload) {
+    this.payload = payload
+  }
+}
 
 /*
  * CAUTION 在 computed 中应该是不允许再嵌套 reactive，
@@ -90,15 +94,14 @@ class ComputedToken {}
  *
  * 第三参数表示如果是复杂 computed 对象，是否不进行深度 patch，默认是进行。
  */
-export function createComputed(computation, type, shallow) {
+export function createComputed(computation, type, computedPayload) {
   invariant(typeof computation === 'function', 'computation must be a function')
 
-  computation.computed = type ? (type === TYPE.REF ? atom(undefined, true) : new ComputedToken()) : undefined
+  computation.computed = type ? (type === TYPE.REF ? atom(undefined, true) : new ComputedToken(computedPayload)) : undefined
   computation.indeps = new Set()
   computation.levelChildren = new Set()
   computation.level = 0
   computation.type = type
-  computation.deep = shallow
   // 用来标记 scope 的，后面可以用 scopeId skip 掉计算过程。
   computation.scopeId = activeScopeId
 
@@ -126,7 +129,11 @@ function applyCollectComputed(computed) {
   collectFrame.computed.push(computed)
 }
 
-export function destroyComputed(computed) {
+export function canDestroy(computed) {
+  return getFromMap(reactiveToPayloads, toRaw(computed))
+}
+
+export function destroyComputed(computed, stopRecursive) {
   const payload = getFromMap(reactiveToPayloads, toRaw(computed))
   if (payload) {
     invariant(Object.values(payload.keys).every(({ computations }) => computations.size === 0), 'computed have deps, can not destroy')
@@ -146,13 +153,16 @@ export function destroyComputed(computed) {
         computation.levelParent.levelChildren.delete(computation)
       }
 
-      // 最后标记一下，可以用于调试等
+      // 最后标记一下，如果已经在 computationStack 中等待 recomputed 的，可以利用这个标记跳过
       computation.deleted = true
 
       // 如果有 innerComputed 呢？
-      // 如果是 computation 重新执行，那么在执行的代码中已经处理了 innerComputed，并且是递归处理的。
-      // 如果是手动调用 destroyComputed。目前应该只有在 watch 中调用了。
-      // TODO 要不要统一改成递归 destroyComputed？
+      // 如果是 computation 重新执行，那么在执行的代码中已经处理了 innerComputed，并且是压栈处理了所有的。
+      // 如果是手动调用 destroyComputed。目前应该只有在 watch 中调用了，默认应该递归。
+      if (!stopRecursive) {
+        destroyInnerComputed(computation)
+      }
+
     }
     reactiveToPayloads.delete(toRaw(computed))
   } else {
@@ -187,7 +197,7 @@ function applyComputation() {
     computation.computed = (Array.isArray(nextValue) || isPlainObject(nextValue)) ? reactive(nextValue, true) : atom(nextValue, true)
   } else if(!isToken) {
     // 未来可能提供能力让 computed token 可以销毁自己。所以这里的 isToken 变量要在前面定义，否则到这里的时候 computation 已经被清理得差不多了
-    if (computation.type === TYPE.REF || computation.shallow) {
+    if (computation.type === TYPE.REF) {
       // TODO 支持自定义的 patch???
       replace(computation.computed, nextValue)
     } else {
@@ -273,7 +283,8 @@ function updateLevelParent(computation, nextParentLevel) {
     }
   })
 
-
+  // TODO 这里是 bug，应该要考虑的是 parentComputation 的高度, inner 应该要比 out 高。
+  //  因为 inner 要后计算，这样 outComputed 重新计算的时候才能及时 destroy 掉 inner，阻止无意义的 inner 再计算。
   // 还要看所有的内部 computed 的高度
   const innerComputations = computedRelation.get(computation)
   if (innerComputations) {
@@ -323,8 +334,7 @@ function getComputationFromKeyNode(keyNode) {
  * 因为我们的 computed 中允许再建立 computed。
  * 这意味每次 computed 重新执行的时候都会新建，所以必须要清理掉上次的子 computed。否则会造成内存泄露。
  */
-function destroyInnerComputed() {
-  const { computation } = computationStack[computationStack.length - 1]
+function destroyInnerComputed(computation = computationStack[computationStack.length - 1].computation) {
   // 先清理掉依赖于当前项 computed
   let current
   const computationToClear = computedRelation.get(computation)
@@ -336,8 +346,11 @@ function destroyInnerComputed() {
       // 再把更里面的也放进去等着销毁
       computationToClear.push(...(computedRelation.get(current) || []))
     }
+
     computedToDestroy.forEach(computed => {
-      destroyComputed(computed)
+      // CAUTION 注意这里第二个参数表示不递归，因为我们这里已经用压栈的方式处理了
+      //  为什么不递归？因为递归在调试的时候调用栈太深，而压栈清晰很多。
+      destroyComputed(computed, true)
     })
   }
 }
@@ -400,6 +413,9 @@ function digestComputations() {
   computationObservers.forEach(observer => observer.start && observer.start(cachedTriggerSources, cachedComputations))
   computationCalled = 0
   while(computation = cachedComputations.shift()) {
+    // CAUTION 有可能出现收集到的 computation 是 innerComputed 的情况，而 recomputed 的时候这些 innerComputed 应该
+    //  不要重新执行了
+    if (computation.deleted) continue
     // 一定不要忘了清空
     levelChangedComputations = []
     // 通知全局的 observer,observer 可以自己去 cachedComputations 取后续的，去 appliedComputations 中取执行过的。
@@ -410,7 +426,7 @@ function digestComputations() {
     // 绝大部分场景，应该不会有层级频繁变化的 computation。
     const changedLevelComputations = filterOut(cachedComputations, levelChangedComputations)
     changedLevelComputations.forEach(c => {
-      insertIntoOrderedArray(cachedComputations, c, (a, b) => b.level < a.level)
+      insertIntoOrderedArray(cachedComputations, c, (a, toInsert) => toInsert.level < a.level)
     })
     computationCalled++
     if (computationCalled > maxComputationCalls) {

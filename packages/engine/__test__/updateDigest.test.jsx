@@ -144,6 +144,49 @@ describe('array', () => {
     view.updateDigest(ctree)
     expect(refs[0].outerHTML).toBe('<div><span>1</span></div>')
   })
+
+  test('return different type of vnode',() => {
+    let count = 0
+    const App = {
+      render() {
+        ++count
+        if (count === 1) {
+          return <div>1</div>
+        } else if (count === 2){
+          return <span></span>
+        } else if(count ===3){
+          return [<div>3</div>, <div>4</div>]
+        } else {
+          return null
+        }
+      }
+    }
+
+
+    const ctree = painter.createCnode(<App />)
+    painter.paint(ctree)
+    view.initialDigest(ctree)
+
+    const refs = ctree.view.getRootElements()
+    expect(refs.length).toBe(1)
+    expect(refs[0].outerHTML).toBe('<div>1</div>')
+
+    painter.repaint(ctree)
+    view.updateDigest(ctree)
+    const refs2 = ctree.view.getRootElements()
+    expect(refs2[0].outerHTML).toBe('<span></span>')
+
+    painter.repaint(ctree)
+    view.updateDigest(ctree)
+    const refs3 = ctree.view.getRootElements()
+    expect(refs3[0].outerHTML).toBe('<div>3</div>')
+    expect(refs3[1].outerHTML).toBe('<div>4</div>')
+
+    painter.repaint(ctree)
+    view.updateDigest(ctree)
+    const refs4 = ctree.view.getRootElements()
+    expect(refs4.length).toBe(0)
+  })
 })
 
 // TODO fragment/array 的测试补全，包括placeholder

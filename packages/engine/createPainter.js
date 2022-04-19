@@ -208,13 +208,18 @@ function handleInsertPatchNode(vnode, collections, parentPatch, cnode, utils) {
 }
 
 function handleRemovePatchNode(lastVnode, patch) {
-  patch.push(createPatchNode(lastVnode, {}, PATCH_ACTION_REMOVE))
+  const patchNode = createPatchNode(lastVnode, {}, PATCH_ACTION_REMOVE)
+  // CAUTION 对于要 remove 的节点需要直接把 children 复制过来，因为 digest 的时候要 resolveFirstElement，
+  //  如果 patchNode 是 Array 或者 Fragment，就会去 children 中 resolve
+  patchNode.children = lastVnode.children
+  patch.push(patchNode)
 }
 
 /**
  * If a vnode's position changed from last time, we use this method to mark it.
  */
 function handleToMovePatchNode(lastVnode, patch) {
+  // 这里不用递归处理 children，因为我们其实不消费 to_move 的节点，而是消费 move_from 的节点
   patch.push(createPatchNode(lastVnode, {}, PATCH_ACTION_TO_MOVE))
 }
 
@@ -560,7 +565,6 @@ export default function createPainter(renderer, isComponentVnode = defaultIsComp
 
   return {
     paint: (cnode) => {
-      if (!cnode.type) debugger
       if (cnode.isPainted) throw new Error(`cnode already painted ${cnode.type.displayName}`)
       return paint(cnode, renderer, utils)
     },

@@ -1,6 +1,4 @@
-import VNode from '@ariesate/are/VNode'
-import vnodeComputed from "./vnodeComputed"
-import { createCreateElement, defaultNormalizeLeaf } from '@ariesate/are/createElement'
+import { createCreateElement } from '@ariesate/are/createElement'
 
 const methods = createCreateElement()
 

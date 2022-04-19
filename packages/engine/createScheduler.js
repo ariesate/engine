@@ -135,6 +135,9 @@ export default function createScheduler(painter, view, supervisor) {
       cnodes.forEach(cnode => cnodeTrackingTree.track(cnode))
       if (!currentSession) {
         startUpdateSession()
+      } if (currentSession === SESSION_INITIAL ) {
+        // CAUTION 这里警告非常重要，说明用户可能写错了代码，正在 render 过程中又触发了变化
+        console.warn('Cannot start update session in initial session. You probably triggered update in render process.')
       }
     },
     // 除了 cnode 带来的结构性变化（消化 diff 产生的结果）。我们还支持精确的 vnode 的变化处理（例如 axii 中由于使用了 reactive 对象来表示 text/style，只需要局部更新）。
