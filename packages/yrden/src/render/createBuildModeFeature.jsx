@@ -1,9 +1,9 @@
-import { propTypes, atom } from 'axii'
+import { propTypes, atom, useViewEffect } from 'axii'
 import { SCHEMA_NODE_ID_STATE_NAME, SCHEMA_NODE_INDEX_STATE_NAME } from './render'
 
 
 
-export function createBuildModeFeature({ listen, collect, inspect }) {
+export function createBuildModeFeature({ listen, collect, inspect, useViewEffect: featureUseViewEffect }) {
 
   function BuildModeFeature(fragments) {
     listen.forEach(({ listeners, matcher : listenerMatcher }) => {
@@ -19,6 +19,9 @@ export function createBuildModeFeature({ listen, collect, inspect }) {
 
     inspect && fragments.global.inspect(inspect)
 
+    featureUseViewEffect && fragments.root.prepare((...argv) => {
+      useViewEffect(() => featureUseViewEffect(...argv))
+    })
   }
 
   BuildModeFeature.propTypes = {

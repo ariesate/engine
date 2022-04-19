@@ -409,5 +409,5 @@ export function deferred(fn) {
 }
 
 export function nextTask(callback) {
-  setTimeout(callback, 0)
+  setTimeout(callback, 16)
 }

@@ -11,30 +11,51 @@ import {
   atom,
   useRef
 } from 'axii'
-import {useLayer} from "axii-components";
+import {
+  SCHEMA_NODE_ID_STATE_NAME,
+  SCHEMA_NODE_INDEX_STATE_NAME
+} from 'yrden'
+import { Input } from "axii-components";
 import ComponentPicker from "./ComponentPicker";
 import useHotkeys from "../hooks/useHotkeys";
 import useFocus from "../hooks/useFocus";
-import {nextTask} from "../util";
+import useModal from "../hooks/useModal";
+import {filter, mapValues, nextTask} from "../util";
+
+const RESERVED_NAMES = [
+  SCHEMA_NODE_ID_STATE_NAME,
+  SCHEMA_NODE_INDEX_STATE_NAME,
+  'children'
+]
+
+function createDefaultProps(componentPropTypes = {}) {
+  // TODO 过滤 function ？
+  const toCreate = filter(componentPropTypes, (_, name) => !RESERVED_NAMES.includes(name))
+
+  return mapValues(toCreate, (propType) => {
+    // 这是个 defined property， 会调用 createDefault 函数创建新的，所以不用更担心引用问题
+    return propType.defaultValue
+  })
+}
 
 
-function insertToChildren(children, insertName, childrenPropType) {
+function insertToChildren(children, insertName, childrenPropType, componentPropTypes) {
   if (childrenPropType.is(propTypes.arrayOf)) {
     if (childrenPropType.argv[0].is(propTypes.element)) {
-      children.push({ component: insertName })
+      children.push({ component: insertName, props: createDefaultProps(componentPropTypes) })
       return true
     } else {
       // shape 结构。得找到 children 的上一个位置还能不能插入，如果不能的话，新建一个 shape 来插入
       const lastChild = children[children.length -1]
       let insertToLast
       if (lastChild) {
-        insertToLast = insertToChildren(lastChild, insertName, childrenPropType.argv[0])
+        insertToLast = insertToChildren(lastChild, insertName, childrenPropType.argv[0], componentPropTypes)
       }
       if (insertToLast) return true
 
       children.push({})
       // CAUTION 注意这里要再读一遍，因为 children 是个 reactive。拆入进去的那个引用已经变了。
-      return insertToChildren(children[children.length -1], insertName, childrenPropType.argv[0])
+      return insertToChildren(children[children.length -1], insertName, childrenPropType.argv[0], componentPropTypes)
     }
   } else {
     // TODO shape 结构，递归寻找能被插入的第一个位置
@@ -61,16 +82,16 @@ function insertToChildren(children, insertName, childrenPropType) {
  *   3. 如果是 arrayOf，那么是不定长度的 array，还要递归。展示成 key[]
  *   4. 如果是 shapeOf，那么还要递归 shape。
  */
-function renderChildrenShape(childrenPropType, children, components, f) {
+function renderChildrenShape(childrenPropType, children, components, f, listeners) {
   if (!childrenPropType) {
     // 说明是个标签节点
-    return (children || []).map(child => f.child({ data: child })(<children key={child?.id}>{renderEmptyOrSchema({data: child, components}, f)}</children>))
+    return (children || []).map(child => f.child({ data: child })(<children key={child?.id}>{renderEmptyOrSchema({data: child, components}, f, listeners)}</children>))
   }
 
   // 如果没有名字，那么就是 children。
   if (childrenPropType.is(propTypes.element)) {
     return (
-      renderEmptyOrSchema({data: children, components}, f)
+      renderEmptyOrSchema({data: children, components}, f, listeners)
     )
   }
 
@@ -82,7 +103,7 @@ function renderChildrenShape(childrenPropType, children, components, f) {
           () => children ?
             children.map((child, index) =>
               f.childShape({data: child, key: index, isArray: true})(
-                <childrenShape key={child?.id}>{renderChildrenShape(childrenPropType.argv[0], child, components, f)}</childrenShape>
+                <childrenShape key={child?.id}>{renderChildrenShape(childrenPropType.argv[0], child, components, f, listeners)}</childrenShape>
               )
             ) :
             <emptyNode inline>+</emptyNode>
@@ -97,7 +118,7 @@ function renderChildrenShape(childrenPropType, children, components, f) {
         {() => Object.entries(childrenPropType.argv[0]).map(([key, childPropType]) => f.childShape({ key, data: children?.[key], isArray: false })(
           <children block key={key}>
             <childName inline>{key}</childName>
-            {() => renderChildrenShape(childPropType, children?.[key], components, f)}
+            {() => renderChildrenShape(childPropType, children?.[key], components, f, listeners)}
           </children>
         ))}
       </children>
@@ -106,29 +127,35 @@ function renderChildrenShape(childrenPropType, children, components, f) {
 }
 
 
-function renderEmptyOrSchema(props, f) {
-  return (!props.data || props.data.component === null) ? <emptyNode inline>+</emptyNode> : renderSchema(props, f)
+function renderEmptyOrSchema(props, f, listeners) {
+  return (!props.data || props.data.component === null) ?
+    <emptyNode inline>+</emptyNode> :
+    <childSchema block block-margin-left-4px>
+      {renderSchema(props, f, {}, listeners)}
+    </childSchema>
+
 }
 
-function renderSchema({data, components}, f, nodeContainerProps = {}) {
+function renderSchema({data, components}, f, nodeContainerProps = {}, listeners = {}) {
   const Component = components[data?.component]
   return (
     <nodeContainer block {...nodeContainerProps} tabIndex={-1}>
-      <nodeName inline>{
+      <nodeName inline onClick={() => listeners.onNodeNameClick(data)}>{
         () => {
           // 文字、数字等可以渲染的节点
           return typeof data !== 'object' ? JSON.stringify(data): data.component
         }}
+        {() => data.exportName ? `(${data.exportName})` : ''}
       </nodeName>
       {() => {
         if (!data?.children) return null
         // CAUTION 这里没有严格检测是普通标签还是组件，只是没匹配就认为是普通标签
         return (
-          <childrenContainer block block-padding-left-20px>
+          <childrenContainer block block-padding-left-8px>
             {
               () => Component ?
-                renderChildrenShape(Component.propTypes.children, data.children, components, f) :
-                data.children?.map(child => f.child({ data: child })(<children key={child?.id}>{renderEmptyOrSchema({data: child, components}, f)}</children>))
+                renderChildrenShape(Component.propTypes.children, data.children, components, f, listeners) :
+                data.children?.map((child, index) => f.child({ data: child, childIndex: index })(<children key={child?.id}>{renderEmptyOrSchema({data: child, components}, f, listeners)}</children>))
             }
           </childrenContainer>
         )
@@ -137,13 +164,13 @@ function renderSchema({data, components}, f, nodeContainerProps = {}) {
         () => {
           if (!Component || !data.points) return null
           return (
-            <pointsContainer block flex-display block-padding-left-20px>
+            <pointsContainer block flex-display block-padding-left-8px>
               <points block>
                 {
                   Object.entries(data.points).map(([pointName, child]) => (
                     <point block key={pointName}>
                       <pointName inline>#{pointName}</pointName>
-                      {f.child({data: child})(renderEmptyOrSchema({data: child, components}, f))}
+                      {f.child({data: child})(renderEmptyOrSchema({data: child, components}, f, listeners))}
                     </point>
                   ))
                 }
@@ -156,131 +183,95 @@ function renderSchema({data, components}, f, nodeContainerProps = {}) {
   )
 }
 
-function Schema({ data, components, selectedData }, f) {
 
-  // 这里需要注册 hotkeys
-  let pickerLayer
+function createComponentPickerModal(components) {
+  const inputRef = useRef()
+  const { node: pickerNode, run: userInputComponent } = useModal((done, cancel) =>
+      <background
+        block
+        block-left-0
+        block-top-0
+        block-height={document.body.offsetHeight}
+        block-width={document.body.offsetWidth}
+        flex-display
+        flex-justify-content-center
+        flex-align-items-center
+        onClick={cancel}
+      >
+        <editorContainer block block-padding-10px onClick={(e) => e.stopPropagation()}>
+          <componentPicker
+            use={ComponentPicker}
+            onSelect={done}
+            components={components}
+            listeners={(f) => f.root.elements.input.ref(inputRef)}
+          />
+        </editorContainer>
+      </background>,
+    { onRun: () => nextTask(() => inputRef.current.focus() )}
+  )
+  return { pickerNode, userInputComponent }
+}
 
-  const { focused: schemaTreeFocused, ref: schemaTreeFocusRef, ...schemaTreeFocusProps } = useFocus(true)
-  const componentPickerVisible = atom(false)
+function createExportNameModal() {
   const inputRef = useRef()
 
-  useHotkeys('i', () => {
-    if (schemaTreeFocused.value) {
-      // TODO 判断是否可以插入 children
-      //  1. 选中组件，判断 children
-      //  2. 选中 children
-      //  3. 选中 rp
-
-      if (selectedData.value.component) {
-        const Component = components[selectedData.value.component]
-        // 1. 普通结点和组件结点可以插入
-        if(Component?.propTypes?.children || !Component) {
-          componentPickerVisible.value = true
-          nextTask(() => {
-            inputRef.current.focus()
-          })
-        }
-      }
-
-      // 2. TODO 选中 children 也可以打开
-      // 3. TODO 选中 rp 也可以打开
-    }
-  })
-
-  // TODO 删除位置
-  useHotkeys('backspace', () => {
-    if (schemaTreeFocused.value) {
-    }
-  })
-
-  // TODO 如果是按 enter，可以在后面插入一个
-  useHotkeys('enter', () => {
-    if (schemaTreeFocused.value) {
-    }
-  })
-
-
-  // 对可插入的位置开始执行插入操作
-  const onSelectComponent = (insertComponentName) => {
-    /**
-     *  1. 如果是标签结点，直接插在下面就行了。
-     *  2. 如果是组件被插入，默认达到第一个能插 children 的位置
-     *  3. 如果是组件的 children 位插入，直接插就行了。如果是 被删除，需要上级的信息，进行快捷操作。
-     */
-    if (selectedData.value.component) {
-      const Component = components[selectedData.value.component]
-      if (!Component) {
-        if (!selectedData.value.children) selectedData.value.children = []
-        selectedData.value.children.push({ component : insertComponentName})
-      } else if(Component.propTypes.children){
-        // TODO 读取第一个可插入位置
-        let base = selectedData.value.children
-        if (!base) {
-          if (Component.propTypes.children.is(propTypes.arrayOf)) {
-            base = []
-          } else {
-            base = {}
+  const { node: exportNameNode, run: userInputExportName } = useModal(
+    (done, cancel) => {
+      const onKeyDownFeature = (f) => {
+        f.root.elements.input.onKeyDown((e, { value }) => {
+          if (e.key === 'Enter') {
+            done(value.value)
+          } else if (e.key === 'Escape') {
+            cancel()
           }
-          selectedData.value.children = base
-        }
-        // 随 propTypes.children 结构来构建
-        insertToChildren(selectedData.value.children, insertComponentName, Component.propTypes.children)
-
+        })
       }
-    }
-
-    componentPickerVisible.value = false
-    schemaTreeFocusRef.current.focus()
-  }
-
-  //TODO 如果组件重新渲染，会导致重新执行这个 onClick。
-  // 但全是是要重新执行，因为引用都变了，只不过之前的那个要卸载掉。
-  // 这个行为就是对递归方便，但其实是不应该的？因为可能会造成难以预计的问题？
-  f.global.elements.nodeName.onClick((e, { data }, { data: dataStack }) => {
-    console.log(data, dataStack)
-    selectedData.value = data
-  })
-
-  const attachInputRef = f => {
-    f.root.elements.input.ref(inputRef)
-    f.root.elements.input.onKeyDown(e => {
-      if(e.code === 'Escape') componentPickerVisible.value = false
-    })
-  }
-
-
-
-  pickerLayer = useLayer(
-    <background
-      block
-      block-left-0
-      block-top-0
-      block-height={document.body.offsetHeight}
-      block-width={document.body.offsetWidth}
-      block-display={atomComputed(() => componentPickerVisible.value ? 'flex' : 'none')}
-      flex-justify-content-center
-      flex-align-items-center
-      onClick={() => componentPickerVisible.value = false}
-    >
-      <editorContainer block block-padding-10px onClick={(e) => e.stopPropagation()}>
-        {() => componentPickerVisible.value ?
-          <ComponentPicker
-            onSelect={onSelectComponent}
-            components={components}
-            listeners={attachInputRef}
-          /> :
-          null
-        }
-      </editorContainer>
-    </background>,
-    { visible: componentPickerVisible }
+      const attachInputRef = (f) => f.root.elements.input.ref(inputRef)
+      return (
+        <background
+          block
+          block-left-0
+          block-top-0
+          block-height={document.body.offsetHeight}
+          block-width={document.body.offsetWidth}
+          flex-display
+          flex-justify-content-center
+          flex-align-items-center
+          onClick={cancel}
+        >
+          <editorContainer block block-padding-10px onClick={(e) => e.stopPropagation()}>
+            <Input listeners={[onKeyDownFeature, attachInputRef]}/>
+          </editorContainer>
+        </background>
+      )
+    },
+    { onRun: () => nextTask(() => inputRef.current.focus() )}
   )
+  return { exportNameNode, userInputExportName }
+}
+
+
+function Schema({ data, components, selectedData, componentPickerVisible, focused }, f, upperRef, instance) {
+
+  const { ref: schemaTreeFocusRef, ...schemaTreeFocusProps } = useFocus(true, focused)
+  // 注册的有语义的命令
+  instance.focusSchemaTree = () => schemaTreeFocusRef.current.focus()
+
+  const onNodeNameClick = (data) => {
+    // selectedData.value = data
+  }
+
+  const { userInputComponent, pickerNode } = createComponentPickerModal(components)
+  const { exportNameNode, userInputExportName } = createExportNameModal()
+  // 注册的外部交互过程
+  instance.userInputComponent = userInputComponent
+  instance.userInputExportName = userInputExportName
 
   return (
     <container block>
-      {renderSchema({data, components}, f, { ref: schemaTreeFocusRef, ...schemaTreeFocusProps })}
-      {pickerLayer?.node || null}
+      {renderSchema({data, components}, f, { ref: schemaTreeFocusRef, ...schemaTreeFocusProps }, { onNodeNameClick })}
+      {pickerNode }
+      {exportNameNode}
     </container>
   )
 }
@@ -288,7 +279,9 @@ function Schema({ data, components, selectedData }, f) {
 Schema.propTypes = {
   data: propTypes.object.default(() => reactive({})),
   components: propTypes.object.default(() => reactive({})),
-  selectedData: propTypes.object.default(() => atom())
+  selectedData: propTypes.object.default(() => atom()),
+  componentPickerVisible: propTypes.object.default(() => atom(true)),
+  focused: propTypes.object.default(() => atom(false))
 }
 
 Schema.Style = (f) => {
@@ -299,7 +292,8 @@ Schema.Style = (f) => {
 
   f.global.elements.nodeName.style(({ selectedData, data }) => ({
     padding:4,
-    background: ((data.id && selectedData.value?.id === data.id) || selectedData.value === data) ? '#71a6e7': '#ccc',
+    background: ((data.id && selectedData.value?.id === data.id) || selectedData.value === data) ? '#000': '#ccc',
+    color: ((data.id && selectedData.value?.id === data.id) || selectedData.value === data) ? '#fff': '#333',
     cursor: 'pointer',
     whiteSpace: 'nowrap',
     textOverflow: 'ellipsis'
@@ -331,6 +325,109 @@ Schema.Style = (f) => {
 }
 
 
-const StyledSchema = createComponent(Schema)
+function OnNodeClickFeature(f) {
+  f.global.elements.nodeName.onClick((e, { data, selectedData }) => {
+    selectedData.value = data
+  })
+}
+
+function OperationsFeature(f) {
+
+
+  f.global.elements.nodeName.onClick((e, {selectedDataParent}, { data: dataStack}) => {
+    selectedDataParent.value = dataStack.at(-2)
+  })
+
+
+
+  f.root.prepare(({
+    selectedDataParent,
+    selectedData,
+    components,
+    schemaTreeFocusRef,
+    focused: schemaTreeFocused
+  }, stack, instance) => {
+    useHotkeys('i', async () => {
+      // TODO 判断是否可以插入 children
+      //  1. 选中组件，判断 children
+      //  2. 选中 children
+      //  2.1 选中 children 中的不同位置
+      //  3. 选中 rp
+
+      if (selectedData.value.component) {
+        const Component = components[selectedData.value.component]
+        // 1. 普通结点和组件结点可以插入
+        if(Component?.propTypes?.children || !Component) {
+
+          const [insertComponentName, exception] = await instance.userInputComponent()
+          if (exception) return
+
+          /**
+           *  1. 如果是标签结点，直接插在下面就行了。
+           *  2. 如果是组件被插入，默认达到第一个能插 children 的位置
+           *  3. 如果是组件的 children 位插入，直接插就行了。如果是 被删除，需要上级的信息，进行快捷操作。
+           */
+          if (selectedData.value.component) {
+            const Component = components[selectedData.value.component]
+            if (!Component) {
+              if (!selectedData.value.children) selectedData.value.children = []
+              selectedData.value.children.push({ component : insertComponentName})
+            } else if(Component.propTypes.children){
+              // TODO 读取第一个可插入位置
+              let base = selectedData.value.children
+              if (!base) {
+                if (Component.propTypes.children.is(propTypes.arrayOf)) {
+                  base = []
+                } else {
+                  base = {}
+                }
+                selectedData.value.children = base
+              }
+              // 随 propTypes.children 结构来构建
+              insertToChildren(selectedData.value.children, insertComponentName, Component.propTypes.children, Component.propTypes)
+
+            }
+          }
+          instance.focusSchemaTree()
+        }
+      }
+
+      // 2. TODO 选中 children 也可以打开
+      // 3. TODO 选中 rp 也可以打开
+    }, schemaTreeFocused)
+
+    useHotkeys('n', async () => {
+      if (selectedData.value.component) {
+        const [name, exception] = await instance.userInputExportName()
+        if(exception) return
+        selectedData.value.exportName = name
+        instance.focusSchemaTree()
+      }
+    }, schemaTreeFocused)
+
+    useHotkeys('backspace', () => {
+      if (selectedData.value.component) {
+        // 找到 parent，
+        const index = selectedDataParent.value.children.indexOf(selectedData.value)
+        selectedDataParent.value.children.splice(index, 1)
+        // TODO 应该切到父组件或者上一个兄弟？
+        selectedData.value = null
+      }
+
+    }, schemaTreeFocused)
+
+    // TODO 如果是按 enter，可以在后面插入一个
+    useHotkeys('enter', () => {
+
+    }, schemaTreeFocused)
+  })
+}
+
+OperationsFeature.propTypes = {
+  selectedDataParent: propTypes.object.default(() => atom())
+}
+
+
+const StyledSchema = createComponent(Schema, [OnNodeClickFeature, OperationsFeature])
 
 export default StyledSchema

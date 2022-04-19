@@ -1,10 +1,10 @@
 /**@jsx createElement */
 import {createElement, createComponent, atom, atomComputed, propTypes} from 'axii'
 
-function TLayout({ showHeader }) {
+function TLayout({ showHeader, children }) {
   return <container block block-height="100%" flex-display flex-direction-column>
-    <header slot block flex-grow-0 flex-shrink-0 block-height={atomComputed(() => showHeader.value ? '50px' : 0)}></header>
-    <content slot block flex-grow-1 block-width-600px block-overflow-y-auto flex-align-self-center></content>
+    <header block flex-grow-0 flex-shrink-0 block-height={atomComputed(() => showHeader.value ? '50px' : 0)}>{children.header}</header>
+    <content block flex-grow-1 block-width-600px block-overflow-y-auto flex-align-self-center>{children.content}</content>
   </container>
 }
 
