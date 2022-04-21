@@ -364,13 +364,13 @@ export const Graph = {
       }
     })
 
-    dm.on('remove', ({id, type}) => {
+    dm.on('remove', ({id, cellType}) => {
       console.log('[remove cb] id: ', id);
       const cells = graph.getCells();
       console.log('[remove cb] cell ids=', cells.map(cell => [cell.id, cell.getData().remoteId]));
       const cell = cells.find(cell => cell.getData().remoteId === id);
       let removedCell;
-      if (cell && type === 'edge') {
+      if (cell && cellType === 'edge') {
         removedCell = graph.removeCell(cell.id);
       } else {
         removedCell = graph.removeCell(id);
@@ -497,7 +497,7 @@ export const Graph = {
         name: 'manhattan',
       },
       source: {cell: sourceId,port: null},
-      target: {cell: targetId,port:null}
+      target: {cell: targetId,port:null},
     });
     const pickedEdge = pick(newEdge, ['id', 'target', 'source', 'label', 'name', 'type']);
     dm.addNewEdge(sourceId, pickedEdge).then(remoteId => {
