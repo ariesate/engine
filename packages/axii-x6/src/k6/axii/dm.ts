@@ -19,6 +19,7 @@ type IDataNode = IX6Node & {
   edges: IEdgeData[];
   prev: IDataNode[];
   next: IDataNode[];
+  cellType: string;
 };
 type IEdgeData = IX6Edge & {
   remoteId?: string | number;
@@ -28,7 +29,8 @@ type IEdgeData = IX6Edge & {
   view?:{
     sourcePortSide: 'right' | 'left' | 'top' | 'bottom';
     targetPortSide: 'left' | 'right' | 'top' | 'bottom';
-  }
+  };
+  cellType: string
 };
 type INodePropKeys = keyof IDataNode;
 
@@ -112,7 +114,8 @@ function generateNodeByConfig(k6Node: INodeComponent, initNodeProp?: { x?:number
     prev: [],
     next: [],
     selected: false,
-    isGroupNode: false
+    isGroupNode: false,
+    cellType: 'node'
   };
   newAddIndex++;
 
@@ -145,6 +148,7 @@ class NodeManager {
         edges: reactive([]),
         prev: reactive([]),
         next: reactive([]),
+        cellType: 'node'
       }
     });
   }
@@ -156,6 +160,7 @@ class NodeManager {
         if (cell === id) {          
           node.edges.push({
             ...edge,
+            cellType: 'edge',
             data: reactive(edge.data || {}),
           });
         }
@@ -438,6 +443,7 @@ class DataManager extends EventEmiter{
         ...edge,
         data: reactive(edge.data || {}),
         id: null,
+        cellType: 'edge'
       };
       const r = await this.notifyShapeComponent(node, newEdge, 'add', {});
 
@@ -553,7 +559,6 @@ class DataManager extends EventEmiter{
       return;
     }
     const node = this.findNode(id);
-    if(node) node.data.type = 'node'
     const [nodeComponent] = this.getShapeComponent(node.shape);
     Object.assign(this.insideState, {
       selected: {
@@ -604,7 +609,6 @@ class DataManager extends EventEmiter{
 
     const [node, edge] = this.findNodeAndEdge(id);
     if (node) {
-      edge.data.type = 'edge'
       const [ _1, _2, edgeComponent ] = this.getShapeComponent(node.shape);
       Object.assign(this.insideState, {
         selected: {
@@ -626,7 +630,7 @@ class DataManager extends EventEmiter{
     nodeComponent.onCancelSelect && nodeComponent.onCancelSelect(cell)
   }
   triggerCurrentEvent(event: INodeComponentEvent, data: any) {
-    this.triggerEvent(this.insideState.selected.cell?.id, event, data, this.insideState.selected.cell?.data?.type || 'node');      
+    this.triggerEvent(this.insideState.selected.cell?.id, event, data, this.insideState.selected.cell?.cellType || 'node');      
   }
 
   async notifyShapeComponent(node: IDataNode, edge: IEdgeData, event: INodeComponentEvent, data: any) {
@@ -654,17 +658,17 @@ class DataManager extends EventEmiter{
     }
   }
 
-  triggerEvent(cellId: string, event: INodeComponentEvent, data: any, type: string) {
+  triggerEvent(cellId: string, event: INodeComponentEvent, data: any, cellType: string) {
     if (!cellId) {
       return;
     }
-    const [node, edge] = type==='edge' ? this.findNodeAndEdge(cellId) : [this.findNode(cellId), null];
+    const [node, edge] = cellType==='edge' ? this.findNodeAndEdge(cellId) : [this.findNode(cellId), null];
 
     this.notifyShapeComponent(node, edge, event, data);
   }
-  removeIdOrCurrent(targetId: string, type: string) {
+  removeIdOrCurrent(targetId: string, cellType: string) {
     const currentCellId = targetId ? targetId : this.insideState.selected.cell.id;
-    const currentType = type ? type : this.insideState.selected.cell.data?.type
+    const currentType = cellType ? cellType : this.insideState.selected.cell?.cellType;
     const [node, edge] = currentType === 'edge' ? this.findNodeAndEdge(currentCellId) : [this.findNode(currentCellId), null];
     const [nodeComponent, _, edgeComponent] = this.getShapeComponent(node.shape);
 
@@ -679,7 +683,7 @@ class DataManager extends EventEmiter{
         nodeComponent && edgeComponent.onRemove && nodeComponent.onRemove(node);
       }  
     }
-    this.emit('remove', {id: currentCellId, type: currentType});
+    this.emit('remove', {id: currentCellId, cellType: currentType});
     this.selectNode(null);
   }
   zoomIn(v:number=0.2) {
