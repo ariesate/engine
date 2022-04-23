@@ -403,8 +403,8 @@ function renderFragments(fragment, selfHandleRef, fragmentAgentContainer, upperA
 
       // 收集匹配的PseudoClassNames
       matchedPseudoClassStyles.push(
-        ...fragmentAgentContainer.summary[sourceFragmentName]?.elements[originVnode.name]?.pseudoClassStyle || [],
-        ...fragmentAgentContainer.summary[GLOBAL_NAME]?.elements[originVnode.name]?.pseudoClassStyle || [],
+        ...fragmentAgentContainer.summary[sourceFragmentName]?.elements[originVnode.name]?.pseudoClassStyles || [],
+        ...fragmentAgentContainer.summary[GLOBAL_NAME]?.elements[originVnode.name]?.pseudoClassStyles || [],
         ...flatten(matchedDynamicSummary.map(s => s.pseudoClassStyles)),
         ...flatten(matchedGlobalDynamicSummary.map(s => s.pseudoClassStyles))
       )
@@ -443,7 +443,6 @@ function renderFragments(fragment, selfHandleRef, fragmentAgentContainer, upperA
         }, originVnode)
         vnodes[vnodes.indexOf(originVnode)] = modifiedVnode
       }
-      
       // 挂载 样式
       // TODO 未来考虑将"静态的"样式生成 css rule 来防止元素上 style 爆炸。
       if (matchedStyles.length) {
@@ -483,12 +482,14 @@ function renderFragments(fragment, selfHandleRef, fragmentAgentContainer, upperA
             // watch 参数变化，修改规则
             watch(() => computeDynamicObject(rules, commonArgv), (computedRules) => {
               // TODO 如何修改？目前只会继续插入
+              console.log(stylesheet, className, name, computedRules)
               appendRule(stylesheet, className, name, computedRules)
             }, true)
           } else {
             // 静态的，应该只要 inject once，之后的复用就行了
             if (!staticClassNamesByComponentId[componentId]) staticClassNamesByComponentId[componentId] = new Set()
             if (!staticClassNamesByComponentId[componentId].has(name)) {
+              console.log(stylesheet, className, name, rules)
               appendRule(stylesheet, className, name, rules)
             }
           }
