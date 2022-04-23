@@ -482,14 +482,12 @@ function renderFragments(fragment, selfHandleRef, fragmentAgentContainer, upperA
             // watch 参数变化，修改规则
             watch(() => computeDynamicObject(rules, commonArgv), (computedRules) => {
               // TODO 如何修改？目前只会继续插入
-              console.log(stylesheet, className, name, computedRules)
               appendRule(stylesheet, className, name, computedRules)
             }, true)
           } else {
             // 静态的，应该只要 inject once，之后的复用就行了
             if (!staticClassNamesByComponentId[componentId]) staticClassNamesByComponentId[componentId] = new Set()
             if (!staticClassNamesByComponentId[componentId].has(name)) {
-              console.log(stylesheet, className, name, rules)
               appendRule(stylesheet, className, name, rules)
             }
           }
