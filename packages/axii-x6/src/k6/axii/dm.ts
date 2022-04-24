@@ -30,7 +30,8 @@ type IEdgeData = IX6Edge & {
     sourcePortSide: 'right' | 'left' | 'top' | 'bottom';
     targetPortSide: 'left' | 'right' | 'top' | 'bottom';
   };
-  cellType: string
+  cellType: string;
+  domId?: string | number
 };
 type INodePropKeys = keyof IDataNode;
 

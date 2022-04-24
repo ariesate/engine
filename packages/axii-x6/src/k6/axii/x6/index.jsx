@@ -107,7 +107,7 @@ export const Register = {
         });
 
         // TODO:x6不会添加完全重复的“边”
-        nodeConfig.edges.forEach(edge => {
+        nodeConfig.edges.forEach((edge, i) => {
           const edgeConfig = EdgeCpt({ node: nodeConfig, edge });
           const c = assignDefaultEdge(edgeConfig, edge);
           const remoteId = c.id;
@@ -115,6 +115,7 @@ export const Register = {
           const edgeIns = graph.addEdge({
             ...c,
           }); 
+          edge.domId = edgeIns.id
           // 监听并动态修改label
           const [_, token] = watch(() => traverse(edgeConfig), () => {
             setTimeout(() => {
