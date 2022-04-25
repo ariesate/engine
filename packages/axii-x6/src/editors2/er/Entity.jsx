@@ -186,7 +186,7 @@ export const EntityNode = createComponent((() => {
     console.log('[EntityNode] onSelect: node',node)
   }
 
-  EntityRender.onCancelSelect = (node)=>{
+  EntityRender.onCancelSelect = (node, allNodes)=>{
     console.log('[EntityNode] onCancelSelect: node',node)
   }
 
