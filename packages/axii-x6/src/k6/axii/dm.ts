@@ -628,7 +628,7 @@ class DataManager extends EventEmiter{
   cancelSelectNodeOrEdge(){
     const {cell, nodeComponent} = this.insideState.selected
     if(!cell) return 
-    nodeComponent.onCancelSelect && nodeComponent.onCancelSelect(cell)
+    nodeComponent.onCancelSelect && nodeComponent.onCancelSelect(cell, this.nm.nodes)
   }
   triggerCurrentEvent(event: INodeComponentEvent, data: any) {
     this.triggerEvent(this.insideState.selected.cell?.id, event, data, this.insideState.selected.cell?.cellType || 'node');      

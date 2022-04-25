@@ -51,7 +51,7 @@ export interface INodeComponent extends Function {
   onRemove: (node: IX6Cell) => void;
   onAdd: (node: IX6Cell) => IX6Cell;
   onSelect: (node: IX6Cell) => void;
-  onCancelSelect: (node: IX6Cell) => void;
+  onCancelSelect: (node: IX6Cell, allNodes: IX6Cell[]) => void;
 };
 
 // -------
