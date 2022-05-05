@@ -545,7 +545,8 @@ class DataManager extends EventEmiter{
   @disabledByReadOnly
   selectNode (id: string) {
     this.cancelSelectNodeOrEdge()
-    if (!id ) {
+    const node = this.findNode(id || '');
+    if (!id || !node) {
       Object.assign(this.insideState, {
         selected: {
           cell: null,
@@ -559,7 +560,6 @@ class DataManager extends EventEmiter{
       });
       return;
     }
-    const node = this.findNode(id);
     const [nodeComponent] = this.getShapeComponent(node.shape);
     Object.assign(this.insideState, {
       selected: {
