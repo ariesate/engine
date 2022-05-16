@@ -466,17 +466,17 @@ function renderFragments(fragment, selfHandleRef, fragmentAgentContainer, upperA
       // 处理伪类
       if (matchedPseudoClassStyles.length) {
         let shouldClassNameBeReactive = isOriginClassNameRef
-        const makeClassName = (instanceId, pseudoName) => `${instanceId}-${pseudoName}`
+        const makeClassName = (instanceId, nodeName, pseudoName) => `${instanceId}-${nodeName}-${pseudoName}`
 
         const getNextClassName = () => {
           const classNames = matchedPseudoClassStyles.map(({ name, rules }) => {
-            return makeClassName(isDynamicObject(rules) ? instanceId : componentId, name)
+            return makeClassName(isDynamicObject(rules) ? instanceId : componentId, originVnode.name, name)
           }).join(' ')
           return originClassName.value? `${originClassName.value} ${classNames}` : classNames
         }
 
         matchedPseudoClassStyles.forEach(({ name, rules }) => {
-          const className = makeClassName(isDynamicObject(rules) ? instanceId : componentId, name)
+          const className = makeClassName(isDynamicObject(rules) ? instanceId : componentId, originVnode.name, name)
           if (isDynamicObject(rules)) {
             // 动态的，每个组件实例都要单独的 class，因为传入的参数可能不一样，并且需要 watch，动态修改规则
             // watch 参数变化，修改规则
