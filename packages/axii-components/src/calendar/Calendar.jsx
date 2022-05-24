@@ -71,7 +71,7 @@ export function Calendar({ value, current, onSelect, onSelectNextMonth, onSelect
               dates.push({
                 year: nextMonth.year(),
                 month: nextMonth.month(),
-                date: i
+                date: i - endDayOfWeek
               })
             }
           }
