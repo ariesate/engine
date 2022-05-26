@@ -19,6 +19,7 @@ type IDataNode = IX6Node & {
   edges: IEdgeData[];
   prev: IDataNode[];
   next: IDataNode[];
+  cellType: string;
 };
 type IEdgeData = IX6Edge & {
   remoteId?: string | number;
@@ -26,9 +27,11 @@ type IEdgeData = IX6Edge & {
     [key: string]: any;
   };
   view?:{
-    sourcePortSide: 'right' | 'left';
-    targetPortSide: 'left' | 'right';
-  }
+    sourcePortSide: 'right' | 'left' | 'top' | 'bottom';
+    targetPortSide: 'left' | 'right' | 'top' | 'bottom';
+  };
+  cellType: string;
+  domId?: string | number
 };
 type INodePropKeys = keyof IDataNode;
 
@@ -44,14 +47,17 @@ type INodeComponentEvent = 'change' | 'save' | 'remove' | 'add';
 
 export interface IInsideState {
   selected: {
-    cell: IDataNode;
-    nodeComponent: INodeComponent
+    cell: IDataNode,
+    nodeComponent: INodeComponent,
+    multiCell: IDataNode[]
   }
   cacheSelected: {
     cell: { [k: string]: any }; // 镜像版本，用以对比数据
+    multiCell: { [k: string]: any }[]
   },
   graph: {
     zoom: number,
+    type: string,
   }
 }
 
@@ -96,7 +102,6 @@ function generateNodeByConfig(k6Node: INodeComponent, initNodeProp?: { x?:number
   if (Reflect.has(data, 'x') || Reflect.has(data, 'y')) {
     throw new Error('[generateNodeByConfig] x, y is preserved prop name')
   }
-
   const newNode = {
     id: Math.floor(((Math.random() * 10000))).toString(),
     shape: k6Node.shape,
@@ -109,6 +114,9 @@ function generateNodeByConfig(k6Node: INodeComponent, initNodeProp?: { x?:number
     edges: [],
     prev: [],
     next: [],
+    selected: false,
+    isGroupNode: false,
+    cellType: 'node'
   };
   newAddIndex++;
 
@@ -141,6 +149,7 @@ class NodeManager {
         edges: reactive([]),
         prev: reactive([]),
         next: reactive([]),
+        cellType: 'node'
       }
     });
   }
@@ -152,6 +161,7 @@ class NodeManager {
         if (cell === id) {          
           node.edges.push({
             ...edge,
+            cellType: 'edge',
             data: reactive(edge.data || {}),
           });
         }
@@ -271,6 +281,13 @@ class NodeManager {
         if (fi >= 0) {
           prevNode.next.splice(fi, 1);
         }
+        const resovedEdges = prevNode.edges.filter(e => e.target.cell === currentNode.id)
+        resovedEdges.forEach(removedEdge => {
+          const ei = prevNode.edges.findIndex(e => e.id === removedEdge.id) 
+          if(ei >=0){
+            prevNode.edges.splice(ei, 1)
+          }
+        })
       });
 
       this.nodes.splice(i, 1);
@@ -337,13 +354,16 @@ class DataManager extends EventEmiter{
   insideState:IInsideState = reactive({
     selected: {
       cell: null,
-      nodeComponent: null,  
+      nodeComponent: null, 
+      multiCell: null
     },
     cacheSelected: {
       cell: null,
+      multiCell: null,
     },
     graph: {
       zoom: 1,
+      type: '',
     },
   });
   // x6/index.jsx
@@ -374,7 +394,7 @@ class DataManager extends EventEmiter{
     this.nm.readEdges(edges)
   }
   @disabledByReadOnly
-  async addNode(initNode?: { x?:number, y?:number }) {
+  async addNode(initNode?: { x?:number, y?:number, isGroupNode?:boolean }, parentId: string = null) {
     // 先默认只支持一种
     if (1) {
       const nodeComponent: ShapeComponent = this.nodeShapeComponentMap.values().next().value;
@@ -387,7 +407,33 @@ class DataManager extends EventEmiter{
       merge(newNode, notifiedNode);
 
       this.nm.addNewNode(newNode);
-      this.emit('addNode', newNode);
+      if(!!parentId){
+        this.emit('addChildNode',{childNode:newNode,id:parentId})
+      }else{
+        this.emit('addNode', newNode);
+      }
+    }
+  }
+  @disabledByReadOnly
+  // 新增子节点
+  async addChildNode(id: string) {
+    const parentNode = this.findNode(id)
+    if(parentNode){
+      const childNum = parentNode.next.length+1
+      await this.addNode({x:parentNode.x+200*childNum,y:parentNode.y+200+10*childNum},id)
+    }
+  }
+  @disabledByReadOnly
+  // 新增兄弟节点
+  async addBroNode(id: string) {
+    const broNode = this.findNode(id)
+    if(broNode){
+      const parentNode = broNode.prev.length>0?broNode.prev[0]:null
+      if(parentNode){
+        await this.addChildNode(parentNode.id)
+      } else {
+        await this.addNode()
+      }
     }
   }
   @disabledByReadOnly
@@ -398,6 +444,7 @@ class DataManager extends EventEmiter{
         ...edge,
         data: reactive(edge.data || {}),
         id: null,
+        cellType: 'edge'
       };
       const r = await this.notifyShapeComponent(node, newEdge, 'add', {});
 
@@ -414,10 +461,17 @@ class DataManager extends EventEmiter{
    * @param nodeId 
    * @param props 
    */
-  syncEdge(edgeId: string, props: { id?: string }) {
+  syncEdge(edgeId: string, props: { id?: string }, syncToGraph: boolean) {
     let edge = this.nm.findEdgeById(edgeId);
     if (edge) {
       merge(edge, props);
+      if (syncToGraph) {
+        this.emit('node:changed', {
+          prop: props,
+          type: 'edge',
+          id: edgeId
+        })
+      }
     }
   }
   /**
@@ -425,11 +479,12 @@ class DataManager extends EventEmiter{
    * @param nodeId 
    * @param props 
    */
-  syncNode(nodeId: string, props: { [k in INodePropKeys]: any }, syncToGraph = false) {
+  syncNode(nodeId: string, props: { [k in INodePropKeys]: any }, syncToGraph: boolean) {
     const node = this.findNode(nodeId);
     if (node) {
       const propKeys = Object.keys(props || {});
       if (propKeys.includes('x') && propKeys.includes('y')) {
+        // this.emit('node:position:changed',{node:node,x:props.x,y:props.y})
         merge(node, props, { data: {
           x: props.x,
           y: props.y,
@@ -439,7 +494,8 @@ class DataManager extends EventEmiter{
       }
       if (syncToGraph) {
         this.emit('node:changed', {
-          ...props,
+          prop: props,
+          type: 'node',
           id: nodeId
         })
       }
@@ -468,7 +524,6 @@ class DataManager extends EventEmiter{
       ]);
     });
   }
-
   getAllShapeComponents(): ShapeComponent[] {
     return [
       ...this.nodeShapeComponentMap.values(),
@@ -489,40 +544,65 @@ class DataManager extends EventEmiter{
   }
   @disabledByReadOnly
   selectNode (id: string) {
-    if (!id || this.insideState.selected.cell?.id === id) {
+    this.cancelSelectNodeOrEdge()
+    const node = this.findNode(id || '');
+    if (!id || !node) {
       Object.assign(this.insideState, {
         selected: {
           cell: null,
           nodeComponent: null,
+          multiCell: null
         },
         cacheSelected: {
           cell: null,
+          multiCell: null
         },
       });
       return;
     }
-    const node = this.findNode(id);
     const [nodeComponent] = this.getShapeComponent(node.shape);
     Object.assign(this.insideState, {
       selected: {
         cell: node,
         nodeComponent: nodeComponent,  
+        multiCell: null
       },
       cacheSelected: {
         cell: cloneDeep(node),
+        multiCell: null
+      },
+    });
+    nodeComponent.onSelect && nodeComponent.onSelect(node)
+  }
+  @disabledByReadOnly
+  multiSelectNode (array: string[]) {
+    const nodeArray = array.map(id=>this.findNode(id))
+    const [nodeComponent] = this.getShapeComponent(nodeArray[0].shape);
+    Object.assign(this.insideState, {
+      selected: {
+        cell: null,
+        nodeComponent: nodeComponent,  
+        multiCell: nodeArray
+      },
+      cacheSelected: {
+        cell: null,
+        multiCell: cloneDeep(nodeArray)
       },
     });
   }
   @disabledByReadOnly
   selectEdge(id: string) {
+    this.cancelSelectNodeOrEdge()
     if (!id || this.insideState.selected.cell?.id === id) {
       Object.assign(this.insideState, {
         selected: {
           cell: null,
           nodeComponent: null,  
+          multiCell: null
         },
         cacheSelected: {
           cell: null,
+          multiCell: null
         },
       });
       return;
@@ -535,15 +615,23 @@ class DataManager extends EventEmiter{
         selected: {
           cell: edge,
           nodeComponent: edgeComponent,  
+          multiCell: null
         },
         cacheSelected: {
           cell: cloneDeep(edge),
+          multiCell: null
         },
       });
+      edgeComponent.onSelect && edgeComponent.onSelect(edge)
     }
   }
+  cancelSelectNodeOrEdge(){
+    const {cell, nodeComponent} = this.insideState.selected
+    if(!cell) return 
+    nodeComponent.onCancelSelect && nodeComponent.onCancelSelect(cell, this.nm.nodes)
+  }
   triggerCurrentEvent(event: INodeComponentEvent, data: any) {
-    this.triggerEvent(this.insideState.selected.cell?.id, event, data);      
+    this.triggerEvent(this.insideState.selected.cell?.id, event, data, this.insideState.selected.cell?.cellType || 'node');      
   }
 
   async notifyShapeComponent(node: IDataNode, edge: IEdgeData, event: INodeComponentEvent, data: any) {
@@ -571,17 +659,18 @@ class DataManager extends EventEmiter{
     }
   }
 
-  triggerEvent(cellId: string, event: INodeComponentEvent, data: any) {
+  triggerEvent(cellId: string, event: INodeComponentEvent, data: any, cellType: string) {
     if (!cellId) {
       return;
     }
-    const [node, edge] = this.findNodeAndEdge(cellId);
+    const [node, edge] = cellType==='edge' ? this.findNodeAndEdge(cellId) : [this.findNode(cellId), null];
 
     this.notifyShapeComponent(node, edge, event, data);
   }
-  removeIdOrCurrent(targetId: string) {
+  removeIdOrCurrent(targetId: string, cellType: string) {
     const currentCellId = targetId ? targetId : this.insideState.selected.cell.id;
-    const [node, edge] = this.findNodeAndEdge(currentCellId);
+    const currentType = cellType ? cellType : this.insideState.selected.cell?.cellType;
+    const [node, edge] = currentType === 'edge' ? this.findNodeAndEdge(currentCellId) : [this.findNode(currentCellId), null];
     const [nodeComponent, _, edgeComponent] = this.getShapeComponent(node.shape);
 
     if (edge) {
@@ -595,20 +684,28 @@ class DataManager extends EventEmiter{
         nodeComponent && edgeComponent.onRemove && nodeComponent.onRemove(node);
       }  
     }
-    this.emit('remove', currentCellId);
+    this.emit('remove', {id: currentCellId, cellType: currentType});
     this.selectNode(null);
   }
-  zoomIn() {
-    this.insideState.graph.zoom += 0.2
-    this.emit('zoom-in', 0.2);
+  zoomIn(v:number=0.2) {
+    this.emit('zoom-in', v);
   }
-  zoomOut(){
-    this.insideState.graph.zoom -= 0.2
-    this.emit('zoom-out', 0.2);
+  zoomOut(v:number=0.2){
+    this.emit('zoom-out', v);
+  }
+  centerContent() {
+    this.emit('center-content');
+  }
+  centerPoint(x:number,y:number) {
+    this.emit('center-point', {x, y})
   }
 
   dispose() {
     this.emit('dispose');
+  }
+
+  resize(width:number,height:number) {
+    this.emit('resize', {width:width,height:height})
   }
 }
 

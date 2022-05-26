@@ -37,12 +37,13 @@ function splitChildren (children) {
   };
 }
 
-function Root({ children, height, ref, readOnly, graphConfig={} }, frags) {
+function Root({ children, height, ref, readOnly, graphConfig={}, type = '', isAllReadOnly }, frags) {
   const {slots, realChildren} = splitChildren(children);
   const shareContext = useContext(ShareContext);
 
   const dm = new DM();
   dm.setX6(x6);
+  // readOnly表示只读，不能对画布进行操作，在isAllReadOnly=true的情况下无toolbar;isAllReadOnly=false时仍然显示toolbar
   dm.setReadOnly(readOnly);
 
   if (shareContext) {
@@ -63,6 +64,7 @@ function Root({ children, height, ref, readOnly, graphConfig={} }, frags) {
       graph: null,
     }),
     readOnly,
+    isAllReadOnly
   };
 
 
@@ -80,11 +82,14 @@ function Root({ children, height, ref, readOnly, graphConfig={} }, frags) {
         minimap: elementRefs.miniMap,
         graphConfig
       });
+      dm.insideState.graph.type = type;
       x6.Graph.renderNodes(dm.nm.nodes);
-    } 
+    }
+    console.log('Root mounted', new Date())
     return () => {
       // @TODO: dispose会触发其它render的卸载，当此时当前这个render并没有卸载完成
       setTimeout(() => {
+        console.log('Root unmount', new Date())
         dm.dispose();
       });
     };
@@ -136,7 +141,7 @@ Root.Style = (frag) => {
     ...s,
   });
   el.nodeFormContainer.style(genStyle({
-    top: '16px',
+    top: '40px',
   }));
 }
 

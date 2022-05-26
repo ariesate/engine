@@ -100,6 +100,13 @@ Input.Style = (fragments) => {
     onBlur()
   })
 
+  rootElements.input.onKeyDown((e, {onKeyDown,onPressEnter}) => {
+    if (onPressEnter && e.keyCode === 13) {
+      onPressEnter(e)
+    }
+    onKeyDown?.(e)
+  })
+
   rootElements.container.style(({ focused }) => {
     return {
       borderStyle: 'solid',

@@ -44,7 +44,7 @@ function NodeForm(props) {
   window.formJson = formJson;
 
   const showConfigForm = computed(() => {
-    return !!context.dm.insideState.selected.cell;
+    return !!context.dm.insideState.selected.cell || !!context.dm.insideState.selected.multiCell?.length;
   });
 
   function onSave(rawSelectedData) {    
@@ -74,8 +74,9 @@ function NodeForm(props) {
         formJsonChangedLockSt++;
         if (showConfigForm.value) {
           const cell = insideState.selected.cell;
+          const multiCell = insideState.selected.multiCell;
           const { configJSON, ConfigPanel } = insideState.selected.nodeComponent;
-          const data = cell.data;
+          const data = cell?cell.data:multiCell.map(cell => cell.data);
           if (configJSON) {
             const mergedJson = mergeJsonAndData(configJSON, data);
             formJson.value = mergedJson;  
@@ -111,23 +112,38 @@ function NodeForm(props) {
     });
   });
 
+  const createConfigPanel=(ConfigPanel,formJson,cell)=>{
+    return createElement(ConfigPanel, {
+      node: cell,
+      data: formJson.value,
+      onSave,
+    });
+  }
+
   return (
     <nodeForm block block-width="400px">
       {(() => {
-        const { cell, nodeComponent } = context.dm.insideState.selected;
-        if (!formJson.value || !cell) {
-          return;
+        const { cell, nodeComponent, multiCell } = context.dm.insideState.selected;
+        if (!formJson.value || (!cell && !multiCell?.length)) {
+          return null;
         }
-        if (nodeComponent.configJSON) {
+        if (!!multiCell?.length && nodeComponent.MultiConfigPanel){
+          return createConfigPanel(nodeComponent.MultiConfigPanel, formJson, multiCell)
+        }
+        if (cell && nodeComponent.configJSON && nodeComponent.ConfigPanel) {
+          return (
+            <config>
+              {createConfigPanel(nodeComponent.ConfigPanel,formJson,cell)}
+              <DataConfig jsonWithData={formJson.value} onSave={onSave} hasTop={false}></DataConfig>
+            </config>)
+        }
+        if (cell && nodeComponent.configJSON) {
           return (<DataConfig jsonWithData={formJson.value} onSave={onSave}></DataConfig>);  
         }
-        if (nodeComponent.ConfigPanel) {
-          return createElement(nodeComponent.ConfigPanel, {
-            node: cell,
-            data: formJson.value,
-            onSave,
-          });
+        if (cell && nodeComponent.ConfigPanel) {
+          return createConfigPanel(nodeComponent.ConfigPanel, formJson, cell)
         }
+        return null
       })}
     </nodeForm>
   )

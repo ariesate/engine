@@ -16,11 +16,11 @@ import {useElementPosition, manualTrigger as createManualTrigger } from 'axii-co
 import EntityConfigJSON from './Entity.k6.json';
 import RelationConfigJSON from './Relation.k6.json';
 
-export const EntityEdge = ({ edge }) => {
+export const EntityEdge = ({ node,edge }) => {
   // 兼容旧ER数据
   const ee = Object.assign({}, edge);
 
-  const config = {
+  const config = computed(() => ({
     ...ee,
     attrs: {
       line: {
@@ -33,9 +33,18 @@ export const EntityEdge = ({ edge }) => {
       },
     },
     labels: [`${edge.data.name} ${edge.data.type}`]
-  };
+  }));
   return config;
 };
+EntityEdge.onChange = (node, edge, data, oldEdgeData) => {
+  console.log('[EntityEdge] onChange: node, edge, data, oldEdgeData: ', node, edge, data, oldEdgeData);
+}
+EntityEdge.onSelect = (edge) => {
+  console.log('[EntityEdge] onSelect: edge', edge)
+}
+EntityEdge.onCancelSelect = (edge) => {
+  console.log('[EntityEdge] onCancelSelect: edge', edge)
+}
 EntityEdge.configJSON = RelationConfigJSON;
 
 export const EntityPort = createComponent((() => {
@@ -172,6 +181,14 @@ export const EntityNode = createComponent((() => {
 
   EntityRender.shape = 'entity-shape';
   EntityRender.configJSON = EntityConfigJSON;
+
+  EntityRender.onSelect = (node)=>{
+    console.log('[EntityNode] onSelect: node',node)
+  }
+
+  EntityRender.onCancelSelect = (node, allNodes)=>{
+    console.log('[EntityNode] onCancelSelect: node',node)
+  }
 
   return EntityRender;
 })());

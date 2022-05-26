@@ -1,5 +1,6 @@
 /** @jsx createElement */
 import {
+  createComponent,
   createElement,
   tryToRaw,
   useContext,
@@ -13,7 +14,7 @@ import Toolbar from './Toolbar';
 import * as x6 from './x6';
 import { generateLayout } from './Layout'
 
-function Graph({ data, height, layoutConfig={}, toolbarExtra }, ref) {
+function Graph({ data, height, layoutConfig={}, inlineToolbar, toolbarExtra, toolbarProps = {} }, ref) {
   const rootContext = useContext(RootContext);
   const { nodes, edges } = reactive(data);
   const graphRef = useRef();
@@ -61,9 +62,9 @@ function Graph({ data, height, layoutConfig={}, toolbarExtra }, ref) {
 
   return (
     <graphContainer block >
-      {() => rootContext.readOnly.value ? '' : (
+      {() => (rootContext.readOnly.value && rootContext.isAllReadOnly.value) || !inlineToolbar ? '' : (
         <toolbarBox block >
-          <Toolbar extra={toolbarExtra} />
+          <Toolbar extra={toolbarExtra} {...toolbarProps}/>
         </toolbarBox>
       )}
       <graph block ref={graphRef} style={{ backgroundColor: '#fff' }}>
@@ -73,5 +74,7 @@ function Graph({ data, height, layoutConfig={}, toolbarExtra }, ref) {
   );
 }
 Graph.forwardRef = true;
+Graph.propTypes = {
+}
 
-export default (Graph);
+export default createComponent(Graph);

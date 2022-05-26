@@ -24,7 +24,7 @@
   "scripts": {
     "start": "vite build --mode=development",
     "build": "vite build",
-    "release": "pnpm run build && bump --commit \"release: axii v%s\" --push && pnpm publish --no-git-checks",
+    "release": "bump --commit \"release: axii v%s\" --push && pnpm publish --no-git-checks",
     "test": "jest",
     "coverage": "jest --coverage",
     "prepare": "pnpm build"

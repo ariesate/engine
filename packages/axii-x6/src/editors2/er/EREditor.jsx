@@ -8,7 +8,7 @@ import {
 } from 'axii';
 import { Button } from 'axii-components'
 
-import { K6, Register, Graph, NodeForm, MiniMap } from '../../k6';
+import { K6, Register, Graph, NodeForm, Toolbar } from '../../k6';
 import { EntityNode, EntityPort, EntityEdge, data as dataFunc } from './Entity';
 
 function ER2Editor({ data, layoutConfig={}, onSave, graphConfig={} }) {
@@ -23,25 +23,27 @@ function ER2Editor({ data, layoutConfig={}, onSave, graphConfig={} }) {
   }
 
   const readOnly = atom(false)
+  const isAllReadOnly = atom(false)
   window.editorReadOnly = readOnly
   
   return (
     <container block>
-      <K6 layout:block layout:flex-display readOnly={readOnly} graphConfig={graphConfig} ref={dmRef}>
+      <K6 layout:block layout:flex-display readOnly={readOnly} graphConfig={graphConfig} ref={dmRef} extraHeight={-200} isAllReadOnly={isAllReadOnly}>
         <k6base flex-grow="1" block>
           <Register globalData={dataFunc}>
           </Register>
           <Register node={EntityNode} port={EntityPort} edge={EntityEdge}>
           </Register>
           
-          <Graph data={data} layoutConfig={layoutConfig} ref={graphRef} toolbarExtra={[
-            <Button size="small" primary onClick={saveER} >
-              保存
-            </Button>,
-          <Button key="add" size="small" primary k6-add-node >
-              新增Entity
-            </Button>
-          ]}>
+          <Toolbar onBeforeRemove={() => confirm('确认删除下？')} extra={[
+              <Button size="small" primary onClick={saveER} >
+                保存
+              </Button>,
+              <Button key="add" size="small" primary k6-add-node >
+                新增Entity
+              </Button>
+            ]} tip="双击空白可新增" />
+          <Graph data={data} layoutConfig={layoutConfig} ref={graphRef} >
           </Graph>
         </k6base>
         {{
