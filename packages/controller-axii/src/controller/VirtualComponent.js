@@ -125,7 +125,7 @@ export function HandleFunctionAndReactiveAndChildren(renderResult, collectChange
 		// 1. 这是当前组件的作用域，先解开children。
 		const vnodeToHandle = vnode?.isChildren ? vnode.raw : vnode
 		// CAUTION 增加标记，可以给外部的搭建系统等使用
-		if (vnode?.isChildren) {
+		if (vnode?.isChildren && parentVnode?.attributes) {
 			parentVnode.attributes.isChildrenContainer = true
 		}
 		// 只要发现不是原来的节点，不管后面处理还是不处理，先替换一下。确保引用正确。
