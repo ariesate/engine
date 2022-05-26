@@ -11,7 +11,7 @@ export const SCHEMA_NODE_INDEX_STATE_NAME = 'schemaNodeIndex'
  * TODO 要 check 一下 rerender 的范围
  */
 
-export function render(schema, components, root) {
+export function render(schema, components) {
 
   const stateTree = {}
   // TODO

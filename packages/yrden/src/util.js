@@ -412,10 +412,47 @@ export function nextTask(callback) {
   setTimeout(callback, 0)
 }
 
-export function findSchemaNode(schema, nodeId) {
-  if (schema.id === nodeId) return schema
-  if (!schema.children) return undefined
+export function findSchemaNode(schema, nodeId, parentPath = []) {
+  if (schema.id === nodeId) return [schema, parentPath]
+  if (!schema.children) return [undefined, parentPath]
 
-  const nextTarget = Array.isArray(schema.children) ? schema.children : Object.values(schema.children)
-  return nextTarget.find(child => findSchemaNode(child, nodeId))
+  if (Array.isArray(schema.children)) {
+    for(const index in schema.children) {
+      const result = findSchemaNode(schema.children[index], nodeId, parentPath.concat(index))
+      if (result[0]) return result
+    }
+  } else {
+    for(const [index, child] of Object.entries(schema.children)) {
+      const result = findSchemaNode(child, nodeId, parentPath.concat(index))
+      if (result[0]) return result
+    }
+  }
+
+  return [undefined, parentPath]
+}
+
+export function walkSchema(node, components, handle, context, path = []) {
+  if (!node) return
+  // TODO 说明是在 children 中。理论上应该用 propTypes 去判断，不然有坑你 children 里面刚好也有字段取名叫 component 就有问题了。
+  if (typeof node === 'object' && !node.component) {
+    if (Array.isArray(node)) {
+      return node.forEach((child, index) => walkSchema(child, components, handle, context, path.concat(index)))
+    } else {
+      return Object.entries(node).forEach(([key, child]) => walkSchema(child, components, handle, context, path.concat(key)))
+    }
+  }
+
+  const nextContext = handle(node, path, context)
+
+  if (!node.children) return
+
+  if (Array.isArray(node.children)) {
+    node.children.forEach((child, index) => walkSchema(child, components, handle, nextContext || context, path.concat(index)))
+  } else {
+    Object.entries(node.children).forEach(([key, child]) => walkSchema(child, components, handle, nextContext || context, path.concat(key)))
+  }
+}
+
+export function deepClone(data) {
+  return JSON.parse(JSON.stringify(data))
 }

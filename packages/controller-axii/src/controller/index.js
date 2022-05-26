@@ -54,9 +54,7 @@ import { UNIT_PAINT } from '@ariesate/are/constant'
 import { shallowCloneElement } from '../index.js'
 import { reverseWalkCnodes } from '../common'
 import { filter, mapValues, shallowEqual, nextTask } from '../util'
-import {
-	isAtom,
-} from '../reactive';
+import { isAtom } from '../reactive';
 import {withCurrentWorkingCnode, activeEvent} from '../renderContext'
 import LayoutManager from '../LayoutManager'
 import { afterDigestion } from '../reactive/effect';
@@ -361,8 +359,12 @@ export default function createAxiiController(rootElement) {
 			// 调用 listener。
 			invoke: (fn, e) => {
 				// CAUTION removeChild 会触发 onBlur 事件，这不是我们想要的情况。
-				// 这里两个判断都要，后面按个是兼容 Portal。
-				if (!rootElement.contains(e.target) && !document.body.contains(e.target)) {
+				//  这里对 target 是否还存在的两个判断都要，后面那个是为了兼容 Portal。
+				if (!rootElement.contains(e.target)
+					&& !document.body.contains(e.target)
+					&& e.type !== 'blur'
+					&& e.type !== 'focusout'
+				) {
 					console.warn('element is removed, should not call callbacks', e)
 					return false
 				}

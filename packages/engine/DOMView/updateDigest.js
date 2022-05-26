@@ -60,8 +60,10 @@ function handleRemovePatchNode(p, toDestroy, view) {
     }
     parentNode.removeChild(toDestroyCnode.view.endPlaceholder)
   } else {
-
-    const elements = resolveFirstLayerElements([p], toDestroy)
+    // CAUTION 注意这里我们伪造了第二个参数 cnode，本来 resolveFirstLayerElements 遇到了 component 节点
+    //  就会去 cnode.next 中找，但由于我们这里是 remove，digest 的时候 next 已经变成了新的，需要 remove 的全都到
+    //  toDestroyPatch 里去了，所以这里伪造一下就能保证能正确获取了。
+    const elements = resolveFirstLayerElements([p], { next: toDestroy.toDestroyPatch})
     elements.forEach((ele) => {
       ele.parentNode.removeChild(ele)
     })
@@ -122,6 +124,7 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, cnod
   let currentLastStableSiblingNode = lastStableSiblingNode
 
   patch.forEach((p) => {
+    const lastAction = {...p.action }
     if (p.action.type === PATCH_ACTION_TO_MOVE) {
       handleToMovePatchNode(p, cnode, toMove)
     } else if (p.action.type === PATCH_ACTION_MOVE_FROM) {
@@ -156,7 +159,7 @@ function handlePatchVnodeChildren(patch, parentNode, lastStableSiblingNode, cnod
   })
 
   /**
-   * 如果当前没处理完的 toInsert, 说明一直没有碰到 remain 节点。
+   * 如果当前没处理完的 toInsert, 说明一直没有碰到 remain 节点，或者碰到 remain 后还有新的。
    * 这时候有几种情况：
    * 1. 如果是组建的顶层节点，那么 currentLastStableSiblingNode 就是自己的 startPlaceholder
    * 2. 如果是某层级下的第一个节点，前面没有兄弟节点，那么没有 currentLastStableSiblingNode，parentNode.childNodes[0]，也没有，

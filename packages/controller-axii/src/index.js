@@ -33,7 +33,7 @@ export { default as watch, traverse, watchReactive, watchOnce, autorun } from '.
 export { StyleEnum, StyleRule } from './StyleManager'
 export { isComponentVnode, useViewEffect, useContext, createContext } from './controller'
 export { createSmartProp, overwrite, disableDraft, DIRTY } from './controller/ComponentNode'
-export { invariant, tryToRaw, shallowEqual, createBufferedRef, deferred } from './util'
+export { invariant, tryToRaw, shallowEqual, createBufferedRef, deferred, composeRef } from './util'
 export { default as createComponent} from './component/createComponent'
 export { default as Scenario, createRange, matrixMatch, addAlpha } from './Scenario'
 export { default as batchOperation } from './batchOperation'

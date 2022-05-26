@@ -1,9 +1,16 @@
-import {useViewEffect} from "axii";
+import {debounceComputed, useViewEffect} from "axii";
 import hotkeys from "hotkeys-js";
 
-export default function useHotkeys(key, handle) {
+export default function useHotkeys(key, handle, active) {
   useViewEffect(() => {
-    hotkeys(key, handle)
-    return () => hotkeys.unbind(key, handle)
+    const handleWithActive = () => {
+      if (active === undefined || active.value) {
+        debounceComputed(() => {
+          handle()
+        })
+      }
+    }
+    hotkeys(key, handleWithActive)
+    return () => hotkeys.unbind(key, handleWithActive)
   })
 }

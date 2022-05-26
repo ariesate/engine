@@ -160,7 +160,6 @@ function createSomeLike(callHandler, initialResult) {
 export function createFlatChildrenProxy(children, path = [], childrenPropType = propTypes.arrayOf(propTypes.element())) {
   // 这里的 shape 可能是 arrayOf(element) 也可能是 shapeOf([element])
   const elementShape = childrenPropType.argv[0]
-
   const mutableInstruments = {
     map: createEachLike(function(lastResult, handler, value, count) {
       const elementPropType = Array.isArray(elementShape) ? elementShape[count] : elementShape
@@ -288,12 +287,20 @@ export function createElementChildProxy(child, path, elementPropType) {
 
 
 
-// childrenProp 一定是个静态数组，所以这里要智能判断一下
-export function smartCreateChildrenProxy(childrenProp, childrenPropType = propTypes.arrayOf(propTypes.element())) {
+// childrenProp 一定是个静态数组，这是在 createElement 时候就决定了的。所以这里要智能判断一下
+export function smartCreateChildrenProxy(rawChildren, childrenPropType = propTypes.arrayOf(propTypes.element())) {
    const shouldUnwrap = childrenPropType.is(propTypes.element) ||
      childrenPropType.is(propTypes.shapeOf) && !Array.isArray(childrenPropType.argv[0])
 
-  return createChildrenProxy(shouldUnwrap ? childrenProp[0] : childrenProp, childrenPropType)
+  const inputChildren = shouldUnwrap ? rawChildren[0] : rawChildren
+
+  // 如果传进来的是个 undefined，那么这里创建 proxy 的时候还是得变成 [] 或者 {}, 这样组件里面就不用去判断 children 的存在性了。
+  return createChildrenProxy(
+    inputChildren === undefined ?
+      (childrenPropType.is(propTypes.shapeOf) ? {} : []) :
+      inputChildren,
+    childrenPropType
+  )
 }
 
 /**
@@ -302,6 +309,8 @@ export function smartCreateChildrenProxy(childrenProp, childrenPropType = propTy
  *  最符合语义就是传的时候创建 proxy。
  */
 export function createChildrenProxy(children, childrenPropType = propTypes.arrayOf(propTypes.element()), path = []) {
+  if (children === undefined) return children
+
   // element/arrayOf(array)/[...element] 是可以直接拿来渲染的
   // 1. 就直接是 element
   if(childrenPropType.is(propTypes.element)) {

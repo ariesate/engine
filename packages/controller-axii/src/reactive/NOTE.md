@@ -73,4 +73,55 @@ b.push( ((i) => i+1)(4))
 
 source -[mapFn]> vnodeComputed -[diff]-> actionPatch -[digest]-> dom
 
+### 目前哪些操作会触发 mapFn 重新计算
+
+map 函数是把数组的的所有索引都读了一遍了。所以： 任何改变数组任意一个元素或者改变"数组长度"的行为，都会触发重新执行 mapFn。
+
+- 数组的操作，如 push 改变了长度，splice 即可能改变长度，也会改变其中对应索引的元素。这些都会触发。
+- 直接针对数组元素的 set 也会，例如 a[0] = {}
+
+如果数组里的元素是个对象，并且 mapFn 生成的对象没有再用 computed 包裹住，那么对于其中对象的深度阅读也会将依赖收集到 map 这一层上，
+对象元素的深度属性改变也会触发 mapFn 重新计算。
+
+## 数组短路计算的实现
+
+目前 mapFn 触发更新的机制：
+
+在 track 阶段，map 的执行 track 了：
+
+- 数组 length
+- 数组中的每个元素 index
+- 对元素的 has 检测(可以去掉？？？)
+
+在 trigger 阶段。如果是数组型操作 push/pop/shift/unshift/splice。会触发：
+
+- length 变化
+- 新元素的 add 
+- 旧元素的 delete 
+- 所有影响到了的元素的 set，即使是值相同也会触发，但是会附加 isChanged 信息。
+
+我们可以把短路行为记录到调用 map 函数的 computation 上，*当且只当*：
+
+- 数组操作 
+- 元素 set 操作而
+  
+而触发这个 computation 时， 根据具体操作直接短路成对 computed 的操作。因为 mapFn 中还可能依赖数组之外的其他数据，
+所以只能是*当且只当*才能短路。
+
+## map + mapFn 产生 innerComputed 的情况如何短路
+
+我们为了控制对象类型的元素内部的子孙节点变化产生的影响，一般都会在 mapFn 中再包装一个 computed，这样当某个元素
+的内部产生变化时，只有这个内部 computed 会被重新计算，不会触发 mapFn 重新计算。
+
+当元素产生变化时，innerComputed 会怎样？
+不会怎么样，因为 innerComputed 读取的时候已经是从元素的根节点开始读，不会读到 index。
+
+### innerComputed 的新能损耗
+如果 mapFn 重新计算，又会产生新的 innerComputed，虽然结果是肯定会替换掉所有原本的 computed（因为引用不同），但还是会
+检测一下，这里有性能损耗。
+
+当 computation 重新计算时还会去 destroy 所有的 innerComputed，这里也会有性能损耗。
+
+
+
 

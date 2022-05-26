@@ -101,6 +101,7 @@ describe('basic render', () => {
 
     list.push(3)
 
+    expect(root.children[0].children.length).toBe(3)
     expect(root.children[0]).partialMatchDOM(
       <div>
         <span key={1}>1</span>
@@ -111,6 +112,57 @@ describe('basic render', () => {
 
     // 不需要再渲染
     expect(rendered).toBe(1)
+
+    list.splice(0, 1)
+    expect(root.children[0].children.length).toBe(2)
+    expect(root.children[0]).partialMatchDOM(
+      <div>
+        <span key={2}>2</span>
+        <span key={3}>3</span>
+      </div>
+    )
+
+    list.splice(0, 2, 5, 6, 7)
+    expect(root.children[0].children.length).toBe(3)
+    expect(root.children[0]).partialMatchDOM(
+      <div>
+        <span key={5}>5</span>
+        <span key={6}>6</span>
+        <span key={7}>7</span>
+      </div>
+    )
+
+  })
+
+  test('reactive vnode(vnodeComputed) return different type of vnode', () => {
+    // TODO 没有使用 vnodeComputed 包裹的动态节点，可能会收集到错误的 cnode。
+    const rendered = atom(false)
+
+    function App() {
+      return <container>
+        {function() {
+          return rendered.value ?
+            null :
+            [<span>1</span>]
+        }}
+      </container>
+    }
+
+    const root = document.createElement('div')
+    render(<App />, root)
+
+    expect(root.children[0]).partialMatchDOM(
+      <container>
+        <span>1</span>
+      </container>
+    )
+
+    rendered.value = true
+    // 不需要再渲染，只是里面动态结构变化
+    expect(rendered.value).toBe(true)
+    expect(root.children.length).toBe(1)
+    expect(root.children[0].children.length).toBe(0)
+
   })
 
   test('pass reactive to child component', () => {
@@ -197,6 +249,7 @@ describe('complex vnodeComputed', () => {
       return <div>
         {() => {
           computedCalled += 1
+          debugger
           return (
             <>
               {base.value === 1 ? <span>1</span> : <div>2</div>}

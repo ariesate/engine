@@ -1,4 +1,4 @@
-const { atom, atomComputed, debounceComputed } = require('../reactive/index.js')
+const { atom, atomComputed, computed, debounceComputed } = require('../reactive/index.js')
 const batchOperation = require('../batchOperation').default
 
 describe('performance test', () => {
@@ -137,5 +137,30 @@ describe('performance test', () => {
 
 
   })
-
 })
+
+// test('innerComputed should be disposed when recompute', () => {
+//   const source = atom(0)
+//   let innerRuns = 0
+//   let outRuns = 0
+//   const outComputed = atomComputed(function outer() {
+//     outRuns++
+//     console.log("out run", outRuns)
+//     return source.value > -1 ? atomComputed(function inner() {
+//       innerRuns++
+//       console.log("inner run", innerRuns)
+//       return source.value === 0 ? '0' : '1'
+//     }) : null
+//   })
+//
+//   expect(outRuns).toBe(1)
+//   expect(innerRuns).toBe(1)
+//   expect(outComputed.value.value).toBe('0')
+//
+//   source.value += 1
+// debugger
+//   expect(outRuns).toBe(2)
+//   expect(innerRuns).toBe(2)
+//   expect(outComputed.value.value).toBe('1')
+//
+// })

@@ -485,6 +485,28 @@ describe('repaint key diff', () => {
     expect(disposedRefs[0].ref).toBe(ref1)
   })
 
+  test('diff different type of vnode', () => {
+      let isFirst = true
+      const App = {
+        render() {
+          if (isFirst) {
+            return [<span key={1}>1</span>]
+          } else {
+            return null
+          }
+        }
+      }
+
+      const ctree = painter.createCnode(<App/>)
+      painter.paint(ctree)
+      isFirst = false
+      const diffResult = painter.repaint(ctree)
+      expect(diffResult.patch.length).toBe(2)
+      expect(diffResult.patch[0]).toMatchObject({ type: Array, action: {type: 'patch.remove'} })
+      expect(diffResult.patch[0].children).toMatchObject([{ children: [{ value: "1"}]}])
+      expect(diffResult.patch[1]).toMatchObject({ type: null, action: {type: 'patch.insert'} })
+  })
+
   // test('diff with null vnode', () => {
   //   let isFirst = true
   //   const App = {

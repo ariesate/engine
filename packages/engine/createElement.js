@@ -18,7 +18,8 @@ export function defaultNormalizeLeaf(rawChild) {
 
   let child
   if (rawChild === undefined) {
-    child = { type: String, value: 'undefined'}
+    // child = { type: String, value: 'undefined'}
+    child = { type: null, isUndefined: true}
   } else if (rawChild === null) {
     child = { type: null }
   } else if (Array.isArray(rawChild)) {

@@ -3,11 +3,7 @@
 import {isReactiveLike, isAtom} from "../reactive";
 import {invariant, isComponentVnode, createElement, normalizeLeaf, isVnodeComputed, VNode} from "../index";
 import watch, {traverse} from "../watch";
-import {createVnodePath, walkRawVnodes} from "../common";
-import { getCurrentWorkingCnode } from '../renderContext'
-import { isCollectingComputed } from "../reactive/effect";
 import { walkVnodes } from "../util";
-import vnodeComputed from "../vnodeComputed";
 
 const virtualComponentCacheByCnode = new WeakMap()
 function getTypeCache(cnode, currentPath) {
@@ -20,10 +16,10 @@ function getTypeCache(cnode, currentPath) {
 }
 
 /**
- * 我们会将组件渲染中产生 vnodeComputed 节点替换成 component node，这样就能利用引擎的机制来刷新组件了。
+ * 我们会将组件渲染中产生 function 节点替换成 component node，这样就能利用引擎的机制来刷新组件了。
  * createVirtualCnodeForComputedVnodeOrText 就是用来创建 virtual Component 的。
  *
- * 1. 但这里有个性能问题，就是 vnodeComputed 是在 render 中产生的函数，每次 render 自然都是新引用了。
+ * 1. 但这里有个性能问题，就是 function 节点是在 render 中产生的函数，每次 render 自然都是新引用了。
  * 那么正常的 diff 过程会把这个虚拟节点都当成全新的，这就导致 vnodeComputed 里面本来无法继续利用 diff 了。
  *
  * 解决方案是按照 cnode 和 vnodeComputed 的路径把建立的 Virtual Component 存起来。始终保持同一个类型引用。
@@ -42,15 +38,16 @@ function getTypeCache(cnode, currentPath) {
 export function createVirtualCnodeForComputedVnodeOrText(reactiveVnode, cnode, currentPath) {
 	// CAUTION 拿到 originVnode 的时候如果是 function，一定要立即包装成 vnodeComputed 得到结果，这样作为 children 传给子组件之后才能被子组件理解使用。
 	const currentCache = getTypeCache(cnode, currentPath)
-	currentCache.vnode = (typeof reactiveVnode === 'function') ? vnodeComputed(reactiveVnode) : reactiveVnode
+	currentCache.vnode = reactiveVnode
 	let { Component } = currentCache
 	if (!Component) {
 		Component = function VirtualComponent() {
-			return currentCache.vnode
+			// CAUTION 一定要从 currentCache 上面读，这样才能保证使用了最新的 reactiveVnode，因为 Component 为了保持引用，如果有 cache，就是用的上一次创建的引用。
+			return (typeof currentCache.vnode === 'function') ? currentCache.vnode() : currentCache.vnode.value
 		}
 
 		Component.isVirtual = true
-		Component.displayName = reactiveVnode.displayName || `VnodeComputed`
+		Component.displayName = (typeof currentCache.vnode === 'function') ? (currentCache.vnode.name || currentCache.vnode.displayName) : `(Text)`
 
 		currentCache.Component = Component
 	}
@@ -68,9 +65,12 @@ export function watchReactiveAttributesVnode(vnode, reportChangedVnode) {
 		return isReactiveLike(attr) && !reservedAttrNames.includes(attrName)
 	})
 
-
 	if (reactiveAttributes.length) {
-		watch(() => reactiveAttributes.forEach(([attrName, attr]) => traverse(attr)), () => {
+		watch(() => {
+			reactiveAttributes.forEach(([attrName, attr]) => {
+				traverse(attr)
+			})
+		}, () => {
 			// CAUTION 只要上报这个 vnode 就够了。engine 会使用这个 vnode 上的 path 去找对应的 patchNode。
 			reportChangedVnode(vnode)
 		})
@@ -109,18 +109,25 @@ export function watchReactiveAttributesVnode(vnode, reportChangedVnode) {
  *
  */
 
-export function replaceVnodeComputedAndWatchReactive(renderResult, collectChangePatchNode, cnode) {
+export function HandleFunctionAndReactiveAndChildren(renderResult, collectChangePatchNode, cnode) {
 	const rootVnode = (renderResult instanceof VNode) ? renderResult : normalizeLeaf(renderResult)
 
 	const container = [rootVnode]
 
 	walkVnodes(container, (walkChildren, vnode, vnodes, vnodeIndex, parentVnode, currentPath) => {
-		// 组件也是不允许返回 undefined 的，所以如果有，那么是 walkChildren 的时候来的，可以直接返回
+		// CAUTION 可以用 undefined 做 children，这里统一处理
 		// 如果是 null 的话，需要下面的 normalize.
-		if (vnode === undefined) return
+		if (vnode === undefined) {
+			vnodes[vnodeIndex] = normalizeLeaf(vnode)
+			return
+		}
 
 		// 1. 这是当前组件的作用域，先解开children。
 		const vnodeToHandle = vnode?.isChildren ? vnode.raw : vnode
+		// CAUTION 增加标记，可以给外部的搭建系统等使用
+		if (vnode?.isChildren) {
+			parentVnode.attributes.isChildrenContainer = true
+		}
 		// 只要发现不是原来的节点，不管后面处理还是不处理，先替换一下。确保引用正确。
 		// CAUTION 后面还要替换的话都用 vnodes[vnodes.indexOf(vnode)]
 		if (vnodeToHandle !== vnode) vnodes[vnodeIndex] = vnodeToHandle
