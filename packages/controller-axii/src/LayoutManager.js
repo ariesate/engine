@@ -231,7 +231,6 @@ export default class LayoutManager {
           keys.push(val)
         }
       }
-      if (key === 'flex') console.log(keys)
       // 有名字的组件会有个 block=true 这样的，过滤掉。
       const keysToMatch = len < 2 ? [keys[0], '__base'] : keys
 
