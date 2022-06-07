@@ -1,5 +1,5 @@
 /** @jsx createElement */
-import { createElement, render, atom } from 'axii'
+import { createElement, render, atom, layoutManager } from 'axii'
 import { Input } from 'axii-components'
 import HomeStay from 'axii-icons/HomeStay'
 
@@ -16,8 +16,12 @@ const slot = {
   before: <HomeStay />
 }
 
+layoutManager.configAlias({
+  'text-xs': 	{ 'font-size': '0.75rem' }
+})
+
 render(<div>
-  <div>
+  <div block flex flex-wrap text-xs>
     <Input>{slots}</Input>
   </div>
   <div style={{ marginTop: 8 }}>
