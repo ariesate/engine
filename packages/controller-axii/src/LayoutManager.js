@@ -1,3 +1,5 @@
+import defaultAlias from "./styleAlias"
+
 function createSimpleKeyToValue(key) {
   return {
     [key]: (...argv) => {
@@ -80,7 +82,7 @@ const BaseDefaultRules = {
     __base: () => ({
       display: 'inline'
     }),
-  }
+  },
 }
 
 const createFlexProperty = (name) => createWithoutPrefixKeyToValue('flex', name)
@@ -105,6 +107,7 @@ const LayoutRules = {
     ...createFlexProperty('direction'),
     ...createFlexProperty('shrink'),
     ...createFlexProperty('wrap'),
+    ...createSimpleKeyToValue('gap'),
     ...createSimpleKeyToValue('order'),
     ...createSimpleKeyToValue('justify-content'),
     ...createSimpleKeyToValue('align-content'),
@@ -136,6 +139,13 @@ function flatten(obj, parentPath=[], result = {}) {
 
 const NAMESPACE = 'layout'
 
+function getPrefix(attributes) {
+  if (attributes.inline) return 'inline'
+  if (attributes.block) return 'block'
+  if (attributes.text) return 'text'
+  return ''
+}
+
 /**
  * Layout 用法:
  * 类似于 Style，但是在组件内部是写在 render 函数里的。
@@ -155,10 +165,15 @@ export default class LayoutManager {
     this.flatRules = flatten(Object.assign({}, baseRules, layoutRules))
     // this.layoutRules = layoutRules
   }
-  match(vnode) {
 
+  configAlias(styleAlias) {
+    this.styleAlias = styleAlias
+  }
+
+  match(vnode) {
     return this.baseRuleTypes.includes(vnode.type) || this.baseRuleTypes.some(type => type in (vnode.attributes || {}))
   }
+
   processLayoutProps(props) {
     const layoutProps = {}
     const originProps = {}
@@ -171,14 +186,53 @@ export default class LayoutManager {
     })
     return Object.keys(layoutProps).length ? [layoutProps, originProps] : [undefined]
   }
+
+  processAlias(key, prefix) {
+    let attr = key
+    let val = null
+    const styleAlias = Object.assign({}, defaultAlias, this.styleAlias)
+    const config = styleAlias[key]
+    if (!config) return {}
+
+    if (typeof config === 'object') {
+      const keys = Object.keys(config)
+      if (keys.length) {
+        attr = keys[0]
+        val = config[attr]
+      }
+    } else {
+      attr = config
+    }
+    // CAUTION: 这里用 InlineRules 来判断是否添加前缀有点 trick，因为 LayoutManager 本来是不感知 rules 内部规则的，暂时先这样
+    if (InlineRules[attr]) attr = `${prefix}-${attr}`
+    return { attr, val }
+  }
+
   parse(attributes, vnode) {
     const style = {}
     let hasStyle = false
-    Object.entries(attributes).forEach(([key, shouldApply]) => {
-      const keys = key.split('-')
-      // 有名字的组件会有个 block=true 这样的，过滤掉。
+    const prefix = getPrefix(attributes)
+    Object.entries(attributes).forEach(([key, value]) => {
+      let shouldApply = value
+      const { attr, val } =  this.processAlias(key, prefix)
+      if (val) shouldApply = val
 
-      const keysToMatch = keys.length < 2 ? [keys[0], '__base'] : keys
+      let keys = (attr || key).split('-')
+      const len = keys.length
+
+      // alias-val 类型（如 p-2px)
+      if (!attr && len > 1 && shouldApply === true) {
+        const val = keys.pop()
+        const alias = keys.join('-')
+        const { attr } = this.processAlias(alias, prefix)
+        if (attr) {
+          keys = [...attr.split('-'), val]
+        } else {
+          keys.push(val)
+        }
+      }
+      // 有名字的组件会有个 block=true 这样的，过滤掉。
+      const keysToMatch = len < 2 ? [keys[0], '__base'] : keys
 
       const [fn, argv] = matchRule(this.flatRules, keysToMatch)
       if (fn) {
