@@ -317,6 +317,64 @@ interface LayoutAttributes {
   "flex-wrap-nowrap"?: boolean;
   "flex-wrap-wrap"?: boolean;
   "flex-wrap-wrap-reverse"?: boolean;
+
+  /** alias */
+
+  'box-border'?: boolean;
+  'box-content'?: boolean;
+
+  static?: boolean;
+  fixed?: boolean;
+  absolute?: boolean;
+  relative?: boolean;
+  sticky?: boolean;
+  left?: Numberish;
+  right?: Numberish
+  top?: Numberish;
+  bottom?: Numberish;
+
+  m?: Numberish;
+  mt?: Numberish;
+  ml?: Numberish;
+  mr?: Numberish;
+  mb?: Numberish;
+
+  p?: Numberish;
+  pl?: Numberish;
+  pr?: Numberish;
+  pt?: Numberish;
+  pb?: Numberish;
+
+  w?: Numberish;
+  h?: Numberish;
+  'max-w'?: Numberish;
+  'min-w'?: Numberish;
+  'max-h'?: Numberish;
+  'min-h'?: Numberish;
+
+  flex?: boolean;
+  iflex?: boolean;
+  'flex-row'?: boolean;
+  'flex-col'?: boolean;
+  'flex-row-reverse'?: boolean;
+  'flex-col-reverse'?: boolean;
+  'flex-wrap'?: boolean;
+  'flex-wrap-reverse'?: boolean;
+  'flex-nowrap'?: boolean;
+  'basis'?: boolean;
+  'grow'?: boolean;
+  'shrink'?: boolean;
+  'justify-start'?: boolean;
+  'justify-end'?: boolean;
+  'justify-center'?: boolean;
+  'justify-between'?: boolean;
+  'justify-around'?: boolean;
+  'justify-evenly'?: boolean;
+  'items-start'?: boolean;
+  'items-end'?: boolean;
+  'items-center'?: boolean;
+  'items-baseline'?: boolean;
+  'items-stretch'?: boolean;
 }
 
 export interface Events {
