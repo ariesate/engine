@@ -32,7 +32,9 @@ const margin = {
   mt: 'margin-top',
   ml: 'margin-left',
   mr: 'margin-right',
-  mb: 'margin-bottom'
+  mb: 'margin-bottom',
+  mx: ['margin-left', 'margin-right'],
+  my: ['margin-top', 'margin-bottom']
 }
 
 const padding = {
@@ -40,12 +42,18 @@ const padding = {
   pl: 'padding-left',
   pr: 'padding-right',
   pt: 'padding-top',
-  pb: 'padding-bottom'
+  pb: 'padding-bottom',
+  px: ['padding-left', 'padding-right'],
+  py: ['padding-top', 'padding-bottom']
 }
 
 const rect = {
   w: 'width',
+  'w-full': { width: '100%' },
+  'w-half': { width: '50%' },
   h: 'height',
+  'h-full': { height: '100%' },
+  'h-half': { height: '50%' },
   'max-w': 'max-width',
   'min-w': 'min-width',
   'max-h': 'max-height',
@@ -64,6 +72,7 @@ const flex = {
   'flex-nowrap': 'flex-wrap-nowrap',
   'basis': 'flex-basis',
   'grow': 'flex-grow',
+  'gap': 'flex-gap',
   'shrink': 'flex-shrink',
   'justify-start': { 'justify-content': 'flex-start' },
   'justify-end': { 'justify-content': 'flex-end' },

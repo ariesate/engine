@@ -338,15 +338,23 @@ interface LayoutAttributes {
   ml?: Numberish;
   mr?: Numberish;
   mb?: Numberish;
+  mx?: Numberish;
+  my?: Numberish;
 
   p?: Numberish;
   pl?: Numberish;
   pr?: Numberish;
   pt?: Numberish;
   pb?: Numberish;
+  px?: Numberish;
+  py?: Numberish;
 
   w?: Numberish;
   h?: Numberish;
+  'w-full'?: boolean;
+  'h-full'?: boolean;
+  'w-half'?: boolean;
+  'h-half'?: boolean;
   'max-w'?: Numberish;
   'min-w'?: Numberish;
   'max-h'?: Numberish;
