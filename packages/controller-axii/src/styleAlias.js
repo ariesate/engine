@@ -74,17 +74,22 @@ const flex = {
   'grow': 'flex-grow',
   'gap': 'flex-gap',
   'shrink': 'flex-shrink',
-  'justify-start': { 'justify-content': 'flex-start' },
-  'justify-end': { 'justify-content': 'flex-end' },
-  'justify-center': { 'justify-content': 'center' },
-  'justify-between': { 'justify-content': 'space-between' },
-  'justify-around': { 'justify-content': 'space-around' },
-  'justify-evenly': { 'justify-content': 'space-evenly' },
-  'items-start': { 'align-items': 'flex-start' },
-  'items-end': { 'align-items': 'flex-end' },
-  'items-center': { 'align-items': 'center' },
-  'items-baseline': { 'align-items': 'baseline' },
-  'items-stretch': { 'align-items': 'stretch' }
+  'justify-start': { 'flex-justify-content': 'flex-start' },
+  'justify-end': { 'flex-justify-content': 'flex-end' },
+  'justify-center': { 'flex-justify-content': 'center' },
+  'justify-between': { 'flex-justify-content': 'space-between' },
+  'justify-around': { 'flex-justify-content': 'space-around' },
+  'justify-evenly': { 'flex-justify-content': 'space-evenly' },
+  'items-start': { 'flex-align-items': 'flex-start' },
+  'items-end': { 'flex-align-items': 'flex-end' },
+  'items-center': { 'flex-align-items': 'center' },
+  'items-baseline': { 'flex-align-items': 'baseline' },
+  'items-stretch': { 'flex-align-items': 'stretch' }
+}
+
+const text = {
+  text: 'font-size',
+  leading: 'line-height',
 }
 
 export default {
@@ -95,4 +100,5 @@ export default {
   ...padding,
   ...rect,
   ...flex,
+  ...text
 }
