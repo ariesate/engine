@@ -271,7 +271,7 @@ interface LayoutAttributes {
   "block-margin-bottom"?: Numberish;
   /** flex */
   "flex-display"?: boolean;
-  "flex-direction"?: "row" | "row-reverse" | "column" | "column-reverse ";
+  "flex-direction"?: "row" | "row-reverse" | "column" | "column-reverse";
   "flex-direction-row"?: boolean;
   "flex-direction-row-reverse"?: boolean;
   "flex-direction-column"?: boolean;
@@ -383,6 +383,9 @@ interface LayoutAttributes {
   'items-center'?: boolean;
   'items-baseline'?: boolean;
   'items-stretch'?: boolean;
+
+  text?: Numberish;
+  leading?: Numberish;
 }
 
 export interface Events {
