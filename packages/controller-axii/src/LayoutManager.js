@@ -193,8 +193,9 @@ export default class LayoutManager {
     const styleAlias = Object.assign({}, defaultAlias, this.styleAlias)
     const config = styleAlias[key]
     if (!config) return {}
-
-    if (typeof config === 'object') {
+    if(Array.isArray(config)) {
+      attr = config.map(k => InlineRules[k]? `${prefix}-${k}`: k)
+    } else if (typeof config === 'object') {
       const keys = Object.keys(config)
       if (keys.length) {
         attr = keys[0]
@@ -214,8 +215,14 @@ export default class LayoutManager {
     const prefix = getPrefix(attributes)
     Object.entries(attributes).forEach(([key, value]) => {
       let shouldApply = value
-      const { attr, val } =  this.processAlias(key, prefix)
+      let extraAttrs
+      let { attr, val } =  this.processAlias(key, prefix)
       if (val) shouldApply = val
+      if(Array.isArray(attr)) {
+        const [first, ...rest] = attr
+        attr = first
+        extraAttrs = rest
+      }
 
       let keys = (attr || key).split('-')
       const len = keys.length
@@ -224,8 +231,13 @@ export default class LayoutManager {
       if (!attr && len > 1 && shouldApply === true) {
         const val = keys.pop()
         const alias = keys.join('-')
-        const { attr } = this.processAlias(alias, prefix)
+        let { attr } = this.processAlias(alias, prefix)
         if (attr) {
+          if(Array.isArray(attr)) {
+            const [first, ...rest] = attr
+            attr = first
+            extraAttrs = rest
+          }
           keys = [...attr.split('-'), val]
         } else {
           keys.push(val)
@@ -233,30 +245,34 @@ export default class LayoutManager {
       }
       // 有名字的组件会有个 block=true 这样的，过滤掉。
       const keysToMatch = len < 2 ? [keys[0], '__base'] : keys
+      const extraKeysToMatch = extraAttrs? extraAttrs.map(k => {
+        const extraKeys = k.split('-')
+        return [...extraKeys, keysToMatch[keysToMatch.length - 1]]
+      }): []
 
-      const [fn, argv] = matchRule(this.flatRules, keysToMatch)
-      if (fn) {
-        hasStyle = true
-        // 例如 block-display-none={false} 这种情况说明要取消掉这个 style。argv !== 0 说明已经在前面读到 'none' 这个参数。
-        // 改成 undefined 说明要删除这些属性
-        const styleArgv = typeof shouldApply === 'boolean' ? argv : argv.concat(shouldApply)
-        const partialStyle = fn(...styleArgv)
-        if (shouldApply === false && argv.length !== 0) {
-          Object.keys(partialStyle).forEach(k => {
-            // CAUTION  注意这里一定要有这个判断，因为可能多个规则操作统一个属性，例如
-            // display 可以被 flex 等操作，如果之前有别的规则操作了，那么自然会被复写掉，就不用设置 undefined 来清除了。
-            if (!style.hasOwnProperty(k) ) {
-              partialStyle[k] = undefined
-            } else {
-              // 如果有的话，就不用管了
-              delete partialStyle[k]
-            }
-          })
+      for (const match of [keysToMatch, ...extraKeysToMatch]) {
+        const [fn, argv] = matchRule(this.flatRules, match)
+        if (fn) {
+          hasStyle = true
+          // 例如 block-display-none={false} 这种情况说明要取消掉这个 style。argv !== 0 说明已经在前面读到 'none' 这个参数。
+          // 改成 undefined 说明要删除这些属性
+          const styleArgv = typeof shouldApply === 'boolean' ? argv : argv.concat(shouldApply)
+          const partialStyle = fn(...styleArgv)
+          if (shouldApply === false && argv.length !== 0) {
+            Object.keys(partialStyle).forEach(k => {
+              // CAUTION  注意这里一定要有这个判断，因为可能多个规则操作统一个属性，例如
+              // display 可以被 flex 等操作，如果之前有别的规则操作了，那么自然会被复写掉，就不用设置 undefined 来清除了。
+              if (!style.hasOwnProperty(k) ) {
+                partialStyle[k] = undefined
+              } else {
+                // 如果有的话，就不用管了
+                delete partialStyle[k]
+              }
+            })
+          }
+          Object.assign(style, partialStyle)
         }
-        Object.assign(style, partialStyle)
       }
-
-
     })
 
     return hasStyle ? style : undefined
